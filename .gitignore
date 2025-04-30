@@ -1,0 +1,23 @@
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# JetBrains IDE files
+.idea/
+
+# Jupyter Notebook checkpoint files
+**/.ipynb_checkpoints/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env
+
+# Local configuration
+*.env
+config.json
