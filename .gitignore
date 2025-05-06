@@ -8,6 +8,9 @@
 # Jupyter Notebook checkpoint files
 **/.ipynb_checkpoints/
 
+# Scratch files
+Notebooks/scovi-Copy1.ipynb
+
 # Python cache files
 __pycache__/
 *.py[cod]
@@ -21,3 +24,6 @@ env/
 # Local configuration
 *.env
 config.json
+
+# Node.js dependencies
+node_modules/
