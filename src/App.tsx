@@ -113,9 +113,9 @@ const App: React.FC = () => {
             }
 
             items.push(
-                <div key={i} className="legend__item">
+                <div key={i} className={styles.legend__item}>
                     <div
-                        className="legend__item-color"
+                        className={styles['legend__item-color']}
                         style={{ backgroundColor: datasetConfig.colors[i] }}
                     ></div>
                     <span>{label}</span>
@@ -134,6 +134,9 @@ const App: React.FC = () => {
             <MapContainer
                 center={mapParams.mapCenter}
                 zoom={mapParams.mapZoom}
+                minZoom={mapParams.minZoom}
+                maxBounds={mapParams.maxBounds}
+                maxBoundsViscosity={mapParams.maxBoundsViscosity}
                 style={{ height: '100%', width: '100%' }}
             >
                 <TileLayer
@@ -150,8 +153,8 @@ const App: React.FC = () => {
 
                 {datasetConfig && (
                     <div className={styles.legend}>
-                        <div className="legend__title">{datasetConfig.metricLabel}</div>
-                        <div className="legend__items">
+                        <div className={styles.legend__title}>{datasetConfig.metricLabel}</div>
+                        <div className={styles.legend__items}>
                             {legendLevels()}
                         </div>
                     </div>
