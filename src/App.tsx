@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import { Feature, Geometry, FeatureCollection } from 'geojson';
-import { PathOptions } from 'leaflet';
+import { Layer, PathOptions } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import styles from './App.module.scss'
@@ -95,6 +95,25 @@ const App: React.FC = () => {
         };
     };
 
+    const onEachFeature = (
+        feature: Feature<Geometry, BlockGroupProperties>,
+        layer: Layer
+    ): void => {
+        if (!metricsData) return;
+
+        const geoid = feature.properties[mapParams.geoidField];
+        const metricValue = metricsData[geoid]?.[datasetConfig.metricName] || 0;
+
+        if ('bindPopup' in layer) {
+            layer.bindPopup(`
+                <div>
+                    <b>Block Group ID:</b> ${geoid}<br>
+                    <b>${datasetConfig.metricLabel}:</b> ${metricValue}
+                </div>
+            `);
+        }
+    };
+
     const legendLevels = () => {
         if (!datasetConfig) return [];
 
@@ -164,6 +183,7 @@ const App: React.FC = () => {
                     <GeoJSON
                         data={geoData}
                         style={style}
+                        onEachFeature={onEachFeature}
                     />
                 )}
             </MapContainer>
