@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, GeoJSON, useMapEvents } from 'react-leaflet';
 import { Feature, Geometry, FeatureCollection } from 'geojson';
-import { Layer, PathOptions } from 'leaflet';
+import L, { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import styles from './App.module.scss'
@@ -29,20 +29,23 @@ interface BlockGroupProperties {
     pop20: number;
     st_areasha: number;
     st_perimet: number;
-    [key: string]: string | number;
 }
 
 type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 
 const App: React.FC = () => {
     const [datasetConfig] = useState<DatasetConfig>(datasetParams.computers);
-
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const [showMetrics, setshowMetrics] = useState<boolean>(true);
+    const [showMetrics, setShowMetrics] = useState<boolean>(true);
+    const [activeFeature, setActiveFeature] = useState<string | null>(null);
+    const layerRef = useRef<L.GeoJSON | null>(null);
 
-    const getColor = (value: number): string => {
+    const getColor = (value: number | null): string => {
+        if (value === null) {
+            return '#00FF00'
+        }
         for (let i = 0; i < datasetConfig.thresholds.length; i++) {
             const threshold = datasetConfig.thresholds[i];
 
@@ -83,16 +86,39 @@ const App: React.FC = () => {
             fillOpacity: 0.3
         };
 
-        const geoid = feature.properties[mapParams.geoidField];
-        const metricValue = metricsData[geoid]?.[datasetConfig.metricName] || 0;
+        const geoid = feature.properties.geoid20;
+        const metricValue = metricsData[geoid]?.[datasetConfig.metricName] ?? null;
+        const isActive = activeFeature === geoid;
 
         return {
             fillColor: getColor(metricValue),
-            weight: 0.5,
+            weight: isActive ? 1 : 0.5,
             opacity: 1,
-            color: '#333',
-            fillOpacity: 0.7
+            color: isActive ? '#000' : '#333',
+            fillOpacity: isActive ? 0.8 : 0.5,
         };
+    };
+
+    function highlightFeature(e: LeafletMouseEvent) {
+        const layer = e.target;
+        const feature = layer.feature as Feature<Geometry, BlockGroupProperties>;
+        const geoid = feature.properties.geoid20;
+
+        setActiveFeature(geoid)
+        layer.bringToFront();
+    }
+
+    function removeHighlight() {
+        setActiveFeature(null);
+    }
+
+    const MapEvents = () => {
+        useMapEvents({
+            click: () => {
+                removeHighlight();
+            },
+        });
+        return null;
     };
 
     const onEachFeature = (
@@ -101,8 +127,12 @@ const App: React.FC = () => {
     ): void => {
         if (!metricsData) return;
 
-        const geoid = feature.properties[mapParams.geoidField];
-        const metricValue = metricsData[geoid]?.[datasetConfig.metricName] || 0;
+        const geoid = feature.properties.geoid20;
+        const metricValue = metricsData[geoid]?.[datasetConfig.metricName] ?? null;
+
+        layer.on({
+            click: highlightFeature,
+        })
 
         if ('bindPopup' in layer) {
             layer.bindPopup(`
@@ -144,6 +174,10 @@ const App: React.FC = () => {
         return items;
     };
 
+    const onGeoJsonLoad = (layer: L.GeoJSON) => {
+        layerRef.current = layer;
+    }
+
     if (loading) {
         return <div>Loading...</div>;
     }
@@ -158,13 +192,14 @@ const App: React.FC = () => {
                 maxBoundsViscosity={mapParams.maxBoundsViscosity}
                 style={{ height: '100%', width: '100%' }}
             >
+                <MapEvents/>
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                 />
 
                 <button
-                    onClick={() => setshowMetrics(!showMetrics)}
+                    onClick={() => setShowMetrics(!showMetrics)}
                     style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1000 }}
                 >
                     {showMetrics ? 'Hide' : 'Show'} Heatmap
@@ -184,6 +219,12 @@ const App: React.FC = () => {
                         data={geoData}
                         style={style}
                         onEachFeature={onEachFeature}
+                        ref={onGeoJsonLoad}
+                        eventHandlers={{
+                            click: (e) => {
+                                e.originalEvent.stopPropagation();
+                            }
+                        }}
                     />
                 )}
             </MapContainer>
