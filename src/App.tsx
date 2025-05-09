@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from 'react-leaflet';
 import { Feature, Geometry, FeatureCollection } from 'geojson';
 import L, { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -33,13 +33,27 @@ interface BlockGroupProperties {
 
 type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 
+const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
+     const map = useMap();
+
+     useEffect(() => {
+         if (activeFeature && activeFeature.geometry) {
+             const feature = L.geoJSON(activeFeature);
+             const bounds = feature.getBounds();
+
+             map.fitBounds(bounds);
+         }
+     }, [activeFeature, map]);
+     return null;
+};
+
 const App: React.FC = () => {
     const [datasetConfig] = useState<DatasetConfig>(datasetParams.computers);
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [showMetrics, setShowMetrics] = useState<boolean>(true);
-    const [activeFeature, setActiveFeature] = useState<string | null>(null);
+    const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
 
     const getColor = (value: number | null): string => {
@@ -88,11 +102,11 @@ const App: React.FC = () => {
 
         const geoid = feature.properties.geoid20;
         const metricValue = metricsData[geoid]?.[datasetConfig.metricName] ?? null;
-        const isActive = activeFeature === geoid;
+        const isActive = activeFeature?.properties?.geoid20 === geoid;
 
         return {
             fillColor: getColor(metricValue),
-            weight: isActive ? 1 : 0.5,
+            weight: isActive ? 3 : 1,
             opacity: 1,
             color: isActive ? '#000' : '#333',
             fillOpacity: isActive ? 0.8 : 0.5,
@@ -102,20 +116,19 @@ const App: React.FC = () => {
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
         const feature = layer.feature as Feature<Geometry, BlockGroupProperties>;
-        const geoid = feature.properties.geoid20;
 
-        setActiveFeature(geoid)
+        setActiveFeature(feature)
         layer.bringToFront();
     }
 
-    function removeHighlight() {
-        setActiveFeature(null);
-    }
+    // function removeHighlight() {
+    //     setActiveFeature(null);
+    // }
 
     const MapEvents = () => {
         useMapEvents({
             click: () => {
-                removeHighlight();
+                setActiveFeature(null);
             },
         });
         return null;
@@ -193,6 +206,7 @@ const App: React.FC = () => {
                 style={{ height: '100%', width: '100%' }}
             >
                 <MapEvents/>
+                {activeFeature && <MapComponent activeFeature={activeFeature}/>}
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
