@@ -14,6 +14,46 @@
   }
 }
 
+.data-selector {
+  position: absolute;
+  bottom: 300px;
+  right: 10px;
+  z-index: 1000;
+  background-color: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+
+  &__title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px;
+  }
+}
+
+.controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+
+  h2 {
+    margin: 0;
+    text-align: center;
+  }
+}
+
 .legend {
   position: absolute;
   bottom: 30px;
