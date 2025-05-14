@@ -1,0 +1,1361 @@
+{
+  "internet_subscription": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!No Internet access": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          30,
+          40,
+          60,
+          90,
+          365
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "aggregate_income": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Built 1980 to 1989": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          25,
+          40,
+          60,
+          85,
+          125,
+          205,
+          610
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1970 to 1979": {
+        "thresholds": [
+          0,
+          15,
+          35,
+          50,
+          70,
+          105,
+          140,
+          200,
+          300,
+          1125
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1960 to 1969": {
+        "thresholds": [
+          0,
+          15,
+          25,
+          40,
+          60,
+          85,
+          120,
+          195,
+          1150
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1950 to 1959": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          30,
+          50,
+          80,
+          120,
+          380
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1940 to 1949": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          30,
+          60,
+          290
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1939 or earlier": {
+        "thresholds": [
+          0,
+          0,
+          15,
+          25,
+          55,
+          330
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "living_arrangements": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!In households:!!Householder:!!Male:!!Living alone": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          25,
+          35,
+          50,
+          65,
+          90,
+          145,
+          375
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!In households:!!Householder:!!Female:!!Living alone": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          30,
+          40,
+          50,
+          70,
+          90,
+          135,
+          330
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "limited_english_speaking": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Spanish:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          85
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Other Indo-European languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          70
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Asian and Pacific Island languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          35,
+          60,
+          465
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Other languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          95
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "tenure": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Renter occupied": {
+        "thresholds": [
+          0,
+          15,
+          45,
+          70,
+          95,
+          130,
+          160,
+          210,
+          290,
+          390,
+          1060
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "age_of_structure": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Built 1980 to 1989": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          25,
+          40,
+          60,
+          85,
+          125,
+          205,
+          610
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1970 to 1979": {
+        "thresholds": [
+          0,
+          15,
+          35,
+          50,
+          70,
+          105,
+          140,
+          200,
+          300,
+          1125
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1960 to 1969": {
+        "thresholds": [
+          0,
+          15,
+          25,
+          40,
+          60,
+          85,
+          120,
+          195,
+          1150
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1950 to 1959": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          30,
+          50,
+          80,
+          120,
+          380
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1940 to 1949": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          30,
+          60,
+          290
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Built 1939 or earlier": {
+        "thresholds": [
+          0,
+          0,
+          15,
+          25,
+          55,
+          330
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "aggregate_vehicles": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Aggregate number of vehicles available:": {
+        "thresholds": [
+          30,
+          385,
+          515,
+          630,
+          720,
+          820,
+          955,
+          1090,
+          1275,
+          1535,
+          3135
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "households_w_computer": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!No Computer": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          30,
+          45,
+          65,
+          295
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "person_under_5_65": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Male:": {
+        "thresholds": [
+          0,
+          255,
+          370,
+          455,
+          530,
+          620,
+          720,
+          825,
+          960,
+          1165,
+          4025
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!Under 5 years": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          25,
+          35,
+          50,
+          65,
+          105,
+          345
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!5 to 9 years": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          25,
+          40,
+          50,
+          70,
+          100,
+          320
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!10 to 14 years": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          25,
+          40,
+          50,
+          70,
+          105,
+          400
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!15 to 17 years": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          20,
+          30,
+          40,
+          60,
+          185
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!65 and 66 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          20,
+          30,
+          40,
+          145
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!67 to 69 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          20,
+          25,
+          40,
+          55,
+          230
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!70 to 74 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          25,
+          30,
+          40,
+          50,
+          75,
+          270
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!75 to 79 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          20,
+          30,
+          35,
+          50,
+          235
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!80 to 84 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          25,
+          35,
+          120
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Male:!!85 years and over": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          25,
+          35,
+          175
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:": {
+        "thresholds": [
+          0,
+          245,
+          370,
+          455,
+          530,
+          610,
+          710,
+          815,
+          965,
+          1155,
+          2430
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!Under 5 years": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          30,
+          45,
+          60,
+          95,
+          500
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!5 to 9 years": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          35,
+          45,
+          65,
+          95,
+          510
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!65 and 66 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          20,
+          30,
+          50,
+          155
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!67 to 69 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          25,
+          30,
+          40,
+          60,
+          210
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!70 to 74 years": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          25,
+          35,
+          45,
+          55,
+          75,
+          295
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!75 to 79 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          25,
+          35,
+          45,
+          60,
+          280
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!80 to 84 years": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          15,
+          20,
+          30,
+          45,
+          135
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!Female:!!85 years and over": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          30,
+          45,
+          70,
+          290
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "population_group_quarters": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "!!Total:": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          55,
+          4640
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Institutionalized population:": {
+        "thresholds": [
+          0,
+          5,
+          970
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Institutionalized population:!!Correctional facilities for adults": {
+        "thresholds": [
+          0,
+          970
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Institutionalized population:!!Juvenile facilities": {
+        "thresholds": [
+          0,
+          40
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Institutionalized population:!!Nursing facilities/Skilled-nursing facilities": {
+        "thresholds": [
+          0,
+          340
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Institutionalized population:!!Other institutional facilities": {
+        "thresholds": [
+          0,
+          205
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Noninstitutionalized population:": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          30,
+          4640
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Noninstitutionalized population:!!College/University student housing": {
+        "thresholds": [
+          0,
+          1845
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Noninstitutionalized population:!!Military quarters": {
+        "thresholds": [
+          0,
+          4620
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "!!Total:!!Noninstitutionalized population:!!Other noninstitutional facilities": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          1040
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "health_insurance": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:!!Under 19 years:!!No health insurance coverage": {
+        "thresholds": [
+          0,
+          10,
+          30,
+          240
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!19 to 34 years:!!No health insurance coverage": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          30,
+          50,
+          410
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!35 to 64 years:!!No health insurance coverage": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          25,
+          40,
+          65,
+          340
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total:!!65 years and over:!!No health insurance coverage": {
+        "thresholds": [
+          0,
+          55
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  }
+}
