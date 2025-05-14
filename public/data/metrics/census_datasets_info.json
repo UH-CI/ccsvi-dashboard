@@ -1,9 +1,9 @@
 {
   "internet_subscription": {
-    "metricName": "",
-    "metricLabel": "",
+    "metricName": "No Internet access",
+    "metricLabel": "Households without internet access",
     "columnThresholds": {
-      "Estimate!!Total:!!No Internet access": {
+      "No Internet access": {
         "thresholds": [
           0,
           5,
@@ -34,7 +34,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Built 1980 to 1989": {
+      "Built 1980 to 1989": {
         "thresholds": [
           0,
           5,
@@ -60,7 +60,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1970 to 1979": {
+      "Built 1970 to 1979": {
         "thresholds": [
           0,
           15,
@@ -86,7 +86,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1960 to 1969": {
+      "Built 1960 to 1969": {
         "thresholds": [
           0,
           15,
@@ -111,7 +111,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1950 to 1959": {
+      "Built 1950 to 1959": {
         "thresholds": [
           0,
           10,
@@ -135,7 +135,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1940 to 1949": {
+      "Built 1940 to 1949": {
         "thresholds": [
           0,
           10,
@@ -157,7 +157,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1939 or earlier": {
+      "Built 1939 or earlier": {
         "thresholds": [
           0,
           0,
@@ -185,7 +185,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!In households:!!Householder:!!Male:!!Living alone": {
+      "In households:!!Householder:!!Male:!!Living alone": {
         "thresholds": [
           0,
           5,
@@ -211,7 +211,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!In households:!!Householder:!!Female:!!Living alone": {
+      "In households:!!Householder:!!Female:!!Living alone": {
         "thresholds": [
           0,
           10,
@@ -243,7 +243,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Spanish:!!Limited English speaking household": {
+      "Spanish:!!Limited English speaking household": {
         "thresholds": [
           0,
           85
@@ -261,7 +261,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Other Indo-European languages:!!Limited English speaking household": {
+      "Other Indo-European languages:!!Limited English speaking household": {
         "thresholds": [
           0,
           70
@@ -279,7 +279,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Asian and Pacific Island languages:!!Limited English speaking household": {
+      "Asian and Pacific Island languages:!!Limited English speaking household": {
         "thresholds": [
           0,
           5,
@@ -302,7 +302,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Other languages:!!Limited English speaking household": {
+      "Other languages:!!Limited English speaking household": {
         "thresholds": [
           0,
           95
@@ -326,7 +326,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Renter occupied": {
+      "Renter occupied": {
         "thresholds": [
           0,
           15,
@@ -359,7 +359,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Built 1980 to 1989": {
+      "Built 1980 to 1989": {
         "thresholds": [
           0,
           5,
@@ -385,7 +385,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1970 to 1979": {
+      "Built 1970 to 1979": {
         "thresholds": [
           0,
           15,
@@ -411,7 +411,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1960 to 1969": {
+      "Built 1960 to 1969": {
         "thresholds": [
           0,
           15,
@@ -436,7 +436,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1950 to 1959": {
+      "Built 1950 to 1959": {
         "thresholds": [
           0,
           10,
@@ -460,7 +460,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1940 to 1949": {
+      "Built 1940 to 1949": {
         "thresholds": [
           0,
           10,
@@ -482,7 +482,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Built 1939 or earlier": {
+      "Built 1939 or earlier": {
         "thresholds": [
           0,
           0,
@@ -543,7 +543,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!No Computer": {
+      "No Computer": {
         "thresholds": [
           0,
           5,
@@ -573,7 +573,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Male:": {
+      "Male:": {
         "thresholds": [
           0,
           255,
@@ -600,7 +600,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!Under 5 years": {
+      "Male:!!Under 5 years": {
         "thresholds": [
           0,
           10,
@@ -625,7 +625,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!5 to 9 years": {
+      "Male:!!5 to 9 years": {
         "thresholds": [
           0,
           10,
@@ -650,7 +650,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!10 to 14 years": {
+      "Male:!!10 to 14 years": {
         "thresholds": [
           0,
           10,
@@ -675,7 +675,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!15 to 17 years": {
+      "Male:!!15 to 17 years": {
         "thresholds": [
           0,
           10,
@@ -699,7 +699,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!65 and 66 years": {
+      "Male:!!65 and 66 years": {
         "thresholds": [
           0,
           5,
@@ -723,7 +723,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!67 to 69 years": {
+      "Male:!!67 to 69 years": {
         "thresholds": [
           0,
           5,
@@ -748,7 +748,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!70 to 74 years": {
+      "Male:!!70 to 74 years": {
         "thresholds": [
           0,
           5,
@@ -774,7 +774,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!75 to 79 years": {
+      "Male:!!75 to 79 years": {
         "thresholds": [
           0,
           5,
@@ -799,7 +799,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!80 to 84 years": {
+      "Male:!!80 to 84 years": {
         "thresholds": [
           0,
           5,
@@ -822,7 +822,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Male:!!85 years and over": {
+      "Male:!!85 years and over": {
         "thresholds": [
           0,
           5,
@@ -845,7 +845,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:": {
+      "Female:": {
         "thresholds": [
           0,
           245,
@@ -872,7 +872,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!Under 5 years": {
+      "Female:!!Under 5 years": {
         "thresholds": [
           0,
           5,
@@ -897,7 +897,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!5 to 9 years": {
+      "Female:!!5 to 9 years": {
         "thresholds": [
           0,
           5,
@@ -922,7 +922,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!65 and 66 years": {
+      "Female:!!65 and 66 years": {
         "thresholds": [
           0,
           5,
@@ -946,7 +946,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!67 to 69 years": {
+      "Female:!!67 to 69 years": {
         "thresholds": [
           0,
           5,
@@ -971,7 +971,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!70 to 74 years": {
+      "Female:!!70 to 74 years": {
         "thresholds": [
           0,
           10,
@@ -996,7 +996,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!75 to 79 years": {
+      "Female:!!75 to 79 years": {
         "thresholds": [
           0,
           5,
@@ -1021,7 +1021,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!80 to 84 years": {
+      "Female:!!80 to 84 years": {
         "thresholds": [
           0,
           5,
@@ -1045,7 +1045,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!Female:!!85 years and over": {
+      "Female:!!85 years and over": {
         "thresholds": [
           0,
           5,
@@ -1272,7 +1272,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:!!Under 19 years:!!No health insurance coverage": {
+      "Under 19 years:!!No health insurance coverage": {
         "thresholds": [
           0,
           10,
@@ -1292,7 +1292,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!19 to 34 years:!!No health insurance coverage": {
+      "19 to 34 years:!!No health insurance coverage": {
         "thresholds": [
           0,
           5,
@@ -1315,7 +1315,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!35 to 64 years:!!No health insurance coverage": {
+      "35 to 64 years:!!No health insurance coverage": {
         "thresholds": [
           0,
           10,
@@ -1338,7 +1338,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total:!!65 years and over:!!No health insurance coverage": {
+      "65 years and over:!!No health insurance coverage": {
         "thresholds": [
           0,
           55
