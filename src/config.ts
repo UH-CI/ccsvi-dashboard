@@ -7,8 +7,8 @@ export const mapParams = {
     maxBounds: [[18, -162], [24, -154]] as LatLngBoundsExpression,
     maxBoundsViscosity: 1,
     geoidField: 'geoid20',
-    geoJsonPath: '/data/2020_Census_Block_Groups_WGS84.geojson',
-    datasetPath: '/data/metrics/all_census.json',
+    geoJsonPath: './data/2020_Census_Block_Groups_WGS84.geojson',
+    datasetPath: './data/metrics/all_census.json',
 };
 
 // export const datasetParams = {
