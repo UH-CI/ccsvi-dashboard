@@ -1,7 +1,7 @@
 {
   "internet_subscription": {
     "metricName": "No Internet access",
-    "metricLabel": "Households without internet access",
+    "metricLabel": "Households without Internet Access",
     "columnThresholds": {
       "No Internet access": {
         "thresholds": [
@@ -183,7 +183,7 @@
   },
   "living_arrangements": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Household Living Arrangements",
     "columnThresholds": {
       "In households:!!Householder:!!Male:!!Living alone": {
         "thresholds": [
@@ -241,7 +241,7 @@
   },
   "limited_english_speaking": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Limited English Speaking Households",
     "columnThresholds": {
       "Spanish:!!Limited English speaking household": {
         "thresholds": [
@@ -324,7 +324,7 @@
   },
   "tenure": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Renter Occupied Households",
     "columnThresholds": {
       "Renter occupied": {
         "thresholds": [
@@ -357,7 +357,7 @@
   },
   "age_of_structure": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Age of Household Structures",
     "columnThresholds": {
       "Built 1980 to 1989": {
         "thresholds": [
@@ -508,7 +508,7 @@
   },
   "aggregate_vehicles": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Aggregate Number of Vehicles",
     "columnThresholds": {
       "Estimate!!Aggregate number of vehicles available:": {
         "thresholds": [
@@ -541,7 +541,7 @@
   },
   "households_w_computer": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Households without Computers",
     "columnThresholds": {
       "No Computer": {
         "thresholds": [
@@ -571,7 +571,7 @@
   },
   "person_under_5_65": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Age Groups per Household",
     "columnThresholds": {
       "Male:": {
         "thresholds": [
@@ -1073,7 +1073,7 @@
   },
   "population_group_quarters": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Group Quarters",
     "columnThresholds": {
       "!!Total:": {
         "thresholds": [
@@ -1270,7 +1270,7 @@
   },
   "health_insurance": {
     "metricName": "",
-    "metricLabel": "",
+    "metricLabel": "Households without Health Insurance",
     "columnThresholds": {
       "Under 19 years:!!No health insurance coverage": {
         "thresholds": [

@@ -5,27 +5,35 @@ import L, { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import styles from './App.module.scss'
-import { mapParams, datasetParams } from './config';
+import { mapParams } from './config';
 
 
 interface MetricsData {
     [geoid: string]: {
-        metrics: {
-            [metricName: string]: number;
-        };
         geoinfo: {
             blockGroup: string;
             censusTract: string;
             county: string;
-        }
+        };
+        metrics: {
+            [datasetName: string]: {
+                [metricName: string]: number;
+            }
+        };
     }
 }
 
-interface DatasetConfig {
-    metricName: string;
-    metricLabel: string;
-    thresholds: number[];
-    colors: string[];
+interface Dataset {
+    [key: string]: {
+        metricName: string;
+        metricLabel: string;
+        columnThresholds: {
+            [columnName: string]: {
+                thresholds: number[];
+                colors: string[];
+            }
+        }
+    }
 }
 
 interface BlockGroupProperties {
@@ -41,21 +49,24 @@ interface BlockGroupProperties {
 type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
-     const map = useMap();
+    const map = useMap();
 
-     useEffect(() => {
-         if (activeFeature && activeFeature.geometry) {
-             const feature = L.geoJSON(activeFeature);
-             const bounds = feature.getBounds();
+    useEffect(() => {
+        if (activeFeature && activeFeature.geometry) {
+            const feature = L.geoJSON(activeFeature);
+            const bounds = feature.getBounds();
 
-             map.fitBounds(bounds);
-         }
-     }, [activeFeature, map]);
-     return null;
+            map.fitBounds(bounds);
+        }
+    }, [activeFeature, map]);
+    return null;
 };
 
 const App: React.FC = () => {
-    const [activeDataset, setActiveDataset] = useState<string>('computers');
+    const [dataset, setDataset] = useState<Dataset | null>(null);
+    const [activeDataset, setActiveDataset] = useState<string>('');
+    const [activeDatasetMetric, setActiveDatasetMetric] = useState<string>('');
+    // const [activeDatasetColumn, setActiveDatasetColumn] = useState<DatasetColumn | null>(null);
     // const [datasetConfig, setDatasetConfig] = useState<DatasetConfig>(datasetParams.computers);
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
@@ -64,32 +75,35 @@ const App: React.FC = () => {
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
 
+    const getActiveDatasetObject = () => {
+        if (!dataset) return null;
+        console.log("getActiveDatasetObject: ", dataset[activeDataset]);
+        return dataset[activeDataset];
+    }
 
-    // const getDatasetConfig = (key: string): DatasetConfig => {
-    //     // Check if the key exists in datasetParams
-    //     if (key in datasetParams) {
-    //         return datasetParams[key as keyof typeof datasetParams];
-    //     }
-    //
-    //     // Fallback to first dataset if key not found
-    //     console.warn(`Dataset key "${key}" not found, using default dataset`);
-    //     const firstDatasetKey = Object.keys(datasetParams)[0];
-    //     return datasetParams[firstDatasetKey as keyof typeof datasetParams];
-    // };
-    //
-    // const datasetConfig = getDatasetConfig(activeDataset);
+    const getActiveDatasetMetricObject = () => {
+        const datasetObject = getActiveDatasetObject();
+        if (!datasetObject || !activeDatasetMetric) return null;
+        console.log("getActiveDatasetMetricObject: ", datasetObject.columnThresholds[activeDatasetMetric])
+        return datasetObject.columnThresholds[activeDatasetMetric]
+    }
 
-    const datasetConfig: DatasetConfig = datasetParams[activeDataset as keyof typeof datasetParams];
+    // const datasetConfig = getDataset(activeDataset);
+
+    // const dataset: Dataset = datasetParams[activeDataset as keyof typeof datasetParams];
 
     const getColor = (value: number | null): string => {
-        if (value === null) {
+        const metric = getActiveDatasetMetricObject()
+        console.log("getColor: ", metric)
+
+        if (value === null || !metric) {
             return '#00FF00'
         }
-        for (let i = 0; i < datasetConfig.thresholds.length; i++) {
-            const threshold = datasetConfig.thresholds[i];
+        for (let i = 0; i < metric.thresholds?.length; i++) {
+            const threshold = metric.thresholds[i];
 
             if (value <= threshold) {
-                return datasetConfig.colors[i];
+                return metric.colors[i];
             }
         }
         return '#333';
@@ -104,6 +118,7 @@ const App: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
+
             try {
                 const geoResponse = await fetch(mapParams.geoJsonPath);
                 const geoData = await geoResponse.json();
@@ -112,6 +127,20 @@ const App: React.FC = () => {
                 const metricsResponse = await fetch(mapParams.datasetPath);
                 const metricsData = await metricsResponse.json();
                 setMetricsData(metricsData);
+
+                const datasetResponse = await fetch('./data/metrics/census_datasets_info.json');
+                const datasetData = await datasetResponse.json();
+                setDataset(datasetData)
+
+                // Check if active metric is valid in current dataset. Else set to empty.
+                if (activeDataset && datasetData[activeDataset]?.columnThresholds) {
+                    const availableMetrics = Object.keys(datasetData[activeDataset].columnThresholds);
+                    if (activeDatasetMetric && !availableMetrics.includes(activeDatasetMetric)) {
+                        setActiveDatasetMetric('');
+                    }
+                }
+                console.log("Object.keys(datasetData): ", Object.keys(datasetData[activeDataset]))
+
                 setLoading(false);
             } catch (err) {
                 console.error('Error loading data:', err);
@@ -120,10 +149,30 @@ const App: React.FC = () => {
         };
 
         loadData();
-    }, []);
+    }, [activeDataset]);
+
+    // Helper function to extract specific metrics given current census data json structure
+    const getMetricValue = (geoid: string): number | null => {
+        if (!metricsData || !activeDataset || !geoid) return null;
+
+        const datasetObject = getActiveDatasetObject();
+        if (!datasetObject) return null;
+
+        const metricsForGeoid = metricsData[geoid]?.metrics;
+        if (!metricsForGeoid) return null;
+
+        const datasetMetrics = metricsForGeoid[activeDataset];
+        if (!datasetMetrics) return null;
+
+        return datasetMetrics[activeDatasetMetric] ?? null;
+    };
 
     const style: StyleFunction = (feature) => {
-        if (!feature || !metricsData || !datasetConfig) return {
+        console.log("feature: ", feature);
+        console.log("metricsData: ", metricsData);
+        console.log("activeDataset: ", activeDataset);
+        console.log("activeDatasetMetric: ", activeDatasetMetric);
+        if (!feature || !metricsData || !activeDataset || !activeDatasetMetric) return {
             fillColor: '#cccccc',
             weight: 0.5,
             opacity: 1,
@@ -132,7 +181,12 @@ const App: React.FC = () => {
         };
 
         const geoid = feature.properties.geoid20;
-        const metricValue = metricsData[geoid]?.metrics?.[datasetConfig.metricName] ?? null;
+        // const datasetObject = getActiveDatasetObject()
+        // const metricValue = metricsData[geoid].metrics[datasetObject?.metricName] ?? null;
+        // const metricValue = metricsData?.[geoid]?.metrics?.[datasetObject?.metricName ?? ''] ?? null;
+        const metricValue = getMetricValue(geoid)
+        console.log("metricValue 1: ", metricValue);
+        // const metricValue = 30;
         const isActive = activeFeature?.properties?.geoid20 === geoid;
 
         return {
@@ -172,7 +226,14 @@ const App: React.FC = () => {
         if (!metricsData) return;
 
         const geoid = feature.properties.geoid20;
-        const metricValue = metricsData[geoid]?.metrics?.[datasetConfig.metricName] ?? null;
+        // const datasetObject = getActiveDatasetObject()
+        // const metricValue = metricsData[geoid].metrics.[datasetObject?.metricName] ?? null;
+        // const metricValue = metricsData?.[geoid]?.metrics?.[datasetObject?.metricName ?? ''] ?? null;
+        const metricValue = getMetricValue(geoid)
+        const datasetObject = getActiveDatasetObject()
+        console.log("metricValue 2: ", metricValue)
+        // const metricValue = 30;
+
 
         layer.on({
             click: highlightFeature,
@@ -180,14 +241,14 @@ const App: React.FC = () => {
 
         if ('bindPopup' in layer) {
             layer.bindPopup(`
-    <div>
-        <b>Block Group ID:</b> ${geoid}<br>
-        <b>Block Group:</b> ${metricsData[geoid]?.geoinfo?.blockGroup ?? 'N/A'}<br>
-        <b>Census Tract:</b> ${metricsData[geoid]?.geoinfo?.censusTract ?? 'N/A'}<br>
-        <b>County:</b> ${metricsData[geoid]?.geoinfo?.county ?? 'N/A'}<br>
-        <b>${datasetConfig.metricLabel}:</b> ${metricValue ?? 'N/A'}
-    </div>
-`);
+                <div>
+                    <b>Block Group ID:</b> ${geoid}<br>
+                    <b>Block Group:</b> ${metricsData[geoid]?.geoinfo?.blockGroup ?? 'N/A'}<br>
+                    <b>Census Tract:</b> ${metricsData[geoid]?.geoinfo?.censusTract ?? 'N/A'}<br>
+                    <b>County:</b> ${metricsData[geoid]?.geoinfo?.county ?? 'N/A'}<br>
+                    <b>${datasetObject?.metricLabel}:</b> ${metricValue ?? 'N/A'}
+                </div>
+            `);
         }
     };
 
@@ -207,15 +268,16 @@ const App: React.FC = () => {
     // };
 
     const legendLevels = () => {
-        if (!datasetConfig) return [];
+        const datasetMetricObject = getActiveDatasetMetricObject();
+        if (!datasetMetricObject) return [];
 
         const items = [];
-        for (let i = datasetConfig.thresholds.length - 1; i >= 0; i--) {
-            const low = datasetConfig.thresholds[i];
-            const high = datasetConfig.thresholds[i + 1];
+        for (let i = datasetMetricObject.thresholds.length - 1; i >= 0; i--) {
+            const low = datasetMetricObject.thresholds[i];
+            const high = datasetMetricObject.thresholds[i + 1];
 
             let label;
-            if (i === datasetConfig.thresholds.length - 1) {
+            if (i === datasetMetricObject.thresholds.length - 1) {
                 label = `> ${low}`;
             } else if (i === 0) {
                 label = `${low}`;
@@ -227,7 +289,7 @@ const App: React.FC = () => {
                 <div key={i} className={styles.legend__item}>
                     <div
                         className={styles['legend__item-color']}
-                        style={{ backgroundColor: datasetConfig.colors[i] }}
+                        style={{ backgroundColor: datasetMetricObject.colors[i] }}
                     ></div>
                     <span>{label}</span>
                 </div>
@@ -241,12 +303,33 @@ const App: React.FC = () => {
     }
 
     const getDatasets = () => {
-        return Object.entries(datasetParams).map(([key, config]) => ({
+        if (!dataset) {
+            console.log("getDatasets: no dataset")
+            return []
+        }
+        return Object.entries(dataset).map(([key, config]) => ({
             id: key,
             label: config.metricLabel
         }));
     };
 
+    const getColumns = () => {
+        if (!dataset || !activeDataset) return [];
+
+        const datasetObject = dataset[activeDataset];
+        if (!datasetObject || !datasetObject.columnThresholds) return [];
+
+        return Object.keys(datasetObject.columnThresholds).map(columnName => ({
+            id: columnName,
+            label: columnName
+        }));
+    }
+
+    const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newDataset = e.target.value;
+        setActiveDataset(newDataset);
+        setActiveDatasetMetric('');
+    };
 
     if (loading) {
         return <div>Loading...</div>;
@@ -279,18 +362,35 @@ const App: React.FC = () => {
 
                     <select
                         value={activeDataset}
-                        onChange={(e) => setActiveDataset(e.target.value)}
+                        onChange={handleDatasetChange}
                         style={{ padding: '5px' }}
                     >
+                        <option value="">Select Dataset </option>
                         {getDatasets().map(dataset => (
                             <option key={dataset.id} value={dataset.id}>
                                 {dataset.label}
                             </option>
                         ))}
                     </select>
+                    {activeDataset && (
+                        <select
+                            value={activeDatasetMetric}
+                            onChange={(e) => setActiveDatasetMetric(e.target.value)}
+                            style={{ padding: '5px' }}
+                        >
+                            <option value="">Select Metric</option>
+                            {getColumns().map(dataset => (
+                                <option key={dataset.id} value={dataset.id}>
+                                    {dataset.label}
+                                </option>
+                            ))}
+                        </select>
+                    )
+
+                    }
                 </div>
 
-                {datasetConfig && (
+                {dataset && activeDataset && (
                     <div>
                         {/*<div className={styles['data-selector']}>*/}
                         {/*    <div className={styles['data-selector__title']}>Feature</div>*/}
@@ -299,7 +399,7 @@ const App: React.FC = () => {
                         {/*    </div>*/}
                         {/*</div>*/}
                         <div className={styles.legend}>
-                            <div className={styles.legend__title}>{datasetConfig.metricLabel}</div>
+                            <div className={styles.legend__title}>{getActiveDatasetObject()?.metricLabel}</div>
                             <div className={styles.legend__items}>
                                 {legendLevels()}
                             </div>
@@ -307,7 +407,7 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                {geoData && metricsData && datasetConfig && showMetrics && (
+                {geoData && metricsData && dataset && showMetrics && (
                     <GeoJSON
                         data={geoData}
                         style={style}
