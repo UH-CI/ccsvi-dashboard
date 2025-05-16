@@ -8,14 +8,6 @@
       "internet_subscription": {
         "No Internet access": 160
       },
-      "aggregate_income": {
-        "Built 1980 to 1989": 82,
-        "Built 1970 to 1979": 294,
-        "Built 1960 to 1969": 87,
-        "Built 1950 to 1959": 17,
-        "Built 1940 to 1949": 5,
-        "Built 1939 or earlier": 9
-      },
       "living_arrangements": {
         "In households:!!Householder:!!Male:!!Living alone": 79,
         "In households:!!Householder:!!Female:!!Living alone": 49
