@@ -1,7 +1,408 @@
 {
+  "2022_census_hawaiian_homelands": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Total Population Under 5": {
+        "thresholds": [
+          0,
+          5,
+          5,
+          5,
+          10,
+          75
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Total Population Under 18": {
+        "thresholds": [
+          0,
+          20,
+          25,
+          25,
+          30,
+          30,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Total Population Over 65": {
+        "thresholds": [
+          0,
+          0,
+          10,
+          15,
+          15,
+          20,
+          25,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!SEX!!Male": {
+        "thresholds": [
+          0,
+          40,
+          45,
+          50,
+          50,
+          50,
+          50,
+          55,
+          55,
+          65,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!SEX!!Female": {
+        "thresholds": [
+          0,
+          35,
+          45,
+          45,
+          50,
+          50,
+          50,
+          50,
+          55,
+          60,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          10,
+          20,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          20
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian": {
+        "thresholds": [
+          0,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          10,
+          10,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander": {
+        "thresholds": [
+          0,
+          10,
+          25,
+          35,
+          40,
+          45,
+          50,
+          55,
+          55,
+          60,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          0,
+          5
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!Two or more races": {
+        "thresholds": [
+          0,
+          10,
+          25,
+          35,
+          40,
+          40,
+          45,
+          50,
+          50,
+          60,
+          80
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!Hispanic or Latino origin (of any race)": {
+        "thresholds": [
+          0,
+          0,
+          5,
+          5,
+          5,
+          10,
+          10,
+          15,
+          15,
+          85
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!White alone, not Hispanic or Latino": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          15,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH!!Population 5 years and over!!Speak language other than English!!Speak English less than very well": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          0,
+          5,
+          5,
+          5,
+          10,
+          60
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!INDIVIDUALS' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS)!!Population 15 years and over!!Median income (dollars)": {
+        "thresholds": [
+          22750,
+          26745,
+          31745,
+          32985,
+          34005,
+          37165,
+          38150,
+          38970,
+          42130,
+          46210,
+          120000
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
   "internet_subscription": {
-    "metricName": "No Internet access",
-    "metricLabel": "Households without Internet Access",
+    "metricName": "",
+    "metricLabel": "",
     "columnThresholds": {
       "No Internet access": {
         "thresholds": [
@@ -30,183 +431,9 @@
       }
     }
   },
-  "living_arrangements": {
+  "aggregate_income": {
     "metricName": "",
-    "metricLabel": "Household Living Arrangements",
-    "columnThresholds": {
-      "In households:!!Householder:!!Male:!!Living alone": {
-        "thresholds": [
-          0,
-          5,
-          15,
-          25,
-          35,
-          50,
-          65,
-          90,
-          145,
-          375
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "In households:!!Householder:!!Female:!!Living alone": {
-        "thresholds": [
-          0,
-          10,
-          20,
-          30,
-          40,
-          50,
-          70,
-          90,
-          135,
-          330
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      }
-    }
-  },
-  "limited_english_speaking": {
-    "metricName": "",
-    "metricLabel": "Limited English Speaking Households",
-    "columnThresholds": {
-      "Spanish:!!Limited English speaking household": {
-        "thresholds": [
-          0,
-          85
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "Other Indo-European languages:!!Limited English speaking household": {
-        "thresholds": [
-          0,
-          70
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "Asian and Pacific Island languages:!!Limited English speaking household": {
-        "thresholds": [
-          0,
-          5,
-          10,
-          20,
-          35,
-          60,
-          465
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "Other languages:!!Limited English speaking household": {
-        "thresholds": [
-          0,
-          95
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      }
-    }
-  },
-  "tenure": {
-    "metricName": "",
-    "metricLabel": "Renter Occupied Households",
-    "columnThresholds": {
-      "Renter occupied": {
-        "thresholds": [
-          0,
-          15,
-          45,
-          70,
-          95,
-          130,
-          160,
-          210,
-          290,
-          390,
-          1060
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      }
-    }
-  },
-  "age_of_structure": {
-    "metricName": "",
-    "metricLabel": "Age of Household Structures",
+    "metricLabel": "",
     "columnThresholds": {
       "Built 1980 to 1989": {
         "thresholds": [
@@ -355,9 +582,431 @@
       }
     }
   },
+  "living_arrangements": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Total Living alone": {
+        "thresholds": [
+          0,
+          10,
+          30,
+          45,
+          65,
+          80,
+          100,
+          130,
+          180,
+          250,
+          625
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "In households:!!Householder:!!Male:!!Living alone": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          25,
+          35,
+          50,
+          65,
+          90,
+          145,
+          375
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "In households:!!Householder:!!Female:!!Living alone": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          30,
+          40,
+          50,
+          70,
+          90,
+          135,
+          330
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "limited_english_speaking": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Total Limited English Speaking Households": {
+        "thresholds": [
+          0,
+          10,
+          15,
+          25,
+          40,
+          65,
+          465
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Spanish:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          85
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Other Indo-European languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          70
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Asian and Pacific Island languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          5,
+          10,
+          20,
+          35,
+          60,
+          465
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Other languages:!!Limited English speaking household": {
+        "thresholds": [
+          0,
+          95
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "tenure": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Renter occupied": {
+        "thresholds": [
+          0,
+          15,
+          45,
+          70,
+          95,
+          130,
+          160,
+          210,
+          290,
+          390,
+          1060
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "income_share_of_fpl": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Estimate!!Total:": {
+        "thresholds": [
+          0,
+          480,
+          735,
+          915,
+          1040,
+          1225,
+          1400,
+          1620,
+          1895,
+          2285,
+          4900
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Total Under 100% FPL": {
+        "thresholds": [
+          0,
+          20,
+          35,
+          60,
+          75,
+          105,
+          135,
+          195,
+          295,
+          1595
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Total Under 150% FPL": {
+        "thresholds": [
+          0,
+          15,
+          45,
+          70,
+          100,
+          140,
+          180,
+          245,
+          315,
+          455,
+          1805
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Total Under 200% FPL": {
+        "thresholds": [
+          0,
+          30,
+          75,
+          115,
+          165,
+          215,
+          275,
+          350,
+          460,
+          635,
+          2065
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!POVERTY STATUS IN THE PAST 12 MONTHS!!Population for whom poverty status is determined!!Below 100 percent of the poverty level": {
+        "thresholds": [
+          0,
+          0,
+          5,
+          5,
+          10,
+          10,
+          10,
+          10,
+          15,
+          35
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Estimate!!Total!!POVERTY STATUS IN THE PAST 12 MONTHS!!Population for whom poverty status is determined!!100 to 149 percent of the poverty level": {
+        "thresholds": [
+          0,
+          0,
+          0,
+          5,
+          5,
+          5,
+          5,
+          10,
+          15,
+          100
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "age_of_structure": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Total Housing Built Before 1990": {
+        "thresholds": [
+          0,
+          30,
+          160,
+          220,
+          275,
+          320,
+          370,
+          435,
+          520,
+          660,
+          1605
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
   "aggregate_vehicles": {
     "metricName": "",
-    "metricLabel": "Aggregate Number of Vehicles",
+    "metricLabel": "",
     "columnThresholds": {
       "Estimate!!Aggregate number of vehicles available:": {
         "thresholds": [
@@ -388,9 +1037,184 @@
       }
     }
   },
+  "race_origin": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "White alone": {
+        "thresholds": [
+          0,
+          30,
+          70,
+          105,
+          140,
+          190,
+          260,
+          355,
+          505,
+          745,
+          3175
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Black or African American alone": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          30,
+          70,
+          665
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "American Indian and Alaska Native alone": {
+        "thresholds": [
+          0,
+          10,
+          270
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Asian alone": {
+        "thresholds": [
+          0,
+          50,
+          125,
+          210,
+          305,
+          405,
+          520,
+          645,
+          805,
+          1070,
+          2765
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Native Hawaiian and Other Pacific Islander alone": {
+        "thresholds": [
+          0,
+          15,
+          30,
+          55,
+          85,
+          135,
+          210,
+          360,
+          1565
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Some Other Race alone": {
+        "thresholds": [
+          0,
+          10,
+          20,
+          30,
+          65,
+          580
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Two or More Races:": {
+        "thresholds": [
+          0,
+          50,
+          115,
+          175,
+          225,
+          280,
+          335,
+          410,
+          535,
+          695,
+          1930
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
   "households_w_computer": {
     "metricName": "",
-    "metricLabel": "Households without Computers",
+    "metricLabel": "",
     "columnThresholds": {
       "No Computer": {
         "thresholds": [
@@ -420,7 +1244,7 @@
   },
   "person_under_5_65": {
     "metricName": "",
-    "metricLabel": "Age Groups per Household",
+    "metricLabel": "",
     "columnThresholds": {
       "Male:": {
         "thresholds": [
@@ -920,18 +1744,21 @@
       }
     }
   },
-  "population_group_quarters": {
+  "person_under_5_65_males": {
     "metricName": "",
-    "metricLabel": "Group Quarters",
+    "metricLabel": "",
     "columnThresholds": {
-      "!!Total:": {
+      "Males Under 5": {
         "thresholds": [
           0,
-          5,
           10,
-          20,
-          55,
-          4640
+          15,
+          25,
+          35,
+          50,
+          65,
+          105,
+          345
         ],
         "colors": [
           "#FFEDA0",
@@ -946,6 +1773,150 @@
           "#3A000F"
         ]
       },
+      "Males Under 18": {
+        "thresholds": [
+          0,
+          10,
+          40,
+          65,
+          85,
+          110,
+          140,
+          180,
+          230,
+          325,
+          990
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Males Over 65": {
+        "thresholds": [
+          0,
+          10,
+          45,
+          65,
+          85,
+          105,
+          125,
+          150,
+          185,
+          230,
+          535
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "person_under_5_65_females": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "Females Under 5": {
+        "thresholds": [
+          0,
+          5,
+          15,
+          20,
+          30,
+          45,
+          60,
+          95,
+          500
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Females Under 18": {
+        "thresholds": [
+          0,
+          10,
+          25,
+          35,
+          50,
+          70,
+          90,
+          120,
+          180,
+          705
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      },
+      "Females Over 65": {
+        "thresholds": [
+          0,
+          15,
+          55,
+          80,
+          100,
+          125,
+          150,
+          180,
+          215,
+          270,
+          655
+        ],
+        "colors": [
+          "#FFEDA0",
+          "#FED976",
+          "#FEB24C",
+          "#FD8D3C",
+          "#FC4E2A",
+          "#E31A1C",
+          "#BD0026",
+          "#800026",
+          "#5A0018",
+          "#3A000F"
+        ]
+      }
+    }
+  },
+  "population_group_quarters": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
       "!!Total:!!Institutionalized population:": {
         "thresholds": [
           0,
@@ -1036,71 +2007,24 @@
           "#5A0018",
           "#3A000F"
         ]
-      },
-      "!!Total:!!Noninstitutionalized population:": {
+      }
+    }
+  },
+  "health_insurance": {
+    "metricName": "",
+    "metricLabel": "",
+    "columnThresholds": {
+      "No Health Insurance Coverage": {
         "thresholds": [
           0,
-          5,
-          15,
-          30,
-          4640
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "!!Total:!!Noninstitutionalized population:!!College/University student housing": {
-        "thresholds": [
-          0,
-          1845
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "!!Total:!!Noninstitutionalized population:!!Military quarters": {
-        "thresholds": [
-          0,
-          4620
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "!!Total:!!Noninstitutionalized population:!!Other noninstitutional facilities": {
-        "thresholds": [
-          0,
-          5,
           10,
           20,
-          1040
+          30,
+          45,
+          60,
+          80,
+          130,
+          495
         ],
         "colors": [
           "#FFEDA0",
@@ -1117,16 +2041,23 @@
       }
     }
   },
-  "health_insurance": {
+  "genders": {
     "metricName": "",
-    "metricLabel": "Households without Health Insurance",
+    "metricLabel": "",
     "columnThresholds": {
-      "Under 19 years:!!No health insurance coverage": {
+      "Male:": {
         "thresholds": [
           0,
-          10,
-          30,
-          240
+          255,
+          370,
+          455,
+          530,
+          620,
+          720,
+          825,
+          960,
+          1165,
+          4025
         ],
         "colors": [
           "#FFEDA0",
@@ -1141,15 +2072,19 @@
           "#3A000F"
         ]
       },
-      "19 to 34 years:!!No health insurance coverage": {
+      "Female:": {
         "thresholds": [
           0,
-          5,
-          10,
-          20,
-          30,
-          50,
-          410
+          245,
+          370,
+          455,
+          530,
+          610,
+          710,
+          815,
+          965,
+          1155,
+          2430
         ],
         "colors": [
           "#FFEDA0",
@@ -1164,33 +2099,19 @@
           "#3A000F"
         ]
       },
-      "35 to 64 years:!!No health insurance coverage": {
+      "Total_Population": {
         "thresholds": [
           0,
-          10,
-          20,
-          25,
-          40,
-          65,
-          340
-        ],
-        "colors": [
-          "#FFEDA0",
-          "#FED976",
-          "#FEB24C",
-          "#FD8D3C",
-          "#FC4E2A",
-          "#E31A1C",
-          "#BD0026",
-          "#800026",
-          "#5A0018",
-          "#3A000F"
-        ]
-      },
-      "65 years and over:!!No health insurance coverage": {
-        "thresholds": [
-          0,
-          55
+          490,
+          760,
+          930,
+          1060,
+          1235,
+          1420,
+          1640,
+          1920,
+          2320,
+          5035
         ],
         "colors": [
           "#FFEDA0",
