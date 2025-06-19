@@ -156,6 +156,7 @@ const App: React.FC = () => {
     }, [metricsData, activeDataset, activeDatasetMetric]);
 
     const style: StyleFunction = useCallback((feature) => {
+        console.log("StyleFunction")
         // console.log("feature: ", feature);
         // console.log("metricsData: ", metricsData);
         // console.log("activeDataset: ", activeDataset);
@@ -242,7 +243,8 @@ const App: React.FC = () => {
     //     );
     // };
 
-    const legendLevels = () => {
+    const legendLevels = useMemo(() => {
+        console.log("legendLevels")
         if (!activeDatasetMetricObject) return [];
 
         const items = [];
@@ -270,34 +272,36 @@ const App: React.FC = () => {
             );
         }
         return items;
-    };
+    }, [activeDatasetMetricObject]);
 
     const onGeoJsonLoad = (layer: L.GeoJSON) => {
         layerRef.current = layer;
     }
 
-    const getDatasets = () => {
+    const datasetList = useMemo(() => {
+        console.log("getDatasets")
         if (!dataset) {
             console.log("getDatasets: no dataset")
             return []
         }
         return Object.entries(dataset).map(([key, config]) => ({
             id: key,
-            label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) // Convert snake case to title case
+            label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
         }));
-    };
+    }, [dataset]);
 
-    const getColumns = () => {
+    const datasetMetrics = useMemo(() => {
+        console.log("getMetrics")
         if (!dataset || !activeDataset) return [];
 
         const datasetObject = dataset[activeDataset];
-        if (!datasetObject || !datasetObject.columnThresholds) return [];
+        if (!datasetObject?.columnThresholds) return [];
 
         return Object.keys(datasetObject.columnThresholds).map(columnName => ({
             id: columnName,
             label: columnName
         }));
-    }
+    }, [dataset, activeDataset]);
 
     const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newDataset = e.target.value;
@@ -340,7 +344,7 @@ const App: React.FC = () => {
                         style={{ padding: '5px' }}
                     >
                         <option value="">Select Dataset </option>
-                        {getDatasets().map(dataset => (
+                        {datasetList.map(dataset => (
                             <option key={dataset.id} value={dataset.id}>
                                 {dataset.label}
                             </option>
@@ -353,9 +357,9 @@ const App: React.FC = () => {
                             style={{ padding: '5px' }}
                         >
                             <option value="">Select Metric</option>
-                            {getColumns().map(dataset => (
-                                <option key={dataset.id} value={dataset.id}>
-                                    {dataset.label}
+                            {datasetMetrics.map(metric => (
+                                <option key={metric.id} value={metric.id}>
+                                    {metric.label}
                                 </option>
                             ))}
                         </select>
@@ -375,7 +379,7 @@ const App: React.FC = () => {
                         <div className={styles.legend}>
                             <div className={styles.legend__title}>{activeDatasetObject?.metricLabel}</div>
                             <div className={styles.legend__items}>
-                                {legendLevels()}
+                                {legendLevels}
                             </div>
                         </div>
                     </div>
