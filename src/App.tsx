@@ -69,7 +69,7 @@ const App: React.FC = () => {
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const [showMetrics, setShowMetrics] = useState<boolean>(true);
+    // const [showMetrics, setShowMetrics] = useState<boolean>(true);
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
 
@@ -209,7 +209,6 @@ const App: React.FC = () => {
 
         const geoid = feature.properties.geoid20;
         const metricValue = getMetricValue(geoid)
-        // const datasetObject = getActiveDatasetObject()
 
         layer.on({
             click: highlightFeature,
@@ -227,21 +226,6 @@ const App: React.FC = () => {
             `);
         }
     };
-
-    // const featureData = () => {
-    //     if (!activeFeature) return;
-    //
-    //     const geoid = activeFeature?.properties?.geoid20;
-    //     const blockData = metricsData?.[geoid];
-    //
-    //     return(
-    //         <div className={styles['data-selector__item']}>
-    //             <span>ID: {activeFeature.id}</span>
-    //             <span>ID: {geoid}</span>
-    //             <span>{datasetConfig.metricLabel}: {blockData?.[datasetConfig.metricName] ?? 'N/A'}</span>
-    //         </div>
-    //     );
-    // };
 
     const legendLevels = useMemo(() => {
         console.log("legendLevels")
@@ -314,30 +298,51 @@ const App: React.FC = () => {
     }
 
     return (
-        <div style={{ height: '100vh', width: '100%' }}>
-            <MapContainer
-                center={mapParams.mapCenter}
-                zoom={mapParams.mapZoom}
-                minZoom={mapParams.minZoom}
-                maxBounds={mapParams.maxBounds}
-                maxBoundsViscosity={mapParams.maxBoundsViscosity}
-                style={{ height: '100%', width: '100%' }}
-            >
-                <MapEvents/>
-                {activeFeature && <MapComponent activeFeature={activeFeature}/>}
-                <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; OpenStreetMap contributors'
-                />
+        <div style={{ height: '100vh', width: '100%', display: 'flex' }}>
+            <div style={{ flex: 1, height: '100%', position: 'relative'}}>
+                <MapContainer
+                    center={mapParams.mapCenter}
+                    zoom={mapParams.mapZoom}
+                    minZoom={mapParams.minZoom}
+                    maxBounds={mapParams.maxBounds}
+                    maxBoundsViscosity={mapParams.maxBoundsViscosity}
+                    style={{ height: '100%', width: '100%' }}
+                >
+                    <MapEvents/>
+                    {activeFeature && <MapComponent activeFeature={activeFeature}/>}
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; OpenStreetMap contributors'
+                    />
+                    {geoData && metricsData && dataset && (
+                        <GeoJSON
+                            data={geoData}
+                            style={style}
+                            onEachFeature={onEachFeature}
+                            ref={onGeoJsonLoad}
+                            eventHandlers={{
+                                click: (e) => {
+                                    e.originalEvent.stopPropagation();
+                                }
+                            }}
+                        />
+                    )}
+                </MapContainer>
 
-                <div className={styles.controls}>
-                    <h2>Controls</h2>
-                    <button
-                        onClick={() => setShowMetrics(!showMetrics)}
-                    >
-                        {showMetrics ? 'Hide' : 'Show'} Heatmap
-                    </button>
+                {dataset && activeDataset && activeDatasetMetric && (
+                    <div className={styles.legend}>
+                        {/*<div className={styles.legend__title}>{activeDatasetMetric}</div>*/}
+                        <div className={styles.legend__items}>
+                            {legendLevels}
+                        </div>
+                    </div>
+                )}
+            </div>
 
+
+            <div className={styles['control-panel']}>
+                <h2>Controls</h2>
+                <div>
                     <select
                         value={activeDataset}
                         onChange={handleDatasetChange}
@@ -350,7 +355,9 @@ const App: React.FC = () => {
                             </option>
                         ))}
                     </select>
-                    {activeDataset && (
+                </div>
+                {activeDataset && (
+                    <div>
                         <select
                             value={activeDatasetMetric}
                             onChange={(e) => setActiveDatasetMetric(e.target.value)}
@@ -363,42 +370,10 @@ const App: React.FC = () => {
                                 </option>
                             ))}
                         </select>
-                    )
-
-                    }
-                </div>
-
-                {dataset && activeDataset && (
-                    <div>
-                        {/*<div className={styles['data-selector']}>*/}
-                        {/*    <div className={styles['data-selector__title']}>Feature</div>*/}
-                        {/*    <div className={styles['data-selector__items']}>*/}
-                        {/*        {featureData()}*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-                        <div className={styles.legend}>
-                            <div className={styles.legend__title}>{activeDatasetObject?.metricLabel}</div>
-                            <div className={styles.legend__items}>
-                                {legendLevels}
-                            </div>
-                        </div>
                     </div>
-                )}
-
-                {geoData && metricsData && dataset && showMetrics && (
-                    <GeoJSON
-                        data={geoData}
-                        style={style}
-                        onEachFeature={onEachFeature}
-                        ref={onGeoJsonLoad}
-                        eventHandlers={{
-                            click: (e) => {
-                                e.originalEvent.stopPropagation();
-                            }
-                        }}
-                    />
-                )}
-            </MapContainer>
+                )
+                }
+            </div>
         </div>
     );
 };
