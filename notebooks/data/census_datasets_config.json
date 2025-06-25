@@ -1,0 +1,82 @@
+{
+  "datasets": [
+    {
+      "key": "age_of_structure",
+      "alias": "age_of_structure",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Age of Structure/Age of Structure/ACSDT5Y2022.B25034-Data.csv",
+      "description": "Housing units by year structure was built"
+    },
+    {
+      "key": "aggregate_number_of_vehicles_available_by_tenure",
+      "alias": "aggregate_vehicles",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Mobility constraints/ACSDT5Y2022.B25046-Data.csv",
+      "description": "Aggregate number of vehicles available by tenure"
+    },
+    {
+      "key": "health_insurance_coverage_by_age",
+      "alias": "health_insurance",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
+      "description": "Health insurance coverage status by age groups"
+    },
+    {
+      "key": "households_with_a_computer",
+      "alias": "households_w_computer",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/households_w_computer/ACSDT5Y2022.B28010-Data.csv",
+      "description": "Households with computer and internet access"
+    },
+    {
+      "key": "internet_subscription_in_household",
+      "alias": "internet_subscription",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/internet_subscription/ACSDT5Y2022.B28011-Data.csv",
+      "description": "Types of internet subscriptions in household"
+    },
+    {
+      "key": "limited_english_speaking_households",
+      "alias": "limited_english_speaking",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/limited_english_speaking/ACSDT5Y2022.C16002-Data.csv",
+      "description": "Households with limited English speaking ability"
+    },
+    {
+      "key": "living_arragements_including_living_alone_by_sex_and_relationship",
+      "alias": "living_arrangements",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/living_arrangements/ACSDT5Y2022.B09019-Data.csv",
+      "description": "Living arrangements including living alone by sex and relationship"
+    },
+    {
+      "key": "income_share_of_fpl",
+      "alias": "income_share_of_fpl",
+      "original_file_path": "All Exposures/Other/Ratio of Income to Poverty Level in the Past 12 Months (2022)/ACSDT5Y2022.C17002_2025-03-17T172135/ACSDT5Y2022.C17002-Data.csv",
+      "description": "Ratio of income to poverty level"
+    },
+    {
+      "key": "persons_under_5_65_years_table",
+      "alias": "person_under_5_65",
+      "original_file_path": "All Exposures/Table2/Data Describing Unsafe Conditions/Special Group at Risk/person_under_5_65/ACSDT5Y2022.B01001-Data.csv",
+      "description": "Population by sex and age"
+    },
+    {
+      "key": "population_in_group_quarters",
+      "alias": "population_group_quarters",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Population in group quarters/DECENNIALPL2020.P5-Data.csv",
+      "description": "Population in group quarters"
+    },
+    {
+      "key": "race_origin",
+      "alias": "race_origin",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/race_origin/ACSDT5Y2022.B02001-Data.csv",
+      "description": "Race and Hispanic or Latino origin"
+    },
+    {
+      "key": "tenure",
+      "alias": "tenure",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Tenure/ACSDT5Y2022.B25003-Data.csv",
+      "description": "Tenure (owner vs renter occupied housing)"
+    },
+    {
+      "key": "2022_census_hawaiian_homelands",
+      "alias": "2022_census_hawaiian_homelands",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022_census_hawaiian_homelands/ACSST5Y2022.S0601-Data.csv",
+      "description": "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands"
+    }
+  ]
+}

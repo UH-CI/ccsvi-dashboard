@@ -72,7 +72,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!SEX!!Male": {
+      "Total population SEX Male": {
         "thresholds": [
           0,
           40,
@@ -99,7 +99,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!SEX!!Female": {
+      "Total population SEX Female": {
         "thresholds": [
           0,
           35,
@@ -126,7 +126,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race White": {
         "thresholds": [
           0,
           0,
@@ -153,7 +153,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race Black or African American": {
         "thresholds": [
           0,
           0,
@@ -173,7 +173,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race American Indian and Alaska Native": {
         "thresholds": [
           0,
           0,
@@ -193,7 +193,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race Asian": {
         "thresholds": [
           0,
           0,
@@ -219,7 +219,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race Native Hawaiian and Other Pacific Islander": {
         "thresholds": [
           0,
           10,
@@ -246,7 +246,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN One race Some other race": {
         "thresholds": [
           0,
           0,
@@ -267,7 +267,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!Two or more races": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN Two or more races": {
         "thresholds": [
           0,
           10,
@@ -294,7 +294,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!Hispanic or Latino origin (of any race)": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN Hispanic or Latino origin (of any race)": {
         "thresholds": [
           0,
           0,
@@ -320,7 +320,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!White alone, not Hispanic or Latino": {
+      "Total population RACE AND HISPANIC OR LATINO ORIGIN White alone, not Hispanic or Latino": {
         "thresholds": [
           0,
           0,
@@ -346,7 +346,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH!!Population 5 years and over!!Speak language other than English!!Speak English less than very well": {
+      "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well": {
         "thresholds": [
           0,
           0,
@@ -371,7 +371,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!INDIVIDUALS' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS)!!Population 15 years and over!!Median income (dollars)": {
+      "INDIVIDUALS' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS) Population 15 years and over Median income (dollars)": {
         "thresholds": [
           22750,
           26745,
@@ -613,7 +613,7 @@
           "#3A000F"
         ]
       },
-      "In households:!!Householder:!!Male:!!Living alone": {
+      "In households: Householder: Male: Living alone": {
         "thresholds": [
           0,
           5,
@@ -639,7 +639,7 @@
           "#3A000F"
         ]
       },
-      "In households:!!Householder:!!Female:!!Living alone": {
+      "In households: Householder: Female: Living alone": {
         "thresholds": [
           0,
           10,
@@ -694,7 +694,7 @@
           "#3A000F"
         ]
       },
-      "Spanish:!!Limited English speaking household": {
+      "Spanish: Limited English speaking household": {
         "thresholds": [
           0,
           85
@@ -712,7 +712,7 @@
           "#3A000F"
         ]
       },
-      "Other Indo-European languages:!!Limited English speaking household": {
+      "Other Indo-European languages: Limited English speaking household": {
         "thresholds": [
           0,
           70
@@ -730,7 +730,7 @@
           "#3A000F"
         ]
       },
-      "Asian and Pacific Island languages:!!Limited English speaking household": {
+      "Asian and Pacific Island languages: Limited English speaking household": {
         "thresholds": [
           0,
           5,
@@ -753,7 +753,7 @@
           "#3A000F"
         ]
       },
-      "Other languages:!!Limited English speaking household": {
+      "Other languages: Limited English speaking household": {
         "thresholds": [
           0,
           95
@@ -810,7 +810,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Total:": {
+      "Estimate Total": {
         "thresholds": [
           0,
           480,
@@ -917,7 +917,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!POVERTY STATUS IN THE PAST 12 MONTHS!!Population for whom poverty status is determined!!Below 100 percent of the poverty level": {
+      "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level": {
         "thresholds": [
           0,
           0,
@@ -943,7 +943,7 @@
           "#3A000F"
         ]
       },
-      "Estimate!!Total!!POVERTY STATUS IN THE PAST 12 MONTHS!!Population for whom poverty status is determined!!100 to 149 percent of the poverty level": {
+      "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined 100 to 149 percent of the poverty level": {
         "thresholds": [
           0,
           0,
@@ -1008,7 +1008,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Estimate!!Aggregate number of vehicles available:": {
+      "Estimate Aggregate number of vehicles available": {
         "thresholds": [
           30,
           385,
@@ -1183,7 +1183,7 @@
           "#3A000F"
         ]
       },
-      "Two or More Races:": {
+      "Two or More Races": {
         "thresholds": [
           0,
           50,
@@ -1246,7 +1246,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Male:": {
+      "Male": {
         "thresholds": [
           0,
           255,
@@ -1273,7 +1273,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!Under 5 years": {
+      "Male: Under 5 years": {
         "thresholds": [
           0,
           10,
@@ -1298,7 +1298,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!5 to 9 years": {
+      "Male: 5 to 9 years": {
         "thresholds": [
           0,
           10,
@@ -1323,7 +1323,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!10 to 14 years": {
+      "Male: 10 to 14 years": {
         "thresholds": [
           0,
           10,
@@ -1348,7 +1348,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!15 to 17 years": {
+      "Male: 15 to 17 years": {
         "thresholds": [
           0,
           10,
@@ -1372,7 +1372,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!65 and 66 years": {
+      "Male: 65 and 66 years": {
         "thresholds": [
           0,
           5,
@@ -1396,7 +1396,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!67 to 69 years": {
+      "Male: 67 to 69 years": {
         "thresholds": [
           0,
           5,
@@ -1421,7 +1421,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!70 to 74 years": {
+      "Male: 70 to 74 years": {
         "thresholds": [
           0,
           5,
@@ -1447,7 +1447,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!75 to 79 years": {
+      "Male: 75 to 79 years": {
         "thresholds": [
           0,
           5,
@@ -1472,7 +1472,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!80 to 84 years": {
+      "Male: 80 to 84 years": {
         "thresholds": [
           0,
           5,
@@ -1495,7 +1495,7 @@
           "#3A000F"
         ]
       },
-      "Male:!!85 years and over": {
+      "Male: 85 years and over": {
         "thresholds": [
           0,
           5,
@@ -1518,7 +1518,7 @@
           "#3A000F"
         ]
       },
-      "Female:": {
+      "Female": {
         "thresholds": [
           0,
           245,
@@ -1545,7 +1545,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!Under 5 years": {
+      "Female: Under 5 years": {
         "thresholds": [
           0,
           5,
@@ -1570,7 +1570,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!5 to 9 years": {
+      "Female: 5 to 9 years": {
         "thresholds": [
           0,
           5,
@@ -1595,7 +1595,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!65 and 66 years": {
+      "Female: 65 and 66 years": {
         "thresholds": [
           0,
           5,
@@ -1619,7 +1619,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!67 to 69 years": {
+      "Female: 67 to 69 years": {
         "thresholds": [
           0,
           5,
@@ -1644,7 +1644,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!70 to 74 years": {
+      "Female: 70 to 74 years": {
         "thresholds": [
           0,
           10,
@@ -1669,7 +1669,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!75 to 79 years": {
+      "Female: 75 to 79 years": {
         "thresholds": [
           0,
           5,
@@ -1694,7 +1694,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!80 to 84 years": {
+      "Female: 80 to 84 years": {
         "thresholds": [
           0,
           5,
@@ -1718,7 +1718,7 @@
           "#3A000F"
         ]
       },
-      "Female:!!85 years and over": {
+      "Female: 85 years and over": {
         "thresholds": [
           0,
           5,
@@ -1917,7 +1917,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "!!Total:!!Institutionalized population:": {
+      "Institutionalized population": {
         "thresholds": [
           0,
           5,
@@ -1936,7 +1936,7 @@
           "#3A000F"
         ]
       },
-      "!!Total:!!Institutionalized population:!!Correctional facilities for adults": {
+      "Institutionalized population: Correctional facilities for adults": {
         "thresholds": [
           0,
           970
@@ -1954,7 +1954,7 @@
           "#3A000F"
         ]
       },
-      "!!Total:!!Institutionalized population:!!Juvenile facilities": {
+      "Institutionalized population: Juvenile facilities": {
         "thresholds": [
           0,
           40
@@ -1972,7 +1972,7 @@
           "#3A000F"
         ]
       },
-      "!!Total:!!Institutionalized population:!!Nursing facilities/Skilled-nursing facilities": {
+      "Institutionalized population: Nursing facilities/Skilled-nursing facilities": {
         "thresholds": [
           0,
           340
@@ -1990,7 +1990,7 @@
           "#3A000F"
         ]
       },
-      "!!Total:!!Institutionalized population:!!Other institutional facilities": {
+      "Institutionalized population: Other institutional facilities": {
         "thresholds": [
           0,
           205
@@ -2045,7 +2045,7 @@
     "metricName": "",
     "metricLabel": "",
     "columnThresholds": {
-      "Male:": {
+      "Male": {
         "thresholds": [
           0,
           255,
@@ -2072,7 +2072,7 @@
           "#3A000F"
         ]
       },
-      "Female:": {
+      "Female": {
         "thresholds": [
           0,
           245,
