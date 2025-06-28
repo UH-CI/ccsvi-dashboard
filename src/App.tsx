@@ -27,6 +27,7 @@ interface Dataset {
     [key: string]: {
         metricName: string;
         metricLabel: string;
+        hawaiianHomelands?: boolean;
         columnThresholds: {
             [columnName: string]: {
                 thresholds: number[];
@@ -46,7 +47,20 @@ interface BlockGroupProperties {
     st_perimet: number;
 }
 
+interface HawaiianHomelandProperties {
+    AIANNHCE10: string;
+    AIANNHNS10: string;
+    GEOID10: string;
+    NAME10: string;
+    AIANNHFP10: string;
+    POP10: number;
+    Shape_Leng: number;
+    Shape_Area: number;
+}
+
 type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
+
+type HomelandStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -67,11 +81,13 @@ const App: React.FC = () => {
     const [activeDataset, setActiveDataset] = useState<string>('');
     const [activeDatasetMetric, setActiveDatasetMetric] = useState<string>('');
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
+    const [homelandsData, setHomelandsData] = useState<FeatureCollection<Geometry, HawaiianHomelandProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     // const [showMetrics, setShowMetrics] = useState<boolean>(true);
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
+    const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
 
     const activeDatasetObject = useMemo(() => {
         if (!dataset || !activeDataset) return null;
@@ -85,9 +101,13 @@ const App: React.FC = () => {
         return activeDatasetObject.columnThresholds[activeDatasetMetric];
     }, [activeDatasetObject, activeDatasetMetric]);
 
+    const hawaiianHomelands = useMemo(() => {
+        return activeDatasetObject?.hawaiianHomelands || false;
+    }, [activeDatasetObject]);
+
     const getColor = useCallback((value: number | null): string => {
         if (value === null || !activeDatasetMetricObject) {
-            return '#00FF00';
+            return '#cccccc';
         }
 
         for (let i = 0; i < activeDatasetMetricObject.thresholds?.length; i++) {
@@ -98,6 +118,25 @@ const App: React.FC = () => {
         }
         return '#333';
     }, [activeDatasetMetricObject]);
+
+    // Load Hawaiian Homelands data when needed
+    useEffect(() => {
+        const loadHomelandsData = async () => {
+            if (!hawaiianHomelands) {
+                setHomelandsData(null);
+                return;
+            }
+            if (homelandsData) return;
+            try {
+                const response = await fetch('./data/Census_Hawaiian_Homelands_hhl10.geojson');
+                const data = await response.json();
+                setHomelandsData(data);
+            } catch (err) {
+                console.error('Error loading Hawaiian Homelands data:', err);
+            }
+        };
+        loadHomelandsData();
+    }, [hawaiianHomelands, homelandsData]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -155,6 +194,7 @@ const App: React.FC = () => {
         };
     }, [metricsData, activeDataset, activeDatasetMetric]);
 
+    // Style function for state census features
     const style: StyleFunction = useCallback((feature) => {
         console.log("StyleFunction")
         // console.log("feature: ", feature);
@@ -184,10 +224,34 @@ const App: React.FC = () => {
         };
     }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
 
+    // Style function for Hawaiian Homelands
+    const homelandStyle: HomelandStyleFunction = useCallback((feature) => {
+        if (!feature) {
+            return {
+                fillColor: '#cccccc',
+                weight: 0.5,
+                opacity: 1,
+                color: '#333',
+                fillOpacity: 0.3
+            };
+        }
+        const geoid = feature.properties.GEOID10;
+        const metricValue = getMetricValue(geoid);
+        const isActive = activeFeature?.properties?.GEOID10 === feature.properties.GEOID10;
+
+        return {
+            fillColor: getColor(metricValue),
+            weight: isActive ? 3 : 1,
+            opacity: 1,
+            color: isActive ? '#654321' : '#8B4513',
+            fillOpacity: isActive ? 0.8 : 0.5,
+        };
+    }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
+
+
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
-        const feature = layer.feature as Feature<Geometry, BlockGroupProperties>;
-
+        const feature = layer.feature as Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties>;
         setActiveFeature(feature)
         layer.bringToFront();
     }
@@ -227,6 +291,27 @@ const App: React.FC = () => {
         }
     };
 
+    const onEachHomelandFeature = (
+        feature: Feature<Geometry, HawaiianHomelandProperties>,
+        layer: Layer
+    ): void => {
+        layer.on({
+            click: highlightFeature,
+        })
+
+        const geoid = feature.properties.GEOID10;
+        const metricValue = getMetricValue(geoid);
+
+        if ('bindPopup' in layer) {
+            layer.bindPopup(`
+                <div>
+                    <b>Hawaiian Homeland:</b> ${feature.properties.NAME10}<br>
+                    <b>Geo ID:</b> ${feature.properties.GEOID10}<br>
+                    ${activeDatasetObject?.metricLabel ? `<b>${activeDatasetObject.metricLabel}:</b> ${metricValue ?? 'N/A'}` : ''}
+                </div>
+            `);
+        }
+    };
     const legendLevels = useMemo(() => {
         console.log("legendLevels")
         if (!activeDatasetMetricObject) return [];
@@ -262,6 +347,11 @@ const App: React.FC = () => {
         layerRef.current = layer;
     }
 
+    const onHomelandsLoad = (layer: L.GeoJSON) => {
+        homelandsLayerRef.current = layer;
+    }
+
+
     const datasetList = useMemo(() => {
         console.log("getDatasets")
         if (!dataset) {
@@ -270,7 +360,8 @@ const App: React.FC = () => {
         }
         return Object.entries(dataset).map(([key, config]) => ({
             id: key,
-            label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            hawaiianHomelands: config.hawaiianHomelands || false
         }));
     }, [dataset]);
 
@@ -291,6 +382,7 @@ const App: React.FC = () => {
         const newDataset = e.target.value;
         setActiveDataset(newDataset);
         setActiveDatasetMetric('');
+        setActiveFeature(null);
     };
 
     if (loading) {
@@ -314,12 +406,27 @@ const App: React.FC = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; OpenStreetMap contributors'
                     />
+                    {/* Census Block Groups Layer */}
                     {geoData && metricsData && dataset && (
                         <GeoJSON
                             data={geoData}
                             style={style}
                             onEachFeature={onEachFeature}
                             ref={onGeoJsonLoad}
+                            eventHandlers={{
+                                click: (e) => {
+                                    e.originalEvent.stopPropagation();
+                                }
+                            }}
+                        />
+                    )}
+                    {/* Hawaiian Homelands Layer - Only when needed */}
+                    {hawaiianHomelands && homelandsData && (
+                        <GeoJSON
+                            data={homelandsData}
+                            style={homelandStyle}
+                            onEachFeature={onEachHomelandFeature}
+                            ref={onHomelandsLoad}
                             eventHandlers={{
                                 click: (e) => {
                                     e.originalEvent.stopPropagation();
