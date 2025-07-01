@@ -3,18 +3,17 @@ import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from 'react-le
 import { Feature, Geometry, FeatureCollection } from 'geojson';
 import L, { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import * as FaIcons from 'react-icons/fa';
 import './App.css';
 import styles from './App.module.scss'
 import { mapParams } from './config';
-
+import { GenericPointMarkers, usePointLayers } from './components/PointLayers.tsx';
 
 interface MetricsData {
     [geoid: string]: {
-        geoinfo: {
-            blockGroup: string;
-            censusTract: string;
-            county: string;
-        };
+        block_group: string;
+        census_tract: string;
+        county: string;
         metrics: {
             [datasetName: string]: {
                 [metricName: string]: number;
@@ -59,8 +58,7 @@ interface HawaiianHomelandProperties {
 }
 
 type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
-
-type HomelandStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
+type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -84,10 +82,12 @@ const App: React.FC = () => {
     const [homelandsData, setHomelandsData] = useState<FeatureCollection<Geometry, HawaiianHomelandProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    // const [showMetrics, setShowMetrics] = useState<boolean>(true);
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
+
+    // Use the point layers hook
+    const { pointLayers, togglePointLayer } = usePointLayers();
 
     const activeDatasetObject = useMemo(() => {
         if (!dataset || !activeDataset) return null;
@@ -225,7 +225,7 @@ const App: React.FC = () => {
     }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
 
     // Style function for Hawaiian Homelands
-    const homelandStyle: HomelandStyleFunction = useCallback((feature) => {
+    const homelandStyle: HomelandsStyleFunction = useCallback((feature) => {
         if (!feature) {
             return {
                 fillColor: '#cccccc',
@@ -247,7 +247,6 @@ const App: React.FC = () => {
             fillOpacity: isActive ? 0.8 : 0.5,
         };
     }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
-
 
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
@@ -282,9 +281,9 @@ const App: React.FC = () => {
             layer.bindPopup(`
                 <div>
                     <b>Block Group ID:</b> ${geoid}<br>
-                    <b>Block Group:</b> ${metricsData[geoid]?.geoinfo?.blockGroup ?? 'N/A'}<br>
-                    <b>Census Tract:</b> ${metricsData[geoid]?.geoinfo?.censusTract ?? 'N/A'}<br>
-                    <b>County:</b> ${metricsData[geoid]?.geoinfo?.county ?? 'N/A'}<br>
+                    <b>Block Group:</b> ${metricsData[geoid]?.block_group ?? 'N/A'}<br>
+                    <b>Census Tract:</b> ${metricsData[geoid]?.census_tract ?? 'N/A'}<br>
+                    <b>County:</b> ${metricsData[geoid]?.county ?? 'N/A'}<br>
                     <b>${activeDatasetObject?.metricLabel}:</b> ${metricValue ?? 'N/A'}
                 </div>
             `);
@@ -312,8 +311,8 @@ const App: React.FC = () => {
             `);
         }
     };
+
     const legendLevels = useMemo(() => {
-        console.log("legendLevels")
         if (!activeDatasetMetricObject) return [];
 
         const items = [];
@@ -350,7 +349,6 @@ const App: React.FC = () => {
     const onHomelandsLoad = (layer: L.GeoJSON) => {
         homelandsLayerRef.current = layer;
     }
-
 
     const datasetList = useMemo(() => {
         console.log("getDatasets")
@@ -406,7 +404,6 @@ const App: React.FC = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; OpenStreetMap contributors'
                     />
-                    {/* Census Block Groups Layer */}
                     {geoData && metricsData && dataset && (
                         <GeoJSON
                             data={geoData}
@@ -420,7 +417,6 @@ const App: React.FC = () => {
                             }}
                         />
                     )}
-                    {/* Hawaiian Homelands Layer - Only when needed */}
                     {hawaiianHomelands && homelandsData && (
                         <GeoJSON
                             data={homelandsData}
@@ -434,18 +430,19 @@ const App: React.FC = () => {
                             }}
                         />
                     )}
+                    {pointLayers.map(layer => (
+                        <GenericPointMarkers key={layer.id} layer={layer} />
+                    ))}
                 </MapContainer>
 
                 {dataset && activeDataset && activeDatasetMetric && (
                     <div className={styles.legend}>
-                        {/*<div className={styles.legend__title}>{activeDatasetMetric}</div>*/}
                         <div className={styles.legend__items}>
                             {legendLevels}
                         </div>
                     </div>
                 )}
             </div>
-
 
             <div className={styles['control-panel']}>
                 <h2>Controls</h2>
@@ -478,8 +475,37 @@ const App: React.FC = () => {
                             ))}
                         </select>
                     </div>
-                )
-                }
+                )}
+
+                <div>
+                    <h3>Points of Interest</h3>
+                    {pointLayers.map(layer => {
+                        const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+
+                        return (
+                            <div key={layer.id} className={styles['layer-toggle']}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={layer.visible}
+                                        onChange={() => togglePointLayer(layer.id)}
+                                    />
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        width: '16px',
+                                        height: '16px',
+                                        marginRight: '8px',
+                                        color: layer.color
+                                    }}>
+                                        <IconComponent size={12} />
+                                    </span>
+                                    {layer.name}
+                                </label>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
