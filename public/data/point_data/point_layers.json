@@ -1,0 +1,100 @@
+{
+  "pointLayers": [
+    {
+      "id": "fire_stations",
+      "name": "Fire Stations",
+      "visible": false,
+      "icon": "FaCircle",
+      "color": "#FF0000",
+      "filePath": "/data/point_data/Fire_Stations_(Statewide).geojson",
+      "popupConfig": {
+        "titleField": "name",
+        "fields": []
+      }
+    },
+    {
+      "id": "hospitals",
+      "name": "Hospitals",
+      "visible": false,
+      "icon": "FaSquare",
+      "color": "#00BFFF",
+      "filePath": "/data/point_data/Hospitals.geojson",
+      "popupConfig": {
+        "titleField": "name",
+        "fields": []
+      }
+    },
+    {
+      "id": "police_stations",
+      "name": "Police Stations",
+      "visible": false,
+      "icon": "FaPlay",
+      "color": "#000080",
+      "filePath": "/data/point_data/Police_Stations_(Statewide).geojson",
+      "popupConfig": {
+        "titleField": "name",
+        "fields": []
+      }
+    },
+    {
+      "id": "shelters",
+      "name": "Emergency Shelters",
+      "visible": false,
+      "icon": "FaStar",
+      "color": "#00CC00",
+      "filePath": "/data/point_data/emergency_shelters.geojson",
+      "popupConfig": {
+        "titleField": "BUSNAME",
+        "fields": [
+          { "key": "ADDRESS", "label": "Address" },
+          { "key": "PLACENAME", "label": "Location" }
+        ]
+      }
+    },
+    {
+      "id": "preschools",
+      "name": "Preschools",
+      "visible": false,
+      "icon": "FaPlus",
+      "color": "#FFA500",
+      "filePath": "/data/point_data/Preschools.geojson",
+      "popupConfig": {
+        "titleField": "name",
+        "fields": [
+          { "key": "address", "label": "Address" },
+          { "key": "city", "label": "City" }
+        ]
+      }
+    },
+    {
+      "id": "public_schools",
+      "name": "Public Schools",
+      "visible": false,
+      "icon": "FaCertificate",
+      "color": "#8A2BE2",
+      "filePath": "/data/point_data/Public_Schools.geojson",
+      "popupConfig": {
+        "titleField": "sch_name",
+        "fields": [
+          { "key": "address", "label": "Address", "required": true },
+          { "key": "city", "label": "City" }
+        ]
+      }
+    },
+    {
+      "id": "private_schools",
+      "name": "Private Schools",
+      "visible": false,
+      "icon": "FaDiamond",
+      "color": "#DC143C",
+      "filePath": "/data/point_data/Private_Schools.geojson",
+      "popupConfig": {
+        "titleField": "school",
+        "fields": [
+          { "key": "address", "label": "Address", "required": true },
+          { "key": "city", "label": "City" }
+        ]
+      }
+    }
+  ]
+}
