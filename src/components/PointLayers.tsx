@@ -2,8 +2,8 @@
  * PointLayers, markers, zoom tracking all generated using Anthropic's Claude Sonnet 4
  */
 
-import React, { useState, useEffect } from 'react';
-import { Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Marker, Popup } from 'react-leaflet';
 import { renderToString } from 'react-dom/server';
 import * as FaIcons from 'react-icons/fa';
 import L from 'leaflet';
@@ -26,33 +26,14 @@ export interface PointLayerConfig {
     };
 }
 
-// Component to track zoom and update all markers
-const ZoomTracker: React.FC<{ onZoomChange: (zoom: number) => void }> = ({ onZoomChange }) => {
-    useMapEvents({
-        zoomend: (e) => {
-            onZoomChange(e.target.getZoom());
-        },
-    });
-    return null;
-};
-
-export const GenericPointMarkers: React.FC<{ layer: PointLayerConfig }> = ({ layer }) => {
-    const [currentZoom, setCurrentZoom] = useState(10);
-
+export const GenericPointMarkers: React.FC<{
+    layer: PointLayerConfig;
+}> = ({ layer }) => {
     if (!layer.visible || !layer.data) return null;
 
     const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
 
-    // Calculate size based on zoom (simple linear scaling)
-    const getSize = (zoom: number) => {
-        const minSize = 8;
-        const maxSize = 36;
-
-        const size = minSize + ((zoom - 8) * (maxSize - minSize)) / (15 - 8);
-        return Math.max(minSize, Math.min(maxSize, size));
-    };
-
-    const iconSize = Math.round(getSize(currentZoom));
+    const iconSize = 18;
     const iconElementSize = Math.round(iconSize * 0.67);
 
     const customIcon = L.divIcon({
@@ -92,7 +73,6 @@ export const GenericPointMarkers: React.FC<{ layer: PointLayerConfig }> = ({ lay
 
     return (
         <>
-            <ZoomTracker onZoomChange={setCurrentZoom} />
             {layer.data.features
                 .filter(feature => {
                     const objectId = feature.properties?.objectid || feature.properties?.OBJECTID;
@@ -153,6 +133,11 @@ export const usePointLayers = () => {
         }
     };
 
+    const visibleLayerIds = useMemo(() =>
+            pointLayers.filter(l => l.visible).map(l => l.id).join(','),
+        [pointLayers]
+    );
+
     useEffect(() => {
         const loadVisibleLayers = async () => {
             const visibleLayers = pointLayers.filter(layer => layer.visible && !layer.data);
@@ -172,7 +157,7 @@ export const usePointLayers = () => {
         };
 
         loadVisibleLayers();
-    }, [pointLayers.map(l => l.visible).join(',')]);
+    }, [visibleLayerIds]);
 
     const togglePointLayer = (layerId: string) => {
         setPointLayers(prev =>
