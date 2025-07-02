@@ -1,64 +1,23 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from 'react-leaflet';
 import { Feature, Geometry, FeatureCollection } from 'geojson';
-import L, { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
+import L, { Layer, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import * as FaIcons from 'react-icons/fa';
 import './App.css';
-import styles from './App.module.scss'
+import {
+    MetricsData,
+    Dataset,
+    BlockGroupProperties,
+    HawaiianHomelandProperties,
+    StyleFunction,
+    HomelandsStyleFunction
+} from './types';
+// import styles from './App.module.scss'
 import { mapParams } from './config';
+import { MapLegend } from './components/MapLegend';
+import { ControlPanel } from './components/ControlPanel';
 import { GenericPointMarkers, usePointLayers } from './components/PointLayers.tsx';
 
-interface MetricsData {
-    [geoid: string]: {
-        block_group: string;
-        census_tract: string;
-        county: string;
-        metrics: {
-            [datasetName: string]: {
-                [metricName: string]: number;
-            }
-        };
-    }
-}
-
-interface Dataset {
-    [key: string]: {
-        metricName: string;
-        metricLabel: string;
-        hawaiianHomelands?: boolean;
-        columnThresholds: {
-            [columnName: string]: {
-                thresholds: number[];
-                colors: string[];
-            }
-        }
-    }
-}
-
-interface BlockGroupProperties {
-    objectid: number;
-    geoid20: string;
-    aland20: number;
-    awater20: number;
-    pop20: number;
-    st_areasha: number;
-    st_perimet: number;
-}
-
-interface HawaiianHomelandProperties {
-    AIANNHCE10: string;
-    AIANNHNS10: string;
-    GEOID10: string;
-    NAME10: string;
-    AIANNHFP10: string;
-    POP10: number;
-    Shape_Leng: number;
-    Shape_Area: number;
-}
-
-type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
-type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -86,7 +45,6 @@ const App: React.FC = () => {
     const layerRef = useRef<L.GeoJSON | null>(null);
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
 
-    // Use the point layers hook
     const { pointLayers, togglePointLayer } = usePointLayers();
 
     const activeDatasetObject = useMemo(() => {
@@ -312,36 +270,6 @@ const App: React.FC = () => {
         }
     };
 
-    const legendLevels = useMemo(() => {
-        if (!activeDatasetMetricObject) return [];
-
-        const items = [];
-        for (let i = activeDatasetMetricObject.thresholds.length - 1; i >= 0; i--) {
-            const low = activeDatasetMetricObject.thresholds[i];
-            const high = activeDatasetMetricObject.thresholds[i + 1];
-
-            let label;
-            if (i === activeDatasetMetricObject.thresholds.length - 1) {
-                label = `> ${low}`;
-            } else if (i === 0) {
-                label = `${low}`;
-            } else {
-                label = `${low}-${high - 1}`;
-            }
-
-            items.push(
-                <div key={i} className={styles.legend__item}>
-                    <div
-                        className={styles['legend__item-color']}
-                        style={{ backgroundColor: activeDatasetMetricObject.colors[i] }}
-                    ></div>
-                    <span>{label}</span>
-                </div>
-            );
-        }
-        return items;
-    }, [activeDatasetMetricObject]);
-
     const onGeoJsonLoad = (layer: L.GeoJSON) => {
         layerRef.current = layer;
     }
@@ -350,37 +278,15 @@ const App: React.FC = () => {
         homelandsLayerRef.current = layer;
     }
 
-    const datasetList = useMemo(() => {
-        console.log("getDatasets")
-        if (!dataset) {
-            console.log("getDatasets: no dataset")
-            return []
-        }
-        return Object.entries(dataset).map(([key, config]) => ({
-            id: key,
-            label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            hawaiianHomelands: config.hawaiianHomelands || false
-        }));
-    }, [dataset]);
-
-    const datasetMetrics = useMemo(() => {
-        console.log("getMetrics")
-        if (!dataset || !activeDataset) return [];
-
-        const datasetObject = dataset[activeDataset];
-        if (!datasetObject?.columnThresholds) return [];
-
-        return Object.keys(datasetObject.columnThresholds).map(columnName => ({
-            id: columnName,
-            label: columnName
-        }));
-    }, [dataset, activeDataset]);
-
     const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newDataset = e.target.value;
         setActiveDataset(newDataset);
         setActiveDatasetMetric('');
         setActiveFeature(null);
+    };
+
+    const handleMetricChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setActiveDatasetMetric(e.target.value);
     };
 
     if (loading) {
@@ -435,78 +341,22 @@ const App: React.FC = () => {
                     ))}
                 </MapContainer>
 
-                {dataset && activeDataset && activeDatasetMetric && (
-                    <div className={styles.legend}>
-                        <div className={styles.legend__items}>
-                            {legendLevels}
-                        </div>
-                    </div>
-                )}
+                <MapLegend
+                    dataset={dataset}
+                    activeDataset={activeDataset}
+                    activeDatasetMetric={activeDatasetMetric}
+                />
             </div>
 
-            <div className={styles['control-panel']}>
-                <h2>Controls</h2>
-                <div>
-                    <select
-                        value={activeDataset}
-                        onChange={handleDatasetChange}
-                        style={{ padding: '5px' }}
-                    >
-                        <option value="">Select Dataset </option>
-                        {datasetList.map(dataset => (
-                            <option key={dataset.id} value={dataset.id}>
-                                {dataset.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                {activeDataset && (
-                    <div>
-                        <select
-                            value={activeDatasetMetric}
-                            onChange={(e) => setActiveDatasetMetric(e.target.value)}
-                            style={{ padding: '5px' }}
-                        >
-                            <option value="">Select Metric</option>
-                            {datasetMetrics.map(metric => (
-                                <option key={metric.id} value={metric.id}>
-                                    {metric.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-
-                <div>
-                    <h3>Points of Interest</h3>
-                    {pointLayers.map(layer => {
-                        const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-
-                        return (
-                            <div key={layer.id} className={styles['layer-toggle']}>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={layer.visible}
-                                        onChange={() => togglePointLayer(layer.id)}
-                                    />
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        width: '16px',
-                                        height: '16px',
-                                        marginRight: '8px',
-                                        color: layer.color
-                                    }}>
-                                        <IconComponent size={12} />
-                                    </span>
-                                    {layer.name}
-                                </label>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+            <ControlPanel
+                dataset={dataset}
+                activeDataset={activeDataset}
+                activeDatasetMetric={activeDatasetMetric}
+                onDatasetChange={handleDatasetChange}
+                onMetricChange={handleMetricChange}
+                pointLayers={pointLayers}
+                togglePointLayer={togglePointLayer}
+            />
         </div>
     );
 };
