@@ -8,16 +8,28 @@ import {
     TableHead,
     TableRow,
     TablePagination,
+    TableSortLabel,
     IconButton,
     Typography,
     Box,
     Collapse,
     CircularProgress,
-    Alert
+    Alert,
+    TextField,
+    InputAdornment,
+    Toolbar,
+    Chip,
+    Menu,
+    MenuItem,
+    Button
 } from '@mui/material';
 import {
     KeyboardArrowUp,
-    KeyboardArrowDown
+    KeyboardArrowDown,
+    Search,
+    FilterList,
+    Clear,
+    GetApp
 } from '@mui/icons-material';
 import styles from './TableViewer.module.scss';
 
@@ -38,6 +50,42 @@ interface TableData {
     rows: string[][];
 }
 
+interface ColumnFilter {
+    column: string;
+    value: string;
+    type: 'text' | 'number' | 'range';
+}
+
+type Order = 'asc' | 'desc';
+
+// Helper function to detect column data type
+const detectColumnType = (columnData: string[]): 'number' | 'text' => {
+    const numericValues = columnData.filter(val =>
+        val && val !== '—' && !isNaN(Number(val.replace(/[,$%]/g, '')))
+    );
+    return numericValues.length > columnData.length * 0.7 ? 'number' : 'text';
+};
+
+// Comparison function for sorting
+const descendingComparator = (a: string[], b: string[], orderBy: number, columnType: 'number' | 'text') => {
+    const aVal = a[orderBy] || '';
+    const bVal = b[orderBy] || '';
+
+    if (columnType === 'number') {
+        const aNum = parseFloat(aVal.replace(/[,$%]/g, '')) || 0;
+        const bNum = parseFloat(bVal.replace(/[,$%]/g, '')) || 0;
+        return bNum - aNum;
+    }
+
+    return bVal.localeCompare(aVal);
+};
+
+const getComparator = (order: Order, orderBy: number, columnType: 'number' | 'text') => {
+    return order === 'desc'
+        ? (a: string[], b: string[]) => descendingComparator(a, b, orderBy, columnType)
+        : (a: string[], b: string[]) => -descendingComparator(a, b, orderBy, columnType);
+};
+
 export const TableViewer: React.FC<TableViewerProps> = ({
                                                             activeDataset,
                                                             datasetInfo
@@ -46,8 +94,25 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [rowsPerPage, setRowsPerPage] = useState(100);
     const [isMinimized, setIsMinimized] = useState(false);
+
+    // Enhanced filtering and sorting state
+    const [globalSearch, setGlobalSearch] = useState('');
+    const [columnFilters, setColumnFilters] = useState<ColumnFilter[]>([]);
+    const [order, setOrder] = useState<Order>('asc');
+    const [orderBy, setOrderBy] = useState<number>(-1);
+    const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(null);
+    const [selectedFilterColumn, setSelectedFilterColumn] = useState<number>(-1);
+
+    // Reset filters when dataset changes
+    useEffect(() => {
+        setGlobalSearch('');
+        setColumnFilters([]);
+        setOrder('asc');
+        setOrderBy(-1);
+        setPage(0);
+    }, [activeDataset]);
 
     // Load CSV data when activeDataset changes
     useEffect(() => {
@@ -136,6 +201,61 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         loadCsvData();
     }, [activeDataset]);
 
+    // Column type detection
+    const columnTypes = useMemo(() => {
+        if (!tableData) return [];
+        return tableData.headers.map((_, index) => {
+            const columnData = tableData.rows.map(row => row[index] || '');
+            return detectColumnType(columnData);
+        });
+    }, [tableData]);
+
+    // Filtered and sorted data
+    const processedData = useMemo(() => {
+        if (!tableData) return [];
+
+        let filteredRows = [...tableData.rows];
+
+        // Apply global search
+        if (globalSearch) {
+            filteredRows = filteredRows.filter(row =>
+                row.some(cell =>
+                    cell && cell.toLowerCase().includes(globalSearch.toLowerCase())
+                )
+            );
+        }
+
+        // Apply column filters
+        columnFilters.forEach(filter => {
+            const columnIndex = tableData.headers.findIndex(header => header === filter.column);
+            if (columnIndex === -1) return;
+
+            filteredRows = filteredRows.filter(row => {
+                const cellValue = row[columnIndex] || '';
+                if (filter.type === 'number') {
+                    const numValue = parseFloat(cellValue.replace(/[,$%]/g, ''));
+                    const filterNum = parseFloat(filter.value);
+                    return !isNaN(numValue) && !isNaN(filterNum) && numValue >= filterNum;
+                }
+                return cellValue.toLowerCase().includes(filter.value.toLowerCase());
+            });
+        });
+
+        // Apply sorting
+        if (orderBy >= 0) {
+            filteredRows.sort(getComparator(order, orderBy, columnTypes[orderBy]));
+        }
+
+        return filteredRows;
+    }, [tableData, globalSearch, columnFilters, order, orderBy, columnTypes]);
+
+    // Pagination
+    const paginatedRows = useMemo(() => {
+        const start = page * rowsPerPage;
+        const end = start + rowsPerPage;
+        return processedData.slice(start, end);
+    }, [processedData, page, rowsPerPage]);
+
     const handleChangePage = (_event: unknown, newPage: number) => {
         setPage(newPage);
     };
@@ -145,16 +265,62 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         setPage(0);
     };
 
+    const handleRequestSort = (columnIndex: number) => {
+        const isAsc = orderBy === columnIndex && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(columnIndex);
+    };
+
+    const handleGlobalSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setGlobalSearch(event.target.value);
+        setPage(0);
+    };
+
+    const handleAddColumnFilter = (columnIndex: number, value: string) => {
+        if (!tableData || !value) return;
+
+        const columnName = tableData.headers[columnIndex];
+        const filterType = columnTypes[columnIndex] === 'number' ? 'number' : 'text';
+
+        setColumnFilters(prev => [
+            ...prev.filter(f => f.column !== columnName),
+            { column: columnName, value, type: filterType }
+        ]);
+        setPage(0);
+        setFilterMenuAnchor(null);
+    };
+
+    const handleRemoveFilter = (columnToRemove: string) => {
+        setColumnFilters(prev => prev.filter(f => f.column !== columnToRemove));
+        setPage(0);
+    };
+
+    const handleClearAllFilters = () => {
+        setGlobalSearch('');
+        setColumnFilters([]);
+        setPage(0);
+    };
+
+    const handleExportFiltered = () => {
+        if (!tableData) return;
+
+        const csvContent = [
+            tableData.headers.join(','),
+            ...processedData.map(row => row.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${activeDataset}_filtered.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
     const formatHeaderText = (header: string) => {
         return header.replace(/!!/g, ' → ');
     };
-
-    const paginatedRows = useMemo(() => {
-        if (!tableData) return [];
-        const start = page * rowsPerPage;
-        const end = start + rowsPerPage;
-        return tableData.rows.slice(start, end);
-    }, [tableData, page, rowsPerPage]);
 
     const datasetLabel = useMemo(() => {
         if (!datasetInfo || !activeDataset) return activeDataset;
@@ -179,6 +345,13 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                     <Typography variant="h6" component="div" className={styles.title}>
                         Dataset: {datasetLabel}
                     </Typography>
+                    {!isMinimized && processedData.length !== tableData?.rows.length && (
+                        <Chip
+                            label={`${processedData.length} of ${tableData?.rows.length || 0} rows`}
+                            size="small"
+                            className={styles.chip}
+                        />
+                    )}
                 </Box>
 
                 <Box className={styles['header-actions']}>
@@ -196,6 +369,72 @@ export const TableViewer: React.FC<TableViewerProps> = ({
             {/* Content */}
             <Collapse in={!isMinimized}>
                 <Box className={styles.content}>
+                    {/* Filter Toolbar */}
+                    {tableData && !loading && !error && (
+                        <Toolbar variant="dense" sx={{ minHeight: '48px', px: 2 }}>
+                            <TextField
+                                size="small"
+                                placeholder="Search all columns..."
+                                value={globalSearch}
+                                onChange={handleGlobalSearchChange}
+                                slotProps={{
+                                    input: {
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Search fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    },
+                                }}
+                                sx={{ mr: 2, minWidth: 200 }}
+                            />
+
+                            <Button
+                                size="small"
+                                startIcon={<FilterList />}
+                                onClick={(e) => setFilterMenuAnchor(e.currentTarget)}
+                                sx={{ mr: 1 }}
+                            >
+                                Add Filter
+                            </Button>
+
+                            {(globalSearch || columnFilters.length > 0) && (
+                                <Button
+                                    size="small"
+                                    startIcon={<Clear />}
+                                    onClick={handleClearAllFilters}
+                                    sx={{ mr: 1 }}
+                                >
+                                    Clear All
+                                </Button>
+                            )}
+
+                            <Button
+                                size="small"
+                                startIcon={<GetApp />}
+                                onClick={handleExportFiltered}
+                                sx={{ ml: 'auto' }}
+                            >
+                                Export
+                            </Button>
+                        </Toolbar>
+                    )}
+
+                    {/* Active Filters */}
+                    {columnFilters.length > 0 && (
+                        <Box sx={{ px: 2, pb: 1 }}>
+                            {columnFilters.map((filter, index) => (
+                                <Chip
+                                    key={index}
+                                    label={`${filter.column}: ${filter.value}`}
+                                    onDelete={() => handleRemoveFilter(filter.column)}
+                                    size="small"
+                                    sx={{ mr: 1, mb: 1 }}
+                                />
+                            ))}
+                        </Box>
+                    )}
+
                     {loading && (
                         <Box className={styles['loading-container']}>
                             <CircularProgress />
@@ -219,13 +458,20 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                                 <TableCell
                                                     key={index}
                                                     className={styles['header-cell']}
+                                                    sortDirection={orderBy === index ? order : false}
                                                 >
-                                                    <Typography
-                                                        variant="caption"
-                                                        className={styles['header-text']}
+                                                    <TableSortLabel
+                                                        active={orderBy === index}
+                                                        direction={orderBy === index ? order : 'asc'}
+                                                        onClick={() => handleRequestSort(index)}
                                                     >
-                                                        {formattedHeader}
-                                                    </Typography>
+                                                        <Typography
+                                                            variant="caption"
+                                                            className={styles['header-text']}
+                                                        >
+                                                            {formattedHeader}
+                                                        </Typography>
+                                                    </TableSortLabel>
                                                 </TableCell>
                                             );
                                         })}
@@ -254,16 +500,65 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                     )}
                 </Box>
 
+                {/* Filter Menu */}
+                <Menu
+                    anchorEl={filterMenuAnchor}
+                    open={Boolean(filterMenuAnchor)}
+                    onClose={() => setFilterMenuAnchor(null)}
+                >
+                    {tableData?.headers.map((header, index) => (
+                        <MenuItem
+                            key={index}
+                            onClick={() => {
+                                setSelectedFilterColumn(index);
+                                setFilterMenuAnchor(null);
+                            }}
+                        >
+                            {formatHeaderText(header)}
+                        </MenuItem>
+                    ))}
+                </Menu>
+
+                {/* Column Filter Dialog */}
+                {selectedFilterColumn >= 0 && (
+                    <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                            Filter: {formatHeaderText(tableData?.headers[selectedFilterColumn] || '')}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <TextField
+                                size="small"
+                                placeholder={columnTypes[selectedFilterColumn] === 'number' ? 'Minimum value...' : 'Filter text...'}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        const target = e.target as HTMLInputElement;
+                                        handleAddColumnFilter(selectedFilterColumn, target.value);
+                                        target.value = '';
+                                        setSelectedFilterColumn(-1);
+                                    }
+                                }}
+                                sx={{ flexGrow: 1 }}
+                            />
+                            <Button
+                                size="small"
+                                onClick={() => setSelectedFilterColumn(-1)}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    </Box>
+                )}
+
                 {/* Pagination */}
                 {tableData && !loading && !error && (
                     <TablePagination
                         component="div"
-                        count={tableData.rows.length}
+                        count={processedData.length}
                         page={page}
                         onPageChange={handleChangePage}
                         rowsPerPage={rowsPerPage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
-                        rowsPerPageOptions={[5, 10, 25, 50]}
+                        rowsPerPageOptions={[10, 25, 50, 100]}
                         className={styles.pagination}
                     />
                 )}
