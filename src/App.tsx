@@ -41,7 +41,7 @@ const App: React.FC = () => {
     const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
     const [homelandsData, setHomelandsData] = useState<FeatureCollection<Geometry, HawaiianHomelandProperties> | null>(null);
     const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [, setLoading] = useState<boolean>(true);
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
     const layerRef = useRef<L.GeoJSON | null>(null);
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
@@ -297,20 +297,15 @@ const App: React.FC = () => {
         homelandsLayerRef.current = layer;
     }
 
-    const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newDataset = e.target.value;
-        setActiveDataset(newDataset);
+    const handleDatasetChange = (value: string) => {
+        setActiveDataset(value);
         setActiveDatasetMetric('');
         setActiveFeature(null);
     };
 
-    const handleMetricChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setActiveDatasetMetric(e.target.value);
+    const handleMetricChange = (value: string) => {
+        setActiveDatasetMetric(value);
     };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     return (
         <div style={{ height: '100vh', width: '100%', display: 'flex' }}>
