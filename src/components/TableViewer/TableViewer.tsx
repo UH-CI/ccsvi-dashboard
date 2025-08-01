@@ -31,6 +31,7 @@ import {
     Clear,
     GetApp
 } from '@mui/icons-material';
+import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser.ts";
 import styles from './TableViewer.module.scss';
 
 interface DatasetInfo {
@@ -43,11 +44,6 @@ interface DatasetInfo {
 interface TableViewerProps {
     activeDataset: string;
     datasetInfo: DatasetInfo | null;
-}
-
-interface TableData {
-    headers: string[];
-    rows: string[][];
 }
 
 interface ColumnFilter {
@@ -90,7 +86,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                                             activeDataset,
                                                             datasetInfo
                                                         }) => {
-    const [tableData, setTableData] = useState<TableData | null>(null);
+    const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
@@ -126,70 +122,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
             setError(null);
 
             try {
-                const response = await fetch(`./data/vulnerability_datasets/${activeDataset}.csv`);
-                if (!response.ok) {
-                    throw new Error(`Failed to load dataset: ${response.statusText}`);
-                }
-
-                const csvText = await response.text();
-
-                // Manual parsing approach for this specific CSV format
-                const parseCustomCSV = (text: string) => {
-                    const lines = text.split(/\n/).filter(line => line.trim() !== '');
-                    const allRows: string[][] = [];
-
-                    for (const line of lines) {
-                        const row: string[] = [];
-                        let current = '';
-                        let inQuotes = false;
-                        let quoteChar = '';
-
-                        for (let i = 0; i < line.length; i++) {
-                            const char = line[i];
-
-                            if ((char === '"' || char === "'") && !inQuotes && (i === 0 || line[i-1] === ',')) {
-                                inQuotes = true;
-                                quoteChar = char;
-                                continue;
-                            }
-                            else if (char === quoteChar && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
-                                inQuotes = false;
-                                quoteChar = '';
-                                continue;
-                            }
-                            else if (char === ',' && !inQuotes) {
-                                row.push(current.trim());
-                                current = '';
-                                continue;
-                            }
-
-                            current += char;
-                        }
-
-                        if (current.trim() !== '') {
-                            row.push(current.trim());
-                        }
-
-                        if (row.length > 0) {
-                            allRows.push(row);
-                        }
-                    }
-
-                    return allRows;
-                };
-
-                const customParsedData = parseCustomCSV(csvText);
-
-                if (customParsedData.length > 1) {
-                    const headers = customParsedData[0];
-                    const rows = customParsedData.slice(1);
-                    setTableData({ headers, rows });
-                    setPage(0);
-                    return;
-                }
-
-                setError('Failed to parse CSV data');
-
+                const csvData = await loadAndParseCSV(`./data/vulnerability_datasets/${activeDataset}.csv`);
+                setTableData(csvData);
+                setPage(0);
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
                 setError(errorMessage);
