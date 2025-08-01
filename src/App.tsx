@@ -12,12 +12,13 @@ import {
     StyleFunction,
     HomelandsStyleFunction
 } from './types';
-// import styles from './App.module.scss'
 import { mapParams } from './config';
 import { MapLegend } from './components/MapLegend';
 import { ControlPanel } from './components/ControlPanel';
-import { GenericPointMarkers, usePointLayers } from './components/PointLayers.tsx';
-
+import { GenericPointMarkers } from './components/PointLayers/PointLayers.tsx';
+import { TableViewer } from './components/TableViewer';
+import { useMapSnapshot } from './hooks/useMapSnapshot';
+import { usePointLayers } from "./hooks/usePointLayers.ts";
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -46,6 +47,7 @@ const App: React.FC = () => {
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
 
     const { pointLayers, togglePointLayer } = usePointLayers();
+    const { mapRef, takeSnapshot } = useMapSnapshot();
 
     const activeDatasetObject = useMemo(() => {
         if (!dataset || !activeDataset) return null;
@@ -76,6 +78,20 @@ const App: React.FC = () => {
         }
         return '#333';
     }, [activeDatasetMetricObject]);
+
+    // Snapshot handler with error handling
+    const handleTakeSnapshot = useCallback(async () => {
+        try {
+            await takeSnapshot({
+                activeDataset,
+                activeDatasetMetric,
+                customPrefix: 'hawaii-census-map'
+            });
+        } catch (error) {
+            console.error('Snapshot error:', error);
+            alert('Failed to take snapshot. Please try again.');
+        }
+    }, [takeSnapshot, activeDataset, activeDatasetMetric]);
 
     // Load Hawaiian Homelands data when needed
     useEffect(() => {
@@ -113,14 +129,6 @@ const App: React.FC = () => {
                 const datasetData = await datasetResponse.json();
                 setDataset(datasetData)
 
-                // Check if active metric is valid in current dataset. Else set to empty.
-                if (activeDataset && datasetData[activeDataset]?.columnThresholds) {
-                    const availableMetrics = Object.keys(datasetData[activeDataset].columnThresholds);
-                    if (activeDatasetMetric && !availableMetrics.includes(activeDatasetMetric)) {
-                        setActiveDatasetMetric('');
-                    }
-                }
-
                 setLoading(false);
             } catch (err) {
                 console.error('Error loading data:', err);
@@ -130,6 +138,15 @@ const App: React.FC = () => {
 
         loadData();
     }, []);
+
+    useEffect(() => {
+        if (dataset && activeDataset && dataset[activeDataset]?.columnThresholds) {
+            const availableMetrics = Object.keys(dataset[activeDataset].columnThresholds);
+            if (activeDatasetMetric && !availableMetrics.includes(activeDatasetMetric)) {
+                setActiveDatasetMetric('');
+            }
+        }
+    }, [dataset, activeDataset, activeDatasetMetric]);
 
     // Helper function to extract specific metrics given current census data json structure
     const getMetricValue = useMemo(() => {
@@ -154,11 +171,6 @@ const App: React.FC = () => {
 
     // Style function for state census features
     const style: StyleFunction = useCallback((feature) => {
-        console.log("StyleFunction")
-        // console.log("feature: ", feature);
-        // console.log("metricsData: ", metricsData);
-        // console.log("activeDataset: ", activeDataset);
-        // console.log("activeDatasetMetric: ", activeDatasetMetric);
         if (!feature || !activeDatasetMetricObject) {
             return {
                 fillColor: '#cccccc',
@@ -204,7 +216,7 @@ const App: React.FC = () => {
             color: isActive ? '#654321' : '#8B4513',
             fillOpacity: isActive ? 0.8 : 0.5,
         };
-    }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
+    }, [getMetricValue, getColor, activeFeature]);
 
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
@@ -214,6 +226,13 @@ const App: React.FC = () => {
     }
 
     const MapEvents = () => {
+        const map = useMap();
+
+        // Store map reference for snapshot
+        useEffect(() => {
+            mapRef.current = map;
+        }, [map]);
+
         useMapEvents({
             click: () => {
                 setActiveFeature(null);
@@ -312,6 +331,7 @@ const App: React.FC = () => {
                     />
                     {geoData && metricsData && dataset && (
                         <GeoJSON
+                            key={`geojson-${activeDataset}-${activeDatasetMetric}`}
                             data={geoData}
                             style={style}
                             onEachFeature={onEachFeature}
@@ -325,6 +345,7 @@ const App: React.FC = () => {
                     )}
                     {hawaiianHomelands && homelandsData && (
                         <GeoJSON
+                            key={`homelands-${activeDataset}-${activeDatasetMetric}`}
                             data={homelandsData}
                             style={homelandStyle}
                             onEachFeature={onEachHomelandFeature}
@@ -346,6 +367,12 @@ const App: React.FC = () => {
                     activeDataset={activeDataset}
                     activeDatasetMetric={activeDatasetMetric}
                 />
+
+                {/* Add the DataTableViewer component here */}
+                <TableViewer
+                    activeDataset={activeDataset}
+                    datasetInfo={activeDatasetObject}
+                />
             </div>
 
             <ControlPanel
@@ -356,6 +383,7 @@ const App: React.FC = () => {
                 onMetricChange={handleMetricChange}
                 pointLayers={pointLayers}
                 togglePointLayer={togglePointLayer}
+                onTakeSnapshot={handleTakeSnapshot}
             />
         </div>
     );

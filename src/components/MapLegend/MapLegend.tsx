@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Dataset } from '../types';
-import styles from '../App.module.scss';
+import { Dataset } from '../../types';
+import styles from './MapLegend.module.scss';
 
 interface MapLegendProps {
     dataset: Dataset | null;
@@ -54,6 +54,10 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
     return (
         <div className={styles.legend}>
+            <div className={styles.legend__title}>
+                Map Legend
+                {/*{activeDatasetMetric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}*/}
+            </div>
             <div className={styles.legend__items}>
                 {legendLevels}
             </div>

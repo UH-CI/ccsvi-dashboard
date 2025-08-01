@@ -49,5 +49,22 @@ export interface HawaiianHomelandProperties {
     Shape_Area: number;
 }
 
+export interface PointLayerConfig {
+    id: string;
+    name: string;
+    visible: boolean;
+    icon: string;
+    color: string;
+    filePath: string;
+    data?: import('geojson').FeatureCollection<import('geojson').Point>;
+    popupConfig: {
+        titleField: string;
+        fields: Array<{
+            key: string;
+            label: string;
+        }>;
+    };
+}
+
 export type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 export type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;

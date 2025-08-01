@@ -1,0 +1,19 @@
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.generic-point-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.popup-content {
+  line-height: 1.4;
+
+  b {
+    font-weight: 600;
+  }
+}
