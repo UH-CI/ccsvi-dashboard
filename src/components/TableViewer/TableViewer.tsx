@@ -40,6 +40,25 @@ const detectColumnType = (columnData: string[]): 'number' | 'string' => {
     return numericValues.length > columnData.length * 0.7 ? 'number' : 'string';
 };
 
+// Clean header for display (separator replacement)
+const cleanHeaderForDisplay = (header: string): string => {
+    return header.replace(/!!/g, ' → ').trim();
+};
+
+// Calculate optimal column width based on header content
+const calculateColumnWidth = (header: string): number => {
+    const cleanedHeader = cleanHeaderForDisplay(header);
+
+    const baseWidth = cleanedHeader.length * 6;
+
+    const minWidth = 150;
+    const maxWidth = 400;
+
+    const calculatedWidth = Math.min(Math.max(baseWidth, minWidth), maxWidth);
+
+    return calculatedWidth;
+};
+
 export const TableViewer: React.FC<TableViewerProps> = ({
                                                             activeDataset,
                                                             datasetInfo
@@ -49,7 +68,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [isMinimized, setIsMinimized] = useState(false);
 
-    // Load CSV data when activeDataset changes
     useEffect(() => {
         const loadCsvData = async () => {
             if (!activeDataset) {
@@ -78,29 +96,43 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     const { columns, rows } = useMemo(() => {
         if (!tableData) return { columns: [], rows: [] };
 
-        // Detect column types
         const columnTypes = tableData.headers.map((_: string, index: number) => {
             const columnData = tableData.rows.map((row: string[]) => row[index] || '');
             return detectColumnType(columnData);
         });
 
-        // Create column definitions
-        const cols: GridColDef[] = tableData.headers.map((header: string, index: number) => ({
-            field: `col_${index}`,
-            headerName: header.replace(/!!/g, ' → '),
-            type: columnTypes[index],
-            flex: 1, // Use flex instead of fixed width
-            minWidth: 120, // Minimum width in pixels (MUI DataGrid doesn't support rem here)
-            valueFormatter: columnTypes[index] === 'number'
-                ? (value: unknown) => {
-                    if (value === null || value === undefined || value === '—') return '—';
-                    const num = parseFloat(String(value).replace(/[,$%]/g, ''));
-                    return isNaN(num) ? String(value) : num.toLocaleString();
-                }
-                : undefined,
-        }));
+        const cols: GridColDef[] = tableData.headers.map((header: string, index: number) => {
+            const displayHeader = cleanHeaderForDisplay(header);
+            const columnWidth = calculateColumnWidth(header);
 
-        // Create row data
+            return {
+                field: `col_${index}`,
+                headerName: displayHeader,
+                type: columnTypes[index],
+                width: columnWidth,
+                minWidth: 150,
+                maxWidth: 400,
+                resizable: true,
+                sortable: true,
+                filterable: true,
+                renderHeader: () => (
+                    <div
+                        title={displayHeader}
+                        className={styles['custom-header']}
+                    >
+                        {displayHeader}
+                    </div>
+                ),
+                valueFormatter: columnTypes[index] === 'number'
+                    ? (value: unknown) => {
+                        if (value === null || value === undefined || value === '—') return '—';
+                        const num = parseFloat(String(value).replace(/[,$%]/g, ''));
+                        return isNaN(num) ? String(value) : num.toLocaleString();
+                    }
+                    : undefined,
+            };
+        });
+
         const rowData = tableData.rows.map((row: string[], index: number) => {
             const rowObj: Record<string, string | number> = { id: index };
             row.forEach((cell: string, cellIndex: number) => {
@@ -126,7 +158,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
             elevation={3}
             className={`${styles['table-viewer']} ${isMinimized ? styles['table-viewer--minimized'] : styles['table-viewer--expanded']}`}
         >
-            {/* Header */}
             <Box
                 className={`${styles.header} ${isMinimized ? styles['header--minimized'] : styles['header--expanded']}`}
                 sx={{ backgroundColor: 'primary.main' }}
@@ -156,7 +187,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 </Box>
             </Box>
 
-            {/* Content */}
             <Collapse in={!isMinimized}>
                 <Box className={styles.content}>
                     {loading && (
@@ -183,35 +213,21 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                             fileName: `${activeDataset}_export`,
                                             delimiter: ',',
                                             utf8WithBom: true
-                                        }
+                                        },
+                                        showQuickFilter: true,
+                                        quickFilterProps: { debounceMs: 500 }
                                     }
                                 }}
                                 initialState={{
                                     pagination: {
-                                        paginationModel: { pageSize: 100 }
+                                        paginationModel: { pageSize: 25 }
                                     }
                                 }}
                                 pageSizeOptions={[10, 25, 50, 100]}
                                 disableRowSelectionOnClick
                                 density="compact"
-                                sx={{
-                                    height: '100%',
-                                    width: '100%',
-                                    '& .MuiDataGrid-main': {
-                                        overflow: 'hidden'
-                                    }
-                                }}
+                                className={styles['data-grid']}
                             />
-                            <Box sx={{
-                                p: 1,
-                                borderTop: 1,
-                                borderColor: 'divider',
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                minHeight: '3rem',
-                                alignItems: 'center'
-                            }}>
-                            </Box>
                         </Box>
                     )}
                 </Box>

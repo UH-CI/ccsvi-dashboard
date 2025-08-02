@@ -16,6 +16,7 @@
 
   &--expanded {
     max-height: 40vh;
+    min-height: 200px;
   }
 }
 
@@ -78,15 +79,114 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden; // Remove auto overflow from parent
   min-height: 0; // Allow flex item to shrink below content size
+  // Add explicit height calculation for DataGrid
+  height: calc(40vh - 3.125rem - 0.0625rem); // max-height minus header height minus border
 }
 
 .data-grid-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; // Allow flex item to shrink below content size
+  min-height: 0;
+  height: 100%;
+  // height: calc(40vh - 4rem); // Adjust based on header + padding
+}
+
+.data-grid {
+  height: 100%;
+  width: 100%;
+  border: none;
+
+  // DataGrid main container
+  :global(.MuiDataGrid-main) {
+    overflow: hidden;
+  }
+
+  // Virtual scroller - ensure scrolling works
+  :global(.MuiDataGrid-virtualScroller) {
+    overflow: auto !important;
+  }
+
+  // Column headers styling
+  :global(.MuiDataGrid-columnHeaders) {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 100px !important; // Increased height for multi-line headers
+    max-height: 120px !important; // Allow some flexibility
+  }
+
+  :global(.MuiDataGrid-columnHeader) {
+    background-color: #f5f5f5;
+    padding: 8px 4px !important;
+    height: auto !important;
+    min-height: 100px !important;
+
+    // Allow headers to wrap and display multiple lines
+    .MuiDataGrid-columnHeaderTitle {
+      white-space: normal !important;
+      line-height: 1.3 !important;
+      font-weight: bold !important;
+      font-size: 0.75rem !important;
+      overflow: visible !important;
+      text-overflow: unset !important;
+      word-break: break-word !important;
+      hyphens: auto !important;
+      height: auto !important;
+    }
+
+    // Ensure the header content container takes full height
+    .MuiDataGrid-columnHeaderTitleContainer {
+      height: 100% !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+    }
+  }
+
+  // Ensure header content is vertically centered
+  :global(.MuiDataGrid-columnHeader--withRightBorder) {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  // Custom tooltip styling for headers
+  :global(.MuiDataGrid-columnHeader[title]) {
+    cursor: help;
+  }
+
+  // Override any height restrictions that might be applied
+  :global(.MuiDataGrid-columnHeader .MuiDataGrid-columnHeaderTitleContainerContent) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  // Custom header content styling
+  .custom-header {
+    white-space: normal;
+    line-height: 1.4;
+    font-weight: bold;
+    font-size: 0.8rem;
+    padding: 8px 6px;
+    overflow: visible;
+    text-align: center;
+    word-break: break-word;
+    hyphens: auto;
+    height: 100%;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  // Row styling
+  :global(.MuiDataGrid-row:hover) {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  :global(.MuiDataGrid-row:nth-of-type(odd)) {
+    background-color: #fafafa;
+  }
 }
 
 .loading-container {
