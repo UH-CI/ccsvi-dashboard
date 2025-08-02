@@ -308,60 +308,78 @@ const App: React.FC = () => {
     };
 
     return (
-        <div style={{ height: '100vh', width: '100%', display: 'flex' }}>
-            <div style={{ flex: 1, height: '100%', position: 'relative'}}>
-                <MapContainer
-                    center={mapParams.mapCenter}
-                    zoom={mapParams.mapZoom}
-                    minZoom={mapParams.minZoom}
-                    maxBounds={mapParams.maxBounds}
-                    maxBoundsViscosity={mapParams.maxBoundsViscosity}
-                    style={{ height: '100%', width: '100%' }}
-                >
-                    <MapEvents/>
-                    {activeFeature && <MapComponent activeFeature={activeFeature}/>}
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; OpenStreetMap contributors'
-                    />
-                    {geoData && metricsData && dataset && (
-                        <GeoJSON
-                            key={`geojson-${activeDataset}-${activeDatasetMetric}`}
-                            data={geoData}
-                            style={style}
-                            onEachFeature={onEachFeature}
-                            ref={onGeoJsonLoad}
-                            eventHandlers={{
-                                click: (e) => {
-                                    e.originalEvent.stopPropagation();
-                                }
-                            }}
+        <div style={{
+            height: '100vh',
+            width: '100%',
+            display: 'flex',
+            overflow: 'hidden' // Prevent overall scrolling that could affect layout
+        }}>
+            <div style={{
+                flex: '1 1 auto', // Allow this to grow/shrink but maintain flex basis
+                minWidth: 0, // Allow shrinking below content size
+                height: '100%',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <div style={{
+                    flex: '1 1 auto',
+                    position: 'relative',
+                    minHeight: 0 // Allow map container to shrink
+                }}>
+                    <MapContainer
+                        center={mapParams.mapCenter}
+                        zoom={mapParams.mapZoom}
+                        minZoom={mapParams.minZoom}
+                        maxBounds={mapParams.maxBounds}
+                        maxBoundsViscosity={mapParams.maxBoundsViscosity}
+                        style={{ height: '100%', width: '100%' }}
+                    >
+                        <MapEvents/>
+                        {activeFeature && <MapComponent activeFeature={activeFeature}/>}
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; OpenStreetMap contributors'
                         />
-                    )}
-                    {hawaiianHomelands && homelandsData && (
-                        <GeoJSON
-                            key={`homelands-${activeDataset}-${activeDatasetMetric}`}
-                            data={homelandsData}
-                            style={homelandStyle}
-                            onEachFeature={onEachHomelandFeature}
-                            ref={onHomelandsLoad}
-                            eventHandlers={{
-                                click: (e) => {
-                                    e.originalEvent.stopPropagation();
-                                }
-                            }}
-                        />
-                    )}
-                    {pointLayers.map(layer => (
-                        <GenericPointMarkers key={layer.id} layer={layer} />
-                    ))}
-                </MapContainer>
+                        {geoData && metricsData && dataset && (
+                            <GeoJSON
+                                key={`geojson-${activeDataset}-${activeDatasetMetric}`}
+                                data={geoData}
+                                style={style}
+                                onEachFeature={onEachFeature}
+                                ref={onGeoJsonLoad}
+                                eventHandlers={{
+                                    click: (e) => {
+                                        e.originalEvent.stopPropagation();
+                                    }
+                                }}
+                            />
+                        )}
+                        {hawaiianHomelands && homelandsData && (
+                            <GeoJSON
+                                key={`homelands-${activeDataset}-${activeDatasetMetric}`}
+                                data={homelandsData}
+                                style={homelandStyle}
+                                onEachFeature={onEachHomelandFeature}
+                                ref={onHomelandsLoad}
+                                eventHandlers={{
+                                    click: (e) => {
+                                        e.originalEvent.stopPropagation();
+                                    }
+                                }}
+                            />
+                        )}
+                        {pointLayers.map(layer => (
+                            <GenericPointMarkers key={layer.id} layer={layer} />
+                        ))}
+                    </MapContainer>
 
-                <MapLegend
-                    dataset={dataset}
-                    activeDataset={activeDataset}
-                    activeDatasetMetric={activeDatasetMetric}
-                />
+                    <MapLegend
+                        dataset={dataset}
+                        activeDataset={activeDataset}
+                        activeDatasetMetric={activeDatasetMetric}
+                    />
+                </div>
 
                 <TableViewer
                     activeDataset={activeDataset}
@@ -369,16 +387,16 @@ const App: React.FC = () => {
                 />
             </div>
 
-            <ControlPanel
-                dataset={dataset}
-                activeDataset={activeDataset}
-                activeDatasetMetric={activeDatasetMetric}
-                onDatasetChange={handleDatasetChange}
-                onMetricChange={handleMetricChange}
-                pointLayers={pointLayers}
-                togglePointLayer={togglePointLayer}
-                onTakeSnapshot={handleTakeSnapshot}
-            />
+                <ControlPanel
+                    dataset={dataset}
+                    activeDataset={activeDataset}
+                    activeDatasetMetric={activeDatasetMetric}
+                    onDatasetChange={handleDatasetChange}
+                    onMetricChange={handleMetricChange}
+                    pointLayers={pointLayers}
+                    togglePointLayer={togglePointLayer}
+                    onTakeSnapshot={handleTakeSnapshot}
+                />
         </div>
     );
 };

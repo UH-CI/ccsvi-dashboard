@@ -1,10 +1,14 @@
 .control-panel {
   display: flex;
   width: 20vw;
+  min-width: 20vw;
+  max-width: 20vw;
   flex-direction: column;
   gap: 10px;
   background: #f5f5f5;
   padding: 1rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .control-title {
@@ -44,10 +48,6 @@
     outline: 2px solid #1976d2;
     outline-offset: 2px;
   }
-}
-
-.points-section {
-  // Container styling handled by parent gap
 }
 
 .points-title {

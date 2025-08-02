@@ -11,11 +11,11 @@
   flex-direction: column;
 
   &--minimized {
-    max-height: 3.125rem; // ~50px equivalent
+    max-height: 3.125rem;
   }
 
   &--expanded {
-    max-height: 40vh; // 40% of viewport height
+    max-height: 40vh;
   }
 }
 
