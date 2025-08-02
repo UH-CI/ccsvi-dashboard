@@ -363,7 +363,6 @@ const App: React.FC = () => {
                     activeDatasetMetric={activeDatasetMetric}
                 />
 
-                {/* Add the DataTableViewer component here */}
                 <TableViewer
                     activeDataset={activeDataset}
                     datasetInfo={activeDatasetObject}
