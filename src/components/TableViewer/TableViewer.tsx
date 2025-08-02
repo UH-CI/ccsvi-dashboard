@@ -8,7 +8,6 @@ import {
     Alert,
     IconButton,
     Chip,
-    Button
 } from '@mui/material';
 import {
     DataGrid,
@@ -17,7 +16,6 @@ import {
 import {
     KeyboardArrowUp,
     KeyboardArrowDown,
-    GetApp
 } from '@mui/icons-material';
 import { loadAndParseCSV, ParsedCSVData } from '../../utils/csvParser';
 import styles from './TableViewer.module.scss';
@@ -114,23 +112,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         return { columns: cols, rows: rowData };
     }, [tableData]);
 
-    const handleExport = () => {
-        if (!tableData) return;
-
-        const csvContent = [
-            tableData.headers.join(','),
-            ...tableData.rows.map((row: string[]) => row.join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${activeDataset}_export.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-
     const datasetLabel = useMemo(() => {
         if (!datasetInfo || !activeDataset) return activeDataset;
         return datasetInfo.metricLabel || activeDataset.replace(/_/g, ' ').toUpperCase();
@@ -195,6 +176,16 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                             <DataGrid
                                 rows={rows}
                                 columns={columns}
+                                showToolbar
+                                slotProps={{
+                                    toolbar: {
+                                        csvOptions: {
+                                            fileName: `${activeDataset}_export`,
+                                            delimiter: ',',
+                                            utf8WithBom: true
+                                        }
+                                    }
+                                }}
                                 initialState={{
                                     pagination: {
                                         paginationModel: { pageSize: 100 }
@@ -220,13 +211,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                 minHeight: '3rem',
                                 alignItems: 'center'
                             }}>
-                                <Button
-                                    size="small"
-                                    startIcon={<GetApp />}
-                                    onClick={handleExport}
-                                >
-                                    Export CSV
-                                </Button>
                             </Box>
                         </Box>
                     )}
