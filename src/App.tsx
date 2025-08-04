@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from 'react-leaflet';
-import { Feature, Geometry, FeatureCollection } from 'geojson';
+import { Feature, Geometry } from 'geojson';
 import L, { Layer, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import {
-    MetricsData,
-    Dataset,
     BlockGroupProperties,
     HawaiianHomelandProperties,
-    StyleFunction,
-    HomelandsStyleFunction
 } from './types';
+import {
+    createColorFunction,
+    createCensusStyleFunction,
+    createHomelandsStyleFunction
+} from './utils/mapStyling';
 import { mapParams } from './config';
 import { MapLegend } from './components/MapLegend';
 import { ControlPanel } from './components/ControlPanel';
@@ -19,6 +20,7 @@ import { GenericPointMarkers } from './components/PointLayers/PointLayers.tsx';
 import { TableViewer } from './components/TableViewer';
 import { useMapSnapshot } from './hooks/useMapSnapshot';
 import { usePointLayers } from "./hooks/usePointLayers.ts";
+import { useDataLoader } from './hooks/useDataLoader';
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -27,7 +29,6 @@ const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
         if (activeFeature && activeFeature.geometry) {
             const feature = L.geoJSON(activeFeature);
             const bounds = feature.getBounds();
-
             map.fitBounds(bounds);
         }
     }, [activeFeature, map]);
@@ -35,20 +36,32 @@ const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
 };
 
 const App: React.FC = () => {
-    const [dataset, setDataset] = useState<Dataset | null>(null);
+    // Dataset state
     const [activeDataset, setActiveDataset] = useState<string>('');
     const [activeDatasetMetric, setActiveDatasetMetric] = useState<string>('');
-    const [geoData, setGeoData] = useState<FeatureCollection<Geometry, BlockGroupProperties> | null>(null);
-    const [homelandsData, setHomelandsData] = useState<FeatureCollection<Geometry, HawaiianHomelandProperties> | null>(null);
-    const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
-    const [, setLoading] = useState<boolean>(true);
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
+
+    // Layer refs
     const layerRef = useRef<L.GeoJSON | null>(null);
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
 
+    // Custom hooks
     const { pointLayers, togglePointLayer } = usePointLayers();
     const { mapRef, takeSnapshot } = useMapSnapshot();
 
+    // Use the data loader hook
+    const {
+        dataset,
+        geoData,
+        homelandsData,
+        metricsData,
+        loading,
+        error,
+        isInitialDataLoaded,
+        hawaiianHomelands
+    } = useDataLoader(activeDataset);
+
+    // Derived state from loaded data
     const activeDatasetObject = useMemo(() => {
         if (!dataset || !activeDataset) return null;
         console.log("activeDatasetObject: ", dataset[activeDataset]);
@@ -61,84 +74,7 @@ const App: React.FC = () => {
         return activeDatasetObject.columnThresholds[activeDatasetMetric];
     }, [activeDatasetObject, activeDatasetMetric]);
 
-    const hawaiianHomelands = useMemo(() => {
-        return activeDatasetObject?.hawaiianHomelands || false;
-    }, [activeDatasetObject]);
-
-    const getColor = useCallback((value: number | null): string => {
-        if (value === null || !activeDatasetMetricObject) {
-            return '#cccccc';
-        }
-
-        for (let i = 0; i < activeDatasetMetricObject.thresholds?.length; i++) {
-            const threshold = activeDatasetMetricObject.thresholds[i];
-            if (value <= threshold) {
-                return activeDatasetMetricObject.colors[i];
-            }
-        }
-        return '#333';
-    }, [activeDatasetMetricObject]);
-
-    // Snapshot handler with error handling
-    const handleTakeSnapshot = useCallback(async () => {
-        try {
-            await takeSnapshot({
-                activeDataset,
-                activeDatasetMetric,
-                customPrefix: 'hawaii-census-map'
-            });
-        } catch (error) {
-            console.error('Snapshot error:', error);
-            alert('Failed to take snapshot. Please try again.');
-        }
-    }, [takeSnapshot, activeDataset, activeDatasetMetric]);
-
-    // Load Hawaiian Homelands data when needed
-    useEffect(() => {
-        const loadHomelandsData = async () => {
-            if (!hawaiianHomelands) {
-                setHomelandsData(null);
-                return;
-            }
-            if (homelandsData) return;
-            try {
-                const response = await fetch('./data/Census_Hawaiian_Homelands_hhl10.geojson');
-                const data = await response.json();
-                setHomelandsData(data);
-            } catch (err) {
-                console.error('Error loading Hawaiian Homelands data:', err);
-            }
-        };
-        loadHomelandsData();
-    }, [hawaiianHomelands, homelandsData]);
-
-    useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-
-            try {
-                const geoResponse = await fetch(mapParams.geoJsonPath);
-                const geoData = await geoResponse.json();
-                setGeoData(geoData);
-
-                const metricsResponse = await fetch(mapParams.datasetPath);
-                const metricsData = await metricsResponse.json();
-                setMetricsData(metricsData);
-
-                const datasetResponse = await fetch('./data/metrics/census_datasets_info.json');
-                const datasetData = await datasetResponse.json();
-                setDataset(datasetData)
-
-                setLoading(false);
-            } catch (err) {
-                console.error('Error loading data:', err);
-                setLoading(false);
-            }
-        };
-
-        loadData();
-    }, []);
-
+    // Validate metric when dataset changes
     useEffect(() => {
         if (dataset && activeDataset && dataset[activeDataset]?.columnThresholds) {
             const availableMetrics = Object.keys(dataset[activeDataset].columnThresholds);
@@ -148,7 +84,12 @@ const App: React.FC = () => {
         }
     }, [dataset, activeDataset, activeDatasetMetric]);
 
-    // Helper function to extract specific metrics given current census data json structure
+    // Color function
+    const getColor = useMemo(() => {
+        return createColorFunction(activeDatasetMetricObject);
+    }, [activeDatasetMetricObject]);
+
+    // Helper function to extract specific metrics
     const getMetricValue = useMemo(() => {
         if (!metricsData || !activeDataset || !activeDatasetMetric) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -169,55 +110,16 @@ const App: React.FC = () => {
         };
     }, [metricsData, activeDataset, activeDatasetMetric]);
 
-    // Style function for state census features
-    const style: StyleFunction = useCallback((feature) => {
-        if (!feature || !activeDatasetMetricObject) {
-            return {
-                fillColor: '#cccccc',
-                weight: 0.5,
-                opacity: 1,
-                color: '#333',
-                fillOpacity: 0.3
-            };
-        }
+    // Style function for census features
+    const style = useMemo(() => {
+        return createCensusStyleFunction(getColor, getMetricValue, activeFeature);
+    }, [getColor, getMetricValue, activeFeature]);
 
-        const geoid = feature.properties.geoid20;
-        const metricValue = getMetricValue(geoid);
-        const isActive = activeFeature?.properties?.geoid20 === geoid;
+    const homelandStyle = useMemo(() => {
+        return createHomelandsStyleFunction(getColor, getMetricValue, activeFeature);
+    }, [getColor, getMetricValue, activeFeature]);
 
-        return {
-            fillColor: getColor(metricValue),
-            weight: isActive ? 3 : 1,
-            opacity: 1,
-            color: isActive ? '#000' : '#333',
-            fillOpacity: isActive ? 0.8 : 0.5,
-        };
-    }, [activeDatasetMetricObject, getMetricValue, getColor, activeFeature]);
-
-    // Style function for Hawaiian Homelands
-    const homelandStyle: HomelandsStyleFunction = useCallback((feature) => {
-        if (!feature) {
-            return {
-                fillColor: '#cccccc',
-                weight: 0.5,
-                opacity: 1,
-                color: '#333',
-                fillOpacity: 0.3
-            };
-        }
-        const geoid = feature.properties.GEOID10;
-        const metricValue = getMetricValue(geoid);
-        const isActive = activeFeature?.properties?.GEOID10 === feature.properties.GEOID10;
-
-        return {
-            fillColor: getColor(metricValue),
-            weight: isActive ? 3 : 1,
-            opacity: 1,
-            color: isActive ? '#654321' : '#8B4513',
-            fillOpacity: isActive ? 0.8 : 0.5,
-        };
-    }, [getMetricValue, getColor, activeFeature]);
-
+    // Feature highlight handler
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
         const feature = layer.feature as Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties>;
@@ -225,10 +127,10 @@ const App: React.FC = () => {
         layer.bringToFront();
     }
 
+    // Map events component
     const MapEvents = () => {
         const map = useMap();
 
-        // Store map reference for snapshot
         useEffect(() => {
             mapRef.current = map;
         }, [map]);
@@ -241,6 +143,7 @@ const App: React.FC = () => {
         return null;
     };
 
+    // Feature handlers
     const onEachFeature = (
         feature: Feature<Geometry, BlockGroupProperties>,
         layer: Layer
@@ -261,7 +164,7 @@ const App: React.FC = () => {
                     <b>Block Group:</b> ${metricsData[geoid]?.block_group ?? 'N/A'}<br>
                     <b>Census Tract:</b> ${metricsData[geoid]?.census_tract ?? 'N/A'}<br>
                     <b>County:</b> ${metricsData[geoid]?.county ?? 'N/A'}<br>
-                    <b>${activeDatasetObject?.metricLabel}:</b> ${metricValue ?? 'N/A'}
+                    <b>${activeDatasetMetric}:</b> ${metricValue ?? 'N/A'}
                 </div>
             `);
         }
@@ -283,12 +186,13 @@ const App: React.FC = () => {
                 <div>
                     <b>Hawaiian Homeland:</b> ${feature.properties.NAME10}<br>
                     <b>Geo ID:</b> ${feature.properties.GEOID10}<br>
-                    ${activeDatasetObject?.metricLabel ? `<b>${activeDatasetObject.metricLabel}:</b> ${metricValue ?? 'N/A'}` : ''}
+                    ${activeDatasetMetric ? `<b>${activeDatasetMetric}:</b> ${metricValue ?? 'N/A'}` : ''}
                 </div>
             `);
         }
     };
 
+    // Layer reference handlers
     const onGeoJsonLoad = (layer: L.GeoJSON) => {
         layerRef.current = layer;
     }
@@ -297,6 +201,7 @@ const App: React.FC = () => {
         homelandsLayerRef.current = layer;
     }
 
+    // Event handlers
     const handleDatasetChange = (value: string) => {
         setActiveDataset(value);
         setActiveDatasetMetric('');
@@ -307,16 +212,72 @@ const App: React.FC = () => {
         setActiveDatasetMetric(value);
     };
 
+    // Snapshot handler
+    const handleTakeSnapshot = useCallback(async () => {
+        try {
+            await takeSnapshot({
+                activeDataset,
+                activeDatasetMetric,
+                customPrefix: 'hawaii-census-map'
+            });
+        } catch (error) {
+            console.error('Snapshot error:', error);
+            alert('Failed to take snapshot. Please try again.');
+        }
+    }, [takeSnapshot, activeDataset, activeDatasetMetric]);
+
+    // Error handling
+    if (error) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
+                <h2>Error loading data</h2>
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()}>
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    // Loading state
+    if (loading || !isInitialDataLoaded) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
+                <div>Loading data...</div>
+                {hawaiianHomelands && !homelandsData && (
+                    <div style={{ fontSize: '0.9em', opacity: 0.7 }}>
+                        Loading Hawaiian Homelands data...
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Main render
     return (
         <div style={{
             height: '100vh',
             width: '100%',
             display: 'flex',
-            overflow: 'hidden' // Prevent overall scrolling that could affect layout
+            overflow: 'hidden'
         }}>
             <div style={{
-                flex: '1 1 auto', // Allow this to grow/shrink but maintain flex basis
-                minWidth: 0, // Allow shrinking below content size
+                flex: '1 1 auto',
+                minWidth: 0,
                 height: '100%',
                 position: 'relative',
                 display: 'flex',
@@ -325,7 +286,7 @@ const App: React.FC = () => {
                 <div style={{
                     flex: '1 1 auto',
                     position: 'relative',
-                    minHeight: 0 // Allow map container to shrink
+                    minHeight: 0
                 }}>
                     <MapContainer
                         center={mapParams.mapCenter}
@@ -387,16 +348,16 @@ const App: React.FC = () => {
                 />
             </div>
 
-                <ControlPanel
-                    dataset={dataset}
-                    activeDataset={activeDataset}
-                    activeDatasetMetric={activeDatasetMetric}
-                    onDatasetChange={handleDatasetChange}
-                    onMetricChange={handleMetricChange}
-                    pointLayers={pointLayers}
-                    togglePointLayer={togglePointLayer}
-                    onTakeSnapshot={handleTakeSnapshot}
-                />
+            <ControlPanel
+                dataset={dataset}
+                activeDataset={activeDataset}
+                activeDatasetMetric={activeDatasetMetric}
+                onDatasetChange={handleDatasetChange}
+                onMetricChange={handleMetricChange}
+                pointLayers={pointLayers}
+                togglePointLayer={togglePointLayer}
+                onTakeSnapshot={handleTakeSnapshot}
+            />
         </div>
     );
 };
