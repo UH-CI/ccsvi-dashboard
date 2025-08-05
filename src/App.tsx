@@ -46,6 +46,7 @@ const App: React.FC = () => {
     // Layer refs
     const layerRef = useRef<L.GeoJSON | null>(null);
     const homelandsLayerRef = useRef<L.GeoJSON | null>(null);
+    const mapWrapperRef = useRef<HTMLDivElement>(null);
 
     // Custom hooks
     const { pointLayers, togglePointLayer } = usePointLayers();
@@ -233,11 +234,12 @@ const App: React.FC = () => {
                 activeDatasetMetric,
                 customPrefix: 'hawaii-census-map',
                 quality: 0.9
-            });
+            }, mapWrapperRef);
         } catch (error) {
             alert(`Failed to take snapshot. Please try again. ${error}`);
         }
     }, [takeSnapshot, activeDataset, activeDatasetMetric]);
+
 
     // Error handling
     if (error) {
@@ -270,7 +272,7 @@ const App: React.FC = () => {
     return (
         <div className={styles['app-container']}>
             <div className={styles['map-section']}>
-                <div className={styles['map-wrapper']}>
+                <div className={styles['map-wrapper']} ref={mapWrapperRef}>
                     <MapContainer
                         center={mapParams.mapCenter}
                         zoom={mapParams.mapZoom}

@@ -4,7 +4,7 @@ import { takeMapSnapshot, SnapshotOptions } from '../utils/snapshotUtils';
 
 export interface UseMapSnapshotReturn {
   mapRef: React.RefObject<LeafletMap | null>;
-  takeSnapshot: (options?: SnapshotOptions) => Promise<void>;
+  takeSnapshot: (options?: SnapshotOptions, wrapperRef?: React.RefObject<HTMLElement | null>) => Promise<void>;
   isSnapshotAvailable: boolean;
 }
 
@@ -15,17 +15,28 @@ export interface UseMapSnapshotReturn {
 export const useMapSnapshot = (): UseMapSnapshotReturn => {
   const mapRef = useRef<LeafletMap | null>(null);
 
-  const takeSnapshot = useCallback(async (options: SnapshotOptions = {}) => {
+  const takeSnapshot = useCallback(async (
+      options: SnapshotOptions = {},
+      wrapperRef?: React.RefObject<HTMLElement | null>
+  ) => {
     if (!mapRef.current) {
       throw new Error('Map reference not available');
     }
 
-    const mapContainer = mapRef.current.getContainer();
-
     // Wait a moment for any pending map updates to complete
     await new Promise(resolve => setTimeout(resolve, 200));
 
-    await takeMapSnapshot(mapContainer, options);
+    let targetElement: HTMLElement;
+
+    if (wrapperRef?.current) {
+      // Use the provided wrapper ref (includes legend)
+      targetElement = wrapperRef.current;
+    } else {
+      // Fallback to just the map container
+      targetElement = mapRef.current.getContainer();
+    }
+
+    await takeMapSnapshot(targetElement, options);
   }, []);
 
   const isSnapshotAvailable = mapRef.current !== null;
