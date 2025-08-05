@@ -4,6 +4,7 @@ import { Feature, Geometry } from 'geojson';
 import L, { Layer, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
+import styles from './App.module.scss';
 import {
     BlockGroupProperties,
     HawaiianHomelandProperties,
@@ -21,6 +22,7 @@ import { TableViewer } from './components/TableViewer';
 import { useMapSnapshot } from './hooks/useMapSnapshot';
 import { usePointLayers } from "./hooks/usePointLayers.ts";
 import { useDataLoader } from './hooks/useDataLoader';
+import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
 
 const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
     const map = useMap();
@@ -48,6 +50,12 @@ const App: React.FC = () => {
     // Custom hooks
     const { pointLayers, togglePointLayer } = usePointLayers();
     const { mapRef, takeSnapshot } = useMapSnapshot();
+
+    // Use the animated map resize hook (can be used outside MapContainer)
+    const { animateResize } = useAnimatedMapResize({
+        animationDuration: 300, // Match your CSS transition
+        updateInterval: 16,     // ~60fps
+    });
 
     // Use the data loader hook
     const {
@@ -126,6 +134,11 @@ const App: React.FC = () => {
         setActiveFeature(feature)
         layer.bringToFront();
     }
+
+    // Handle table size changes with smooth animation
+    const handleTableSizeChange = useCallback(() => {
+        animateResize(mapRef);
+    }, [animateResize, mapRef]);
 
     // Map events component
     const MapEvents = () => {
@@ -229,14 +242,7 @@ const App: React.FC = () => {
     // Error handling
     if (error) {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                flexDirection: 'column',
-                gap: '1rem'
-            }}>
+            <div className={styles['error-container']}>
                 <h2>Error loading data</h2>
                 <p>{error}</p>
                 <button onClick={() => window.location.reload()}>
@@ -249,17 +255,10 @@ const App: React.FC = () => {
     // Loading state for Hawaiian Homelands data
     if (loading || !isInitialDataLoaded) {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                flexDirection: 'column',
-                gap: '1rem'
-            }}>
+            <div className={styles['loading-container']}>
                 <div>Loading data...</div>
                 {hawaiianHomelands && !homelandsData && (
-                    <div style={{ fontSize: '0.9em', opacity: 0.7 }}>
+                    <div className={styles['loading-subtext']}>
                         Loading Hawaiian Homelands data...
                     </div>
                 )}
@@ -269,35 +268,18 @@ const App: React.FC = () => {
 
     // Main render
     return (
-        <div style={{
-            height: '100vh',
-            width: '100%',
-            display: 'flex',
-            overflow: 'hidden'
-        }}>
-            <div style={{
-                flex: '1 1 auto',
-                minWidth: 0,
-                height: '100%',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
-                <div style={{
-                    flex: '1 1 auto',
-                    position: 'relative',
-                    minHeight: 0,
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+        <div className={styles['app-container']}>
+            <div className={styles['map-section']}>
+                <div className={styles['map-wrapper']}>
                     <MapContainer
                         center={mapParams.mapCenter}
                         zoom={mapParams.mapZoom}
                         minZoom={mapParams.minZoom}
                         maxBounds={mapParams.maxBounds}
                         maxBoundsViscosity={mapParams.maxBoundsViscosity}
-                        style={{ height: '100%', width: '100%' }}
+                        className={styles['map-container']}
                     >
+                        <MapResizeHandler />
                         <MapEvents/>
                         {activeFeature && <MapComponent activeFeature={activeFeature}/>}
                         <TileLayer
@@ -347,6 +329,7 @@ const App: React.FC = () => {
                 <TableViewer
                     activeDataset={activeDataset}
                     datasetInfo={activeDatasetObject}
+                    onSizeChange={handleTableSizeChange}
                 />
             </div>
 

@@ -18,6 +18,7 @@ import {
     KeyboardArrowDown,
 } from '@mui/icons-material';
 import { loadAndParseCSV, ParsedCSVData } from '../../utils/csvParser';
+import { useTableResize } from '../../hooks/useTableResize';
 import styles from './TableViewer.module.scss';
 
 interface DatasetInfo {
@@ -30,9 +31,10 @@ interface DatasetInfo {
 interface TableViewerProps {
     activeDataset: string;
     datasetInfo: DatasetInfo | null;
+    onSizeChange?: (isCollapsed: boolean) => void;
+    initialCollapsed?: boolean;
 }
 
-// Helper function to detect column data type
 const detectColumnType = (columnData: string[]): 'number' | 'string' => {
     const numericValues = columnData.filter(val =>
         val && val !== '—' && !isNaN(Number(val.replace(/[,$%]/g, '')))
@@ -40,30 +42,32 @@ const detectColumnType = (columnData: string[]): 'number' | 'string' => {
     return numericValues.length > columnData.length * 0.7 ? 'number' : 'string';
 };
 
-// Clean header for display (separator replacement)
 const cleanHeaderForDisplay = (header: string): string => {
     return header.replace(/!!/g, ' → ').trim();
 };
 
-// Calculate optimal column width based on header content
 const calculateColumnWidth = (header: string): number => {
     const cleanedHeader = cleanHeaderForDisplay(header);
-
     const baseWidth = cleanedHeader.length * 6;
     const minWidth = 150;
     const maxWidth = 400;
-
     return Math.min(Math.max(baseWidth, minWidth), maxWidth);
 };
 
 export const TableViewer: React.FC<TableViewerProps> = ({
                                                             activeDataset,
-                                                            datasetInfo
+                                                            datasetInfo,
+                                                            onSizeChange,
+                                                            initialCollapsed = false
                                                         }) => {
     const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isMinimized, setIsMinimized] = useState(false);
+
+    const { isCollapsed, toggleCollapse } = useTableResize({
+        onSizeChange,
+        initialCollapsed
+    });
 
     useEffect(() => {
         const loadCsvData = async () => {
@@ -146,6 +150,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         return datasetInfo.metricLabel || activeDataset.replace(/_/g, ' ').toUpperCase();
     }, [activeDataset, datasetInfo]);
 
+    // Calculate content height for proper scrolling
+    const contentHeight = isCollapsed ? 0 : 'calc(40vh - 3.125rem)';
+
     if (!activeDataset) {
         return null;
     }
@@ -153,17 +160,17 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return (
         <Paper
             elevation={3}
-            className={`${styles['table-viewer']} ${isMinimized ? styles['table-viewer--minimized'] : styles['table-viewer--expanded']}`}
+            className={`${styles['table-viewer']} ${isCollapsed ? styles['table-viewer--collapsed'] : styles['table-viewer--expanded']}`}
         >
             <Box
-                className={`${styles.header} ${isMinimized ? styles['header--minimized'] : styles['header--expanded']}`}
+                className={`${styles.header} ${isCollapsed ? styles['header--collapsed'] : styles['header--expanded']}`}
                 sx={{ backgroundColor: 'primary.main' }}
             >
                 <Box className={styles['header-content']}>
                     <Typography variant="h6" component="div" className={styles.title}>
                         Dataset: {datasetLabel}
                     </Typography>
-                    {!isMinimized && rows.length > 0 && (
+                    {!isCollapsed && rows.length > 0 && (
                         <Chip
                             label={`${rows.length} rows`}
                             size="small"
@@ -175,17 +182,28 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 <Box className={styles['header-actions']}>
                     <IconButton
                         size="small"
-                        onClick={() => setIsMinimized(!isMinimized)}
+                        onClick={toggleCollapse}
                         className={styles['toggle-button']}
                         sx={{ color: 'white' }}
                     >
-                        {isMinimized ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                        {isCollapsed ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                     </IconButton>
                 </Box>
             </Box>
 
-            <Collapse in={!isMinimized}>
-                <Box className={styles.content}>
+            {/* Using Collapse with timeout to sync with CSS transition */}
+            <Collapse
+                in={!isCollapsed}
+                timeout={300} // Match the CSS transition duration
+                unmountOnExit={false} // Keep content mounted to prevent layout shift
+            >
+                <Box
+                    className={styles.content}
+                    sx={{
+                        height: contentHeight, // Explicit height for scrolling
+                        overflow: 'hidden' // Establish scrolling context
+                    }}
+                >
                     {loading && (
                         <Box className={styles['loading-container']}>
                             <CircularProgress />
@@ -203,7 +221,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                             <DataGrid
                                 rows={rows}
                                 columns={columns}
-                                showToolbar
+                                slots={{
+                                    toolbar: undefined, // Enable toolbar
+                                }}
                                 slotProps={{
                                     toolbar: {
                                         csvOptions: {
@@ -223,7 +243,78 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                 pageSizeOptions={[10, 25, 50, 100]}
                                 disableRowSelectionOnClick
                                 density="compact"
-                                className={styles['data-grid']}
+                                hideFooter={false}
+                                // CRITICAL: All DataGrid styling moved to sx prop to avoid conflicts
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: 'none',
+
+                                    // Main container - allow scrolling
+                                    '& .MuiDataGrid-main': {
+                                        overflow: 'hidden'
+                                    },
+
+                                    // Virtual scroller - enable scrollbars
+                                    '& .MuiDataGrid-virtualScroller': {
+                                        overflow: 'auto !important'
+                                    },
+
+                                    // Column headers styling
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        backgroundColor: '#f5f5f5',
+                                        borderBottom: '1px solid #e0e0e0',
+                                        minHeight: '100px !important',
+                                        maxHeight: '120px !important'
+                                    },
+
+                                    '& .MuiDataGrid-columnHeader': {
+                                        backgroundColor: '#f5f5f5',
+                                        padding: '8px 4px !important',
+                                        height: 'auto !important',
+                                        minHeight: '100px !important',
+
+                                        '& .MuiDataGrid-columnHeaderTitle': {
+                                            whiteSpace: 'normal !important',
+                                            lineHeight: '1.3 !important',
+                                            fontWeight: 'bold !important',
+                                            fontSize: '0.75rem !important',
+                                            overflow: 'visible !important',
+                                            textOverflow: 'unset !important',
+                                            wordBreak: 'break-word !important',
+                                            hyphens: 'auto',
+                                            height: 'auto !important'
+                                        },
+
+                                        '& .MuiDataGrid-columnHeaderTitleContainer': {
+                                            height: '100% !important',
+                                            flexDirection: 'column !important',
+                                            justifyContent: 'center !important',
+                                            alignItems: 'center !important'
+                                        }
+                                    },
+
+                                    // Header borders
+                                    '& .MuiDataGrid-columnHeader--withRightBorder': {
+                                        borderRight: '1px solid #e0e0e0'
+                                    },
+
+                                    // Footer styling
+                                    '& .MuiDataGrid-footerContainer': {
+                                        borderTop: '1px solid #e0e0e0',
+                                        backgroundColor: '#f5f5f5',
+                                        flexShrink: 0
+                                    },
+
+                                    // Row styling
+                                    '& .MuiDataGrid-row:hover': {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    },
+
+                                    '& .MuiDataGrid-row:nth-of-type(odd)': {
+                                        backgroundColor: '#fafafa'
+                                    }
+                                }}
                             />
                         </Box>
                     )}
