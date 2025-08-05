@@ -116,6 +116,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 resizable: true,
                 sortable: true,
                 filterable: true,
+                hideable: true, // Allow columns to be hidden via toolbar
                 renderHeader: () => (
                     <div
                         title={displayHeader}
@@ -221,9 +222,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                             <DataGrid
                                 rows={rows}
                                 columns={columns}
-                                slots={{
-                                    toolbar: undefined, // Enable toolbar
-                                }}
+                                showToolbar // Modern way to enable toolbar
                                 slotProps={{
                                     toolbar: {
                                         csvOptions: {
@@ -231,8 +230,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                             delimiter: ',',
                                             utf8WithBom: true
                                         },
-                                        showQuickFilter: true,
-                                        quickFilterProps: { debounceMs: 500 }
+                                        printOptions: {
+                                            hideFooter: true,
+                                            hideToolbar: true,
+                                        }
                                     }
                                 }}
                                 initialState={{
@@ -244,11 +245,30 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                 disableRowSelectionOnClick
                                 density="compact"
                                 hideFooter={false}
+                                // Enable column management
+                                disableColumnMenu={false}
+                                disableColumnFilter={false}
+                                disableColumnSelector={false}
+                                disableDensitySelector={false}
                                 // CRITICAL: All DataGrid styling moved to sx prop to avoid conflicts
                                 sx={{
                                     height: '100%',
                                     width: '100%',
                                     border: 'none',
+
+                                    // Toolbar styling
+                                    '& .MuiDataGrid-toolbarContainer': {
+                                        padding: '8px 16px',
+                                        borderBottom: '1px solid #e0e0e0',
+                                        backgroundColor: '#f9f9f9',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
+                                        '& .MuiButton-root': {
+                                            fontSize: '0.75rem',
+                                            padding: '4px 8px',
+                                            minWidth: 'auto'
+                                        }
+                                    },
 
                                     // Main container - allow scrolling
                                     '& .MuiDataGrid-main': {
@@ -270,7 +290,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
                                     '& .MuiDataGrid-columnHeader': {
                                         backgroundColor: '#f5f5f5',
-                                        padding: '8px 4px !important',
+                                        padding: '4px 4px !important',
                                         height: 'auto !important',
                                         minHeight: '100px !important',
 
