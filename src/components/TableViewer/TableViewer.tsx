@@ -50,13 +50,10 @@ const calculateColumnWidth = (header: string): number => {
     const cleanedHeader = cleanHeaderForDisplay(header);
 
     const baseWidth = cleanedHeader.length * 6;
-
     const minWidth = 150;
     const maxWidth = 400;
 
-    const calculatedWidth = Math.min(Math.max(baseWidth, minWidth), maxWidth);
-
-    return calculatedWidth;
+    return Math.min(Math.max(baseWidth, minWidth), maxWidth);
 };
 
 export const TableViewer: React.FC<TableViewerProps> = ({

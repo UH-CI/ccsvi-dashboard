@@ -246,7 +246,7 @@ const App: React.FC = () => {
         );
     }
 
-    // Loading state
+    // Loading state for Hawaiian Homelands data
     if (loading || !isInitialDataLoaded) {
         return (
             <div style={{
@@ -286,7 +286,9 @@ const App: React.FC = () => {
                 <div style={{
                     flex: '1 1 auto',
                     position: 'relative',
-                    minHeight: 0
+                    minHeight: 0,
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}>
                     <MapContainer
                         center={mapParams.mapCenter}
