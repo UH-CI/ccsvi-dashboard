@@ -49,43 +49,117 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
 };
 
 /**
- * Simple approach: Take a screenshot of the entire map container
- * This captures everything as the user sees it
+ * Wait for all map elements to be fully loaded
+ */
+const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
+  return new Promise((resolve) => {
+    // Wait for tiles
+    const tiles = mapContainer.querySelectorAll('.leaflet-tile');
+    const images = mapContainer.querySelectorAll('img');
+
+    let loadingCount = 0;
+    const checkComplete = () => {
+      loadingCount--;
+      if (loadingCount <= 0) {
+        // Add delay for final rendering
+        setTimeout(resolve, 300);
+      }
+    };
+
+    // Check tiles
+    tiles.forEach((tile) => {
+      const img = tile as HTMLImageElement;
+      if (!img.complete && img.src) {
+        loadingCount++;
+        img.addEventListener('load', checkComplete, { once: true });
+        img.addEventListener('error', checkComplete, { once: true });
+      }
+    });
+
+    // Check other images
+    images.forEach((img) => {
+      if (!img.complete && img.src && !img.src.includes('data:')) {
+        loadingCount++;
+        img.addEventListener('load', checkComplete, { once: true });
+        img.addEventListener('error', checkComplete, { once: true });
+      }
+    });
+
+    if (loadingCount === 0) {
+      setTimeout(resolve, 300);
+    }
+  });
+};
+
+/**
+ * Take a map snapshot using dom-to-image-more
+ * Captures all layers including GeoJSON features and point markers
  */
 export const takeMapSnapshot = async (
     mapContainer: HTMLElement,
     options: SnapshotOptions = {}
 ): Promise<void> => {
   try {
-    // Dynamic import to avoid blocking main thread during app initialization
-    const html2canvas = (await import('html2canvas')).default;
+    // Wait for all elements to load
+    await waitForMapElements(mapContainer);
 
-    // Simple, reliable options that work well with Leaflet
-    const canvas = await html2canvas(mapContainer, {
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      height: mapContainer.offsetHeight,
-      width: mapContainer.offsetWidth
-    });
+    // Dynamic import
+    const domtoimage = (await import('dom-to-image-more')).default;
 
-    // Convert canvas to blob
-    const blob = await new Promise<Blob | null>((resolve) => {
-      const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png';
-      canvas.toBlob(resolve, mimeType, options.quality);
-    });
+    const format = options.format || 'png';
+    const quality = options.quality || 0.9;
+
+    let dataUrl: string;
+
+    if (format === 'jpeg') {
+      dataUrl = await domtoimage.toJpeg(mapContainer, {
+        quality,
+        bgcolor: '#ffffff',
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        filter: (node: HTMLElement) => {
+          // Include all nodes but exclude some problematic elements
+          if (node.classList) {
+            // Exclude attribution and zoom controls if they cause issues
+            return !node.classList.contains('leaflet-control-attribution') &&
+                !node.classList.contains('leaflet-bar');
+          }
+          return true;
+        }
+      });
+    } else {
+      dataUrl = await domtoimage.toPng(mapContainer, {
+        bgcolor: '#ffffff',
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        },
+        filter: (node: HTMLElement) => {
+          // Include all nodes but exclude some problematic elements
+          if (node.classList) {
+            // Keep all map layers, just exclude controls that might cause issues
+            return !node.classList.contains('leaflet-control-attribution') &&
+                !node.classList.contains('leaflet-bar');
+          }
+          return true;
+        }
+      });
+    }
+
+    // Convert data URL to blob
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
 
     if (!blob) {
       throw new Error('Failed to create image blob');
     }
 
-    // Generate filename and download
     const filename = generateSnapshotFilename(options);
     downloadBlob(blob, filename);
 
-    console.log('Snapshot saved as:', filename);
   } catch (error) {
-    console.error('Error taking snapshot:', error);
-    throw new Error('Failed to take snapshot. Please try again.');
+    throw new Error(`Failed to take snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };

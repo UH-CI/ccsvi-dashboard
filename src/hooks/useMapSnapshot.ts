@@ -9,8 +9,8 @@ export interface UseMapSnapshotReturn {
 }
 
 /**
- * Custom hook for managing map snapshots
- * Provides a map reference and snapshot functionality
+ * Custom hook for managing map snapshots using dom-to-image-more
+ * Captures all layers including GeoJSON features and point markers
  */
 export const useMapSnapshot = (): UseMapSnapshotReturn => {
   const mapRef = useRef<LeafletMap | null>(null);
@@ -21,6 +21,10 @@ export const useMapSnapshot = (): UseMapSnapshotReturn => {
     }
 
     const mapContainer = mapRef.current.getContainer();
+
+    // Wait a moment for any pending map updates to complete
+    await new Promise(resolve => setTimeout(resolve, 200));
+
     await takeMapSnapshot(mapContainer, options);
   }, []);
 

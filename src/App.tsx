@@ -231,11 +231,11 @@ const App: React.FC = () => {
             await takeSnapshot({
                 activeDataset,
                 activeDatasetMetric,
-                customPrefix: 'hawaii-census-map'
+                customPrefix: 'hawaii-census-map',
+                quality: 0.9
             });
         } catch (error) {
-            console.error('Snapshot error:', error);
-            alert('Failed to take snapshot. Please try again.');
+            alert(`Failed to take snapshot. Please try again. ${error}`);
         }
     }, [takeSnapshot, activeDataset, activeDatasetMetric]);
 
