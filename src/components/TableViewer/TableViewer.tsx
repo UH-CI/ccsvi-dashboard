@@ -1,0 +1,345 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+    Paper,
+    Typography,
+    Box,
+    Collapse,
+    CircularProgress,
+    Alert,
+    IconButton,
+    Chip,
+} from '@mui/material';
+import {
+    DataGrid,
+    GridColDef
+} from '@mui/x-data-grid';
+import {
+    KeyboardArrowUp,
+    KeyboardArrowDown,
+} from '@mui/icons-material';
+import { loadAndParseCSV, ParsedCSVData } from '../../utils/csvParser';
+import { useTableResize } from '../../hooks/useTableResize';
+import styles from './TableViewer.module.scss';
+
+interface DatasetInfo {
+    metricName?: string;
+    metricLabel?: string;
+    hawaiianHomelands?: boolean;
+    columnThresholds?: Record<string, unknown>;
+}
+
+interface TableViewerProps {
+    activeDataset: string;
+    datasetInfo: DatasetInfo | null;
+    onSizeChange?: (isCollapsed: boolean) => void;
+    initialCollapsed?: boolean;
+}
+
+const detectColumnType = (columnData: string[]): 'number' | 'string' => {
+    const numericValues = columnData.filter(val =>
+        val && val !== '—' && !isNaN(Number(val.replace(/[,$%]/g, '')))
+    );
+    return numericValues.length > columnData.length * 0.7 ? 'number' : 'string';
+};
+
+const cleanHeaderForDisplay = (header: string): string => {
+    return header.replace(/!!/g, ' → ').trim();
+};
+
+const calculateColumnWidth = (header: string): number => {
+    const cleanedHeader = cleanHeaderForDisplay(header);
+    const baseWidth = cleanedHeader.length * 6;
+    const minWidth = 150;
+    const maxWidth = 400;
+    return Math.min(Math.max(baseWidth, minWidth), maxWidth);
+};
+
+export const TableViewer: React.FC<TableViewerProps> = ({
+                                                            activeDataset,
+                                                            datasetInfo,
+                                                            onSizeChange,
+                                                            initialCollapsed = false
+                                                        }) => {
+    const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const { isCollapsed, toggleCollapse } = useTableResize({
+        onSizeChange,
+        initialCollapsed
+    });
+
+    useEffect(() => {
+        const loadCsvData = async () => {
+            if (!activeDataset) {
+                setTableData(null);
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const csvData = await loadAndParseCSV(`./data/vulnerability_datasets/${activeDataset}.csv`);
+                setTableData(csvData);
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
+                setError(errorMessage);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadCsvData();
+    }, [activeDataset]);
+
+    // Convert CSV data to DataGrid format
+    const { columns, rows } = useMemo(() => {
+        if (!tableData) return { columns: [], rows: [] };
+
+        const columnTypes = tableData.headers.map((_: string, index: number) => {
+            const columnData = tableData.rows.map((row: string[]) => row[index] || '');
+            return detectColumnType(columnData);
+        });
+
+        const cols: GridColDef[] = tableData.headers.map((header: string, index: number) => {
+            const displayHeader = cleanHeaderForDisplay(header);
+            const columnWidth = calculateColumnWidth(header);
+
+            return {
+                field: `col_${index}`,
+                headerName: displayHeader,
+                type: columnTypes[index],
+                width: columnWidth,
+                minWidth: 150,
+                maxWidth: 400,
+                resizable: true,
+                sortable: true,
+                filterable: true,
+                hideable: true, // Allow columns to be hidden via toolbar
+                renderHeader: () => (
+                    <div
+                        title={displayHeader}
+                        className={styles['custom-header']}
+                    >
+                        {displayHeader}
+                    </div>
+                ),
+                valueFormatter: columnTypes[index] === 'number'
+                    ? (value: unknown) => {
+                        if (value === null || value === undefined || value === '—') return '—';
+                        const num = parseFloat(String(value).replace(/[,$%]/g, ''));
+                        return isNaN(num) ? String(value) : num.toLocaleString();
+                    }
+                    : undefined,
+            };
+        });
+
+        const rowData = tableData.rows.map((row: string[], index: number) => {
+            const rowObj: Record<string, string | number> = { id: index };
+            row.forEach((cell: string, cellIndex: number) => {
+                rowObj[`col_${cellIndex}`] = cell || '—';
+            });
+            return rowObj;
+        });
+
+        return { columns: cols, rows: rowData };
+    }, [tableData]);
+
+    const datasetLabel = useMemo(() => {
+        if (!datasetInfo || !activeDataset) return activeDataset;
+        return datasetInfo.metricLabel || activeDataset.replace(/_/g, ' ').toUpperCase();
+    }, [activeDataset, datasetInfo]);
+
+    // Calculate content height for proper scrolling
+    const contentHeight = isCollapsed ? 0 : 'calc(40vh - 3.125rem)';
+
+    if (!activeDataset) {
+        return null;
+    }
+
+    return (
+        <Paper
+            elevation={3}
+            className={`${styles['table-viewer']} ${isCollapsed ? styles['table-viewer--collapsed'] : styles['table-viewer--expanded']}`}
+        >
+            <Box
+                className={`${styles.header} ${isCollapsed ? styles['header--collapsed'] : styles['header--expanded']}`}
+                sx={{ backgroundColor: 'primary.main' }}
+            >
+                <Box className={styles['header-content']}>
+                    <Typography variant="h6" component="div" className={styles.title}>
+                        Dataset: {datasetLabel}
+                    </Typography>
+                    {!isCollapsed && rows.length > 0 && (
+                        <Chip
+                            label={`${rows.length} rows`}
+                            size="small"
+                            className={styles.chip}
+                        />
+                    )}
+                </Box>
+
+                <Box className={styles['header-actions']}>
+                    <IconButton
+                        size="small"
+                        onClick={toggleCollapse}
+                        className={styles['toggle-button']}
+                        sx={{ color: 'white' }}
+                    >
+                        {isCollapsed ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                    </IconButton>
+                </Box>
+            </Box>
+
+            {/* Using Collapse with timeout to sync with CSS transition */}
+            <Collapse
+                in={!isCollapsed}
+                timeout={300} // Match the CSS transition duration
+                unmountOnExit={false} // Keep content mounted to prevent layout shift
+            >
+                <Box
+                    className={styles.content}
+                    sx={{
+                        height: contentHeight, // Explicit height for scrolling
+                        overflow: 'hidden' // Establish scrolling context
+                    }}
+                >
+                    {loading && (
+                        <Box className={styles['loading-container']}>
+                            <CircularProgress />
+                        </Box>
+                    )}
+
+                    {error && (
+                        <Alert severity="error" className={styles['error-alert']}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    {tableData && !loading && !error && (
+                        <Box className={styles['data-grid-container']}>
+                            <DataGrid
+                                rows={rows}
+                                columns={columns}
+                                showToolbar // Modern way to enable toolbar
+                                slotProps={{
+                                    toolbar: {
+                                        csvOptions: {
+                                            fileName: `${activeDataset}_export`,
+                                            delimiter: ',',
+                                            utf8WithBom: true
+                                        },
+                                        printOptions: {
+                                            hideFooter: true,
+                                            hideToolbar: true,
+                                        }
+                                    }
+                                }}
+                                initialState={{
+                                    pagination: {
+                                        paginationModel: { pageSize: 25 }
+                                    }
+                                }}
+                                pageSizeOptions={[10, 25, 50, 100]}
+                                disableRowSelectionOnClick
+                                density="compact"
+                                hideFooter={false}
+                                // Enable column management
+                                disableColumnMenu={false}
+                                disableColumnFilter={false}
+                                disableColumnSelector={false}
+                                disableDensitySelector={false}
+                                // CRITICAL: All DataGrid styling moved to sx prop to avoid conflicts
+                                sx={{
+                                    height: '100%',
+                                    width: '100%',
+                                    border: 'none',
+
+                                    // Toolbar styling
+                                    '& .MuiDataGrid-toolbarContainer': {
+                                        padding: '8px 16px',
+                                        borderBottom: '1px solid #e0e0e0',
+                                        backgroundColor: '#f9f9f9',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
+                                        '& .MuiButton-root': {
+                                            fontSize: '0.75rem',
+                                            padding: '4px 8px',
+                                            minWidth: 'auto'
+                                        }
+                                    },
+
+                                    // Main container - allow scrolling
+                                    '& .MuiDataGrid-main': {
+                                        overflow: 'hidden'
+                                    },
+
+                                    // Virtual scroller - enable scrollbars
+                                    '& .MuiDataGrid-virtualScroller': {
+                                        overflow: 'auto !important'
+                                    },
+
+                                    // Column headers styling
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        backgroundColor: '#f5f5f5',
+                                        borderBottom: '1px solid #e0e0e0',
+                                        minHeight: '100px !important',
+                                        maxHeight: '120px !important'
+                                    },
+
+                                    '& .MuiDataGrid-columnHeader': {
+                                        backgroundColor: '#f5f5f5',
+                                        padding: '4px 4px !important',
+                                        height: 'auto !important',
+                                        minHeight: '100px !important',
+
+                                        '& .MuiDataGrid-columnHeaderTitle': {
+                                            whiteSpace: 'normal !important',
+                                            lineHeight: '1.3 !important',
+                                            fontWeight: 'bold !important',
+                                            fontSize: '0.75rem !important',
+                                            overflow: 'visible !important',
+                                            textOverflow: 'unset !important',
+                                            wordBreak: 'break-word !important',
+                                            hyphens: 'auto',
+                                            height: 'auto !important'
+                                        },
+
+                                        '& .MuiDataGrid-columnHeaderTitleContainer': {
+                                            height: '100% !important',
+                                            flexDirection: 'column !important',
+                                            justifyContent: 'center !important',
+                                            alignItems: 'center !important'
+                                        }
+                                    },
+
+                                    // Header borders
+                                    '& .MuiDataGrid-columnHeader--withRightBorder': {
+                                        borderRight: '1px solid #e0e0e0'
+                                    },
+
+                                    // Footer styling
+                                    '& .MuiDataGrid-footerContainer': {
+                                        borderTop: '1px solid #e0e0e0',
+                                        backgroundColor: '#f5f5f5',
+                                        flexShrink: 0
+                                    },
+
+                                    // Row styling
+                                    '& .MuiDataGrid-row:hover': {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    },
+
+                                    '& .MuiDataGrid-row:nth-of-type(odd)': {
+                                        backgroundColor: '#fafafa'
+                                    }
+                                }}
+                            />
+                        </Box>
+                    )}
+                </Box>
+            </Collapse>
+        </Paper>
+    );
+};
