@@ -7,7 +7,7 @@ export const usePointLayers = () => {
 
     const loadPointLayersConfig = useCallback(async () => {
         try {
-            const response = await fetch('/data/point_data/point_layers.json');
+            const response = await fetch(`${import.meta.env.BASE_URL}data/point_data/point_layers.json`);
             const config = await response.json();
             setPointLayers(config.pointLayers);
         } catch (err) {
