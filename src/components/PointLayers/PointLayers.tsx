@@ -40,7 +40,7 @@ export const GenericPointMarkers: React.FC<{
     });
 
     const renderPopupContent = (feature: Feature<Point>) => {
-        const title = feature.properties?.[layer.popupConfig.titleField] || 'Unknown';
+        const title = feature.properties?.[layer.popupConfig.titleField] || '';
 
         const fields = layer.popupConfig.fields
             .map(field => {

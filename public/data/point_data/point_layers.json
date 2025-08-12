@@ -95,6 +95,21 @@
           { "key": "city", "label": "City" }
         ]
       }
+    },
+    {
+      "id": "bridges",
+      "name": "Bridges",
+      "visible": false,
+      "icon": "FaBridge",
+      "color": "#6c757d",
+      "filePath": "/data/point_data/National_Bridge_Inventory.geojson",
+      "popupConfig": {
+        "fields": [
+          {"key":  "structure_", "label": "Structure ID"},
+          { "key": "year_built", "label": "Year Built" },
+          {"key":  "bridge_con", "label":  "Bridge Condition"}
+        ]
+      }
     }
   ]
 }
