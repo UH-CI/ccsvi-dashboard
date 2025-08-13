@@ -17,7 +17,8 @@ export const usePointLayers = () => {
 
     const loadPointData = useCallback(async (layer: PointLayerConfig): Promise<FeatureCollection<Point> | null> => {
         try {
-            const response = await fetch(layer.filePath);
+            const url = `${import.meta.env.BASE_URL}${layer.filePath}`;
+            const response = await fetch(url);
             return await response.json();
         } catch (err) {
             console.error(`Error loading ${layer.name} data:`, err);

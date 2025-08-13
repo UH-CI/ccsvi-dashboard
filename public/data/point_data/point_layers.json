@@ -6,7 +6,7 @@
       "visible": false,
       "icon": "FaCircle",
       "color": "#FF0000",
-      "filePath": "/data/point_data/Fire_Stations_(Statewide).geojson",
+      "filePath": "data/point_data/Fire_Stations_(Statewide).geojson",
       "popupConfig": {
         "titleField": "name",
         "fields": []
@@ -18,7 +18,7 @@
       "visible": false,
       "icon": "FaSquare",
       "color": "#00BFFF",
-      "filePath": "/data/point_data/Hospitals.geojson",
+      "filePath": "data/point_data/Hospitals.geojson",
       "popupConfig": {
         "titleField": "name",
         "fields": []
@@ -30,7 +30,7 @@
       "visible": false,
       "icon": "FaPlay",
       "color": "#000080",
-      "filePath": "/data/point_data/Police_Stations_(Statewide).geojson",
+      "filePath": "data/point_data/Police_Stations_(Statewide).geojson",
       "popupConfig": {
         "titleField": "name",
         "fields": []
@@ -42,7 +42,7 @@
       "visible": false,
       "icon": "FaStar",
       "color": "#00CC00",
-      "filePath": "/data/point_data/emergency_shelters.geojson",
+      "filePath": "data/point_data/emergency_shelters.geojson",
       "popupConfig": {
         "titleField": "BUSNAME",
         "fields": [
@@ -57,7 +57,7 @@
       "visible": false,
       "icon": "FaPlus",
       "color": "#FFA500",
-      "filePath": "/data/point_data/Preschools.geojson",
+      "filePath": "data/point_data/Preschools.geojson",
       "popupConfig": {
         "titleField": "name",
         "fields": [
@@ -72,7 +72,7 @@
       "visible": false,
       "icon": "FaCertificate",
       "color": "#8A2BE2",
-      "filePath": "/data/point_data/Public_Schools.geojson",
+      "filePath": "data/point_data/Public_Schools.geojson",
       "popupConfig": {
         "titleField": "sch_name",
         "fields": [
@@ -87,7 +87,7 @@
       "visible": false,
       "icon": "FaDiamond",
       "color": "#DC143C",
-      "filePath": "/data/point_data/Private_Schools.geojson",
+      "filePath": "data/point_data/Private_Schools.geojson",
       "popupConfig": {
         "titleField": "school",
         "fields": [
