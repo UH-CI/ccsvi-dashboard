@@ -4,7 +4,7 @@
       "id": "fire_stations",
       "name": "Fire Stations",
       "visible": false,
-      "icon": "FaCircle",
+      "icon": "FaFireExtinguisher",
       "color": "#FF0000",
       "filePath": "data/point_data/Fire_Stations_(Statewide).geojson",
       "popupConfig": {
@@ -16,7 +16,7 @@
       "id": "hospitals",
       "name": "Hospitals",
       "visible": false,
-      "icon": "FaSquare",
+      "icon": "FaHospital",
       "color": "#00BFFF",
       "filePath": "data/point_data/Hospitals.geojson",
       "popupConfig": {
@@ -28,7 +28,7 @@
       "id": "police_stations",
       "name": "Police Stations",
       "visible": false,
-      "icon": "FaPlay",
+      "icon": "FaShieldAlt",
       "color": "#000080",
       "filePath": "data/point_data/Police_Stations_(Statewide).geojson",
       "popupConfig": {
@@ -40,7 +40,7 @@
       "id": "shelters",
       "name": "Emergency Shelters",
       "visible": false,
-      "icon": "FaStar",
+      "icon": "FaHouseUser",
       "color": "#00CC00",
       "filePath": "data/point_data/emergency_shelters.geojson",
       "popupConfig": {
@@ -55,7 +55,7 @@
       "id": "preschools",
       "name": "Preschools",
       "visible": false,
-      "icon": "FaPlus",
+      "icon": "FaSchool",
       "color": "#FFA500",
       "filePath": "data/point_data/Preschools.geojson",
       "popupConfig": {
@@ -70,7 +70,7 @@
       "id": "public_schools",
       "name": "Public Schools",
       "visible": false,
-      "icon": "FaCertificate",
+      "icon": "FaSchool",
       "color": "#8A2BE2",
       "filePath": "data/point_data/Public_Schools.geojson",
       "popupConfig": {
@@ -85,7 +85,7 @@
       "id": "private_schools",
       "name": "Private Schools",
       "visible": false,
-      "icon": "FaDiamond",
+      "icon": "FaSchool",
       "color": "#DC143C",
       "filePath": "data/point_data/Private_Schools.geojson",
       "popupConfig": {
@@ -100,7 +100,7 @@
       "id": "bridges",
       "name": "Bridges",
       "visible": false,
-      "icon": "FaBridge",
+      "icon": "FaArchway",
       "color": "#6c757d",
       "filePath": "/data/point_data/National_Bridge_Inventory.geojson",
       "popupConfig": {

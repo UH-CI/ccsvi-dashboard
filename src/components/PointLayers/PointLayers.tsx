@@ -2,8 +2,8 @@
  * PointLayers, markers, zoom tracking all generated using Anthropic's Claude Sonnet 4
  */
 
-import React from 'react';
-import { Marker, Popup } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { Marker, Popup, useMap } from 'react-leaflet';
 import { renderToString } from 'react-dom/server';
 import * as FaIcons from 'react-icons/fa';
 import L from 'leaflet';
@@ -14,11 +14,43 @@ import { PointLayerConfig } from "../../types";
 export const GenericPointMarkers: React.FC<{
     layer: PointLayerConfig;
 }> = ({ layer }) => {
+    const map = useMap();
+    const [zoom, setZoom] = useState(map.getZoom());
+
+    useEffect(() => {
+        const handleZoom = () => {
+            setZoom(map.getZoom());
+        };
+
+        map.on('zoomend', handleZoom);
+
+        return () => {
+            map.off('zoomend', handleZoom);
+        };
+    }, [map]);
+
     if (!layer.visible || !layer.data) return null;
 
     const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
 
-    const iconSize = 18;
+    // Calculate icon size based on zoom level
+    const getIconSize = (currentZoom: number): number => {
+        const baseZoom = 8;
+        const baseSize = 18;
+
+        // Scale factor: adjust this to control how much icons grow/shrink
+        const scaleFactor = 0.15;
+
+        // Calculate size with min/max bounds
+        const calculatedSize = baseSize + (currentZoom - baseZoom) * scaleFactor * baseSize;
+
+        const minSize = 8;
+        const maxSize = 32;
+
+        return Math.max(minSize, Math.min(maxSize, Math.round(calculatedSize)));
+    };
+
+    const iconSize = getIconSize(zoom);
     const iconElementSize = Math.round(iconSize * 0.67);
 
     const customIcon = L.divIcon({
