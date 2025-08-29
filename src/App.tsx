@@ -23,24 +23,72 @@ import { useMapSnapshot } from './hooks/useMapSnapshot';
 import { usePointLayers } from "./hooks/usePointLayers.ts";
 import { useDataLoader } from './hooks/useDataLoader';
 import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
+import { useUrlState } from './hooks/useUrlState';
 
-const MapComponent = ({activeFeature}: {activeFeature: Feature | null}) => {
+// Utility function for debouncing
+function debounce<T extends (...args: never[]) => void>(func: T, wait: number): T {
+    let timeout: NodeJS.Timeout;
+    return ((...args: Parameters<T>) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    }) as T;
+}
+
+const MapComponent = ({
+                          activeFeature,
+                          onMapMove,
+                          initialPosition
+                      }: {
+    activeFeature: Feature | null;
+    onMapMove: (lat: number, lng: number, zoom: number) => void;
+    initialPosition?: { lat: number; lng: number; zoom: number };
+}) => {
     const map = useMap();
+    const [hasInitialized, setHasInitialized] = useState(false);
 
+    // Set initial position once
     useEffect(() => {
-        if (activeFeature && activeFeature.geometry) {
+        if (initialPosition && !hasInitialized) {
+            console.log('Setting initial map position from URL:', initialPosition);
+            map.setView([initialPosition.lat, initialPosition.lng], initialPosition.zoom);
+            setHasInitialized(true);
+        }
+    }, [initialPosition, hasInitialized, map]);
+
+    // Handle active feature zoom
+    useEffect(() => {
+        if (activeFeature?.geometry) {
             const feature = L.geoJSON(activeFeature);
             const bounds = feature.getBounds();
             map.fitBounds(bounds);
         }
     }, [activeFeature, map]);
+
+    // Debounced move handler
+    const debouncedOnMove = useMemo(
+        () => debounce((lat: number, lng: number, zoom: number) => {
+            console.log('Map moved by user, updating URL:', { lat, lng, zoom });
+            onMapMove(lat, lng, zoom);
+        }, 500),
+        [onMapMove]
+    );
+
+    useMapEvents({
+        moveend: () => {
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            debouncedOnMove(center.lat, center.lng, zoom);
+        },
+    });
+
     return null;
 };
 
 const App: React.FC = () => {
-    // Dataset state
-    const [activeDataset, setActiveDataset] = useState<string>('');
-    const [activeDatasetMetric, setActiveDatasetMetric] = useState<string>('');
+    // URL state management
+    const { urlState, updateUrlState } = useUrlState();
+
+    // Local UI state (non-shareable)
     const [activeFeature, setActiveFeature] = useState<Feature | null>(null);
 
     // Layer refs
@@ -49,16 +97,30 @@ const App: React.FC = () => {
     const mapWrapperRef = useRef<HTMLDivElement>(null);
 
     // Custom hooks
-    const { pointLayers, togglePointLayer } = usePointLayers();
+    const {
+        pointLayers,
+        getCurrentVisibleLayerIds,
+        isInitialized
+    } = usePointLayers(urlState.pointLayers);
+
+    useEffect(() => {
+        console.log('=== STATE DEBUG ===');
+        console.log('URL pointLayers:', urlState.pointLayers);
+        console.log('Local visible layers:', getCurrentVisibleLayerIds());
+        console.log('isInitialized:', isInitialized);
+        console.log('Point layers state:', pointLayers.map(l => ({ id: l.id, visible: l.visible })));
+        console.log('==================');
+    }, [urlState.pointLayers, pointLayers, isInitialized, getCurrentVisibleLayerIds]);
+
     const { mapRef, takeSnapshot } = useMapSnapshot();
 
-    // Use the animated map resize hook (can be used outside MapContainer)
+    // Use the animated map resize hook
     const { animateResize } = useAnimatedMapResize({
-        animationDuration: 300, // Match your CSS transition
-        updateInterval: 16,     // ~60fps
+        animationDuration: 300,
+        updateInterval: 16,
     });
 
-    // Use the data loader hook
+    // Use the data loader hook with URL state
     const {
         dataset,
         geoData,
@@ -68,30 +130,28 @@ const App: React.FC = () => {
         error,
         isInitialDataLoaded,
         hawaiianHomelands
-    } = useDataLoader(activeDataset);
+    } = useDataLoader(urlState.dataset);
 
     // Derived state from loaded data
     const activeDatasetObject = useMemo(() => {
-        if (!dataset || !activeDataset) return null;
-        console.log("activeDatasetObject: ", dataset[activeDataset]);
-        return dataset[activeDataset];
-    }, [dataset, activeDataset]);
+        if (!dataset || !urlState.dataset) return null;
+        return dataset[urlState.dataset];
+    }, [dataset, urlState.dataset]);
 
     const activeDatasetMetricObject = useMemo(() => {
-        if (!activeDatasetObject || !activeDatasetMetric) return null;
-        console.log("activeDatasetMetricObject: ", activeDatasetObject.columnThresholds[activeDatasetMetric]);
-        return activeDatasetObject.columnThresholds[activeDatasetMetric];
-    }, [activeDatasetObject, activeDatasetMetric]);
+        if (!activeDatasetObject || !urlState.metric) return null;
+        return activeDatasetObject.columnThresholds[urlState.metric];
+    }, [activeDatasetObject, urlState.metric]);
 
     // Validate metric when dataset changes
     useEffect(() => {
-        if (dataset && activeDataset && dataset[activeDataset]?.columnThresholds) {
-            const availableMetrics = Object.keys(dataset[activeDataset].columnThresholds);
-            if (activeDatasetMetric && !availableMetrics.includes(activeDatasetMetric)) {
-                setActiveDatasetMetric('');
+        if (dataset && urlState.dataset && dataset[urlState.dataset]?.columnThresholds) {
+            const availableMetrics = Object.keys(dataset[urlState.dataset].columnThresholds);
+            if (urlState.metric && !availableMetrics.includes(urlState.metric)) {
+                updateUrlState({ metric: '' });
             }
         }
-    }, [dataset, activeDataset, activeDatasetMetric]);
+    }, [dataset, urlState.dataset, urlState.metric, updateUrlState]);
 
     // Color function
     const getColor = useMemo(() => {
@@ -100,14 +160,13 @@ const App: React.FC = () => {
 
     // Helper function to extract specific metrics
     const getMetricValue = useMemo(() => {
-        if (!metricsData || !activeDataset || !activeDatasetMetric) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            return (_geoid: string) => null;
+        if (!metricsData || !urlState.dataset || !urlState.metric) {
+            return () => null;
         }
 
         const lookup = new Map<string, number>();
         Object.entries(metricsData).forEach(([geoid, data]) => {
-            const value = data.metrics?.[activeDataset]?.[activeDatasetMetric];
+            const value = data.metrics?.[urlState.dataset]?.[urlState.metric];
             if (value !== undefined && value !== null) {
                 lookup.set(geoid, value);
             }
@@ -117,9 +176,9 @@ const App: React.FC = () => {
             if (!geoid) return null;
             return lookup.get(geoid) ?? null;
         };
-    }, [metricsData, activeDataset, activeDatasetMetric]);
+    }, [metricsData, urlState.dataset, urlState.metric]);
 
-    // Style function for census features
+    // Style functions
     const style = useMemo(() => {
         return createCensusStyleFunction(getColor, getMetricValue, activeFeature);
     }, [getColor, getMetricValue, activeFeature]);
@@ -132,7 +191,7 @@ const App: React.FC = () => {
     function highlightFeature(e: LeafletMouseEvent) {
         const layer = e.target;
         const feature = layer.feature as Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties>;
-        setActiveFeature(feature)
+        setActiveFeature(feature);
         layer.bringToFront();
     }
 
@@ -157,6 +216,11 @@ const App: React.FC = () => {
         return null;
     };
 
+    // Handle map movement for URL updates (debounced)
+    const handleMapMove = useCallback((lat: number, lng: number, zoom: number) => {
+        updateUrlState({ lat, lng, zoom });
+    }, [updateUrlState]);
+
     // Feature handlers
     const onEachFeature = (
         feature: Feature<Geometry, BlockGroupProperties>,
@@ -165,11 +229,11 @@ const App: React.FC = () => {
         if (!metricsData) return;
 
         const geoid = feature.properties.geoid20;
-        const metricValue = getMetricValue(geoid)
+        const metricValue = getMetricValue(geoid);
 
         layer.on({
             click: highlightFeature,
-        })
+        });
 
         if ('bindPopup' in layer) {
             layer.bindPopup(`
@@ -178,7 +242,7 @@ const App: React.FC = () => {
                     <b>Block Group:</b> ${metricsData[geoid]?.block_group ?? 'N/A'}<br>
                     <b>Census Tract:</b> ${metricsData[geoid]?.census_tract ?? 'N/A'}<br>
                     <b>County:</b> ${metricsData[geoid]?.county ?? 'N/A'}<br>
-                    <b>${activeDatasetMetric}:</b> ${metricValue ?? 'N/A'}
+                    <b>${urlState.metric}:</b> ${metricValue ?? 'N/A'}
                 </div>
             `);
         }
@@ -190,7 +254,7 @@ const App: React.FC = () => {
     ): void => {
         layer.on({
             click: highlightFeature,
-        })
+        });
 
         const geoid = feature.properties.GEOID10;
         const metricValue = getMetricValue(geoid);
@@ -200,7 +264,7 @@ const App: React.FC = () => {
                 <div>
                     <b>Hawaiian Homeland:</b> ${feature.properties.NAME10}<br>
                     <b>Geo ID:</b> ${feature.properties.GEOID10}<br>
-                    ${activeDatasetMetric ? `<b>${activeDatasetMetric}:</b> ${metricValue ?? 'N/A'}` : ''}
+                    ${urlState.metric ? `<b>${urlState.metric}:</b> ${metricValue ?? 'N/A'}` : ''}
                 </div>
             `);
         }
@@ -209,37 +273,47 @@ const App: React.FC = () => {
     // Layer reference handlers
     const onGeoJsonLoad = (layer: L.GeoJSON) => {
         layerRef.current = layer;
-    }
+    };
 
     const onHomelandsLoad = (layer: L.GeoJSON) => {
         homelandsLayerRef.current = layer;
-    }
+    };
 
-    // Event handlers
+    // Event handlers that update URL state
     const handleDatasetChange = (value: string) => {
-        setActiveDataset(value);
-        setActiveDatasetMetric('');
+        updateUrlState({ dataset: value, metric: '' });
         setActiveFeature(null);
     };
 
     const handleMetricChange = (value: string) => {
-        setActiveDatasetMetric(value);
+        updateUrlState({ metric: value });
+    };
+
+    const handlePointLayerToggle = (layerId: string) => {
+        console.log('handlePointLayerToggle called for:', layerId);
+
+        const currentVisible = urlState.pointLayers;
+        const newVisible = currentVisible.includes(layerId)
+            ? currentVisible.filter(id => id !== layerId)  // Remove if present
+            : [...currentVisible, layerId];                // Add if not present
+
+        console.log('Updating URL with new layers:', newVisible);
+        updateUrlState({ pointLayers: newVisible });
     };
 
     // Snapshot handler
     const handleTakeSnapshot = useCallback(async () => {
         try {
             await takeSnapshot({
-                activeDataset,
-                activeDatasetMetric,
+                activeDataset: urlState.dataset,
+                activeDatasetMetric: urlState.metric,
                 customPrefix: 'hawaii-census-map',
                 quality: 0.9
             }, mapWrapperRef);
         } catch (error) {
             alert(`Failed to take snapshot. Please try again. ${error}`);
         }
-    }, [takeSnapshot, activeDataset, activeDatasetMetric]);
-
+    }, [takeSnapshot, urlState.dataset, urlState.metric]);
 
     // Error handling
     if (error) {
@@ -254,7 +328,7 @@ const App: React.FC = () => {
         );
     }
 
-    // Loading state for Hawaiian Homelands data
+    // Loading state
     if (loading || !isInitialDataLoaded) {
         return (
             <div className={styles['loading-container']}>
@@ -268,29 +342,45 @@ const App: React.FC = () => {
         );
     }
 
+    // Determine initial map position
+    const initialMapPosition =
+        urlState.lat && urlState.lng && urlState.zoom
+            ? { lat: urlState.lat, lng: urlState.lng, zoom: urlState.zoom }
+            : undefined;
+
+    const mapCenter: [number, number] = initialMapPosition
+        ? [initialMapPosition.lat, initialMapPosition.lng]
+        : mapParams.mapCenter;
+
+    const mapZoom = initialMapPosition ? initialMapPosition.zoom : mapParams.mapZoom;
+
     // Main render
     return (
         <div className={styles['app-container']}>
             <div className={styles['map-section']}>
                 <div className={styles['map-wrapper']} ref={mapWrapperRef}>
                     <MapContainer
-                        center={mapParams.mapCenter}
-                        zoom={mapParams.mapZoom}
+                        center={mapCenter}
+                        zoom={mapZoom}
                         minZoom={mapParams.minZoom}
                         maxBounds={mapParams.maxBounds}
                         maxBoundsViscosity={mapParams.maxBoundsViscosity}
                         className={styles['map-container']}
                     >
                         <MapResizeHandler />
-                        <MapEvents/>
-                        {activeFeature && <MapComponent activeFeature={activeFeature}/>}
+                        <MapEvents />
+                        <MapComponent
+                            activeFeature={activeFeature}
+                            onMapMove={handleMapMove}
+                            initialPosition={initialMapPosition}
+                        />
                         <TileLayer
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; OpenStreetMap contributors'
                         />
                         {geoData && metricsData && dataset && (
                             <GeoJSON
-                                key={`geojson-${activeDataset}-${activeDatasetMetric}`}
+                                key={`geojson-${urlState.dataset}-${urlState.metric}`}
                                 data={geoData}
                                 style={style}
                                 onEachFeature={onEachFeature}
@@ -304,7 +394,7 @@ const App: React.FC = () => {
                         )}
                         {hawaiianHomelands && homelandsData && (
                             <GeoJSON
-                                key={`homelands-${activeDataset}-${activeDatasetMetric}`}
+                                key={`homelands-${urlState.dataset}-${urlState.metric}`}
                                 data={homelandsData}
                                 style={homelandStyle}
                                 onEachFeature={onEachHomelandFeature}
@@ -323,13 +413,13 @@ const App: React.FC = () => {
 
                     <MapLegend
                         dataset={dataset}
-                        activeDataset={activeDataset}
-                        activeDatasetMetric={activeDatasetMetric}
+                        activeDataset={urlState.dataset}
+                        activeDatasetMetric={urlState.metric}
                     />
                 </div>
 
                 <TableViewer
-                    activeDataset={activeDataset}
+                    activeDataset={urlState.dataset}
                     datasetInfo={activeDatasetObject}
                     onSizeChange={handleTableSizeChange}
                 />
@@ -337,12 +427,12 @@ const App: React.FC = () => {
 
             <ControlPanel
                 dataset={dataset}
-                activeDataset={activeDataset}
-                activeDatasetMetric={activeDatasetMetric}
+                activeDataset={urlState.dataset}
+                activeDatasetMetric={urlState.metric}
                 onDatasetChange={handleDatasetChange}
                 onMetricChange={handleMetricChange}
                 pointLayers={pointLayers}
-                togglePointLayer={togglePointLayer}
+                togglePointLayer={handlePointLayerToggle}
                 onTakeSnapshot={handleTakeSnapshot}
             />
         </div>
