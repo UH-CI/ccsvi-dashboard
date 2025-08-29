@@ -54,7 +54,7 @@ export const usePointLayers = () => {
         };
 
         void loadVisibleLayers();
-    }, [visibleLayerIds, loadPointData]);
+    }, [pointLayers, visibleLayerIds, loadPointData]);
 
     const togglePointLayer = useCallback((layerId: string) => {
         setPointLayers(prev =>

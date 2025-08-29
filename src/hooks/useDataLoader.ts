@@ -154,7 +154,7 @@ export const useDataLoader = (activeDataset: string) => {
     };
 
     loadHomelandsData().catch(console.error);
-  }, [state.dataset, activeDataset, state.loading]);
+  }, [state.homelandsData, state.dataset, activeDataset, state.loading]);
 
   return {
     ...state,
