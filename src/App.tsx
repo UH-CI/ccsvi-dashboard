@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, GeoJSON, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Feature, Geometry } from 'geojson';
-import L, { Layer, LeafletMouseEvent } from 'leaflet';
+import L, { LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 import styles from './App.module.scss';
@@ -11,14 +11,16 @@ import {
 } from './types';
 import {
     createColorFunction,
-    createCensusStyleFunction,
-    createHomelandsStyleFunction
+    createGenericStyleFunction,
+    CENSUS_STYLE_CONFIG,
+    HOMELANDS_STYLE_CONFIG
 } from './utils/mapStyling';
 import { mapParams } from './config';
 import { MapLegend } from './components/MapLegend';
 import { ControlPanel } from './components/ControlPanel';
 import { GenericPointMarkers } from './components/PointLayers/PointLayers.tsx';
 import { TableViewer } from './components/TableViewer';
+import { GenericPolygonLayer } from './components/GenericPolygonLayer';
 import { useMapSnapshot } from './hooks/useMapSnapshot';
 import { usePointLayers } from "./hooks/usePointLayers.ts";
 import { useDataLoader } from './hooks/useDataLoader';
@@ -179,12 +181,24 @@ const App: React.FC = () => {
     }, [metricsData, urlState.dataset, urlState.metric]);
 
     // Style functions
-    const style = useMemo(() => {
-        return createCensusStyleFunction(getColor, getMetricValue, activeFeature);
+    const censusStyle = useMemo(() => {
+        return createGenericStyleFunction<BlockGroupProperties>(
+            getColor, 
+            getMetricValue, 
+            activeFeature, 
+            'geoid20', 
+            CENSUS_STYLE_CONFIG
+        );
     }, [getColor, getMetricValue, activeFeature]);
 
     const homelandStyle = useMemo(() => {
-        return createHomelandsStyleFunction(getColor, getMetricValue, activeFeature);
+        return createGenericStyleFunction<HawaiianHomelandProperties>(
+            getColor, 
+            getMetricValue, 
+            activeFeature, 
+            'GEOID10', 
+            HOMELANDS_STYLE_CONFIG
+        );
     }, [getColor, getMetricValue, activeFeature]);
 
     // Feature highlight handler
@@ -221,53 +235,21 @@ const App: React.FC = () => {
         updateUrlState({ lat, lng, zoom });
     }, [updateUrlState]);
 
-    // Feature handlers
-    const onEachFeature = (
-        feature: Feature<Geometry, BlockGroupProperties>,
-        layer: Layer
-    ): void => {
-        if (!metricsData) return;
-
-        const geoid = feature.properties.geoid20;
-        const metricValue = getMetricValue(geoid);
-
-        layer.on({
-            click: highlightFeature,
-        });
-
-        if ('bindPopup' in layer) {
-            layer.bindPopup(`
-                <div>
-                    <b>Block Group ID:</b> ${geoid}<br>
-                    <b>Block Group:</b> ${metricsData[geoid]?.block_group ?? 'N/A'}<br>
-                    <b>Census Tract:</b> ${metricsData[geoid]?.census_tract ?? 'N/A'}<br>
-                    <b>County:</b> ${metricsData[geoid]?.county ?? 'N/A'}<br>
-                    <b>${urlState.metric}:</b> ${metricValue ?? 'N/A'}
-                </div>
-            `);
-        }
+    // Popup configurations
+    const censusPopupConfig = {
+        titleField: 'geoid20',
+        fields: [
+            { key: 'block_group', label: 'Block Group' },
+            { key: 'census_tract', label: 'Census Tract' },
+            { key: 'county', label: 'County' }
+        ]
     };
 
-    const onEachHomelandFeature = (
-        feature: Feature<Geometry, HawaiianHomelandProperties>,
-        layer: Layer
-    ): void => {
-        layer.on({
-            click: highlightFeature,
-        });
-
-        const geoid = feature.properties.GEOID10;
-        const metricValue = getMetricValue(geoid);
-
-        if ('bindPopup' in layer) {
-            layer.bindPopup(`
-                <div>
-                    <b>Hawaiian Homeland:</b> ${feature.properties.NAME10}<br>
-                    <b>Geo ID:</b> ${feature.properties.GEOID10}<br>
-                    ${urlState.metric ? `<b>${urlState.metric}:</b> ${metricValue ?? 'N/A'}` : ''}
-                </div>
-            `);
-        }
+    const homelandsPopupConfig = {
+        titleField: 'NAME10',
+        fields: [
+            { key: 'GEOID10', label: 'Geo ID' }
+        ]
     };
 
     // Layer reference handlers
@@ -379,31 +361,30 @@ const App: React.FC = () => {
                             attribution='&copy; OpenStreetMap contributors'
                         />
                         {geoData && metricsData && dataset && (
-                            <GeoJSON
-                                key={`geojson-${urlState.dataset}-${urlState.metric}`}
-                                data={geoData}
-                                style={style}
-                                onEachFeature={onEachFeature}
+                            <GenericPolygonLayer<BlockGroupProperties>
+                                key={`census-${urlState.dataset}-${urlState.metric}`}
+                                data={geoData.features}
+                                style={censusStyle}
+                                onFeatureClick={highlightFeature}
+                                geoidProperty="geoid20"
+                                getMetricValue={getMetricValue}
+                                activeMetric={urlState.metric}
+                                popupConfig={censusPopupConfig}
+                                metricsData={metricsData}
                                 ref={onGeoJsonLoad}
-                                eventHandlers={{
-                                    click: (e) => {
-                                        e.originalEvent.stopPropagation();
-                                    }
-                                }}
                             />
                         )}
                         {hawaiianHomelands && homelandsData && (
-                            <GeoJSON
+                            <GenericPolygonLayer<HawaiianHomelandProperties>
                                 key={`homelands-${urlState.dataset}-${urlState.metric}`}
-                                data={homelandsData}
+                                data={homelandsData.features}
                                 style={homelandStyle}
-                                onEachFeature={onEachHomelandFeature}
+                                onFeatureClick={highlightFeature}
+                                geoidProperty="GEOID10"
+                                getMetricValue={getMetricValue}
+                                activeMetric={urlState.metric}
+                                popupConfig={homelandsPopupConfig}
                                 ref={onHomelandsLoad}
-                                eventHandlers={{
-                                    click: (e) => {
-                                        e.originalEvent.stopPropagation();
-                                    }
-                                }}
                             />
                         )}
                         {pointLayers.map(layer => (

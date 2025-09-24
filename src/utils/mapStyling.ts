@@ -133,3 +133,32 @@ export const createHomelandsStyleFunction = (
 
 // Export style configs for customization if needed
 export { CENSUS_STYLE_CONFIG, HOMELANDS_STYLE_CONFIG, DEFAULT_STYLE };
+
+/**
+ * Creates a generic style function for any polygon layer
+ */
+export const createGenericStyleFunction = <T = any>(
+    getColor: (value: number | null) => string,
+    getMetricValue: (geoid: string) => number | null,
+    activeFeature: Feature | null,
+    geoidProperty: string,
+    styleConfig: StyleConfig = CENSUS_STYLE_CONFIG
+): ((feature?: Feature<Geometry, T>) => PathOptions) => {
+    return (feature?: Feature<Geometry, T>): PathOptions => {
+        if (!feature || !feature.properties) {
+            return DEFAULT_STYLE;
+        }
+
+        const geoid = feature.properties[geoidProperty] as string;
+        const metricValue = getMetricValue(geoid);
+        const isActive = activeFeature?.properties?.[geoidProperty] === geoid;
+
+        return {
+            fillColor: getColor(metricValue),
+            weight: isActive ? styleConfig.activeWeight : styleConfig.inactiveWeight,
+            opacity: 1,
+            color: isActive ? styleConfig.activeColor : styleConfig.inactiveColor,
+            fillOpacity: isActive ? styleConfig.activeFillOpacity : styleConfig.inactiveFillOpacity,
+        };
+    };
+};

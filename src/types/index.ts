@@ -1,4 +1,4 @@
-import { Feature, Geometry } from 'geojson';
+import { Feature, Geometry, FeatureCollection } from 'geojson';
 import { PathOptions } from 'leaflet';
 
 export interface MetricsData {
@@ -68,3 +68,26 @@ export interface PointLayerConfig {
 
 export type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 export type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
+
+// Generic polygon layer types
+export interface PolygonLayerConfig<T = any> {
+  name: string;
+  path: string;
+  geoidProperty: string;
+  enabled: boolean;
+  styleConfig?: {
+    activeColor: string;
+    inactiveColor: string;
+    activeWeight: number;
+    inactiveWeight: number;
+    activeFillOpacity: number;
+    inactiveFillOpacity: number;
+  };
+}
+
+export interface PolygonLayerState<T = any> {
+  data: FeatureCollection<Geometry, T> | null;
+  loading: boolean;
+  error: string | null;
+  loaded: boolean;
+}
