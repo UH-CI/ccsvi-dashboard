@@ -1,0 +1,19 @@
+{
+  "hazardLayers": [
+    {
+      "id": "flood_hazard",
+      "name": "Flood Hazards",
+      "visible": false,
+      "icon": "FaWater",
+      "color": "#0000FF",
+      "filePath": "data/Hazards/Flood_Hazard_trimmed.geojson",
+      "popupConfig": {
+        "titleField": "fld_zone",
+        "fields": [
+          { "key": "static_bfe", "label": "Base Flood Elevation"},
+          { "key": "depth", "label": "Depth"}
+        ]
+      }
+    }
+  ]
+}

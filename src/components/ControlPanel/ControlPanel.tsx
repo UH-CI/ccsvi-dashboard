@@ -15,7 +15,8 @@ import {
 import { Camera } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
 import { Dataset } from '../../types';
-import { PointLayerConfig} from "../../types";
+import { PointLayerConfig } from "../../types";
+import { HazardLayerConfig } from "../../types";
 import styles from './ControlPanel.module.scss';
 
 interface ControlPanelProps {
@@ -25,7 +26,9 @@ interface ControlPanelProps {
     onDatasetChange: (value: string) => void;
     onMetricChange: (value: string) => void;
     pointLayers: PointLayerConfig[];
+    hazardLayers: HazardLayerConfig[];
     togglePointLayer: (id: string) => void;
+    toggleHazardLayer: (id: string) => void;
     onTakeSnapshot: () => void;
 }
 
@@ -36,11 +39,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                                               onDatasetChange,
                                                               onMetricChange,
                                                               pointLayers,
+                                                              hazardLayers,
                                                               togglePointLayer,
+                                                              toggleHazardLayer,
                                                               onTakeSnapshot,
                                                           }) => {
 
     const datasetList = useMemo(() => {
+        
         if (!dataset) return [];
         return Object.entries(dataset).map(([key, config]) => ({
             id: key,
@@ -97,6 +103,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                 value={activeDatasetMetric}
                                 label="Metric"
                                 onChange={(event) => onMetricChange(event.target.value as string)}
+                                
                                 className={styles['mui-select']}
                             >
                                 <MenuItem value="">
@@ -166,6 +173,56 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     })}
                 </Stack>
             </div>
+
+            <Divider className={styles['section-divider']} />
+
+            <div className={styles['geojson-section']}>
+                <Typography variant="h6" className={styles['points-title']}>
+                    Hazards
+                </Typography>
+                
+                <Stack spacing={1}>
+                    {hazardLayers.map(layer => {
+                    const IconComponent =
+                        FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
+
+                    return (
+                        <div key={layer.id} className={styles['layer-toggle']}>
+                        <FormControlLabel
+                            control={
+                            <Checkbox
+                                checked={layer.visible}
+                                onChange={() => {
+                                console.log(
+                                    "Clicked hazard:",
+                                    layer.id,
+                                    "visible before:",
+                                    layer.visible
+                                );
+                                toggleHazardLayer(layer.id);
+                                }}
+                                size="small"
+                            />
+                            }
+                            label={
+                            <div className={styles['layer-label']}>
+                                <span
+                                className={styles['layer-icon']}
+                                style={{ color: layer.color }}
+                                >
+                                <IconComponent size="1rem" />
+                                </span>
+                                {layer.name}
+                            </div>
+                            }
+                        />
+                        </div>
+                    );
+                    })}
+                </Stack>
+            </div>
+
+
         </Paper>
     );
 };

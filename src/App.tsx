@@ -18,9 +18,11 @@ import { mapParams } from './config';
 import { MapLegend } from './components/MapLegend';
 import { ControlPanel } from './components/ControlPanel';
 import { GenericPointMarkers } from './components/PointLayers/PointLayers.tsx';
+import { GenericHazardLayer } from "./components/HazardLayers/GenericHazardLayer.tsx";
 import { TableViewer } from './components/TableViewer';
 import { useMapSnapshot } from './hooks/useMapSnapshot';
 import { usePointLayers } from "./hooks/usePointLayers.ts";
+import { useGeometryLayers } from "./hooks/useGeometryLayers.ts"
 import { useDataLoader } from './hooks/useDataLoader';
 import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
 import { useUrlState } from './hooks/useUrlState';
@@ -103,6 +105,12 @@ const App: React.FC = () => {
         isInitialized
     } = usePointLayers(urlState.pointLayers);
 
+    const {
+        hazardLayers,
+        getCurrentVisibleLayerIds: getCurrentVisibleHazardLayerIds,
+        isInitialized: isHazardInitialized,
+    } = useGeometryLayers(urlState.hazardLayers ?? [])
+
     useEffect(() => {
         console.log('=== STATE DEBUG ===');
         console.log('URL pointLayers:', urlState.pointLayers);
@@ -111,6 +119,15 @@ const App: React.FC = () => {
         console.log('Point layers state:', pointLayers.map(l => ({ id: l.id, visible: l.visible })));
         console.log('==================');
     }, [urlState.pointLayers, pointLayers, isInitialized, getCurrentVisibleLayerIds]);
+
+    useEffect(() => {
+        console.log('=== STATE DEBUG ===');
+        console.log('URL hazardLayers:', urlState.hazardLayers);
+        console.log('Local visible layers:', getCurrentVisibleHazardLayerIds());
+        console.log('isInitialized:', isHazardInitialized);
+        console.log('Point layers state:', hazardLayers.map(l => ({ id: l.id, visible: l.visible })));
+        console.log('==================');
+    }, [urlState.hazardLayers, hazardLayers, isInitialized, getCurrentVisibleLayerIds]);
 
     const { mapRef, takeSnapshot } = useMapSnapshot();
 
@@ -301,6 +318,18 @@ const App: React.FC = () => {
         updateUrlState({ pointLayers: newVisible });
     };
 
+    const handleHazardLayerToggle = (layerId: string) => {
+        console.log("handleHazardLayerToggle called for:", layerId);
+
+        const currentVisible = urlState.hazardLayers ?? [];
+        const newVisible = currentVisible.includes(layerId)
+            ? currentVisible.filter(id => id !== layerId)
+            : [...currentVisible, layerId];
+
+        console.log('Updating URL with new layers:', newVisible);
+        updateUrlState({ hazardLayers: newVisible });
+    }
+
     // Snapshot handler
     const handleTakeSnapshot = useCallback(async () => {
         try {
@@ -409,6 +438,9 @@ const App: React.FC = () => {
                         {pointLayers.map(layer => (
                             <GenericPointMarkers key={layer.id} layer={layer} />
                         ))}
+                        {hazardLayers.map((layer) => (
+                            <GenericHazardLayer key={layer.id} layer={layer} />
+                        ))}
                     </MapContainer>
 
                     <MapLegend
@@ -432,7 +464,9 @@ const App: React.FC = () => {
                 onDatasetChange={handleDatasetChange}
                 onMetricChange={handleMetricChange}
                 pointLayers={pointLayers}
+                hazardLayers={hazardLayers}
                 togglePointLayer={handlePointLayerToggle}
+                toggleHazardLayer={handleHazardLayerToggle}
                 onTakeSnapshot={handleTakeSnapshot}
             />
         </div>

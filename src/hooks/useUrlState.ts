@@ -5,6 +5,7 @@ export interface UrlState {
     dataset: string;
     metric: string;
     pointLayers: string[];
+    hazardLayers: string[];
     lat?: number;
     lng?: number;
     zoom?: number;
@@ -14,6 +15,7 @@ const DEFAULT_STATE: UrlState = {
     dataset: '',
     metric: '',
     pointLayers: [],
+    hazardLayers: [],
 };
 
 export const useUrlState = () => {
@@ -23,14 +25,21 @@ export const useUrlState = () => {
     // Parse current URL state
     const urlState: UrlState = useMemo(() => {
         const layersParam = searchParams.get('layers');
+        const hazardsParam = searchParams.get('hazards');
+
         const pointLayers = layersParam
             ? layersParam.split(',').filter(Boolean).sort()
             : DEFAULT_STATE.pointLayers;
+        
+        const hazardLayers = hazardsParam
+            ? hazardsParam.split(',').filter(Boolean).sort()
+            : DEFAULT_STATE.hazardLayers;
 
         const state = {
             dataset: searchParams.get('dataset') || DEFAULT_STATE.dataset,
             metric: searchParams.get('metric') || DEFAULT_STATE.metric,
             pointLayers,
+            hazardLayers,
             lat: searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined,
             lng: searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : undefined,
             zoom: searchParams.get('zoom') ? parseInt(searchParams.get('zoom')!) : undefined,
@@ -83,6 +92,17 @@ export const useUrlState = () => {
                         newParams.set('layers', sortedLayers.join(','));
                     } else {
                         newParams.delete('layers');
+                    }
+                }
+
+                // Handle Hazard layers
+                if ('hazardLayers' in updates) {
+                    const newHazards = updates.hazardLayers || [];
+                    if (newHazards.length > 0) {
+                        const sorted = [...newHazards].sort();
+                        newParams.set('hazards', sorted.join(','));    
+                    } else {
+                        newParams.delete('hazards');
                     }
                 }
 
