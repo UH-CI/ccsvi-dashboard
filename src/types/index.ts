@@ -1,4 +1,4 @@
-import { Feature, Geometry, FeatureCollection } from 'geojson';
+import { Feature, Geometry, FeatureCollection, GeoJsonProperties } from 'geojson';
 import { PathOptions } from 'leaflet';
 
 export interface MetricsData {
@@ -70,7 +70,7 @@ export type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | 
 export type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
 
 // Generic polygon layer types
-export interface PolygonLayerConfig<T = any> {
+export interface PolygonLayerConfig {
   name: string;
   path: string;
   geoidProperty: string;
@@ -85,7 +85,7 @@ export interface PolygonLayerConfig<T = any> {
   };
 }
 
-export interface PolygonLayerState<T = any> {
+export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
   data: FeatureCollection<Geometry, T> | null;
   loading: boolean;
   error: string | null;

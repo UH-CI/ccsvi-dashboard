@@ -1,26 +1,26 @@
-import React from 'react';
 import { GeoJSON, GeoJSONProps } from 'react-leaflet';
-import { Feature, Geometry } from 'geojson';
-import { Layer, LeafletMouseEvent } from 'leaflet';
+import {Feature, FeatureCollection, Geometry, GeoJsonProperties} from 'geojson';
+import {Layer, LeafletMouseEvent, PathOptions} from 'leaflet';
+import L from 'leaflet';
+import { forwardRef } from 'react';
 
-export interface PolygonLayerProps<T = any> extends Omit<GeoJSONProps, 'data' | 'style' | 'onEachFeature'> {
-  data: Feature<Geometry, T>[] | null;
-  style: (feature?: Feature<Geometry, T>) => any;
-  onFeatureClick: (e: LeafletMouseEvent) => void;
-  geoidProperty: string;
-  getMetricValue: (geoid: string) => number | null;
-  activeMetric: string;
-  popupConfig: {
-    titleField: string;
-    fields: Array<{
-      key: string;
-      label: string;
-    }>;
-  };
-  metricsData?: any;
+export interface PolygonLayerProps<T extends GeoJsonProperties = GeoJsonProperties> extends Omit<GeoJSONProps, 'data' | 'style' | 'onEachFeature'> {
+    data: Feature<Geometry, T>[] | FeatureCollection<Geometry, T> | null;
+    style: (feature?: Feature<Geometry, T>) => PathOptions;
+    onFeatureClick: (e: LeafletMouseEvent) => void;
+    geoidProperty: string;
+    getMetricValue: (geoid: string) => number | null;
+    activeMetric: string;
+    popupConfig: {
+        titleField: string;
+        fields: Array<{
+            key: string;
+            label: string;
+        }>;
+    };
 }
 
-export const GenericPolygonLayer = <T = any>({
+export const GenericPolygonLayer = forwardRef(<T extends GeoJsonProperties = GeoJsonProperties>({
   data,
   style,
   onFeatureClick,
@@ -28,14 +28,14 @@ export const GenericPolygonLayer = <T = any>({
   getMetricValue,
   activeMetric,
   popupConfig,
-  metricsData,
   ...geoJsonProps
-}: PolygonLayerProps<T>) => {
+}: PolygonLayerProps<T>, ref: React.Ref<L.GeoJSON>) => {
   const onEachFeature = (feature: Feature<Geometry, T>, layer: Layer): void => {
     if (!feature.properties) return;
 
-    const geoid = feature.properties[geoidProperty] as string;
-    const metricValue = getMetricValue(geoid);
+      const properties = feature.properties as Record<string, unknown>;
+      const geoid = String(properties[geoidProperty] ?? '');
+      const metricValue = getMetricValue(geoid);
 
     layer.on({
       click: onFeatureClick,
@@ -44,11 +44,9 @@ export const GenericPolygonLayer = <T = any>({
     if ('bindPopup' in layer) {
       const popupContent = createPopupContent(
         feature,
-        geoid,
         metricValue,
         activeMetric,
-        popupConfig,
-        metricsData
+        popupConfig
       );
       layer.bindPopup(popupContent);
     }
@@ -56,9 +54,13 @@ export const GenericPolygonLayer = <T = any>({
 
   if (!data) return null;
 
+  // Convert Feature[] to FeatureCollection if needed
+  const geoJsonData = Array.isArray(data) ? { type: 'FeatureCollection' as const, features: data } : data;
+
   return (
     <GeoJSON
-      data={data}
+      ref={ref}
+      data={geoJsonData}
       style={style}
       onEachFeature={onEachFeature}
       eventHandlers={{
@@ -69,11 +71,12 @@ export const GenericPolygonLayer = <T = any>({
       {...geoJsonProps}
     />
   );
-};
+}) as <T extends GeoJsonProperties = GeoJsonProperties>(
+  props: PolygonLayerProps<T> & { ref?: React.Ref<L.GeoJSON> }
+) => React.ReactElement;
 
-const createPopupContent = <T = any>(
+const createPopupContent = <T = GeoJsonProperties>(
   feature: Feature<Geometry, T>,
-  geoid: string,
   metricValue: number | null,
   activeMetric: string,
   popupConfig: {
@@ -82,21 +85,19 @@ const createPopupContent = <T = any>(
       key: string;
       label: string;
     }>;
-  },
-  metricsData?: any
+  }
 ): string => {
-  const title = feature.properties?.[popupConfig.titleField] || 'Unknown';
-  
-  let content = `<div><b>${title}</b><br>`;
-  
-  // Add geoid
-  content += `<b>Geo ID:</b> ${geoid}<br>`;
+    const properties = feature.properties as Record<string, unknown>;
+    const title = String(properties?.[popupConfig.titleField] || '');
+
+    let content = `<div><b>${title}</b><br>`;
   
   // Add other fields from config
-  popupConfig.fields.forEach(field => {
-    const value = feature.properties?.[field.key] || metricsData?.[geoid]?.[field.key] || 'N/A';
-    content += `<b>${field.label}:</b> ${value}<br>`;
-  });
+    popupConfig.fields.forEach(field => {
+        const propertyValue = properties[field.key];
+        const value = String(propertyValue ?? 'N/A');
+        content += `<b>${field.label}:</b> ${value}<br>`;
+    });
   
   // Add metric value if available
   if (activeMetric) {
