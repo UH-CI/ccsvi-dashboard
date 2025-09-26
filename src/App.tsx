@@ -399,7 +399,6 @@ const App: React.FC = () => {
                                 getMetricValue={getMetricValue}
                                 activeMetric={urlState.metric}
                                 popupConfig={censusPopupConfig}
-                                metricsData={metricsData}
                                 ref={onGeoJsonLoad}
                             />
                         )}
