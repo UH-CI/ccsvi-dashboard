@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { FeatureCollection, Geometry } from 'geojson';
+import {FeatureCollection, Geometry, GeoJsonProperties} from 'geojson';
 
-export interface PolygonLayerConfig<T = any> {
+export interface PolygonLayerConfig{
   name: string;
   path: string;
   geoidProperty: string;
@@ -16,15 +16,15 @@ export interface PolygonLayerConfig<T = any> {
   };
 }
 
-export interface PolygonLayerState<T = any> {
+export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
   data: FeatureCollection<Geometry, T> | null;
   loading: boolean;
   error: string | null;
   loaded: boolean;
 }
 
-export const usePolygonLayer = <T = any>(
-  config: PolygonLayerConfig<T>
+export const usePolygonLayer =  <T extends GeoJsonProperties = GeoJsonProperties>(
+  config: PolygonLayerConfig
 ): PolygonLayerState<T> => {
   const [state, setState] = useState<PolygonLayerState<T>>({
     data: null,
@@ -68,7 +68,7 @@ export const usePolygonLayer = <T = any>(
           return;
         }
 
-        const data = await response.json();
+        const data = await response.json() as FeatureCollection<Geometry, T>;
         setState(prev => ({
           ...prev,
           data,
@@ -89,7 +89,7 @@ export const usePolygonLayer = <T = any>(
     };
 
     loadData().catch(console.error);
-  }, [config.enabled, config.path, state.loaded, state.data]);
+  }, [config.enabled, config.path, config.name, state.loaded, state.data]);
 
   return state;
 };

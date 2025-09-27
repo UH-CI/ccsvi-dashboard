@@ -52,17 +52,24 @@ export const usePointLayers = (visibleLayerIds: string[] = []) => {
     // Update visibility when URL changes (after layers are loaded)
     useEffect(() => {
         if (isLoaded && pointLayers.length > 0) {
-            console.log('Updating layer visibility from URL change:', {
-                current: pointLayers.map(l => ({ id: l.id, visible: l.visible })),
-                newVisible: visibleLayerIds
-            });
-
-            setPointLayers(prev =>
-                prev.map(layer => ({
-                    ...layer,
-                    visible: visibleLayerIds.includes(layer.id)
-                }))
+            // Check if visibility actually needs to change to prevent infinite loops
+            const needsUpdate = pointLayers.some(layer =>
+                layer.visible !== visibleLayerIds.includes(layer.id)
             );
+
+            if (needsUpdate) {
+                console.log('Updating layer visibility from URL change:', {
+                    current: pointLayers.map(l => ({ id: l.id, visible: l.visible })),
+                    newVisible: visibleLayerIds
+                });
+
+                setPointLayers(prev =>
+                    prev.map(layer => ({
+                        ...layer,
+                        visible: visibleLayerIds.includes(layer.id)
+                    }))
+                );
+            }
         }
     }, [visibleLayerIds, isLoaded]);
 

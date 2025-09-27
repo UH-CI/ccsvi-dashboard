@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 // import { FeatureCollection, Geometry } from 'geojson';
 import {
-  MetricsData,
-  Dataset,
-  BlockGroupProperties,
-  HawaiianHomelandProperties,
-  PolygonLayerConfig
+    MetricsData,
+    Dataset,
+    PolygonLayerConfig, BlockGroupProperties, HawaiianHomelandProperties
 } from '../types';
 import { mapParams } from '../config';
 import { usePolygonLayer } from './usePolygonLayer';
@@ -74,14 +72,14 @@ export const useDataLoader = (activeDataset: string) => {
   }, []);
 
   // Configure polygon layers
-  const censusConfig: PolygonLayerConfig<BlockGroupProperties> = {
+  const censusConfig: PolygonLayerConfig = {
     name: 'Census Block Groups',
     path: mapParams.geoJsonPath,
     geoidProperty: 'geoid20',
     enabled: true,
   };
 
-  const homelandsConfig: PolygonLayerConfig<HawaiianHomelandProperties> = {
+  const homelandsConfig: PolygonLayerConfig = {
     name: 'Hawaiian Homelands',
     path: './data/Census_Hawaiian_Homelands_hhl10.geojson',
     geoidProperty: 'GEOID10',

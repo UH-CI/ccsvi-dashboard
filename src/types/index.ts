@@ -1,5 +1,13 @@
-import { Feature, Geometry, FeatureCollection, GeoJsonProperties } from 'geojson';
+import {Feature, Geometry, FeatureCollection, GeoJsonProperties} from 'geojson';
 import { PathOptions } from 'leaflet';
+
+export interface MapConfig {
+    id: string;
+    title: string;
+    dataset: string;
+    metric: string;
+    visible: boolean;
+}
 
 export interface MetricsData {
     [geoid: string]: {
@@ -86,8 +94,9 @@ export interface PolygonLayerConfig {
 }
 
 export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
-  data: FeatureCollection<Geometry, T> | null;
-  loading: boolean;
-  error: string | null;
-  loaded: boolean;
+    data: FeatureCollection<Geometry, T> | null;
+    loading: boolean;
+    error: string | null;
+    loaded: boolean;
 }
+
