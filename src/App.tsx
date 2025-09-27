@@ -14,12 +14,10 @@ const App: React.FC = () => {
     // Data loading
     const {
         dataset,
-        homelandsData,
         loading,
         error,
-        isInitialDataLoaded,
-        hawaiianHomelands
-    } = useDataLoader(urlState.dataset);
+        isInitialDataLoaded
+    } = useDataLoader();
 
     // Point layers
     const { pointLayers } = usePointLayers(urlState.pointLayers);
@@ -87,11 +85,6 @@ const App: React.FC = () => {
         return (
             <div className={styles['loading-container']}>
                 <div>Loading data...</div>
-                {hawaiianHomelands && !homelandsData && (
-                    <div className={styles['loading-subtext']}>
-                        Loading Hawaiian Homelands data...
-                    </div>
-                )}
             </div>
         );
     }

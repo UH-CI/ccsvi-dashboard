@@ -16,7 +16,6 @@ interface SingleMapViewProps {
     geoData: FeatureCollection<Geometry, BlockGroupProperties> | null;
     homelandsData: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
     metricsData: MetricsData | null;
-    hawaiianHomelands: boolean;
     dataset: Dataset | null;
     isPrimary: boolean;
     mapConfigsLength?: number; // Trigger resize when maps are added/removed
@@ -79,7 +78,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     geoData,
     homelandsData,
     metricsData,
-    hawaiianHomelands,
     dataset,
     isPrimary,
     mapConfigsLength
@@ -108,6 +106,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         if (!dataset || !effectiveDataset) return null;
         return dataset[effectiveDataset];
     }, [dataset, effectiveDataset]);
+
+    // Determine if Hawaiian homelands should be shown for this map's dataset
+    const shouldShowHawaiianHomelands = useMemo(() => {
+        const result = activeDatasetObject?.hawaiianHomelands || false;
+        return result;
+    }, [activeDatasetObject]);
 
     const activeDatasetMetricObject = useMemo(() => {
         if (!activeDatasetObject || !effectiveMetric) return null;
@@ -229,33 +233,40 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         attribution='&copy; OpenStreetMap contributors'
                     />
 
-                    {effectiveDataset && effectiveMetric && geoData && metricsData && dataset && (
-                        <GenericPolygonLayer
-                            key={`census-${effectiveDataset}-${effectiveMetric}`}
-                            data={geoData.features}
-                            style={censusStyle}
-                            onFeatureClick={handleFeatureClick}
-                            geoidProperty="geoid20"
-                            getMetricValue={getMetricValue}
-                            activeMetric={effectiveMetric}
-                            popupConfig={censusPopupConfig}
-                            metricData={metricsData}
-                        />
-                    )}
+                    {(() => {
+                        const shouldRenderCensus = effectiveDataset && effectiveMetric && geoData && metricsData && dataset;
+                        const shouldRenderHomelands = effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && homelandsData && metricsData;
+                        
+                        return (
+                            <>
+                                {shouldRenderCensus && (
+                                    <GenericPolygonLayer
+                                        key={`census-${effectiveDataset}-${effectiveMetric}`}
+                                        data={geoData.features}
+                                        style={censusStyle}
+                                        onFeatureClick={handleFeatureClick}
+                                        geoidProperty="geoid20"
+                                        getMetricValue={getMetricValue}
+                                        activeMetric={effectiveMetric}
+                                        popupConfig={censusPopupConfig}
+                                    />
+                                )}
 
-                    {effectiveDataset && effectiveMetric && hawaiianHomelands && homelandsData && metricsData && (
-                        <GenericPolygonLayer<HawaiianHomelandProperties>
-                            key={`homelands-${effectiveDataset}-${effectiveMetric}`}
-                            data={homelandsData.features}
-                            style={homelandStyle}
-                            onFeatureClick={handleFeatureClick}
-                            geoidProperty="GEOID10"
-                            getMetricValue={getMetricValue}
-                            activeMetric={effectiveMetric}
-                            popupConfig={homelandsPopupConfig}
-                            metricData={metricsData}
-                        />
-                    )}
+                                {shouldRenderHomelands && (
+                                    <GenericPolygonLayer<HawaiianHomelandProperties>
+                                        key={`homelands-${effectiveDataset}-${effectiveMetric}`}
+                                        data={homelandsData.features}
+                                        style={homelandStyle}
+                                        onFeatureClick={handleFeatureClick}
+                                        geoidProperty="GEOID10"
+                                        getMetricValue={getMetricValue}
+                                        activeMetric={effectiveMetric}
+                                        popupConfig={homelandsPopupConfig}
+                                    />
+                                )}
+                            </>
+                        );
+                    })()}
 
                     {pointLayers.map(layer => (
                         <GenericPointMarkers key={layer.id} layer={layer} />

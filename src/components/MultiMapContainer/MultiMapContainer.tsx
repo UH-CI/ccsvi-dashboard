@@ -36,7 +36,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     ]);
 
     // Data loading
-    const { geoData, homelandsData, metricsData, loading, error, isInitialDataLoaded, hawaiianHomelands } = useDataLoader(urlState.dataset || '');
+    const { geoData, homelandsData, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
 
     // Add new map with empty values
     const addMap = useCallback(() => {
@@ -108,11 +108,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
         return (
             <div className={styles['loading-container']}>
                 <div>Loading data...</div>
-                {hawaiianHomelands && !homelandsData && (
-                    <div className={styles['loading-subtext']}>
-                        Loading Hawaiian Homelands data...
-                    </div>
-                )}
             </div>
         );
     }
@@ -136,7 +131,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                 geoData={geoData}
                                 homelandsData={homelandsData}
                                 metricsData={metricsData}
-                                hawaiianHomelands={hawaiianHomelands}
                                 dataset={dataset}
                                 isPrimary={index === 0}
                                 mapConfigsLength={mapConfigs.length}

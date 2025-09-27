@@ -15,7 +15,7 @@ interface DataLoaderState {
   error: string | null;
 }
 
-export const useDataLoader = (activeDataset: string) => {
+export const useDataLoader = () => {
   const [state, setState] = useState<DataLoaderState>({
     dataset: null,
     metricsData: null,
@@ -83,7 +83,7 @@ export const useDataLoader = (activeDataset: string) => {
     name: 'Hawaiian Homelands',
     path: './data/Census_Hawaiian_Homelands_hhl10.geojson',
     geoidProperty: 'GEOID10',
-    enabled: state.dataset && activeDataset ? state.dataset[activeDataset]?.hawaiianHomelands || false : false,
+    enabled: true,
   };
 
   // Use the generic polygon layer hooks
@@ -95,7 +95,6 @@ export const useDataLoader = (activeDataset: string) => {
     geoData: censusLayer.data,
     homelandsData: homelandsLayer.data,
     isInitialDataLoaded: !state.loading && state.dataset !== null && censusLayer.data !== null && state.metricsData !== null,
-    hawaiianHomelands: state.dataset && activeDataset ? state.dataset[activeDataset]?.hawaiianHomelands || false : false,
     // Layer loading states
     censusLoading: censusLayer.loading,
     homelandsLoading: homelandsLayer.loading,
