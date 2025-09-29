@@ -1,20 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {FeatureCollection, Geometry, GeoJsonProperties} from 'geojson';
-
-export interface PolygonLayerConfig{
-  name: string;
-  path: string;
-  geoidProperty: string;
-  enabled: boolean;
-  styleConfig?: {
-    activeColor: string;
-    inactiveColor: string;
-    activeWeight: number;
-    inactiveWeight: number;
-    activeFillOpacity: number;
-    inactiveFillOpacity: number;
-  };
-}
+import { PolygonLayerConfig } from '../types';
 
 export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
   data: FeatureCollection<Geometry, T> | null;

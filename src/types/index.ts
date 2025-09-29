@@ -99,10 +99,5 @@ export interface PolygonLayerConfig {
   };
 }
 
-export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
-    data: FeatureCollection<Geometry, T> | null;
-    loading: boolean;
-    error: string | null;
-    loaded: boolean;
-}
+
 
