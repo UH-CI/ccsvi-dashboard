@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
-import { Dataset, PointLayerConfig } from '../../types';
+import { PointLayerConfig } from '../../types';
 import { useDataLoader } from '../../hooks/useDataLoader';
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
@@ -9,14 +9,12 @@ import { MapConfig } from '../../types';
 
 
 interface MultiMapContainerProps {
-    dataset: Dataset | null;
     maxMaps?: number;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
-    dataset, 
     maxMaps = 4,
     pointLayers,
     togglePointLayer,
@@ -36,7 +34,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     ]);
 
     // Data loading
-    const { geoData, homelandsData, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
+    const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
 
     // Add new map with empty values
     const addMap = useCallback(() => {
@@ -76,6 +74,13 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     const toggleMapVisibility = useCallback((mapId: string) => {
         setMapConfigs(prev => prev.map(config => 
             config.id === mapId ? { ...config, visible: !config.visible } : config
+        ));
+    }, []);
+
+    // Update active feature for a specific map
+    const updateMapActiveFeature = useCallback((mapId: string, activeFeature: MapConfig['activeFeature']) => {
+        setMapConfigs(prev => prev.map(config => 
+            config.id === mapId ? { ...config, activeFeature } : config
         ));
     }, []);
 
@@ -128,19 +133,18 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                         <div key={config.id} className={styles['map-wrapper']}>
                             <SingleMapView
                                 config={config}
-                                geoData={geoData}
-                                homelandsData={homelandsData}
                                 metricsData={metricsData}
-                                dataset={dataset}
+                                dataset={globalDataset}
                                 isPrimary={index === 0}
                                 mapConfigsLength={mapConfigs.length}
+                                onUpdateActiveFeature={(activeFeature) => updateMapActiveFeature(config.id, activeFeature)}
                             />
                         </div>
                     ))}
                 </div>
 
                 <MultiMapControlPanel
-                    dataset={dataset}
+                    dataset={globalDataset}
                     mapConfigs={mapConfigs}
                     activeDataset={urlState.dataset}
                     activeDatasetMetric={urlState.metric}

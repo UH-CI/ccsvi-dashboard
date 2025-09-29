@@ -1,24 +1,23 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { Geometry, FeatureCollection } from 'geojson';
 import L, { LeafletMouseEvent } from 'leaflet';
-import { MapConfig, BlockGroupProperties, HawaiianHomelandProperties, MetricsData, Dataset } from '../../types';
+// import { Feature, Geometry, GeoJsonProperties } from 'geojson';
+import { MapConfig, HawaiianHomelandProperties, MetricsData, Dataset } from '../../types';
 import { GenericPolygonLayer } from '../GenericPolygonLayer';
 import { GenericPointMarkers } from '../PointLayers/PointLayers.tsx';
 import { MapLegend } from '../MapLegend';
 import { usePointLayers } from '../../hooks/usePointLayers.ts';
-import { createColorFunction, createGenericStyleFunction, CENSUS_STYLE_CONFIG, HOMELANDS_STYLE_CONFIG } from '../../utils/mapStyling.ts';
-import { mapParams } from '../../config.ts';
+import { useMapPolygonLayers } from '../../hooks/useMapPolygonLayers.ts';
+import { mapParams, polygonLayerConfigs } from '../../config.ts';
 import styles from './SingleMapView.module.scss';
 
 interface SingleMapViewProps {
     config: MapConfig;
-    geoData: FeatureCollection<Geometry, BlockGroupProperties> | null;
-    homelandsData: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
     metricsData: MetricsData | null;
     dataset: Dataset | null;
     isPrimary: boolean;
     mapConfigsLength?: number; // Trigger resize when maps are added/removed
+    onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
 const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
@@ -75,17 +74,23 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
 
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     config,
-    geoData,
-    homelandsData,
     metricsData,
     dataset,
     isPrimary,
-    mapConfigsLength
+    mapConfigsLength,
+    onUpdateActiveFeature
 }) => {
     const effectiveDataset = config.dataset;
     const effectiveMetric = config.metric;
 
     const mapRef = useRef<L.Map | null>(null);
+
+    // Load polygon layers for this specific map based on its dataset
+    const { geoData, homelandsData } = useMapPolygonLayers(dataset, effectiveDataset);
+
+    const isHawaiianHomelandFeature = useCallback(() => {
+        return false;
+    }, []);
 
     // Point layers for this single map
     const { pointLayers } = usePointLayers([]);
@@ -119,7 +124,19 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     }, [activeDatasetObject, effectiveMetric]);
 
     const getColor = useMemo(() => {
-        return createColorFunction(activeDatasetMetricObject);
+        return (value: number | null): string => {
+            if (value === null || !activeDatasetMetricObject) {
+                return '#cccccc';
+            }
+
+            const { thresholds, colors } = activeDatasetMetricObject;
+            for (let i = 0; i < thresholds.length; i++) {
+                if (value <= thresholds[i]) {
+                    return colors[i];
+                }
+            }
+            return '#333';
+        };
     }, [activeDatasetMetricObject]);
 
     const getMetricValue = useMemo(() => {
@@ -141,30 +158,41 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         };
     }, [metricsData, effectiveDataset, effectiveMetric]);
 
-    const censusStyle = useMemo(() => {
-        return createGenericStyleFunction<BlockGroupProperties>(
-            getColor,
-            getMetricValue,
-            null, // No active feature highlighting
-            'geoid20',
-            CENSUS_STYLE_CONFIG
-        );
-    }, [getColor, getMetricValue]);
-
-    const homelandStyle = useMemo(() => {
-        return createGenericStyleFunction<HawaiianHomelandProperties>(
-            getColor,
-            getMetricValue,
-            null, // No active feature highlighting
-            'GEOID10',
-            HOMELANDS_STYLE_CONFIG
-        );
-    }, [getColor, getMetricValue]);
 
     const handleFeatureClick = useCallback((e: LeafletMouseEvent) => {
         const layer = e.target;
         layer.bringToFront();
-    }, []);
+        
+        // Get the feature properties to extract geoid
+        const feature = layer.feature;
+        if (!feature || !onUpdateActiveFeature) return;
+        
+        const geoid = feature.properties?.geoid20 || feature.properties?.GEOID10;
+        if (!geoid) return;
+        
+        // Get current map position
+        const map = mapRef.current;
+        if (!map) return;
+        
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        
+        // Update active feature
+        const newActiveFeature = {
+            geoid,
+            lat: center.lat,
+            lng: center.lng,
+            zoom: zoom
+        };
+        
+        onUpdateActiveFeature(newActiveFeature);
+        
+        // Center map on the clicked feature
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [20, 20] });
+        }
+    }, [onUpdateActiveFeature]);
 
     // Determine initial map position
     const initialMapPosition = {
@@ -178,21 +206,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return null;
     }
 
-    // Popup configurations
-    const censusPopupConfig = {
-        title: 'Census Block Group',
-        fields: [
-            { key: 'geoid20', label: 'Geo Id' },
-        ]
-    };
-
-    const homelandsPopupConfig = {
-        title: 'Hawaiian Homeland',
-        fields: [
-            { key: 'GEOID10', label: 'Geo Id' },
-            { key: 'NAME10', label: 'Name' }
-        ]
-    };
+    // Use centralized popup configurations
+    const censusPopupConfig = polygonLayerConfigs.census.popupConfig;
+    const homelandsPopupConfig = polygonLayerConfigs.hawaiianHomelands.popupConfig;
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
@@ -234,34 +250,60 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     />
 
                     {(() => {
-                        const shouldRenderCensus = effectiveDataset && effectiveMetric && geoData && metricsData && dataset;
+                        const shouldRenderCensus = effectiveDataset && effectiveMetric && geoData && metricsData && dataset && !shouldShowHawaiianHomelands;
                         const shouldRenderHomelands = effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && homelandsData && metricsData;
+                        const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && geoData && metricsData && dataset;
+                        
                         
                         return (
                             <>
-                                {shouldRenderCensus && (
+                                {/* Render census data as gray background when showing Hawaiian homelands */}
+                                {shouldRenderCensusAsBackground && (
                                     <GenericPolygonLayer
-                                        key={`census-${effectiveDataset}-${effectiveMetric}`}
                                         data={geoData.features}
-                                        style={censusStyle}
                                         onFeatureClick={handleFeatureClick}
                                         geoidProperty="geoid20"
                                         getMetricValue={getMetricValue}
+                                        getColor={getColor}
                                         activeMetric={effectiveMetric}
+                                        activeFeatureGeoid={config.activeFeature?.geoid}
+                                        mapId={config.id}
+                                        popupConfig={censusPopupConfig}
+                                        grayOutMode={true}
+                                        isHawaiianHomelandFeature={isHawaiianHomelandFeature}
+                                        pane="tilePane"
+                                    />
+                                )}
+
+                                {/* Render census data normally when not showing Hawaiian homelands */}
+                                {shouldRenderCensus && (
+                                    <GenericPolygonLayer
+                                        data={geoData.features}
+                                        onFeatureClick={handleFeatureClick}
+                                        geoidProperty="geoid20"
+                                        getMetricValue={getMetricValue}
+                                        getColor={getColor}
+                                        activeMetric={effectiveMetric}
+                                        activeFeatureGeoid={config.activeFeature?.geoid}
+                                        mapId={config.id}
                                         popupConfig={censusPopupConfig}
                                     />
                                 )}
 
+                                {/* Render Hawaiian homelands data - this should be on top */}
                                 {shouldRenderHomelands && (
                                     <GenericPolygonLayer<HawaiianHomelandProperties>
-                                        key={`homelands-${effectiveDataset}-${effectiveMetric}`}
                                         data={homelandsData.features}
-                                        style={homelandStyle}
                                         onFeatureClick={handleFeatureClick}
                                         geoidProperty="GEOID10"
                                         getMetricValue={getMetricValue}
+                                        getColor={getColor}
                                         activeMetric={effectiveMetric}
+                                        activeFeatureGeoid={config.activeFeature?.geoid}
+                                        mapId={config.id}
                                         popupConfig={homelandsPopupConfig}
+                                        pane="overlayPane"
+                                        isHawaiianHomelandsLayer={true}
                                     />
                                 )}
                             </>

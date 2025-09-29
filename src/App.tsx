@@ -8,10 +8,8 @@ import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
 
 const App: React.FC = () => {
-    // URL state management
     const { urlState, updateUrlState } = useUrlState();
 
-    // Data loading
     const {
         dataset,
         loading,
@@ -19,7 +17,6 @@ const App: React.FC = () => {
         isInitialDataLoaded
     } = useDataLoader();
 
-    // Point layers
     const { pointLayers } = usePointLayers(urlState.pointLayers);
 
     // // Handle table size changes with smooth animation
@@ -67,7 +64,6 @@ const App: React.FC = () => {
     // }, [takeSnapshot, urlState.dataset, urlState.metric]);
     // }, []);
 
-    // Error handling
     if (error) {
         return (
             <div className={styles['error-container']}>
@@ -80,7 +76,6 @@ const App: React.FC = () => {
         );
     }
 
-    // Loading state
     if (loading || !isInitialDataLoaded) {
         return (
             <div className={styles['loading-container']}>
@@ -108,7 +103,6 @@ const App: React.FC = () => {
         <div className={styles['app-container']}>
             <div className={styles['map-section']}>
                 <MultiMapContainer 
-                    dataset={dataset} 
                     maxMaps={4}
                     pointLayers={pointLayers}
                     togglePointLayer={handlePointLayerToggle}

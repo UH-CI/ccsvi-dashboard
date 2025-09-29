@@ -7,6 +7,12 @@ export interface MapConfig {
     dataset: string;
     metric: string;
     visible: boolean;
+    activeFeature?: {
+        geoid: string;
+        lat: number;
+        lng: number;
+        zoom: number;
+    };
 }
 
 export interface MetricsData {
