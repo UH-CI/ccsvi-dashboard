@@ -34,7 +34,7 @@ export const useDataLoader = () => {
         // Check if all requests were successful
         if (!metricsResponse.ok || !datasetResponse.ok) {
           const errorMessage = 'Failed to fetch one or more data files';
-          console.error('Error loading initial data:', errorMessage);
+          // console.error('Error loading initial data:', errorMessage);
           setState(prev => ({
             ...prev,
             loading: false,
@@ -56,7 +56,7 @@ export const useDataLoader = () => {
         }));
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
-        console.error('Error loading initial data:', err);
+        // console.error('Error loading initial data:', err);
         setState(prev => ({
           ...prev,
           loading: false,

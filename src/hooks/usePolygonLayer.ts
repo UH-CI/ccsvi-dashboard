@@ -59,7 +59,7 @@ export const usePolygonLayer =  <T extends GeoJsonProperties = GeoJsonProperties
 
         if (!response.ok) {
           const errorMessage = `Failed to fetch ${config.name} data`;
-          console.error(`Error loading ${config.name} data:`, errorMessage);
+          // console.error(`Error loading ${config.name} data:`, errorMessage);
           setState(prev => ({
             ...prev,
             loading: false,

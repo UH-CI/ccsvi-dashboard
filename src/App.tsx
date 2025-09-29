@@ -106,12 +106,14 @@ const App: React.FC = () => {
                     maxMaps={4}
                     pointLayers={pointLayers}
                     togglePointLayer={handlePointLayerToggle}
+                    // DEPRECATED
                     // onTakeSnapshot={handleTakeSnapshot}
                 />
 
                 <TableViewer
                     activeDataset={urlState.dataset}
                     datasetInfo={activeDatasetObject}
+                    // DEPRECATED
                     // onSizeChange={handleTableSizeChange}
                 />
             </div>

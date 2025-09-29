@@ -14,6 +14,7 @@ export const useMapPolygonLayers = (dataset: Dataset | null, activeDataset: stri
   const censusConfig = polygonLayerConfigs.census;
   const homelandsConfig = polygonLayerConfigs.hawaiianHomelands;
 
+  // DEPRECATED
   // // Only load the appropriate layer based on dataset configuration
   // const censusLayer = usePolygonLayer<BlockGroupProperties>(
   //   shouldLoadHawaiianHomelands ? { ...censusConfig, enabled: false } : censusConfig
@@ -25,6 +26,7 @@ export const useMapPolygonLayers = (dataset: Dataset | null, activeDataset: stri
   );
 
   return {
+    // DEPRECATED
     // geoData: shouldLoadHawaiianHomelands ? null : censusLayer.data,
     geoData: censusLayer.data,
     homelandsData: shouldLoadHawaiianHomelands ? homelandsLayer.data : null,
@@ -32,6 +34,7 @@ export const useMapPolygonLayers = (dataset: Dataset | null, activeDataset: stri
     homelandsLoading: homelandsLayer.loading,
     censusError: censusLayer.error,
     homelandsError: homelandsLayer.error,
+    // DEPRECATED
     // isDataLoaded: shouldLoadHawaiianHomelands ? homelandsLayer.data !== null : censusLayer.data !== null,
     // Data loaded state depends on whether we need both layers or just census
     isDataLoaded: shouldLoadHawaiianHomelands 

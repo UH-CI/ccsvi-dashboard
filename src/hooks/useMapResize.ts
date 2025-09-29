@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
-import type L from 'leaflet';
+// import type L from 'leaflet';
 
 interface MapResizeOptions {
     debounceMs?: number;
@@ -49,9 +49,10 @@ export const useMapResize = ({
 };
 
 /**
- * Hook for animated map resizing - can be used anywhere
+ * DEPRECATED: Hook for animated map resizing - can be used anywhere
  * Does NOT require MapContainer context
  */
+/*
 export const useAnimatedMapResize = (options: {
     animationDuration?: number;
     updateInterval?: number;
@@ -101,10 +102,11 @@ export const useAnimatedMapResize = (options: {
     return { animateResize, cleanup };
 };
 
-// Simple component wrapper for the automatic resize functionality
+// DEPRECATED: Simple component wrapper for the automatic resize functionality
 export const MapResizeHandler: React.FC<{ debounceMs?: number }> = ({
                                                                         debounceMs = 50
                                                                     }) => {
     useMapResize({ debounceMs });
     return null;
 };
+*/

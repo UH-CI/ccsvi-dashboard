@@ -31,17 +31,17 @@ export const usePointLayers = (visibleLayerIds: string[] = []) => {
     // Load point layers config once
     useEffect(() => {
         if (!isLoaded) {
-            console.log('Loading point layers config...');
+            // console.log('Loading point layers config...');
             loadPointLayersConfig().then(layers => {
                 const layersWithVisibility = layers.map((layer: PointLayerConfig) => ({
                     ...layer,
                     visible: visibleLayerIds.includes(layer.id)
                 }));
 
-                console.log('Point layers loaded with initial visibility:', {
-                    visibleFromUrl: visibleLayerIds,
-                    layersLoaded: layersWithVisibility.map((l: PointLayerConfig) => ({ id: l.id, visible: l.visible }))
-                });
+                // console.log('Point layers loaded with initial visibility:', {
+                //     visibleFromUrl: visibleLayerIds,
+                //     layersLoaded: layersWithVisibility.map((l: PointLayerConfig) => ({ id: l.id, visible: l.visible }))
+                // });
 
                 setPointLayers(layersWithVisibility);
                 setIsLoaded(true);
@@ -58,10 +58,10 @@ export const usePointLayers = (visibleLayerIds: string[] = []) => {
             );
 
             if (needsUpdate) {
-                console.log('Updating layer visibility from URL change:', {
-                    current: pointLayers.map(l => ({ id: l.id, visible: l.visible })),
-                    newVisible: visibleLayerIds
-                });
+                // console.log('Updating layer visibility from URL change:', {
+                //     current: pointLayers.map(l => ({ id: l.id, visible: l.visible })),
+                //     newVisible: visibleLayerIds
+                // });
 
                 setPointLayers(prev =>
                     prev.map(layer => ({
@@ -80,7 +80,7 @@ export const usePointLayers = (visibleLayerIds: string[] = []) => {
 
             if (visibleLayers.length === 0) return;
 
-            console.log('Loading data for visible layers:', visibleLayers.map(l => l.id));
+            // console.log('Loading data for visible layers:', visibleLayers.map(l => l.id));
 
             // Load all visible layers in parallel
             const loadPromises = visibleLayers.map(async (layer) => {
