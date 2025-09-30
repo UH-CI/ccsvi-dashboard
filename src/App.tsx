@@ -3,22 +3,20 @@ import './App.css';
 import styles from './App.module.scss';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useDataLoader } from './hooks/useDataLoader';
+import { useBlockGroupData } from "./hooks/useBlockGroupData.ts";
+import { useBlockGroupPolygonLayers } from './hooks/useBlockGroupPolygonLayers.ts';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
 
 const App: React.FC = () => {
     const { urlState, updateUrlState } = useUrlState();
 
-    const {
-        dataset,
-        metricsData,
-        loading,
-        error,
-        isInitialDataLoaded
-    } = useDataLoader();
+    const blockGroupData = useBlockGroupData()
+    const blockGroupPolygonLayers = useBlockGroupPolygonLayers(blockGroupData.dataset, urlState.dataset);
+    const pointLayers = usePointLayers(urlState.pointLayers);
 
-    const { pointLayers } = usePointLayers(urlState.pointLayers);
+    // Check if all data is ready
+    const isReady = blockGroupData.isLoaded && blockGroupPolygonLayers.isLoaded && pointLayers.isInitialized;
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {
@@ -65,11 +63,11 @@ const App: React.FC = () => {
     // }, [takeSnapshot, urlState.dataset, urlState.metric]);
     // }, []);
 
-    if (error) {
+    if (blockGroupData.error) {
         return (
             <div className={styles['error-container']}>
                 <h2>Error loading data</h2>
-                <p>{error}</p>
+                <p>{blockGroupData.error}</p>
                 <button onClick={() => window.location.reload()}>
                     Retry
                 </button>
@@ -77,7 +75,7 @@ const App: React.FC = () => {
         );
     }
 
-    if (loading || !isInitialDataLoaded) {
+    if (!isReady) {
         return (
             <div className={styles['loading-container']}>
                 <div>Loading data...</div>
@@ -97,17 +95,23 @@ const App: React.FC = () => {
     //
     // const mapZoom = initialMapPosition ? initialMapPosition.zoom : mapParams.mapZoom;
 
-    // Get active dataset object for table viewer
-    const activeDatasetObject = dataset && urlState.dataset ? dataset[urlState.dataset] : null;
+    // // Get active dataset object for table viewer
+    // const activeDatasetObject = dataset && urlState.dataset ? dataset[urlState.dataset] : null;
+
+    const activeDatasetObject = blockGroupData.dataset && urlState.dataset
+        ? blockGroupData.dataset[urlState.dataset]
+        : null;
 
     return (
         <div className={styles['app-container']}>
             <div className={styles['map-section']}>
-                <MultiMapContainer 
+                <MultiMapContainer
                     maxMaps={4}
-                    dataset={dataset}
-                    metricsData={metricsData}
-                    pointLayers={pointLayers}
+                    dataset={blockGroupData.dataset}
+                    metricsData={blockGroupData.metricsData}
+                    censusBlockPolygons={blockGroupPolygonLayers.censusBlocks.data}
+                    hawaiianHomelandPolygons={blockGroupPolygonLayers.hawaiianHomelands.data}
+                    pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
                 />

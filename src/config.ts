@@ -10,6 +10,7 @@ export const mapParams = {
     geoidField: 'geoid20',
     geoJsonPath: './data/2020_Census_Block_Groups_WGS84.geojson',
     datasetPath: './data/metrics/all_census.json',
+    censusMetadataPath: './data/metrics/census_datasets_info.json',
 };
 
 // Polygon layer configurations

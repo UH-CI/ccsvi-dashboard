@@ -1,22 +1,32 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { FeatureCollection, Geometry } from 'geojson';
 import L, { LeafletMouseEvent } from 'leaflet';
-// import { Feature, Geometry, GeoJsonProperties } from 'geojson';
-import { MapConfig, HawaiianHomelandProperties, MetricsData, Dataset } from '../../types';
+import {
+    MapConfig,
+    MetricsData,
+    Dataset,
+    BlockGroupProperties,
+    HawaiianHomelandProperties,
+    PointLayerConfig
+} from '../../types';
 import { GenericPolygonLayer } from '../GenericPolygonLayer';
-import { GenericPointMarkers } from '../PointLayers/PointLayers.tsx';
+import { GenericPointMarkers } from '../PointLayers/PointLayers';
 import { MapLegend } from '../MapLegend';
-import { usePointLayers } from '../../hooks/usePointLayers.ts';
-import { useMapPolygonLayers } from '../../hooks/useMapPolygonLayers.ts';
-import { mapParams, polygonLayerConfigs } from '../../config.ts';
+import { mapParams, polygonLayerConfigs } from '../../config';
 import styles from './SingleMapView.module.scss';
 
 interface SingleMapViewProps {
     config: MapConfig;
-    metricsData: MetricsData | null;
-    dataset: Dataset | null;
     isPrimary: boolean;
-    mapConfigsLength?: number; // Trigger resize when maps are added/removed
+    mapConfigsLength: number;
+    // Shared data (already loaded - passed as props)
+    dataset: Dataset | null;
+    metricsData: MetricsData | null;
+    censusBlockPolygons: FeatureCollection<Geometry, BlockGroupProperties> | null;
+    hawaiianHomelandPolygons: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
+    pointLayers: PointLayerConfig[];
+    // Handlers
     onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
@@ -28,7 +38,6 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
         containerRef.current = map.getContainer();
         onMapRef(map);
 
-        // Force map to recalculate its size when component mounts
         const timeoutId = setTimeout(() => {
             map.invalidateSize();
         }, 100);
@@ -39,25 +48,19 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
         };
     }, [map, onMapRef]);
 
-    // Use ResizeObserver to detect container size changes
     useEffect(() => {
         if (!containerRef.current) return;
 
         const resizeObserver = new ResizeObserver(() => {
-            // Debounce the resize to avoid excessive calls
             setTimeout(() => {
                 map.invalidateSize();
             }, 50);
         });
 
         resizeObserver.observe(containerRef.current);
-
-        return () => {
-            resizeObserver.disconnect();
-        };
+        return () => resizeObserver.disconnect();
     }, [map]);
 
-    // Also handle window resize events
     useEffect(() => {
         const handleResize = () => {
             setTimeout(() => {
@@ -73,36 +76,27 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
 };
 
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
-    config,
-    metricsData,
-    dataset,
-    isPrimary,
-    mapConfigsLength,
-    onUpdateActiveFeature
-}) => {
+                                                                     config,
+                                                                     isPrimary,
+                                                                     mapConfigsLength,
+                                                                     dataset,
+                                                                     metricsData,
+                                                                     censusBlockPolygons,
+                                                                     hawaiianHomelandPolygons,
+                                                                     pointLayers,
+                                                                     onUpdateActiveFeature
+                                                                 }) => {
     const effectiveDataset = config.dataset;
     const effectiveMetric = config.metric;
-
     const mapRef = useRef<L.Map | null>(null);
 
-    // Load polygon layers for this specific map based on its dataset
-    const { geoData, homelandsData } = useMapPolygonLayers(dataset, effectiveDataset);
+    // NO DATA LOADING - only business logic for THIS map
 
-    const isHawaiianHomelandFeature = useCallback(() => {
-        return false;
-    }, []);
-
-    // Point layers for this single map
-    const { pointLayers } = usePointLayers([]);
-
-    // Force map resize when the number of maps changes
     useEffect(() => {
         if (mapRef.current) {
-            // Delay to ensure DOM has updated
             const timeoutId = setTimeout(() => {
                 mapRef.current?.invalidateSize();
             }, 200);
-            
             return () => clearTimeout(timeoutId);
         }
     }, [mapConfigsLength]);
@@ -112,10 +106,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return dataset[effectiveDataset];
     }, [dataset, effectiveDataset]);
 
-    // Determine if Hawaiian homelands should be shown for this map's dataset
     const shouldShowHawaiianHomelands = useMemo(() => {
-        const result = activeDatasetObject?.hawaiianHomelands || false;
-        return result;
+        return activeDatasetObject?.hawaiianHomelands || false;
     }, [activeDatasetObject]);
 
     const activeDatasetMetricObject = useMemo(() => {
@@ -128,7 +120,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
             if (value === null || !activeDatasetMetricObject) {
                 return '#cccccc';
             }
-
             const { thresholds, colors } = activeDatasetMetricObject;
             for (let i = 0; i < thresholds.length; i++) {
                 if (value <= thresholds[i]) {
@@ -158,57 +149,51 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         };
     }, [metricsData, effectiveDataset, effectiveMetric]);
 
-
     const handleFeatureClick = useCallback((e: LeafletMouseEvent) => {
         const layer = e.target;
         layer.bringToFront();
-        
-        // Get the feature properties to extract geoid
+
         const feature = layer.feature;
         if (!feature || !onUpdateActiveFeature) return;
-        
+
         const geoid = feature.properties?.geoid20 || feature.properties?.GEOID10;
         if (!geoid) return;
-        
-        // Get current map position
+
         const map = mapRef.current;
         if (!map) return;
-        
+
         const center = map.getCenter();
         const zoom = map.getZoom();
-        
-        // Update active feature
-        const newActiveFeature = {
+
+        onUpdateActiveFeature({
             geoid,
             lat: center.lat,
             lng: center.lng,
             zoom: zoom
-        };
-        
-        onUpdateActiveFeature(newActiveFeature);
-        
-        // Center map on the clicked feature
+        });
+
         const bounds = layer.getBounds();
         if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [20, 20] });
         }
     }, [onUpdateActiveFeature]);
 
-    // Determine initial map position
+    const isHawaiianHomelandFeature = useCallback(() => {
+        return false;
+    }, []);
+
+    if (!config.visible) {
+        return null;
+    }
+
+    const censusPopupConfig = polygonLayerConfigs.census.popupConfig;
+    const homelandsPopupConfig = polygonLayerConfigs.hawaiianHomelands.popupConfig;
+
     const initialMapPosition = {
         lat: mapParams.mapCenter[0],
         lng: mapParams.mapCenter[1],
         zoom: mapParams.mapZoom
     };
-
-    // Don't render if not visible
-    if (!config.visible) {
-        return null;
-    }
-
-    // Use centralized popup configurations
-    const censusPopupConfig = polygonLayerConfigs.census.popupConfig;
-    const homelandsPopupConfig = polygonLayerConfigs.hawaiianHomelands.popupConfig;
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
@@ -231,7 +216,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     )}
                 </div>
             </div>
-            
+
             <div className={styles['map-container']} style={{ position: 'relative', zIndex: 1 }}>
                 <MapContainer
                     center={[initialMapPosition.lat, initialMapPosition.lng]}
@@ -243,24 +228,25 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     style={{ zIndex: 1 }}
                 >
                     <MapResizeHandler onMapRef={(map) => { mapRef.current = map; }} />
-                    
+
                     <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; OpenStreetMap contributors'
                     />
 
                     {(() => {
-                        const shouldRenderCensus = effectiveDataset && effectiveMetric && geoData && metricsData && dataset && !shouldShowHawaiianHomelands;
-                        const shouldRenderHomelands = effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && homelandsData && metricsData;
-                        const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && geoData && metricsData && dataset;
-                        
-                        
+                        const shouldRenderCensus = effectiveDataset && effectiveMetric &&
+                            censusBlockPolygons && metricsData && dataset && !shouldShowHawaiianHomelands;
+                        const shouldRenderHomelands = effectiveDataset && effectiveMetric &&
+                            shouldShowHawaiianHomelands && hawaiianHomelandPolygons && metricsData;
+                        const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
+                            shouldShowHawaiianHomelands && censusBlockPolygons && metricsData && dataset;
+
                         return (
                             <>
-                                {/* Render census data as gray background when showing Hawaiian homelands */}
                                 {shouldRenderCensusAsBackground && (
                                     <GenericPolygonLayer
-                                        data={geoData.features}
+                                        data={censusBlockPolygons.features}
                                         onFeatureClick={handleFeatureClick}
                                         geoidProperty="geoid20"
                                         getMetricValue={getMetricValue}
@@ -275,10 +261,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                     />
                                 )}
 
-                                {/* Render census data normally when not showing Hawaiian homelands */}
                                 {shouldRenderCensus && (
                                     <GenericPolygonLayer
-                                        data={geoData.features}
+                                        data={censusBlockPolygons.features}
                                         onFeatureClick={handleFeatureClick}
                                         geoidProperty="geoid20"
                                         getMetricValue={getMetricValue}
@@ -290,10 +275,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                     />
                                 )}
 
-                                {/* Render Hawaiian homelands data - this should be on top */}
                                 {shouldRenderHomelands && (
                                     <GenericPolygonLayer<HawaiianHomelandProperties>
-                                        data={homelandsData.features}
+                                        data={hawaiianHomelandPolygons.features}
                                         onFeatureClick={handleFeatureClick}
                                         geoidProperty="GEOID10"
                                         getMetricValue={getMetricValue}
@@ -324,5 +308,3 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         </div>
     );
 });
-
-

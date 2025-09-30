@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
-import { PointLayerConfig, Dataset, MetricsData, MapConfig } from '../../types';
-// import { useDataLoader } from '../../hooks/useDataLoader';
+import { MapConfig, MetricsData, Dataset, PointLayerConfig, BlockGroupProperties, HawaiianHomelandProperties } from '../../types';
+import { FeatureCollection, Geometry } from "geojson";
+// import { useBlockGroupLayer } from '../../hooks/useBlockGroupLayer';
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
 
@@ -11,6 +12,8 @@ interface MultiMapContainerProps {
     maxMaps?: number;
     dataset: Dataset | null;
     metricsData: MetricsData | null;
+    censusBlockPolygons: FeatureCollection<Geometry, BlockGroupProperties> | null;
+    hawaiianHomelandPolygons: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
 }
@@ -19,6 +22,8 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     maxMaps = 4,
     dataset,
     metricsData,
+    censusBlockPolygons,
+    hawaiianHomelandPolygons,
     pointLayers,
     togglePointLayer,
 }) => {
@@ -37,7 +42,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     ]);
 
     // // Data loading
-    // const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
+    // const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useBlockGroupLayer();
 
     // Add new map with empty values
     const addMap = useCallback(() => {
@@ -87,18 +92,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
         ));
     }, []);
 
-    const gridLayout = useMemo(() => {
-        const visibleMaps = mapConfigs.filter(config => config.visible);
-        const count = visibleMaps.length;
-        
-        if (count === 1) return { rows: 1, cols: 1 };
-        if (count === 2) return { rows: 1, cols: 2 };
-        if (count === 3) return { rows: 2, cols: 2 };
-        if (count === 4) return { rows: 2, cols: 2 };
-        
-        return { rows: 1, cols: 1 };
-    }, [mapConfigs]);
-
     // // Error handling
     // if (error) {
     //     return (
@@ -120,7 +113,21 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     //     );
     // }
 
-    const visibleMaps = mapConfigs.filter(config => config.visible);
+    const visibleMaps = useMemo(() =>
+            mapConfigs.filter(config => config.visible),
+        [mapConfigs]
+    );
+
+    const gridLayout = useMemo(() => {
+        const count = visibleMaps.length;
+
+        if (count === 1) return { rows: 1, cols: 1 };
+        if (count === 2) return { rows: 1, cols: 2 };
+        if (count === 3) return { rows: 2, cols: 2 };
+        if (count === 4) return { rows: 2, cols: 2 };
+
+        return { rows: 1, cols: 1 };
+    }, [visibleMaps]);
 
     return (
         <div className={styles['multi-map-container']}>
@@ -136,11 +143,18 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                         <div key={config.id} className={styles['map-wrapper']}>
                             <SingleMapView
                                 config={config}
-                                metricsData={metricsData}
-                                dataset={dataset}
                                 isPrimary={index === 0}
-                                mapConfigsLength={mapConfigs.length}
-                                onUpdateActiveFeature={(activeFeature) => updateMapActiveFeature(config.id, activeFeature)}
+                                mapConfigsLength={visibleMaps.length}
+                                // Pass shared data - NO LOADING IN SINGLEMAPVIEW
+                                dataset={dataset}
+                                metricsData={metricsData}
+                                censusBlockPolygons={censusBlockPolygons}
+                                hawaiianHomelandPolygons={hawaiianHomelandPolygons}
+                                pointLayers={pointLayers}
+                                // Handlers
+                                onUpdateActiveFeature={(activeFeature) =>
+                                    updateMapActiveFeature(config.id, activeFeature)
+                                }
                             />
                         </div>
                     ))}

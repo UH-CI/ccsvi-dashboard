@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FeatureCollection, Point } from 'geojson';
 import { PointLayerConfig } from "../types";
+import { useDataFetcher} from "./useDataFetcher.ts";
 
 export const usePointLayers = (visibleLayerIds: string[] = []) => {
     const [pointLayers, setPointLayers] = useState<PointLayerConfig[]>([]);
