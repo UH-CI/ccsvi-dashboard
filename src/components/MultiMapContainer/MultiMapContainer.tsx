@@ -1,21 +1,24 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
-import { PointLayerConfig } from '../../types';
-import { useDataLoader } from '../../hooks/useDataLoader';
+import { PointLayerConfig, Dataset, MetricsData, MapConfig } from '../../types';
+// import { useDataLoader } from '../../hooks/useDataLoader';
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
-import { MapConfig } from '../../types';
 
 
 interface MultiMapContainerProps {
     maxMaps?: number;
+    dataset: Dataset | null;
+    metricsData: MetricsData | null;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
     maxMaps = 4,
+    dataset,
+    metricsData,
     pointLayers,
     togglePointLayer,
 }) => {
@@ -33,8 +36,8 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
         }
     ]);
 
-    // Data loading
-    const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
+    // // Data loading
+    // const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useDataLoader();
 
     // Add new map with empty values
     const addMap = useCallback(() => {
@@ -96,26 +99,26 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
         return { rows: 1, cols: 1 };
     }, [mapConfigs]);
 
-    // Error handling
-    if (error) {
-        return (
-            <div className={styles['error-container']}>
-                <h2>Error loading data</h2>
-                <p>{error}</p>
-                <button onClick={() => window.location.reload()}>
-                    Retry
-                </button>
-            </div>
-        );
-    }
-
-    if (loading || !isInitialDataLoaded) {
-        return (
-            <div className={styles['loading-container']}>
-                <div>Loading data...</div>
-            </div>
-        );
-    }
+    // // Error handling
+    // if (error) {
+    //     return (
+    //         <div className={styles['error-container']}>
+    //             <h2>Error loading data</h2>
+    //             <p>{error}</p>
+    //             <button onClick={() => window.location.reload()}>
+    //                 Retry
+    //             </button>
+    //         </div>
+    //     );
+    // }
+    //
+    // if (loading || !isInitialDataLoaded) {
+    //     return (
+    //         <div className={styles['loading-container']}>
+    //             <div>Loading data...</div>
+    //         </div>
+    //     );
+    // }
 
     const visibleMaps = mapConfigs.filter(config => config.visible);
 
@@ -134,7 +137,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                             <SingleMapView
                                 config={config}
                                 metricsData={metricsData}
-                                dataset={globalDataset}
+                                dataset={dataset}
                                 isPrimary={index === 0}
                                 mapConfigsLength={mapConfigs.length}
                                 onUpdateActiveFeature={(activeFeature) => updateMapActiveFeature(config.id, activeFeature)}
@@ -144,7 +147,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                 </div>
 
                 <MultiMapControlPanel
-                    dataset={globalDataset}
+                    dataset={dataset}
                     mapConfigs={mapConfigs}
                     activeDataset={urlState.dataset}
                     activeDatasetMetric={urlState.metric}

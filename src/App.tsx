@@ -12,6 +12,7 @@ const App: React.FC = () => {
 
     const {
         dataset,
+        metricsData,
         loading,
         error,
         isInitialDataLoaded
@@ -104,16 +105,16 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer 
                     maxMaps={4}
+                    dataset={dataset}
+                    metricsData={metricsData}
                     pointLayers={pointLayers}
                     togglePointLayer={handlePointLayerToggle}
-                    // DEPRECATED
                     // onTakeSnapshot={handleTakeSnapshot}
                 />
 
                 <TableViewer
                     activeDataset={urlState.dataset}
                     datasetInfo={activeDatasetObject}
-                    // DEPRECATED
                     // onSizeChange={handleTableSizeChange}
                 />
             </div>
