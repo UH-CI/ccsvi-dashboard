@@ -13,6 +13,7 @@ export interface FetchOptions {
     errorPrefix?: string;
 }
 
+// Single url source data fetcher
 export const useDataFetcher = <T = unknown>(
     url: string | null,
     options: FetchOptions = {}
@@ -97,114 +98,4 @@ export const useDataFetcher = <T = unknown>(
     }, [url, enabled, skipIfLoaded, state.loaded, state.data, errorPrefix]);
 
     return state;
-};
-
-export const useMultiDataFetcher = <T extends object>(
-    sources: Array<{ key: keyof T; url: string; errorPrefix?: string }>,
-    options: Omit<FetchOptions, 'errorPrefix'> = {}
-): FetchState<T> & { partialErrors: Record<string, string> } => {
-    const { enabled = true, skipIfLoaded = true } = options;
-
-    const [state, setState] = useState<FetchState<T> & { partialErrors: Record<string, string> }>({
-        data: null,
-        loading: false,
-        error: null,
-        loaded: false,
-        partialErrors: {},
-    });
-
-    const loadingRef = useRef<boolean>(false);
-
-    useEffect(() => {
-        if (!enabled || sources.length === 0) {
-            return;
-        }
-
-        if (skipIfLoaded && state.loaded && state.data) {
-            return;
-        }
-
-        if (loadingRef.current) {
-            return;
-        }
-
-        const fetchAllData = async () => {
-            loadingRef.current = true;
-            setState(prev => ({ ...prev, loading: true, error: null, partialErrors: {} }));
-
-            try {
-                const results = await Promise.all(
-                    sources.map(async ({ key, url, errorPrefix = 'Failed to fetch data' }) => {
-                        try {
-                            const response = await fetch(url);
-                            if (!response.ok) {
-                                throw new Error(`${response.status} ${response.statusText}`);
-                            }
-                            const data = await response.json();
-                            return { key, data, error: null };
-                        } catch (err) {
-                            const errorMessage = err instanceof Error ? err.message : errorPrefix;
-                            console.error(`${errorPrefix}:`, err);
-                            return { key, data: null, error: errorMessage };
-                        }
-                    })
-                );
-
-                const combinedData = {} as T;
-                const partialErrors: Record<string, string> = {};
-                let hasAnyData = false;
-
-                results.forEach(({ key, data, error }) => {
-                    if (data) {
-                        combinedData[key] = data;
-                        hasAnyData = true;
-                    }
-                    if (error) {
-                        partialErrors[key as string] = error;
-                    }
-                });
-
-                // If all fetches failed, set a global error
-                if (!hasAnyData) {
-                    setState(prev => ({
-                        ...prev,
-                        loading: false,
-                        error: 'All data fetches failed',
-                        partialErrors,
-                    }));
-                    return;
-                }
-
-                setState(prev => ({
-                    ...prev,
-                    data: combinedData,
-                    loading: false,
-                    loaded: true,
-                    partialErrors,
-                }));
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
-                console.error('Error in multi-fetch:', err);
-                setState(prev => ({
-                    ...prev,
-                    loading: false,
-                    error: errorMessage,
-                }));
-            } finally {
-                loadingRef.current = false;
-            }
-        };
-
-        fetchAllData().catch(console.error);
-    }, [sources, enabled, skipIfLoaded, state.loaded, state.data]);
-
-    return state;
-};
-
-export const useConditionalDataFetcher = <T = unknown>(
-    url: string | null,
-    condition: boolean,
-    options: Omit<FetchOptions, 'enabled'> = {}
-): FetchState<T> => {
-    return useDataFetcher<T>(url, { ...options, enabled: condition });
 };

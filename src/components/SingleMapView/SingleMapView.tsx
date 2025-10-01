@@ -13,7 +13,7 @@ import {
 import { GenericPolygonLayer } from '../GenericPolygonLayer';
 import { GenericPointMarkers } from '../PointLayers/PointLayers';
 import { MapLegend } from '../MapLegend';
-import { mapParams, polygonLayerConfigs } from '../../config';
+import { mapParams, blockGroupPolygonLayerConfigs } from '../../config';
 import styles from './SingleMapView.module.scss';
 
 interface SingleMapViewProps {
@@ -186,8 +186,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return null;
     }
 
-    const censusPopupConfig = polygonLayerConfigs.census.popupConfig;
-    const homelandsPopupConfig = polygonLayerConfigs.hawaiianHomelands.popupConfig;
+    const censusPopupConfig = blockGroupPolygonLayerConfigs.census.popupConfig;
+    const homelandsPopupConfig = blockGroupPolygonLayerConfigs.hawaiianHomelands.popupConfig;
 
     const initialMapPosition = {
         lat: mapParams.mapCenter[0],

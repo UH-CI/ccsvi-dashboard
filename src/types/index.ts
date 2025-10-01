@@ -1,4 +1,4 @@
-import {Feature, Geometry, FeatureCollection, GeoJsonProperties} from 'geojson';
+import {Feature, Geometry} from 'geojson';
 import { PathOptions } from 'leaflet';
 
 export interface MapConfig {

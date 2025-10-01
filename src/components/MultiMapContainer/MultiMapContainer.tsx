@@ -3,7 +3,6 @@ import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
 import { MapConfig, MetricsData, Dataset, PointLayerConfig, BlockGroupProperties, HawaiianHomelandProperties } from '../../types';
 import { FeatureCollection, Geometry } from "geojson";
-// import { useBlockGroupLayer } from '../../hooks/useBlockGroupLayer';
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
 
@@ -40,9 +39,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
             visible: true
         }
     ]);
-
-    // // Data loading
-    // const { dataset: globalDataset, metricsData, loading, error, isInitialDataLoaded } = useBlockGroupLayer();
 
     // Add new map with empty values
     const addMap = useCallback(() => {
@@ -91,27 +87,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
             config.id === mapId ? { ...config, activeFeature } : config
         ));
     }, []);
-
-    // // Error handling
-    // if (error) {
-    //     return (
-    //         <div className={styles['error-container']}>
-    //             <h2>Error loading data</h2>
-    //             <p>{error}</p>
-    //             <button onClick={() => window.location.reload()}>
-    //                 Retry
-    //             </button>
-    //         </div>
-    //     );
-    // }
-    //
-    // if (loading || !isInitialDataLoaded) {
-    //     return (
-    //         <div className={styles['loading-container']}>
-    //             <div>Loading data...</div>
-    //         </div>
-    //     );
-    // }
 
     const visibleMaps = useMemo(() =>
             mapConfigs.filter(config => config.visible),

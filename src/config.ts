@@ -8,16 +8,16 @@ export const mapParams = {
     maxBounds: [[18, -162], [24, -154]] as LatLngBoundsExpression,
     maxBoundsViscosity: 1,
     geoidField: 'geoid20',
-    geoJsonPath: './data/2020_Census_Block_Groups_WGS84.geojson',
-    datasetPath: './data/metrics/all_census.json',
-    censusMetadataPath: './data/metrics/census_datasets_info.json',
+    censusBlockGroupGeoJsonPath: './data/2020_Census_Block_Groups_WGS84.geojson',
+    censusDatasetsPath: './data/metrics/census_metrics_by_block_group.json',
+    censusDatasetsInfoPath: './data/metrics/census_datasets_config.json',
 };
 
-// Polygon layer configurations
-export const polygonLayerConfigs = {
+// Block group polygon layer configurations
+export const blockGroupPolygonLayerConfigs = {
     census: {
         name: 'Census Block Groups',
-        path: mapParams.geoJsonPath,
+        path: mapParams.censusBlockGroupGeoJsonPath,
         geoidProperty: 'geoid20',
         enabled: true,
         popupConfig: {
