@@ -1,0 +1,34 @@
+.popup-title {
+  font-weight: 600;
+  margin-bottom: 0.75em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.popup-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+}
+
+.popup-field-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.popup-field-value {
+  text-align: right;
+  word-break: break-word;
+}
+
+.popup-additional {
+  margin-top: 0.75em;
+  padding-top: 0.75em;
+  border-top: 1px solid #e0e0e0;
+}
