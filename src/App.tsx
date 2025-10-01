@@ -5,43 +5,45 @@ import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
-import { usePolygonLayer } from "./hooks/usePolygonLayer.ts";
 import { useDataFetcher } from "./hooks/useDataFetcher.ts";
 import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties } from "./types"
-import {blockGroupPolygonLayerConfigs, mapParams} from "./config.ts";
+import { FeatureCollection, Geometry } from "geojson";
+import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
 
 const App: React.FC = () => {
     const { urlState, updateUrlState } = useUrlState();
 
     // Contains actual demographic metric values per geographic block group
     const metricsData = useDataFetcher<MetricsData>(
-        mapParams.censusDatasetsPath,
+        DATASETS_CONFIG.censusDatasetsPath,
         {errorPrefix: 'Failed to load metrics data' }
     );
 
     // Configuration metadata for census datasets
     const blockGroupData = useDataFetcher<Dataset>(
-        mapParams.censusDatasetsInfoPath,
+        DATASETS_CONFIG.censusDatasetsInfoPath,
         {errorPrefix: 'Failed to load dataset metadata' }
     );
 
     const shouldLoadHawaiianHomelands = blockGroupData.data?.[urlState.dataset]?.hawaiianHomelands || false;
 
-    const censusLayer = usePolygonLayer<BlockGroupProperties>(
-        blockGroupPolygonLayerConfigs.census
-    );
+    const censusBlockGroups = useDataFetcher<FeatureCollection<Geometry, BlockGroupProperties>>(
+        POLYGON_LAYERS.censusBlockGroups.path,
+        { errorPrefix: 'Failed to load census block group data' }
 
-    const homelandsLayer = usePolygonLayer<HawaiianHomelandProperties>({
-        ...blockGroupPolygonLayerConfigs.hawaiianHomelands,
-        enabled: shouldLoadHawaiianHomelands
-    });
+    )
+
+    const hawaiianHomelands = useDataFetcher<FeatureCollection<Geometry, HawaiianHomelandProperties>>(
+        shouldLoadHawaiianHomelands ? POLYGON_LAYERS.hawaiianHomelands.path : null,
+        { errorPrefix: `Failed to fetch hawaiian homelands data` }
+    );
 
     const pointLayers = usePointLayers(urlState.pointLayers);
 
     // Check if all data is ready
     const isPolygonLayersLoaded = shouldLoadHawaiianHomelands
-        ? (censusLayer.data !== null && homelandsLayer.data !== null)
-        : censusLayer.data !== null;
+        ? (censusBlockGroups.data !== null && hawaiianHomelands.data !== null)
+        : censusBlockGroups.data !== null;
 
     // Check if all data is ready
     const isReady = metricsData.loaded && blockGroupData.loaded && isPolygonLayersLoaded && pointLayers.isInitialized;
@@ -123,8 +125,8 @@ const App: React.FC = () => {
                     maxMaps={4}
                     dataset={blockGroupData.data}
                     metricsData={metricsData.data}
-                    censusBlockPolygons={censusLayer.data}
-                    hawaiianHomelandPolygons={homelandsLayer.data}
+                    censusBlockPolygons={censusBlockGroups.data}
+                    hawaiianHomelandPolygons={hawaiianHomelands.data}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}

@@ -89,6 +89,10 @@ export interface PolygonLayerConfig {
   path: string;
   geoidProperty: string;
   enabled: boolean;
+  popupConfig: {
+    title: string;
+    fields: Array<{ key: string; label: string }>;
+  };
   styleConfig?: {
     activeColor: string;
     inactiveColor: string;

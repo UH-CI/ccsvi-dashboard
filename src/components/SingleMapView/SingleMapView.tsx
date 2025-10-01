@@ -13,7 +13,7 @@ import {
 import { GenericPolygonLayer } from '../GenericPolygonLayer';
 import { GenericPointMarkers } from '../PointLayers/PointLayers';
 import { MapLegend } from '../MapLegend';
-import { mapParams, blockGroupPolygonLayerConfigs } from '../../config';
+import { MAP_CONFIG, POLYGON_LAYERS} from "../../config";
 import styles from './SingleMapView.module.scss';
 
 interface SingleMapViewProps {
@@ -90,8 +90,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const effectiveMetric = config.metric;
     const mapRef = useRef<L.Map | null>(null);
 
-    // NO DATA LOADING - only business logic for THIS map
-
     useEffect(() => {
         if (mapRef.current) {
             const timeoutId = setTimeout(() => {
@@ -156,7 +154,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         const feature = layer.feature;
         if (!feature || !onUpdateActiveFeature) return;
 
-        const geoid = feature.properties?.geoid20 || feature.properties?.GEOID10;
+        const geoid = feature.properties?.[POLYGON_LAYERS.censusBlockGroups.geoidProperty] || feature.properties?.[POLYGON_LAYERS.hawaiianHomelands.geoidProperty];
         if (!geoid) return;
 
         const map = mapRef.current;
@@ -186,14 +184,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return null;
     }
 
-    const censusPopupConfig = blockGroupPolygonLayerConfigs.census.popupConfig;
-    const homelandsPopupConfig = blockGroupPolygonLayerConfigs.hawaiianHomelands.popupConfig;
-
-    const initialMapPosition = {
-        lat: mapParams.mapCenter[0],
-        lng: mapParams.mapCenter[1],
-        zoom: mapParams.mapZoom
-    };
+    const censusPopupConfig = POLYGON_LAYERS.censusBlockGroups.popup;
+    const homelandsPopupConfig = POLYGON_LAYERS.hawaiianHomelands.popup;
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
@@ -219,11 +211,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
             <div className={styles['map-container']} style={{ position: 'relative', zIndex: 1 }}>
                 <MapContainer
-                    center={[initialMapPosition.lat, initialMapPosition.lng]}
-                    zoom={initialMapPosition.zoom}
-                    minZoom={mapParams.minZoom}
-                    maxBounds={mapParams.maxBounds}
-                    maxBoundsViscosity={mapParams.maxBoundsViscosity}
+                    center={MAP_CONFIG.center}
+                    zoom={MAP_CONFIG.zoom}
+                    minZoom={MAP_CONFIG.minZoom}
+                    maxBounds={MAP_CONFIG.maxBounds}
+                    maxBoundsViscosity={MAP_CONFIG.maxBoundsViscosity}
                     className={styles['leaflet-map']}
                     style={{ zIndex: 1 }}
                 >
@@ -248,7 +240,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                     <GenericPolygonLayer
                                         data={censusBlockPolygons.features}
                                         onFeatureClick={handleFeatureClick}
-                                        geoidProperty="geoid20"
+                                        geoidProperty={POLYGON_LAYERS.censusBlockGroups.geoidProperty}
                                         getMetricValue={getMetricValue}
                                         getColor={getColor}
                                         activeMetric={effectiveMetric}
@@ -265,7 +257,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                     <GenericPolygonLayer
                                         data={censusBlockPolygons.features}
                                         onFeatureClick={handleFeatureClick}
-                                        geoidProperty="geoid20"
+                                        geoidProperty={POLYGON_LAYERS.censusBlockGroups.geoidProperty}
                                         getMetricValue={getMetricValue}
                                         getColor={getColor}
                                         activeMetric={effectiveMetric}
@@ -279,7 +271,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                     <GenericPolygonLayer<HawaiianHomelandProperties>
                                         data={hawaiianHomelandPolygons.features}
                                         onFeatureClick={handleFeatureClick}
-                                        geoidProperty="GEOID10"
+                                        geoidProperty={POLYGON_LAYERS.hawaiianHomelands.geoidProperty}
                                         getMetricValue={getMetricValue}
                                         getColor={getColor}
                                         activeMetric={effectiveMetric}
