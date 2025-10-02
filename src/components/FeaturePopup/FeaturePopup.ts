@@ -48,9 +48,7 @@ export function createPopupContent({
   `;
 }
 
-/**
- * Escape HTML to prevent XSS
- */
+// Escape HTML to prevent XSS
 function escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;

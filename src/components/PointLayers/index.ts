@@ -1,1 +1,1 @@
-// export { usePointLayers } from './PointLayers';
+export { GenericPointMarkers } from './PointLayers';

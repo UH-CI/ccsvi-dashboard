@@ -10,8 +10,8 @@ import {
     HawaiianHomelandProperties,
     PointLayerConfig
 } from '../../types';
-import { GenericPolygonLayer } from '../GenericPolygonLayer';
-import { GenericPointMarkers } from '../PointLayers/PointLayers';
+import { GenericPolygonLayer } from '../PolygonLayers/GenericPolygonLayer';
+import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG, POLYGON_LAYERS} from "../../config";
 import styles from './SingleMapView.module.scss';
@@ -20,13 +20,11 @@ interface SingleMapViewProps {
     config: MapConfig;
     isPrimary: boolean;
     mapConfigsLength: number;
-    // Shared data (already loaded - passed as props)
     dataset: Dataset | null;
     metricsData: MetricsData | null;
     censusBlockPolygons: FeatureCollection<Geometry, BlockGroupProperties> | null;
     hawaiianHomelandPolygons: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
     pointLayers: PointLayerConfig[];
-    // Handlers
     onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 

@@ -1,1 +1,1 @@
-export { SingleMapView } from './SingleMapView.tsx';
+export { SingleMapView } from './SingleMapView';

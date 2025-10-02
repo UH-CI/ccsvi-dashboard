@@ -4,7 +4,6 @@ import {Layer, LeafletMouseEvent, PathOptions} from 'leaflet';
 import React, { useEffect, useCallback, memo } from 'react';
 
 // Global ref to store layers per map across component remounts
-// const globalLayersRef = new Map<string, Map<string, { layer: Layer; feature: Feature<Geometry, GeoJsonProperties> }>>();
 const globalLayersRef = new Map<string, Map<string, Layer>>();
 
 export interface StyleConfig {
@@ -25,21 +24,6 @@ export interface GenericPolygonLayerProps<T extends GeoJsonProperties = GeoJsonP
     getHighlightStyle?: (feature: Feature<Geometry, T>, baseStyle: StyleConfig | undefined) => StyleConfig;
     onFeatureClick?: (feature: Feature<Geometry, T>, e: LeafletMouseEvent) => void;
     renderPopup?: (feature: Feature<Geometry, T>) => string | null;
-
-    // onFeatureClick: (e: LeafletMouseEvent) => void;
-    // getMetricValue: (geoid: string) => number | null;
-    // getColor: (value: number | null) => string;
-    // activeMetric: string;
-    // popupConfig: {
-    //     title: string;
-    //     fields: Array<{
-    //         key: string;
-    //         label: string;
-    //     }>;
-    // };
-    // grayOutMode?: boolean;
-    // isHawaiianHomelandFeature?: (feature: Feature<Geometry, T>) => boolean;
-    // isHawaiianHomelandsLayer?: boolean;
 }
 
 export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonProperties>({
@@ -51,17 +35,6 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
                                                                                             getHighlightStyle,
                                                                                             onFeatureClick,
                                                                                             renderPopup,
-                                                                                         // onFeatureClick,
-                                                                                         // geoidProperty,
-                                                                                         // getMetricValue,
-                                                                                         // getColor,
-                                                                                         // activeMetric,
-                                                                                         // activeFeatureGeoid,
-                                                                                         // mapId,
-                                                                                         // popupConfig,
-                                                                                         // grayOutMode = false,
-                                                                                         // isHawaiianHomelandFeature,
-                                                                                         // isHawaiianHomelandsLayer = false,
                                                                                          ...geoJsonProps
                                                                                      }: GenericPolygonLayerProps<T>) => {
     // Initialize layer storage for this map
@@ -83,44 +56,6 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
         return getStyle(feature);
     }, [getStyle]);
-
-    //     // Check if this feature should be grayed out
-    //     if (grayOutMode && isHawaiianHomelandFeature && !isHawaiianHomelandFeature(feature)) {
-    //         return {
-    //             fillColor: '#d0d0d0',
-    //             weight: 0.8,
-    //             dashArray: '5, 5',
-    //             opacity: 0.5,
-    //             color: '#999',
-    //             fillOpacity: 0.8
-    //         };
-    //     }
-    //
-    //     const properties = feature.properties as Record<string, unknown>;
-    //     const geoid = String(properties[geoidProperty] ?? '');
-    //     const metricValue = getMetricValue(geoid);
-    //     const originalColor = getColor(metricValue);
-    //
-    //     // Enhanced styling for Hawaiian homelands layer
-    //     if (isHawaiianHomelandsLayer) {
-    //         return {
-    //             fillColor: originalColor,
-    //             weight: 1.5,
-    //             opacity: 1,
-    //             color: '#000',
-    //             fillOpacity: 0.7
-    //         };
-    //     }
-    //
-    //     return {
-    //         fillColor: originalColor,
-    //         weight: 0.5,
-    //         opacity: 1,
-    //         color: '#333',
-    //         fillOpacity: 0.3
-    //     };
-    // }, [geoidProperty, getMetricValue, getColor, grayOutMode, isHawaiianHomelandFeature, isHawaiianHomelandsLayer]);
-
 
     const onEachFeature = useCallback((feature: Feature<Geometry, T>, layer: Layer): void => {
         if (!feature.properties) return;
