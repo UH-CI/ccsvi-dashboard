@@ -1,4 +1,3 @@
-import React from 'react';
 import { Feature } from 'geojson';
 import styles from './FeaturePopup.module.scss';
 
@@ -13,49 +12,47 @@ interface FeaturePopupProps {
     fields: PopupField[];
     metricName?: string;
     metricValue?: number | null;
-    additionalContent?: React.ReactNode;
 }
 
-export const FeaturePopup: React.FC<FeaturePopupProps> = ({
-                                                                            title,
-                                                                            feature,
-                                                                            fields,
-                                                                            metricName,
-                                                                            metricValue,
-                                                                            additionalContent
-                                                                        }) => {
+export function createPopupContent({
+    title,
+    feature,
+    fields,
+    metricName,
+    metricValue
+}: FeaturePopupProps): string {
     const properties = feature.properties || {};
 
-    return (
-        <div>
-            <div className={styles['popup-title']}>{title}</div>
-
-            <div className={styles['popup-fields']}>
-                {fields.map(field => {
-                    const value = properties[field.key];
-                    const displayValue = value ?? 'N/A';
-
-                    return (
-                        <div key={field.key} className={styles['popup-field']}>
-                            <span className={styles['popup-field-label']}>{field.label}:</span>
-                            <span className={styles['popup-field-value']}>{String(displayValue)}</span>
-                        </div>
-                    );
-                })}
-
-                {metricName && metricValue !== null && metricValue !== undefined && (
-                    <div className={styles['popup-field']}>
-                        <span className={styles['popup-field-label']}>{metricName}:</span>
-                        <span className={styles['popup-field-value']}>{metricValue}</span>
-                    </div>
-                )}
+    return `
+    <div>
+      <div class="${styles['popup-title']}">${escapeHtml(title)}</div>
+      <div class="${styles['popup-fields']}">
+        ${fields.map(field => {
+        const value = properties[field.key];
+        const displayValue = value ?? 'N/A';
+        return `
+            <div class="${styles['popup-field']}">
+              <span class="${styles['popup-field-label']}">${escapeHtml(field.label)}:</span>
+              <span class="${styles['popup-field-value']}">${escapeHtml(String(displayValue))}</span>
             </div>
+          `;
+    }).join('')}
+        ${metricName && metricValue !== null && metricValue !== undefined ? `
+          <div class="${styles['popup-field']}">
+            <span class="${styles['popup-field-label']}">${escapeHtml(metricName)}:</span>
+            <span class="${styles['popup-field-value']}">${metricValue}</span>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
 
-            {additionalContent && (
-                <div className={styles['popup-additional']}>
-                    {additionalContent}
-                </div>
-            )}
-        </div>
-    );
-};
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
