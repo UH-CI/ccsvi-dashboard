@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
-import { MapConfig, MetricsData, Dataset, PointLayerConfig, BlockGroupProperties, HawaiianHomelandProperties } from '../../types';
-import { FeatureCollection, Geometry } from "geojson";
+import { MapConfig, MetricsData, Dataset, PointLayerConfig } from '../../types';
+import { FeatureCollection } from "geojson";
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
 
@@ -11,8 +11,9 @@ interface MultiMapContainerProps {
     maxMaps?: number;
     dataset: Dataset | null;
     metricsData: MetricsData | null;
-    censusBlockPolygons: FeatureCollection<Geometry, BlockGroupProperties> | null;
-    hawaiianHomelandPolygons: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
+    polygonLayers?: {
+        [key: string]: FeatureCollection | null;
+    }
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
 }
@@ -21,8 +22,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     maxMaps = 4,
     dataset,
     metricsData,
-    censusBlockPolygons,
-    hawaiianHomelandPolygons,
+    polygonLayers,
     pointLayers,
     togglePointLayer,
 }) => {
@@ -123,8 +123,10 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                 // Pass shared data - NO LOADING IN SINGLEMAPVIEW
                                 dataset={dataset}
                                 metricsData={metricsData}
-                                censusBlockPolygons={censusBlockPolygons}
-                                hawaiianHomelandPolygons={hawaiianHomelandPolygons}
+                                polygonLayers={{
+                                    censusBlockGroups: polygonLayers?.censusBlockGroups || null,
+                                    hawaiianHomelands: polygonLayers?.hawaiianHomelands || null
+                                }}
                                 pointLayers={pointLayers}
                                 // Handlers
                                 onUpdateActiveFeature={(activeFeature) =>

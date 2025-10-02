@@ -14,7 +14,7 @@ interface FeaturePopupProps {
     metricValue?: number | null;
 }
 
-export function createPopupContent({
+export function FeaturePopup({
     title,
     feature,
     fields,

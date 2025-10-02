@@ -80,6 +80,7 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
                     maxWidth: 400
                 })
             }
+
         }
     }, [geoidProperty, onFeatureClick, renderPopup, layersRef]);
 
@@ -141,4 +142,4 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
         prevProps.onFeatureClick === nextProps.onFeatureClick &&
         prevProps.renderPopup === nextProps.renderPopup
     );
-}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;
+}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;

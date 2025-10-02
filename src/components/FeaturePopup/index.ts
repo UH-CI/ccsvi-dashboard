@@ -1,1 +1,1 @@
-export { createPopupContent } from './FeaturePopup';
+export { FeaturePopup } from './FeaturePopup';

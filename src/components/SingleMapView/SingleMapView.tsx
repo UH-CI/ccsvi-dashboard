@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { FeatureCollection, Geometry } from 'geojson';
+import { Feature, FeatureCollection, Geometry } from 'geojson';
 import L, { LeafletMouseEvent } from 'leaflet';
 import {
     MapConfig,
@@ -10,11 +10,11 @@ import {
     HawaiianHomelandProperties,
     PointLayerConfig
 } from '../../types';
-import { GenericPolygonLayer } from '../PolygonLayers/GenericPolygonLayer';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
-import { MAP_CONFIG, POLYGON_LAYERS} from "../../config";
+import { MAP_CONFIG} from "../../config";
 import styles from './SingleMapView.module.scss';
+import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
 
 interface SingleMapViewProps {
     config: MapConfig;
@@ -22,8 +22,9 @@ interface SingleMapViewProps {
     mapConfigsLength: number;
     dataset: Dataset | null;
     metricsData: MetricsData | null;
-    censusBlockPolygons: FeatureCollection<Geometry, BlockGroupProperties> | null;
-    hawaiianHomelandPolygons: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
+    polygonLayers?: {
+        [key: string]: FeatureCollection | null;
+    }
     pointLayers: PointLayerConfig[];
     onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
@@ -79,8 +80,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      mapConfigsLength,
                                                                      dataset,
                                                                      metricsData,
-                                                                     censusBlockPolygons,
-                                                                     hawaiianHomelandPolygons,
+                                                                     polygonLayers,
                                                                      pointLayers,
                                                                      onUpdateActiveFeature
                                                                  }) => {
@@ -111,8 +111,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
 
-    const getColor = useMemo(() => {
-        return (value: number | null): string => {
+    const getColor = useCallback((value: number | null): string => {
             if (value === null || !activeDatasetMetricObject) {
                 return '#cccccc';
             }
@@ -123,36 +122,39 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                 }
             }
             return '#333';
-        };
     }, [activeDatasetMetricObject]);
 
-    const getMetricValue = useMemo(() => {
-        if (!metricsData || !effectiveDataset || !effectiveMetric) {
-            return () => null;
-        }
+    // const getMetricValue = useMemo(() => {
+    //     if (!metricsData || !effectiveDataset || !effectiveMetric) {
+    //         return () => null;
+    //     }
+    //
+    //     const lookup = new Map<string, number>();
+    //     Object.entries(metricsData).forEach(([geoid, data]) => {
+    //         const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
+    //         if (value !== undefined && value !== null) {
+    //             lookup.set(geoid, value);
+    //         }
+    //     });
+    //
+    //     return (geoid: string): number | null => {
+    //         if (!geoid) return null;
+    //         return lookup.get(geoid) ?? null;
+    //     };
+    // }, [metricsData, effectiveDataset, effectiveMetric]);
 
-        const lookup = new Map<string, number>();
-        Object.entries(metricsData).forEach(([geoid, data]) => {
-            const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
-            if (value !== undefined && value !== null) {
-                lookup.set(geoid, value);
-            }
-        });
-
-        return (geoid: string): number | null => {
-            if (!geoid) return null;
-            return lookup.get(geoid) ?? null;
-        };
-    }, [metricsData, effectiveDataset, effectiveMetric]);
-
-    const handleFeatureClick = useCallback((e: LeafletMouseEvent) => {
+    const handleFeatureClick = useCallback((
+        feature: Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties> | null,
+        e: LeafletMouseEvent
+    ) => {
         const layer = e.target;
         layer.bringToFront();
 
-        const feature = layer.feature;
         if (!feature || !onUpdateActiveFeature) return;
 
-        const geoid = feature.properties?.[POLYGON_LAYERS.censusBlockGroups.geoidProperty] || feature.properties?.[POLYGON_LAYERS.hawaiianHomelands.geoidProperty];
+        // Extract geoid - check both census and homelands properties
+        const geoid = (feature.properties as BlockGroupProperties)?.geoid20 || 
+              (feature.properties as HawaiianHomelandProperties)?.GEOID10;
         if (!geoid) return;
 
         const map = mapRef.current;
@@ -174,16 +176,28 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         }
     }, [onUpdateActiveFeature]);
 
-    const isHawaiianHomelandFeature = useCallback(() => {
-        return false;
-    }, []);
+    // const isHawaiianHomelandFeature = useCallback(() => {
+    //     return false;
+    // }, []);
 
     if (!config.visible) {
         return null;
     }
 
-    const censusPopupConfig = POLYGON_LAYERS.censusBlockGroups.popup;
-    const homelandsPopupConfig = POLYGON_LAYERS.hawaiianHomelands.popup;
+    // const censusPopupConfig = POLYGON_LAYERS.censusBlockGroups.popup;
+    // const homelandsPopupConfig = POLYGON_LAYERS.hawaiianHomelands.popup;
+
+    const censusBlockGroups = polygonLayers?.censusBlockGroups;
+    const hawaiianHomelands = polygonLayers?.hawaiianHomelands;
+
+    const shouldRenderCensus = effectiveDataset && effectiveMetric &&
+        censusBlockGroups && metricsData && dataset && !shouldShowHawaiianHomelands;
+
+    const shouldRenderHawaiianHomelands = effectiveDataset && effectiveMetric &&
+        shouldShowHawaiianHomelands && hawaiianHomelands && metricsData;
+
+    const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
+        shouldShowHawaiianHomelands && censusBlockGroups && metricsData && dataset;
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
@@ -224,65 +238,52 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         attribution='&copy; OpenStreetMap contributors'
                     />
 
-                    {(() => {
-                        const shouldRenderCensus = effectiveDataset && effectiveMetric &&
-                            censusBlockPolygons && metricsData && dataset && !shouldShowHawaiianHomelands;
-                        const shouldRenderHomelands = effectiveDataset && effectiveMetric &&
-                            shouldShowHawaiianHomelands && hawaiianHomelandPolygons && metricsData;
-                        const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
-                            shouldShowHawaiianHomelands && censusBlockPolygons && metricsData && dataset;
+                    {
+                        shouldRenderCensusAsBackground && (
+                        <CensusPolygonLayer
+                            data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
+                            metricsData={metricsData}
+                            mapId={config.id}
+                            activeDataset={effectiveDataset}
+                            activeMetric={effectiveMetric}
+                            activeFeatureGeoid={config.activeFeature?.geoid}
+                            getColor={getColor}
+                            grayOut={true}
+                            onFeatureClick={handleFeatureClick}
+                        />
+                    )
+                    }
 
-                        return (
-                            <>
-                                {shouldRenderCensusAsBackground && (
-                                    <GenericPolygonLayer
-                                        data={censusBlockPolygons.features}
-                                        onFeatureClick={handleFeatureClick}
-                                        geoidProperty={POLYGON_LAYERS.censusBlockGroups.geoidProperty}
-                                        getMetricValue={getMetricValue}
-                                        getColor={getColor}
-                                        activeMetric={effectiveMetric}
-                                        activeFeatureGeoid={config.activeFeature?.geoid}
-                                        mapId={config.id}
-                                        popupConfig={censusPopupConfig}
-                                        grayOutMode={true}
-                                        isHawaiianHomelandFeature={isHawaiianHomelandFeature}
-                                        pane="tilePane"
-                                    />
-                                )}
 
-                                {shouldRenderCensus && (
-                                    <GenericPolygonLayer
-                                        data={censusBlockPolygons.features}
-                                        onFeatureClick={handleFeatureClick}
-                                        geoidProperty={POLYGON_LAYERS.censusBlockGroups.geoidProperty}
-                                        getMetricValue={getMetricValue}
-                                        getColor={getColor}
-                                        activeMetric={effectiveMetric}
-                                        activeFeatureGeoid={config.activeFeature?.geoid}
-                                        mapId={config.id}
-                                        popupConfig={censusPopupConfig}
-                                    />
-                                )}
+                    {
+                        shouldRenderCensus && (
+                            <CensusPolygonLayer
+                                data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
+                                metricsData={metricsData}
+                                mapId={config.id}
+                                activeDataset={effectiveDataset}
+                                activeMetric={effectiveMetric}
+                                activeFeatureGeoid={config.activeFeature?.geoid}
+                                getColor={getColor}
+                                onFeatureClick={handleFeatureClick}
+                            />
+                        )
+                    }
 
-                                {shouldRenderHomelands && (
-                                    <GenericPolygonLayer<HawaiianHomelandProperties>
-                                        data={hawaiianHomelandPolygons.features}
-                                        onFeatureClick={handleFeatureClick}
-                                        geoidProperty={POLYGON_LAYERS.hawaiianHomelands.geoidProperty}
-                                        getMetricValue={getMetricValue}
-                                        getColor={getColor}
-                                        activeMetric={effectiveMetric}
-                                        activeFeatureGeoid={config.activeFeature?.geoid}
-                                        mapId={config.id}
-                                        popupConfig={homelandsPopupConfig}
-                                        pane="overlayPane"
-                                        isHawaiianHomelandsLayer={true}
-                                    />
-                                )}
-                            </>
-                        );
-                    })()}
+                    {
+                        // shouldRenderHawaiianHomelands && (
+                        //     <HawaiiianHomelandPolygonLayer
+                        //         data={hawaiianHomelands}
+                        //         metricsData={metricsData}
+                        //         mapId={config.id}
+                        //         activeDataset={effectiveDataset}
+                        //         activeMetric={effectiveMetric}
+                        //         activeFeatureGeoid={config.activeFeature?.geoid}
+                        //         getColor={getColor}
+                        //         onFeatureClick={handleFeatureClick}
+                        //     />
+                        // )
+                    }
 
                     {pointLayers.map(layer => (
                         <GenericPointMarkers key={layer.id} layer={layer} />

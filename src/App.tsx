@@ -125,8 +125,10 @@ const App: React.FC = () => {
                     maxMaps={4}
                     dataset={blockGroupData.data}
                     metricsData={metricsData.data}
-                    censusBlockPolygons={censusBlockGroups.data}
-                    hawaiianHomelandPolygons={hawaiianHomelands.data}
+                    polygonLayers={{
+                        censusBlockGroups: censusBlockGroups.data,
+                        hawaiianHomelands: hawaiianHomelands.data
+                    }}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
