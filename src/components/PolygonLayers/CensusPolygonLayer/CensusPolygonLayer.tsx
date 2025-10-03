@@ -30,63 +30,38 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     activeMetric,
     activeFeatureGeoid,
     getColor,
-    grayOut,
+    grayOut = false,
     onFeatureClick
 }) => {
 
     const getStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
         if (!feature) {
-            return {
-                fillColor: '#cccccc',
-                weight: 0.5,
-                opacity: 1,
-                color: '#333',
-                fillOpacity: 0.3
-            };
+            return LAYER_CONFIG.styles.default;
         }
         
         const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
 
         if (!geoid) {
-            return {
-                fillColor: '#cccccc',
-                weight: 0.5,
-                opacity: 1,
-                color: '#333',
-                fillOpacity: 0.3
-            };
+            return LAYER_CONFIG.styles.default;
         }
 
         if (grayOut) {
-            return {
-                fillColor: '#e0e0e0',
-                weight: 0.8,
-                opacity: 0.5,
-                color: '#999',
-                fillOpacity: 0.8,
-                dashArray: '5, 5'
-            };
+            return LAYER_CONFIG.styles.grayedOut;
         }
 
         const metricValue = getMetricValue(String(geoid));
         const fillColor = getColor(metricValue);
 
         return {
-            fillColor,
-            weight: 0.5,
-            opacity: 1,
-            color: '#333',
-            fillOpacity: 0.3
+            ...LAYER_CONFIG.styles.default,
+            fillColor
         }
     }, [grayOut, getMetricValue, getColor])
 
     const getHighlightStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties>, baseStyle: StyleConfig | undefined): StyleConfig => {
         return {
-            fillColor: baseStyle?.fillColor || '#cccccc',
-            weight: 4,
-            color: '#000000',
-            fillOpacity: 0.8,
-            opacity: 1
+            ...LAYER_CONFIG.styles.highlight,
+            fillColor: baseStyle?.fillColor || LAYER_CONFIG.styles.default.fillColor
         };
     }, []);
 

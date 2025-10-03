@@ -1,3 +1,5 @@
+import { PathOptions } from "leaflet";
+
 export interface PopupFieldConfig {
     key: string;
     label: string;
@@ -8,11 +10,19 @@ export interface PopupConfig {
     fields: PopupFieldConfig[];
 }
 
+export interface LayerStyleConfig {
+    default: PathOptions;
+    highlight: PathOptions;
+    grayedOut?: PathOptions;
+    noData?: PathOptions;
+}
+
 export interface PolygonLayerConfig {
     name: string;
     path: string;
     geoidProperty: string;
     popup: PopupConfig;
+    styles: LayerStyleConfig;
 }
 
 export const POLYGON_LAYERS = {
@@ -26,8 +36,31 @@ export const POLYGON_LAYERS = {
                 { key: 'geoid20', label: 'Geo ID' },
                 { key: 'pop20', label: '2020 Population' }
             ]
+        },
+        styles: {
+            default: {
+                fillColor: '#cccccc',
+                weight: 0.5,
+                opacity: 1,
+                color: '#333',
+                fillOpacity: 0.3
+            },
+            highlight: {
+                weight: 4,
+                color: '#000000',
+                opacity: 1,
+                fillOpacity: 0.8
+            },
+            grayedOut: {
+                fillColor: '#e0e0e0',
+                weight: 0.8,
+                opacity: 0.5,
+                color: '#999',
+                fillOpacity: 0.8,
+                dashArray: '5, 5'
+            }
         }
-    },
+    } satisfies PolygonLayerConfig,
 
     hawaiianHomelands: {
         name: 'Hawaiian Homelands',
@@ -39,6 +72,21 @@ export const POLYGON_LAYERS = {
                 { key: 'GEOID10', label: 'Geo ID' },
                 { key: 'NAME10', label: 'Name' }
             ]
+        },
+        styles: {
+            default: {
+                fillColor: '#cccccc',
+                weight: 0.5,
+                opacity: 1,
+                color: '#333',
+                fillOpacity: 0.3
+            },
+            highlight: {
+                weight: 4,
+                color: '#000000',
+                opacity: 1,
+                fillOpacity: 0.8
+            }
         }
-    }
-};
+    } satisfies PolygonLayerConfig
+} as const;
