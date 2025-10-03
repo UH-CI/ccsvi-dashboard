@@ -1,0 +1,14 @@
+{
+    "subHazardLayers": [
+        {
+            "id": "floods",
+            "name": "Flood Hazards",
+            "subLayers": [
+              { "id": "river_flood", "name": "River Flooding", "visible": false },
+              { "id": "coastal_flood", "name": "Coastal Flooding", "visible": false },
+              { "id": "flash_flood", "name": "Flash Flooding", "visible": false },
+              { "id": "urban_flood", "name": "Urban Flooding", "visible": false }
+            ]
+          }
+    ]
+  }

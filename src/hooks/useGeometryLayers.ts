@@ -114,9 +114,68 @@ export const useGeometryLayers = (visibleLayerIds: string[] = []) => {
     return hazardLayers.filter((layer) => layer.visible).map((layer) => layer.id);
   }, [hazardLayers]);
 
+  const findLayer = (
+    layers: HazardLayerConfig[],
+    id: string
+  ): HazardLayerConfig | undefined => {
+    for (const l of layers) {
+      if (l.id === id) return l;
+      if (l.children) {
+        const found = findLayer(l.children, id);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+  
+  const toggleLayer = (
+    layers: HazardLayerConfig[],
+    id: string,
+    isParent = false
+  ): HazardLayerConfig[] => {
+    return layers.map(layer => {
+      if (layer.id === id) {
+        // Parent toggle
+        if (isParent && layer.children) {
+          const newVisible = !layer.visible;
+          return {
+            ...layer,
+            visible: newVisible,
+            children: layer.children.map(child => ({
+              ...child,
+              visible: newVisible
+            }))
+          };
+        }
+        // Normal toggle
+        return { ...layer, visible: !layer.visible };
+      }
+  
+      // If this layer has children, recurse
+      if (layer.children) {
+        const updatedChildren = toggleLayer(layer.children, id, isParent);
+        const allChildrenVisible = updatedChildren.every(c => c.visible);
+        const anyChildVisible = updatedChildren.some(c => c.visible);
+        return {
+          ...layer,
+          children: updatedChildren,
+          visible: allChildrenVisible ? true : anyChildVisible ? false : layer.visible,
+        };
+      }
+  
+      return layer;
+    });
+  };
+
+  const toggleHazardLayer = useCallback((id: string, isParent = false) => {
+    setHazardLayers(prev => toggleLayer(prev, id, isParent));
+  }, []);
+
+
   return {
     hazardLayers,
     getCurrentVisibleLayerIds,
+    toggleHazardLayer,
     isInitialized: isLoaded && hazardLayers.length > 0,
   };
 };

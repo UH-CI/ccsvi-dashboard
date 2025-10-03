@@ -181,43 +181,73 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     Hazards
                 </Typography>
                 
+                
                 <Stack spacing={1}>
-                    {hazardLayers.map(layer => {
-                    const IconComponent =
-                        FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
+                    {hazardLayers.map((layer) => {
+                        const IconComponent =
+                        FaIcons[layer.icon as keyof typeof FaIcons] ||
+                        FaIcons.FaExclamationTriangle;
 
-                    return (
-                        <div key={layer.id} className={styles['layer-toggle']}>
-                        <FormControlLabel
+                        return (
+                        <div key={layer.id} className={styles["layer-toggle"]}>
+                            {/* Parent Layer */}
+                            <FormControlLabel
                             control={
-                            <Checkbox
+                                <Checkbox
                                 checked={layer.visible}
-                                onChange={() => {
-                                console.log(
-                                    "Clicked hazard:",
-                                    layer.id,
-                                    "visible before:",
-                                    layer.visible
-                                );
-                                toggleHazardLayer(layer.id);
-                                }}
+                                onChange={() => toggleHazardLayer(layer.id, true)}
                                 size="small"
-                            />
+                                />
                             }
                             label={
-                            <div className={styles['layer-label']}>
+                                <div className={styles["layer-label"]}>
                                 <span
-                                className={styles['layer-icon']}
-                                style={{ color: layer.color }}
+                                    className={styles["layer-icon"]}
+                                    style={{ color: layer.color }}
                                 >
-                                <IconComponent size="1rem" />
+                                    <IconComponent size="1rem" />
                                 </span>
                                 {layer.name}
-                            </div>
+                                </div>
                             }
-                        />
+                            />
+
+                            {/* Children Layers */}
+                            {layer.children && (
+                            <Stack spacing={1} sx={{ pl: 3 }}>
+                                {layer.children.map((child) => {
+                                const ChildIcon =
+                                    FaIcons[child.icon as keyof typeof FaIcons] ||
+                                    FaIcons.FaExclamationTriangle;
+
+                                return (
+                                    <FormControlLabel
+                                    key={child.id}
+                                    control={
+                                        <Checkbox
+                                        checked={child.visible}
+                                        onChange={() => toggleHazardLayer(child.id, false)}
+                                        size="small"
+                                        />
+                                    }
+                                    label={
+                                        <div className={styles["layer-label"]}>
+                                        <span
+                                            className={styles["layer-icon"]}
+                                            style={{ color: child.color }}
+                                        >
+                                            <ChildIcon size="1rem" />
+                                        </span>
+                                        {child.name}
+                                        </div>
+                                    }
+                                    />
+                                );
+                                })}
+                            </Stack>
+                            )}
                         </div>
-                    );
+                        );
                     })}
                 </Stack>
             </div>

@@ -300,17 +300,74 @@ const App: React.FC = () => {
         updateUrlState({ pointLayers: newVisible });
     };
 
-    const handleHazardLayerToggle = (layerId: string) => {
+    // const handleHazardLayerToggle = (layerId: string) => {
+    //     console.log("handleHazardLayerToggle called for:", layerId);
+
+    //     const currentVisible = urlState.hazardLayers ?? [];
+    //     const newVisible = currentVisible.includes(layerId)
+    //         ? currentVisible.filter(id => id !== layerId)
+    //         : [...currentVisible, layerId];
+
+    //     console.log('Updating URL with new layers:', newVisible);
+    //     updateUrlState({ hazardLayers: newVisible });
+    // }
+    const handleHazardLayerToggle = (layerId: string, isParent = false) => {
         console.log("handleHazardLayerToggle called for:", layerId);
-
+    
         const currentVisible = urlState.hazardLayers ?? [];
-        const newVisible = currentVisible.includes(layerId)
-            ? currentVisible.filter(id => id !== layerId)
-            : [...currentVisible, layerId];
-
-        console.log('Updating URL with new layers:', newVisible);
+        let newVisible = [...currentVisible];
+    
+        // recursive finder
+        const findLayer = (layers: typeof hazardLayers, id: string): any | undefined => {
+            for (const layer of layers) {
+                if (layer.id === id) return layer;
+                if (layer.children) {
+                    const found = findLayer(layer.children, id);
+                    if (found) return found;
+                }
+            }
+            return undefined;
+        };
+    
+        const layer = findLayer(hazardLayers, layerId);
+        if (!layer) return;
+    
+        if (isParent && layer.children) {
+            // If parent → toggle all children
+            const allChildIds = layer.children.map(c => c.id);
+            const allVisible = allChildIds.every(id => currentVisible.includes(id));
+    
+            if (allVisible) {
+                // remove all
+                newVisible = newVisible.filter(id => !allChildIds.includes(id) && id !== layerId);
+            } else {
+                // add all
+                newVisible = Array.from(new Set([...newVisible, layerId, ...allChildIds]));
+            }
+        } else {
+            // Toggle single (child or independent parent)
+            if (newVisible.includes(layerId)) {
+                newVisible = newVisible.filter(id => id !== layerId);
+            } else {
+                newVisible.push(layerId);
+            }
+    
+            // If it’s a child, sync parent visibility
+            hazardLayers.forEach(parent => {
+                if (parent.children?.some(c => c.id === layerId)) {
+                    const allVisible = parent.children.every(c => newVisible.includes(c.id));
+                    if (allVisible) {
+                        if (!newVisible.includes(parent.id)) newVisible.push(parent.id);
+                    } else {
+                        newVisible = newVisible.filter(id => id !== parent.id);
+                    }
+                }
+            });
+        }
+    
+        console.log('Updating URL with new hazard layers:', newVisible);
         updateUrlState({ hazardLayers: newVisible });
-    }
+    };
 
     // Snapshot handler
     const handleTakeSnapshot = useCallback(async () => {

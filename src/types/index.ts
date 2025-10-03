@@ -72,6 +72,7 @@ export interface HazardLayerConfig {
     visible: boolean;
     icon: string;
     color?: string;
+    children?: HazardLayerConfig[]; // can now have sub sections
     filePath: string;
     data?: import('geojson').FeatureCollection<Geometry>; 
     popupConfig: {
