@@ -1,15 +1,17 @@
-import {Feature, FeatureCollection, Geometry} from "geojson";
-import {BlockGroupProperties, MetricsData} from "../../../types";
-import {useCallback} from "react";
-import {GenericPolygonLayer, StyleConfig} from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
-import {LeafletMouseEvent} from "leaflet";
-import {FeaturePopup} from "../../FeaturePopup";
+import React, { useCallback } from "react";
+import { Feature, FeatureCollection, Geometry } from "geojson";
+import { BlockGroupProperties, MetricsData } from "../../../types";
+import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
+import { LeafletMouseEvent } from "leaflet";
+import { FeaturePopup } from "../../FeaturePopup";
+import { POLYGON_LAYERS } from "../../../config";
 
 interface CensusPolygonLayerProps {
     data: FeatureCollection<Geometry, BlockGroupProperties> | null;
     metricsData: MetricsData | null;
+    getMetricValue: (geoid: string) => number | null;
     mapId: string;
-    activeDataset: string;
+    // activeDataset: string;
     activeMetric: string;
     activeFeatureGeoid?: string | null;
     getColor: (value: number | null) => string;
@@ -17,25 +19,20 @@ interface CensusPolygonLayerProps {
     onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
 }
 
+const LAYER_CONFIG = POLYGON_LAYERS.censusBlockGroups;
+
 export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     data,
     metricsData,
+    getMetricValue,
     mapId,
-    activeDataset,
+    // activeDataset,
     activeMetric,
     activeFeatureGeoid,
     getColor,
     grayOut,
     onFeatureClick
 }) => {
-    const getMetricValue = useCallback((geoid: string): number | null => {
-        if (!metricsData || !activeDataset || !activeMetric) return null;
-
-        const blockGroupData = metricsData[geoid];
-        if (!blockGroupData?.metrics?.[activeDataset]) return null;
-
-        return blockGroupData.metrics[activeDataset][activeMetric] ?? null;
-    }, [metricsData, activeDataset, activeMetric]);
 
     const getStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
         if (!feature) {
@@ -48,7 +45,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             };
         }
         
-        const geoid = feature.properties?.geoid20;
+        const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
 
         if (!geoid) {
             return {
@@ -71,7 +68,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             };
         }
 
-        const metricValue = getMetricValue(geoid);
+        const metricValue = getMetricValue(String(geoid));
         const fillColor = getColor(metricValue);
 
         return {
@@ -100,27 +97,33 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     }, [onFeatureClick]);
 
     const renderPopup = useCallback((feature: Feature<Geometry, BlockGroupProperties>): string | null => {
-        const geoid = feature.properties?.geoid20;
+        const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
         if (!geoid) return null;
 
-        const metricValue = getMetricValue(geoid);
+        const geoidStr = String(geoid);
+        const metricValue = getMetricValue(geoidStr);
+
+        const metadataEntry = metricsData?.[geoidStr];
+
+        const metadata = [];
+        if (metadataEntry?.county) metadata.push(metadataEntry.county);
+        if (metadataEntry?.block_group) metadata.push(metadataEntry.block_group);
+        if (metadataEntry?.census_tract) metadata.push(metadataEntry.census_tract);
+
         return FeaturePopup({
-            title: 'Census Block Group ' + geoid,
+            metadata: metadata.length > 0 ? metadata : undefined,
             feature,
-            fields: [
-                { key: 'pop20', label: '2020 Population' },
-                { key: 'aland20', label: 'Land Area (sq. meters)' }
-            ],
+            fields: LAYER_CONFIG.popup.fields,
             metricName: activeMetric,
             metricValue
         })
-    }, [activeMetric, getMetricValue]);
+    }, [activeMetric, getMetricValue, metricsData]);
 
     return (
         <GenericPolygonLayer
             data={data}
             mapId={mapId}
-            geoidProperty='geoid20'
+            geoidProperty={LAYER_CONFIG.geoidProperty}
             getStyle={getStyle}
             getHighlightStyle={getHighlightStyle}
             activeFeatureGeoid={activeFeatureGeoid}

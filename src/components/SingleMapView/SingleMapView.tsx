@@ -12,7 +12,7 @@ import {
 } from '../../types';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
-import { MAP_CONFIG} from "../../config";
+import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
 import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
 
@@ -111,7 +111,27 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
 
-    const getColor = useCallback((value: number | null): string => {
+    const getMetricValue = useMemo(() => {
+        if (!metricsData || !effectiveDataset || !effectiveMetric) {
+            return () => null;
+        }
+
+        const lookup = new Map<string, number>();
+        Object.entries(metricsData).forEach(([geoid, data]) => {
+            const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
+            if (value !== undefined && value !== null) {
+                lookup.set(geoid, value);
+            }
+        });
+
+        return (geoid: string): number | null => {
+            if (!geoid) return null;
+            return lookup.get(geoid) ?? null;
+        };
+    }, [metricsData, effectiveDataset, effectiveMetric]);
+
+    const getColor = useMemo(() => {
+        return (value: number | null): string => {
             if (value === null || !activeDatasetMetricObject) {
                 return '#cccccc';
             }
@@ -122,26 +142,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                 }
             }
             return '#333';
+        };
     }, [activeDatasetMetricObject]);
-
-    // const getMetricValue = useMemo(() => {
-    //     if (!metricsData || !effectiveDataset || !effectiveMetric) {
-    //         return () => null;
-    //     }
-    //
-    //     const lookup = new Map<string, number>();
-    //     Object.entries(metricsData).forEach(([geoid, data]) => {
-    //         const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
-    //         if (value !== undefined && value !== null) {
-    //             lookup.set(geoid, value);
-    //         }
-    //     });
-    //
-    //     return (geoid: string): number | null => {
-    //         if (!geoid) return null;
-    //         return lookup.get(geoid) ?? null;
-    //     };
-    // }, [metricsData, effectiveDataset, effectiveMetric]);
 
     const handleFeatureClick = useCallback((
         feature: Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties> | null,
@@ -243,8 +245,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         <CensusPolygonLayer
                             data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                             metricsData={metricsData}
+                            getMetricValue={getMetricValue}
                             mapId={config.id}
-                            activeDataset={effectiveDataset}
+                            // activeDataset={effectiveDataset}
                             activeMetric={effectiveMetric}
                             activeFeatureGeoid={config.activeFeature?.geoid}
                             getColor={getColor}
@@ -260,8 +263,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                             <CensusPolygonLayer
                                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                                 metricsData={metricsData}
+                                getMetricValue={getMetricValue}
                                 mapId={config.id}
-                                activeDataset={effectiveDataset}
+                                // activeDataset={effectiveDataset}
                                 activeMetric={effectiveMetric}
                                 activeFeatureGeoid={config.activeFeature?.geoid}
                                 getColor={getColor}

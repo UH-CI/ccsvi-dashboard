@@ -23,7 +23,8 @@ export const POLYGON_LAYERS = {
         popup: {
             title: 'Census Block Group',
             fields: [
-                { key: 'geoid20', label: 'Geo ID' }
+                { key: 'geoid20', label: 'Geo ID' },
+                { key: 'pop20', label: '2020 Population' }
             ]
         }
     },

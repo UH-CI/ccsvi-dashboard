@@ -76,8 +76,8 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
             if (popupContent) {
                 layer.bindPopup(popupContent, {
-                    minWidth: 300,
-                    maxWidth: 400
+                    minWidth: 250,
+                    maxWidth: 300
                 })
             }
 
@@ -117,7 +117,7 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
     return (
         <GeoJSON
-            key={`{mapId}-${activeFeatureGeoid}`}
+            key={mapId}
             data={featureCollection}
             style={styleCallback}
             onEachFeature={onEachFeature}
@@ -142,4 +142,4 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
         prevProps.onFeatureClick === nextProps.onFeatureClick &&
         prevProps.renderPopup === nextProps.renderPopup
     );
-}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;
+}) as <T extends GeoJsonProperties = GeoJsonProperties>(props: GenericPolygonLayerProps<T>) => React.JSX.Element;

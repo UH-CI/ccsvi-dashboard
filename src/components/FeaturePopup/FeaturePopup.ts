@@ -7,7 +7,8 @@ interface PopupField {
 }
 
 interface FeaturePopupProps {
-    title: string;
+    // title: string;
+    metadata?: string[];
     feature: Feature;
     fields: PopupField[];
     metricName?: string;
@@ -15,7 +16,8 @@ interface FeaturePopupProps {
 }
 
 export function FeaturePopup({
-    title,
+    // title
+                                 metadata,
     feature,
     fields,
     metricName,
@@ -25,7 +27,11 @@ export function FeaturePopup({
 
     return `
     <div>
-      <div class="${styles['popup-title']}">${escapeHtml(title)}</div>
+      ${metadata && metadata.length > 0 ? `
+        <div class="${styles['popup-metadata']}">
+          ${metadata.map(line => `<div class="${styles['popup-metadata-line']}">${escapeHtml(line)}</div>`).join('')}
+        </div>
+      ` : ''}
       <div class="${styles['popup-fields']}">
         ${fields.map(field => {
         const value = properties[field.key];
@@ -40,7 +46,7 @@ export function FeaturePopup({
         ${metricName && metricValue !== null && metricValue !== undefined ? `
           <div class="${styles['popup-field']}">
             <span class="${styles['popup-field-label']}">${escapeHtml(metricName)}:</span>
-            <span class="${styles['popup-field-value']}">${metricValue}</span>
+            <span class="${styles['popup-field-value']}">${metricValue.toFixed(2)}</span>
           </div>
         ` : ''}
       </div>
