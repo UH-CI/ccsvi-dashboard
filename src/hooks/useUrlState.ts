@@ -45,13 +45,13 @@ export const useUrlState = () => {
             zoom: searchParams.get('zoom') ? parseInt(searchParams.get('zoom')!) : undefined,
         };
 
-        console.log('URL State parsed:', state);
+        // console.log('URL State parsed:', state);
         return state;
     }, [searchParams]);
 
     // Update URL state with debouncing for map position
     const updateUrlState = useCallback((updates: Partial<UrlState>) => {
-        console.log('updateUrlState called with:', updates);
+        // console.log('updateUrlState called with:', updates);
 
         // Clear any pending timeout for map position updates
         if (updateTimeoutRef.current) {
@@ -115,7 +115,7 @@ export const useUrlState = () => {
                     }
                 }
 
-                console.log('New URL params:', newParams.toString());
+                // console.log('New URL params:', newParams.toString());
                 return newParams;
             }, { replace: isMapUpdate }); // Replace for map updates to avoid cluttering history
         };

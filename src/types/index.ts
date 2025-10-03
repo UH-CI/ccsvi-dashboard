@@ -1,5 +1,19 @@
-import { Feature, Geometry, FeatureCollection, GeoJsonProperties } from 'geojson';
+import {Feature, Geometry} from 'geojson';
 import { PathOptions } from 'leaflet';
+
+export interface MapConfig {
+    id: string;
+    title: string;
+    dataset: string;
+    metric: string;
+    visible: boolean;
+    activeFeature?: {
+        geoid: string;
+        lat: number;
+        lng: number;
+        zoom: number;
+    };
+}
 
 export interface MetricsData {
     [geoid: string]: {
@@ -93,6 +107,10 @@ export interface PolygonLayerConfig {
   path: string;
   geoidProperty: string;
   enabled: boolean;
+  popupConfig: {
+    title: string;
+    fields: Array<{ key: string; label: string }>;
+  };
   styleConfig?: {
     activeColor: string;
     inactiveColor: string;
@@ -103,9 +121,5 @@ export interface PolygonLayerConfig {
   };
 }
 
-export interface PolygonLayerState<T extends GeoJsonProperties = GeoJsonProperties> {
-  data: FeatureCollection<Geometry, T> | null;
-  loading: boolean;
-  error: string | null;
-  loaded: boolean;
-}
+
+

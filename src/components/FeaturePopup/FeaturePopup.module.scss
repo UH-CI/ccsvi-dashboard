@@ -1,0 +1,36 @@
+.popup-metadata {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.popup-metadata-line {
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.5;
+  color: #333;
+}
+
+.popup-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.popup-field-label {
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.popup-field-value {
+  font-weight: 400;
+  text-align: right;
+  word-break: break-word;
+}
