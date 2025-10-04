@@ -30,8 +30,7 @@ const App: React.FC = () => {
     const censusBlockGroups = useDataFetcher<FeatureCollection<Geometry, BlockGroupProperties>>(
         POLYGON_LAYERS.censusBlockGroups.path,
         { errorPrefix: 'Failed to load census block group data' }
-
-    )
+    );
 
     const hawaiianHomelands = useDataFetcher<FeatureCollection<Geometry, HawaiianHomelandProperties>>(
         shouldLoadHawaiianHomelands ? POLYGON_LAYERS.hawaiianHomelands.path : null,

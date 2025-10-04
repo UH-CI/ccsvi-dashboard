@@ -15,6 +15,7 @@ import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
 import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
+import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 
 interface SingleMapViewProps {
     config: MapConfig;
@@ -182,13 +183,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     //     return false;
     // }, []);
 
-    if (!config.visible) {
-        return null;
-    }
-
-    // const censusPopupConfig = POLYGON_LAYERS.censusBlockGroups.popup;
-    // const homelandsPopupConfig = POLYGON_LAYERS.hawaiianHomelands.popup;
-
     const censusBlockGroups = polygonLayers?.censusBlockGroups;
     const hawaiianHomelands = polygonLayers?.hawaiianHomelands;
 
@@ -200,6 +194,22 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
         shouldShowHawaiianHomelands && censusBlockGroups && metricsData && dataset;
+
+    useEffect(() => {
+        console.log('SingleMapView Debug:', {
+            configId: config.id,
+            effectiveDataset,
+            effectiveMetric,
+            shouldShowHawaiianHomelands,
+            hasHawaiianHomelandsData: !!hawaiianHomelands,
+            hawaiianHomelandsFeatureCount: hawaiianHomelands?.features?.length,
+            shouldRenderHawaiianHomelands
+        });
+    }, [config.id, effectiveDataset, effectiveMetric, shouldShowHawaiianHomelands, hawaiianHomelands, shouldRenderHawaiianHomelands]);
+
+    if (!config.visible) {
+        return null;
+    }
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
@@ -275,18 +285,19 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     }
 
                     {
-                        // shouldRenderHawaiianHomelands && (
-                        //     <HawaiiianHomelandPolygonLayer
-                        //         data={hawaiianHomelands}
-                        //         metricsData={metricsData}
-                        //         mapId={config.id}
-                        //         activeDataset={effectiveDataset}
-                        //         activeMetric={effectiveMetric}
-                        //         activeFeatureGeoid={config.activeFeature?.geoid}
-                        //         getColor={getColor}
-                        //         onFeatureClick={handleFeatureClick}
-                        //     />
-                        // )
+                        shouldRenderHawaiianHomelands && (
+                            <HawaiianHomelandsPolygonLayer
+                                data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
+                                metricsData={metricsData}
+                                getMetricValue={getMetricValue}
+                                mapId={config.id}
+                                // activeDataset={effectiveDataset}
+                                activeMetric={effectiveMetric}
+                                activeFeatureGeoid={config.activeFeature?.geoid}
+                                getColor={getColor}
+                                onFeatureClick={handleFeatureClick}
+                            />
+                        )
                     }
 
                     {pointLayers.map(layer => (
