@@ -25,27 +25,23 @@ const App: React.FC = () => {
         {errorPrefix: 'Failed to load dataset metadata' }
     );
 
-    const shouldLoadHawaiianHomelands = blockGroupData.data?.[urlState.dataset]?.hawaiianHomelands || false;
-
     const censusBlockGroups = useDataFetcher<FeatureCollection<Geometry, BlockGroupProperties>>(
         POLYGON_LAYERS.censusBlockGroups.path,
         { errorPrefix: 'Failed to load census block group data' }
     );
 
     const hawaiianHomelands = useDataFetcher<FeatureCollection<Geometry, HawaiianHomelandProperties>>(
-        shouldLoadHawaiianHomelands ? POLYGON_LAYERS.hawaiianHomelands.path : null,
+        POLYGON_LAYERS.hawaiianHomelands.path,
         { errorPrefix: `Failed to fetch hawaiian homelands data` }
     );
 
     const pointLayers = usePointLayers(urlState.pointLayers);
 
     // Check if all data is ready
-    const isPolygonLayersLoaded = shouldLoadHawaiianHomelands
-        ? (censusBlockGroups.data !== null && hawaiianHomelands.data !== null)
-        : censusBlockGroups.data !== null;
+    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null
 
     // Check if all data is ready
-    const isReady = metricsData.loaded && blockGroupData.loaded && isPolygonLayersLoaded && pointLayers.isInitialized;
+    const isReady = metricsData.loaded && blockGroupData.loaded && pointLayers.isInitialized && isPolygonLayersLoaded;
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {

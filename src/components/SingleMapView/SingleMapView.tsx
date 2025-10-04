@@ -195,18 +195,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
         shouldShowHawaiianHomelands && censusBlockGroups && metricsData && dataset;
 
-    useEffect(() => {
-        console.log('SingleMapView Debug:', {
-            configId: config.id,
-            effectiveDataset,
-            effectiveMetric,
-            shouldShowHawaiianHomelands,
-            hasHawaiianHomelandsData: !!hawaiianHomelands,
-            hawaiianHomelandsFeatureCount: hawaiianHomelands?.features?.length,
-            shouldRenderHawaiianHomelands
-        });
-    }, [config.id, effectiveDataset, effectiveMetric, shouldShowHawaiianHomelands, hawaiianHomelands, shouldRenderHawaiianHomelands]);
-
     if (!config.visible) {
         return null;
     }

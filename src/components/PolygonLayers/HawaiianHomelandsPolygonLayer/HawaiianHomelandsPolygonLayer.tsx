@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
 import { HawaiianHomelandProperties, MetricsData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
@@ -90,14 +90,6 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
             metricValue
         })
     }, [activeMetric, getMetricValue, metricsData]);
-
-    useEffect(() => {
-        console.log('Hawaiian Homelands Data:', {
-            hasData: !!data,
-            featureCount: data?.features?.length,
-            geoidProperty: LAYER_CONFIG.geoidProperty
-        });
-    }, [data]);
 
     return (
         <GenericPolygonLayer
