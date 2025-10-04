@@ -1,10 +1,10 @@
 
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
 import { HawaiianHomelandProperties, MetricsData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
-import { FeaturePopup } from "../../FeaturePopup";
+import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
 import { POLYGON_LAYERS } from "../../../config";
 
 interface HawaiianHomelandsPolygonLayerProps {
@@ -68,28 +68,18 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         }
     }, [onFeatureClick]);
 
-    const renderPopup = useCallback((feature: Feature<Geometry, HawaiianHomelandProperties>): string | null => {
-        const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof HawaiianHomelandProperties];
-        if (!geoid) return null;
-
-        const geoidStr = String(geoid);
-        const metricValue = getMetricValue(geoidStr);
-
-        const metadataEntry = metricsData?.[geoidStr];
-
-        const metadata = [];
-        if (metadataEntry?.county) metadata.push(metadataEntry.county);
-        if (metadataEntry?.block_group) metadata.push(metadataEntry.block_group);
-        if (metadataEntry?.census_tract) metadata.push(metadataEntry.census_tract);
-
-        return FeaturePopup({
-            metadata: metadata.length > 0 ? metadata : undefined,
-            feature,
-            fields: LAYER_CONFIG.popup.fields,
-            metricName: activeMetric,
-            metricValue
-        })
-    }, [activeMetric, getMetricValue, metricsData]);
+    const renderPopup = useMemo(
+        () => renderPolygonPopup(
+            {
+                fields: LAYER_CONFIG.popup.fields,
+                geoidProperty: LAYER_CONFIG.geoidProperty
+            },
+            activeMetric,
+            getMetricValue,
+            metricsData
+        ),
+        [activeMetric, getMetricValue, metricsData]
+    );
 
     return (
         <GenericPolygonLayer

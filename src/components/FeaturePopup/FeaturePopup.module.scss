@@ -27,6 +27,10 @@
 .popup-field-label {
   font-weight: 500;
   flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .popup-field-value {

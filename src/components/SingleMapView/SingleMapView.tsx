@@ -179,10 +179,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         }
     }, [onUpdateActiveFeature]);
 
-    // const isHawaiianHomelandFeature = useCallback(() => {
-    //     return false;
-    // }, []);
-
     const censusBlockGroups = polygonLayers?.censusBlockGroups;
     const hawaiianHomelands = polygonLayers?.hawaiianHomelands;
 
