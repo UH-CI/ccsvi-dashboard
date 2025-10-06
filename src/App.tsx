@@ -4,18 +4,19 @@ import styles from './App.module.scss';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { GenericHazardLayer } from "./components/HazardLayers/GenericHazardLayer.tsx";
 import { TableViewer } from './components/TableViewer';
-import { GenericPolygonLayer } from './components/GenericPolygonLayer';
+//import { GenericPolygonLayer } from './components/GenericPolygonLayer';
 import { useMapSnapshot } from './hooks/useMapSnapshot';
-import { usePointLayers } from "./hooks/usePointLayers.ts";
+//import { usePointLayers } from "./hooks/usePointLayers.ts";
 import { useGeometryLayers } from "./hooks/useGeometryLayers.ts"
-import { useDataLoader } from './hooks/useDataLoader';
-import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
+//import { useDataLoader } from './hooks/useDataLoader';
+//import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
 import { useDataFetcher } from "./hooks/useDataFetcher.ts";
 import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties } from "./types"
 import { FeatureCollection, Geometry } from "geojson";
-import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
+import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config/";
+import { useState, useEffect, useRef } from 'react';
 
 const App: React.FC = () => {
     const { urlState, updateUrlState } = useUrlState();
@@ -348,9 +349,9 @@ const App: React.FC = () => {
             {/*    onDatasetChange={handleDatasetChange}*/}
             {/*    onMetricChange={handleMetricChange}*/}
             {/*    pointLayers={pointLayers}*/}
-                hazardLayers={hazardLayers}
+                {/* hazardLayers={hazardLayers} */}
             {/*    togglePointLayer={handlePointLayerToggle}*/}
-                toggleHazardLayer={handleHazardLayerToggle}
+                {/* toggleHazardLayer={handleHazardLayerToggle} */}
             {/*    onTakeSnapshot={handleTakeSnapshot}*/}
             {/*/>*/}
 
