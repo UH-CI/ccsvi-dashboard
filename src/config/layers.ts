@@ -70,7 +70,7 @@ export const POLYGON_LAYERS = {
             title: 'Hawaiian Homeland',
             fields: [
                 { key: 'GEOID10', label: 'Geo ID' },
-                { key: 'NAME10', label: 'Name' }
+                // { key: 'NAME10', label: 'Name' }
             ]
         },
         styles: {
