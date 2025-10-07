@@ -8,6 +8,7 @@ import {
     Dataset,
     BlockGroupProperties,
     HawaiianHomelandProperties,
+    CountyBoundariesProperties,
     PointLayerConfig
 } from '../../types';
 import { GenericPointMarkers } from '../PointLayers';
@@ -16,6 +17,7 @@ import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
+import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
 
 interface SingleMapViewProps {
     config: MapConfig;
@@ -181,6 +183,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     const censusBlockGroups = polygonLayers?.censusBlockGroups;
     const hawaiianHomelands = polygonLayers?.hawaiianHomelands;
+    const countyBoundaries = polygonLayers?.countyBoundaries;
 
     const shouldRenderCensus = effectiveDataset && effectiveMetric &&
         censusBlockGroups && metricsData && dataset && !shouldShowHawaiianHomelands;
@@ -188,8 +191,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const shouldRenderHawaiianHomelands = effectiveDataset && effectiveMetric &&
         shouldShowHawaiianHomelands && hawaiianHomelands && metricsData;
 
-    const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
-        shouldShowHawaiianHomelands && censusBlockGroups && metricsData && dataset;
+    const shouldRenderCountyBoundariesBackground = effectiveDataset && effectiveMetric &&
+        shouldShowHawaiianHomelands && countyBoundaries;
 
     if (!config.visible) {
         return null;
@@ -235,20 +238,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     />
 
                     {
-                        shouldRenderCensusAsBackground && (
-                        <CensusPolygonLayer
-                            data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
-                            metricsData={metricsData}
-                            getMetricValue={getMetricValue}
-                            mapId={config.id}
-                            // activeDataset={effectiveDataset}
-                            activeMetric={effectiveMetric}
-                            activeFeatureGeoid={config.activeFeature?.geoid}
-                            getColor={getColor}
-                            grayOut={true}
-                            onFeatureClick={handleFeatureClick}
-                        />
-                    )
+                        shouldRenderCountyBoundariesBackground && (
+                            <CountyBoundariesBackgroundLayer
+                                data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
+                                mapId={config.id}
+                            />
+                        )
                     }
 
 

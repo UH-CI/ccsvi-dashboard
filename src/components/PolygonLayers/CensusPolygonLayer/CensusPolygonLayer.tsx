@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useEffect} from "react";
+import React, { useCallback, useMemo } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
 import { BlockGroupProperties, MetricsData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
@@ -15,7 +15,6 @@ interface CensusPolygonLayerProps {
     activeMetric: string;
     activeFeatureGeoid?: string | null;
     getColor: (value: number | null) => string;
-    grayOut?: boolean;
     onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
 }
 
@@ -30,7 +29,6 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
                                                                           activeMetric,
                                                                           activeFeatureGeoid,
                                                                           getColor,
-                                                                          grayOut = false,
                                                                           onFeatureClick
                                                                       }) => {
 
@@ -45,9 +43,6 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             return LAYER_CONFIG.styles.default;
         }
 
-        if (grayOut) {
-            return LAYER_CONFIG.styles.grayedOut;
-        }
 
         const metricValue = getMetricValue(String(geoid));
         const fillColor = getColor(metricValue);
@@ -56,7 +51,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             ...LAYER_CONFIG.styles.default,
             fillColor
         }
-    }, [grayOut, getMetricValue, getColor, mapId, data?.features]);
+    }, [getMetricValue, getColor]);
 
     const getHighlightStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties>, baseStyle: StyleConfig | undefined): StyleConfig => {
         return {

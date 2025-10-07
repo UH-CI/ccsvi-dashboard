@@ -6,7 +6,7 @@ import { TableViewer } from './components/TableViewer';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
 import { useDataFetcher } from "./hooks/useDataFetcher.ts";
-import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties } from "./types"
+import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties, CountyBoundariesProperties } from "./types"
 import { FeatureCollection, Geometry } from "geojson";
 import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
 
@@ -35,10 +35,15 @@ const App: React.FC = () => {
         { errorPrefix: `Failed to fetch hawaiian homelands data` }
     );
 
+    const countyBoundaries = useDataFetcher<FeatureCollection<Geometry, CountyBoundariesProperties>>(
+        POLYGON_LAYERS.countyBoundaries.path,
+        { errorPrefix: `Failed to fetch county boundaries data` }
+    );
+
     const pointLayers = usePointLayers(urlState.pointLayers);
 
     // Check if all data is ready
-    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null
+    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null && countyBoundaries.data !== null
 
     // Check if all data is ready
     const isReady = metricsData.loaded && blockGroupData.loaded && pointLayers.isInitialized && isPolygonLayersLoaded;
@@ -122,7 +127,8 @@ const App: React.FC = () => {
                     metricsData={metricsData.data}
                     polygonLayers={{
                         censusBlockGroups: censusBlockGroups.data,
-                        hawaiianHomelands: hawaiianHomelands.data
+                        hawaiianHomelands: hawaiianHomelands.data,
+                        countyBoundaries: countyBoundaries.data
                     }}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}

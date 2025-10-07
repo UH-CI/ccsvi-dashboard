@@ -12,7 +12,7 @@ export interface PopupConfig {
 
 export interface LayerStyleConfig {
     default: PathOptions;
-    highlight: PathOptions;
+    highlight?: PathOptions;
     grayedOut?: PathOptions;
     noData?: PathOptions;
 }
@@ -50,14 +50,6 @@ export const POLYGON_LAYERS = {
                 color: '#000000',
                 opacity: 1,
                 fillOpacity: 0.8
-            },
-            grayedOut: {
-                fillColor: '#e0e0e0',
-                weight: 0.8,
-                opacity: 0.5,
-                color: '#999',
-                fillOpacity: 0.8,
-                dashArray: '5, 5'
             }
         }
     } satisfies PolygonLayerConfig,
@@ -79,13 +71,44 @@ export const POLYGON_LAYERS = {
                 weight: 0.5,
                 opacity: 1,
                 color: '#333',
-                fillOpacity: 0.3
+                fillOpacity: 0.6
             },
             highlight: {
                 weight: 4,
                 color: '#000000',
                 opacity: 1,
                 fillOpacity: 0.8
+            }
+        }
+    } satisfies PolygonLayerConfig,
+
+    countyBoundaries: {
+        name: 'County Boundaries',
+        path: './data/2020_Census_County_Boundaries_Stripped.geojson',
+        geoidProperty: 'NAME20',
+        popup: {
+            title: 'County',
+            fields: [
+                { key: 'NAME20', label: 'County Name' },
+                { key: 'POP20', label: '2020 Population' }
+            ]
+        },
+        styles: {
+            default: {
+                fillColor: '#cccccc',
+                weight: 0.5,
+                opacity: 0.3,
+                color: '#999',
+                fillOpacity: 0.2,
+                dashArray: '5, 5'
+            },
+            grayedOut: {
+                fillColor: '#e0e0e0',
+                weight: 0.8,
+                opacity: 0.5,
+                color: '#999',
+                fillOpacity: 0.8,
+                dashArray: '5, 5'
             }
         }
     } satisfies PolygonLayerConfig

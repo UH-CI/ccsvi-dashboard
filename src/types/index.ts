@@ -63,6 +63,11 @@ export interface HawaiianHomelandProperties {
     Shape_Area: number;
 }
 
+export interface CountyBoundariesProperties {
+    NAME20: string;
+    POP20: number;
+}
+
 export interface PointLayerConfig {
     id: string;
     name: string;

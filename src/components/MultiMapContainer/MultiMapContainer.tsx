@@ -125,7 +125,8 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                 metricsData={metricsData}
                                 polygonLayers={{
                                     censusBlockGroups: polygonLayers?.censusBlockGroups || null,
-                                    hawaiianHomelands: polygonLayers?.hawaiianHomelands || null
+                                    hawaiianHomelands: polygonLayers?.hawaiianHomelands || null,
+                                    countyBoundaries: polygonLayers?.countyBoundaries || null
                                 }}
                                 pointLayers={pointLayers}
                                 // Handlers
