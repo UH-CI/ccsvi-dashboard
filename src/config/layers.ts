@@ -28,7 +28,7 @@ export interface PolygonLayerConfig {
 export const POLYGON_LAYERS = {
     censusBlockGroups: {
         name: 'Census Block Groups',
-        path: './data/2020_Census_Block_Groups_WGS84.geojson',
+        path: './data/2020_Census_Block_Groups_Stripped.geojson',
         geoidProperty: 'geoid20',
         popup: {
             title: 'Census Block Group',
@@ -56,7 +56,7 @@ export const POLYGON_LAYERS = {
 
     hawaiianHomelands: {
         name: 'Hawaiian Homelands',
-        path: './data/Census_Hawaiian_Homelands_hhl10.geojson',
+        path: './data/Census_Hawaiian_Homelands_hhl10_Stripped.geojson',
         geoidProperty: 'GEOID10',
         popup: {
             title: 'Hawaiian Homeland',
