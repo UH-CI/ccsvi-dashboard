@@ -17,8 +17,9 @@ export interface StyleConfig {
 
 export interface GenericPolygonLayerProps<T extends GeoJsonProperties = GeoJsonProperties> extends Omit<GeoJSONProps, 'data' | 'style' | 'onEachFeature'> {
     data: Feature<Geometry, T>[] | FeatureCollection<Geometry, T> | null;
-    mapId: string; // mapId to identify which map the layer belongs to
-    geoidProperty: string; // Layer GEOID
+    mapId: string;
+    layerType: string;
+    geoidProperty: string;
     activeFeatureGeoid?: string | null;
     getStyle: (feature: Feature<Geometry, T> | undefined) => StyleConfig;
     getHighlightStyle?: (feature: Feature<Geometry, T>, baseStyle: StyleConfig | undefined) => StyleConfig;
@@ -27,21 +28,25 @@ export interface GenericPolygonLayerProps<T extends GeoJsonProperties = GeoJsonP
 }
 
 export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonProperties>({
-                                                                                         data,
-                                                                                            mapId,
-                                                                                            geoidProperty,
-                                                                                            activeFeatureGeoid,
-                                                                                            getStyle,
-                                                                                            getHighlightStyle,
-                                                                                            onFeatureClick,
-                                                                                            renderPopup,
-                                                                                         ...geoJsonProps
-                                                                                     }: GenericPolygonLayerProps<T>) => {
-    // Initialize layer storage for this map
-    if (!globalLayersRef.has(mapId)) {
-        globalLayersRef.set(mapId, new Map());
+                                                                                              data,
+                                                                                              mapId,
+                                                                                              layerType,
+                                                                                              geoidProperty,
+                                                                                              activeFeatureGeoid,
+                                                                                              getStyle,
+                                                                                              getHighlightStyle,
+                                                                                              onFeatureClick,
+                                                                                              renderPopup,
+                                                                                              ...geoJsonProps
+                                                                                          }: GenericPolygonLayerProps<T>) => {
+    // Create unique storage key combining mapId and layerType
+    const storageKey = `${mapId}-${layerType}`;
+    
+    // Initialize layer storage for this map-layer combination
+    if (!globalLayersRef.has(storageKey)) {
+        globalLayersRef.set(storageKey, new Map());
     }
-    const layersRef = globalLayersRef.get(mapId)!;
+    const layersRef = globalLayersRef.get(storageKey)!;
 
     const styleCallback = useCallback((feature?: Feature<Geometry, T>): PathOptions => {
         if (!feature) {
@@ -62,7 +67,7 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
         const geoid = String(feature.properties[geoidProperty] ?? '');
 
-        // Store both layer reference for dynamic highlighting
+        // Store layer reference
         layersRef.set(geoid, layer);
 
         if (onFeatureClick) {
@@ -80,11 +85,11 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
                     maxWidth: 300
                 })
             }
-
         }
     }, [geoidProperty, onFeatureClick, renderPopup, layersRef]);
 
-    // Handle dynamic highlighting when activeFeatureGeoid changes
+    // Handle dynamic highlighting when activeFeatureGeoid OR style functions change
+    // This is the key fix - include getStyle in dependencies so it re-runs when styles change
     useEffect(() => {
         layersRef.forEach((layer, geoid) => {
             if (!('setStyle' in layer)) return;
@@ -96,12 +101,16 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
             if (!feature) return;
 
+            // Use the current getStyle function directly (not a ref)
             const baseStyle = getStyle(feature);
-            const highlightStyle = isActive && getHighlightStyle ? getHighlightStyle(feature, baseStyle) : baseStyle;
+
+            const highlightStyle = isActive && getHighlightStyle
+                ? getHighlightStyle(feature, baseStyle)
+                : baseStyle;
 
             (layer as { setStyle: (style: PathOptions) => void }).setStyle(highlightStyle);
         });
-    }, [activeFeatureGeoid, layersRef, getStyle, getHighlightStyle]);
+    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle]);
 
 
     if (!data) {
@@ -117,7 +126,7 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
 
     return (
         <GeoJSON
-            key={mapId}
+            key={storageKey}
             data={featureCollection}
             style={styleCallback}
             onEachFeature={onEachFeature}
@@ -131,12 +140,12 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
     );
 }, (prevProps, nextProps) => {
     // Custom comparison to prevent unnecessary re-renders
-    // Only compare essential props, ignore function references that change frequently
     return (
         prevProps.data === nextProps.data &&
         prevProps.activeFeatureGeoid === nextProps.activeFeatureGeoid &&
         prevProps.geoidProperty === nextProps.geoidProperty &&
         prevProps.mapId === nextProps.mapId &&
+        prevProps.layerType === nextProps.layerType &&
         prevProps.getStyle === nextProps.getStyle &&
         prevProps.getHighlightStyle === nextProps.getHighlightStyle &&
         prevProps.onFeatureClick === nextProps.onFeatureClick &&

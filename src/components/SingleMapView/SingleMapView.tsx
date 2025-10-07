@@ -14,7 +14,7 @@ import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
-import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
+import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 
 interface SingleMapViewProps {

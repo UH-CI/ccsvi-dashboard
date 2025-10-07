@@ -85,6 +85,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         <GenericPolygonLayer
             data={data}
             mapId={mapId}
+            layerType="hawaiian-homelands"
             geoidProperty={LAYER_CONFIG.geoidProperty}
             getStyle={getStyle}
             getHighlightStyle={getHighlightStyle}
