@@ -1,52 +1,36 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import styles from './App.module.scss';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
+import { useAppStore, useIsReady } from './stores';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
-import { useDataFetcher } from "./hooks/useDataFetcher.ts";
-import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties, CountyBoundariesProperties } from "./types"
-import { FeatureCollection, Geometry } from "geojson";
-import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
 
 const App: React.FC = () => {
+    // Get URL state (currently broken)
     const { urlState, updateUrlState } = useUrlState();
-
-    // Contains actual demographic metric values per geographic block group
-    const metricsData = useDataFetcher<MetricsData>(
-        DATASETS_CONFIG.censusDatasetsPath,
-        {errorPrefix: 'Failed to load metrics data' }
-    );
-
-    // Configuration metadata for census datasets
-    const blockGroupData = useDataFetcher<Dataset>(
-        DATASETS_CONFIG.censusDatasetsInfoPath,
-        {errorPrefix: 'Failed to load dataset metadata' }
-    );
-
-    const censusBlockGroups = useDataFetcher<FeatureCollection<Geometry, BlockGroupProperties>>(
-        POLYGON_LAYERS.censusBlockGroups.path,
-        { errorPrefix: 'Failed to load census block group data' }
-    );
-
-    const hawaiianHomelands = useDataFetcher<FeatureCollection<Geometry, HawaiianHomelandProperties>>(
-        POLYGON_LAYERS.hawaiianHomelands.path,
-        { errorPrefix: `Failed to fetch hawaiian homelands data` }
-    );
-
-    const countyBoundaries = useDataFetcher<FeatureCollection<Geometry, CountyBoundariesProperties>>(
-        POLYGON_LAYERS.countyBoundaries.path,
-        { errorPrefix: `Failed to fetch county boundaries data` }
-    );
-
+    
+    // Get data from stores
+    const { 
+        metricsData, 
+        blockGroupData, 
+        censusBlockGroups, 
+        hawaiianHomelands, 
+        countyBoundaries,
+        errors,
+        fetchAllData 
+    } = useAppStore();
+    
+    const isReady = useIsReady();
+    
+    // Load point layers
     const pointLayers = usePointLayers(urlState.pointLayers);
 
-    // Check if all data is ready
-    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null && countyBoundaries.data !== null
-
-    // Check if all data is ready
-    const isReady = metricsData.loaded && blockGroupData.loaded && pointLayers.isInitialized && isPolygonLayersLoaded;
+    // Fetch all data on mount
+    useEffect(() => {
+        fetchAllData();
+    }, []);
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {
@@ -69,7 +53,7 @@ const App: React.FC = () => {
     //     return null;
     // };
 
-    // Event handlers that update URL state
+    // Event handlers
     const handlePointLayerToggle = (layerId: string) => {
         const currentVisible = urlState.pointLayers;
         const newVisible = currentVisible.includes(layerId)
@@ -93,12 +77,15 @@ const App: React.FC = () => {
     // }, [takeSnapshot, urlState.dataset, urlState.metric]);
     // }, []);
 
-    if (metricsData.error || blockGroupData.error) {
+    // Check for errors
+    const hasErrors = Object.values(errors).some(error => error !== null);
+    if (hasErrors) {
         return (
             <div className={styles['error-container']}>
                 <h2>Error loading data</h2>
-                {metricsData.error && <p>{metricsData.error}</p>}
-                {blockGroupData.error && <p>{blockGroupData.error}</p>}
+                {Object.entries(errors).map(([key, error]) => 
+                    error && <p key={key}>{error}</p>
+                )}
                 <button onClick={() => window.location.reload()}>
                     Retry
                 </button>
@@ -114,8 +101,8 @@ const App: React.FC = () => {
         );
     }
 
-    const activeDatasetObject = blockGroupData.data && urlState.dataset
-        ? blockGroupData.data[urlState.dataset]
+    const activeDatasetObject = blockGroupData && urlState.dataset
+        ? blockGroupData[urlState.dataset]
         : null;
 
     return (
@@ -123,12 +110,12 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer
                     maxMaps={4}
-                    dataset={blockGroupData.data}
-                    metricsData={metricsData.data}
+                    dataset={blockGroupData}
+                    metricsData={metricsData}
                     polygonLayers={{
-                        censusBlockGroups: censusBlockGroups.data,
-                        hawaiianHomelands: hawaiianHomelands.data,
-                        countyBoundaries: countyBoundaries.data
+                        censusBlockGroups: censusBlockGroups,
+                        hawaiianHomelands: hawaiianHomelands,
+                        countyBoundaries: countyBoundaries
                     }}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
