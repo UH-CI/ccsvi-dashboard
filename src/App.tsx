@@ -106,7 +106,6 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer
                     maxMaps={4}
-                    dataset={blockGroupData}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
