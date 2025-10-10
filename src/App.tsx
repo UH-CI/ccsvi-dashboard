@@ -13,11 +13,7 @@ const App: React.FC = () => {
     
     // Get data from stores
     const { 
-        metricsData, 
-        blockGroupData, 
-        censusBlockGroups, 
-        hawaiianHomelands, 
-        countyBoundaries,
+        blockGroupData,
         errors,
         fetchAllData 
     } = useAppStore();
@@ -111,12 +107,6 @@ const App: React.FC = () => {
                 <MultiMapContainer
                     maxMaps={4}
                     dataset={blockGroupData}
-                    metricsData={metricsData}
-                    polygonLayers={{
-                        censusBlockGroups: censusBlockGroups,
-                        hawaiianHomelands: hawaiianHomelands,
-                        countyBoundaries: countyBoundaries
-                    }}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}

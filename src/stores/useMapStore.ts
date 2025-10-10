@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from "zustand/react/shallow";
 import { MapConfig } from '../types';
 
 interface MapState {
@@ -82,9 +83,9 @@ export const useMapStore = create<MapState>((set, get) => ({
 
 // Selectors for computed state
 export const useVisibleMaps = () => {
-  return useMapStore((state) => 
+  return useMapStore(useShallow((state) =>
     state.mapConfigs.filter(config => config.visible)
-  );
+  ));
 };
 
 export const useMapConfig = (mapId: string) => {
