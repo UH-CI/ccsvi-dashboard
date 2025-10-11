@@ -6,7 +6,6 @@ import {
     BlockGroupProperties,
     HawaiianHomelandProperties,
     CountyBoundariesProperties,
-    PointLayerConfig
 } from '../../types';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
@@ -15,14 +14,12 @@ import styles from './SingleMapView.module.scss';
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
-import { useAppStore } from "../../stores";
-import { useMapStore, useMapConfig } from '../../stores';
+import { useAppStore, useMapStore, useMapConfig, usePointLayerStore } from "../../stores";
 
 interface SingleMapViewProps {
     mapId: string;
     isPrimary: boolean;
     mapConfigsLength: number;
-    pointLayers: PointLayerConfig[];
     // onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
@@ -75,7 +72,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      mapId,
                                                                      isPrimary,
                                                                      mapConfigsLength,
-                                                                     pointLayers,
                                                                      // onUpdateActiveFeature
                                                                  }) => {
     const mapRef = useRef<L.Map | null>(null);
@@ -94,6 +90,20 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
+
+    const configs = usePointLayerStore(state => state.pointLayerConfigs);
+    const data = usePointLayerStore(state => state.pointLayerData);
+    const visibleIds = usePointLayerStore(state => state.visibleLayerIds);
+
+    const visiblePointLayers = useMemo(() => {
+        return configs
+            .filter(config => visibleIds.has(config.id))
+            .map(config => ({
+                ...config,
+                visible: true,
+                data: data.get(config.id),
+            }));
+    }, [configs, data, visibleIds]);
 
     useEffect(() => {
         if (mapRef.current) {
@@ -279,7 +289,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         )
                     }
 
-                    {pointLayers.map(layer => (
+                    {visiblePointLayers.map(layer => (
                         <GenericPointMarkers key={layer.id} layer={layer} />
                     ))}
                 </MapContainer>

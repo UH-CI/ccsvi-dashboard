@@ -3,9 +3,8 @@ import './App.css';
 import styles from './App.module.scss';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useAppStore, useIsReady } from './stores';
+import { useAppStore, useIsReady, usePointLayerStore } from './stores';
 import { useUrlState } from './hooks/useUrlState';
-import { usePointLayers } from './hooks/usePointLayers';
 
 const App: React.FC = () => {
     // Get URL state (currently broken)
@@ -20,13 +19,31 @@ const App: React.FC = () => {
     
     const isReady = useIsReady();
     
-    // Load point layers
-    const pointLayers = usePointLayers(urlState.pointLayers);
+    // Point layers store
+    const {
+        fetchPointLayerConfigs,
+        setVisibleLayerIds,
+        fetchPointLayerData
+    } = usePointLayerStore();
 
     // Fetch all data on mount
     useEffect(() => {
         fetchAllData();
+        fetchPointLayerConfigs(urlState.pointLayers);
     }, []);
+
+    useEffect(() => {
+        setVisibleLayerIds(urlState.pointLayers);
+    }, [urlState.pointLayers]);
+
+    // Load data for visible layers
+    useEffect(() => {
+        if (urlState.pointLayers.length > 0) {
+            urlState.pointLayers.forEach(layerId => {
+                fetchPointLayerData(layerId);
+            });
+        }
+    }, [urlState.pointLayers, fetchPointLayerData]);
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {
@@ -51,6 +68,10 @@ const App: React.FC = () => {
 
     // Event handlers
     const handlePointLayerToggle = (layerId: string) => {
+        const { toggleLayerVisibility } = usePointLayerStore.getState();
+        toggleLayerVisibility(layerId);
+        
+        // Update URL state
         const currentVisible = urlState.pointLayers;
         const newVisible = currentVisible.includes(layerId)
             ? currentVisible.filter(id => id !== layerId)
@@ -106,7 +127,6 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer
                     maxMaps={4}
-                    pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
                 />

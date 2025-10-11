@@ -1,22 +1,18 @@
 import React, { useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
-import { PointLayerConfig } from '../../types';
 import { useUrlState } from '../../hooks/useUrlState';
-import { useAppStore } from '../../stores';
-import { useMapStore, useVisibleMaps } from '../../stores';
+import { useAppStore, useMapStore, useVisibleMaps, usePointLayerStore, usePointLayerConfigs } from '../../stores';
 import styles from './MultiMapContainer.module.scss';
 
 
 interface MultiMapContainerProps {
     maxMaps?: number;
-    pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
     maxMaps = 4,
-    pointLayers,
     togglePointLayer,
 }) => {
     const { blockGroupData } = useAppStore();
@@ -29,7 +25,20 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
         toggleMapVisibility
     } = useMapStore();
 
-    // use Vivible Maps from mapStore
+    // Get all point layer configs and visibility state
+    const pointLayerConfigs = usePointLayerConfigs();
+    const visibleLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    
+    // Create point layers with visibility for control panel (memoized)
+    const pointLayers = useMemo(() => 
+        pointLayerConfigs.map(config => ({
+            ...config,
+            visible: visibleLayerIds.has(config.id)
+        })), 
+        [pointLayerConfigs, visibleLayerIds]
+    );
+
+    // Wse visible maps from mapStore
     const visibleMaps = useVisibleMaps();
 
     // URL state management
@@ -62,7 +71,6 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                 mapId={config.id}
                                 isPrimary={index === 0}
                                 mapConfigsLength={visibleMaps.length}
-                                pointLayers={pointLayers}
                                 // Handlers
                                 // onUpdateActiveFeature={(activeFeature) =>
                                 //     updateMapActiveFeature(config.id, activeFeature)
