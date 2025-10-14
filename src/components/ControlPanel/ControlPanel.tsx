@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Typography,
     FormControl,
@@ -10,35 +10,67 @@ import {
     Checkbox,
     Paper,
     Divider,
-    Stack
+    Stack,
+    Collapse,
+    IconButton,
+    Box,
+    Chip
 } from '@mui/material';
-import { Camera } from '@mui/icons-material';
+import {
+    Camera,
+    ExpandMore,
+    ExpandLess,
+    Layers,
+    Visibility,
+    VisibilityOff,
+} from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
-import { Dataset } from '../../types';
-import { PointLayerConfig} from "../../types";
+import { Dataset, PointLayerConfig, MapConfig } from '../../types';
 import styles from './ControlPanel.module.scss';
 
-interface ControlPanelProps {
+interface IntegratedControlPanelProps {
     dataset: Dataset | null;
+    mapConfigs: MapConfig[];
     activeDataset: string;
     activeDatasetMetric: string;
     onDatasetChange: (value: string) => void;
     onMetricChange: (value: string) => void;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
-    onTakeSnapshot: () => void;
+    onAddMap: () => void;
+    onRemoveMap: (mapId: string) => void;
+    onUpdateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
+    onToggleVisibility: (mapId: string) => void;
+    maxMaps: number;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({
-                                                              dataset,
-                                                              activeDataset,
-                                                              activeDatasetMetric,
-                                                              onDatasetChange,
-                                                              onMetricChange,
-                                                              pointLayers,
-                                                              togglePointLayer,
-                                                              onTakeSnapshot,
-                                                          }) => {
+export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
+    dataset,
+    mapConfigs,
+    activeDataset,
+    activeDatasetMetric,
+    onDatasetChange,
+    onMetricChange,
+    pointLayers,
+    togglePointLayer,
+    onAddMap,
+    onRemoveMap,
+    onUpdateMapConfig,
+    onToggleVisibility,
+    maxMaps
+}) => {
+    const [expandedSections, setExpandedSections] = useState({
+        maps: true,
+        vulnerability: true,
+        points: true
+    });
+
+    const toggleSection = (section: keyof typeof expandedSections) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
 
     const datasetList = useMemo(() => {
         if (!dataset) return [];
@@ -59,113 +91,254 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         }));
     }, [dataset, activeDataset]);
 
+    const visibleMaps = mapConfigs.filter(config => config.visible);
+    const canAddMap = mapConfigs.length < maxMaps;
+    const canRemoveMap = mapConfigs.length > 1;
+
     return (
-        <Paper className={styles['control-panel']} elevation={2}>
-            <Typography variant="h5" component="h2" className={styles['control-title']}>
-                Controls
-            </Typography>
-
-            <div className={styles['vulnerability-section']}>
-                <Typography variant="subtitle1" className={styles['section-title']}>
-                    Vulnerability Indicators
+        <Paper className={styles['integrated-control-panel']} elevation={2}>
+            <Box className={styles['control-header']}>
+                <Typography variant="h6" component="h2" className={styles['control-title']}>
+                    Multi-Map Controls
                 </Typography>
+                <Chip 
+                    label={`${visibleMaps.length}/${mapConfigs.length} maps`} 
+                    size="small" 
+                    color="primary" 
+                />
+            </Box>
 
-                <Stack spacing={2}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Dataset</InputLabel>
-                        <Select
-                            value={activeDataset}
-                            label="Dataset"
-                            onChange={(event) => onDatasetChange(event.target.value as string)}
-                            className={styles['mui-select']}
-                        >
-                            <MenuItem value="">
-                                <em>Select Dataset</em>
-                            </MenuItem>
-                            {datasetList.map(dataset => (
-                                <MenuItem key={dataset.id} value={dataset.id}>
-                                    {dataset.label}
-                                </MenuItem>
+            {/* Maps Section */}
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('maps')}
+                >
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        <Layers className={styles['section-icon']} />
+                        Map Management
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.maps ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
+
+                <Collapse in={expandedSections.maps}>
+                    <Stack spacing={2} className={styles['section-content']}>
+                        <Box className={styles['map-actions']}>
+                            {canAddMap && (
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={onAddMap}
+                                    startIcon={<Layers />}
+                                >
+                                    Add Map
+                                </Button>
+                            )}
+                        </Box>
+
+                        <Box className={styles['map-list']}>
+                            {mapConfigs.map((config, index) => (
+                                <Box key={config.id} className={styles['map-item']}>
+                                    <Box className={styles['map-item-header']}>
+                                        <Typography variant="body2" className={styles['map-item-title']}>
+                                            {config.title} {index === 0 && '(Primary)'}
+                                        </Typography>
+                                        <Box className={styles['map-item-actions']}>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => onToggleVisibility(config.id)}
+                                                title={config.visible ? 'Hide map' : 'Show map'}
+                                            >
+                                                {config.visible ? <Visibility /> : <VisibilityOff />}
+                                            </IconButton>
+                                            {canRemoveMap && (
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => onRemoveMap(config.id)}
+                                                    title="Remove map"
+                                                >
+                                                    <ExpandLess />
+                                                </IconButton>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                    
+                                    {config.visible && (
+                                        <Box className={styles['map-item-config']}>
+                                            <FormControl size="small" fullWidth>
+                                                <InputLabel>Dataset</InputLabel>
+                                                <Select
+                                                    value={config.dataset}
+                                                    onChange={(e) => onUpdateMapConfig(config.id, { 
+                                                        dataset: e.target.value, 
+                                                        metric: '' 
+                                                    })}
+                                                    label="Dataset"
+                                                >
+                                                    <MenuItem value="">
+                                                        <em>Select Dataset</em>
+                                                    </MenuItem>
+                                                    {datasetList.map(dataset => (
+                                                        <MenuItem key={dataset.id} value={dataset.id}>
+                                                            {dataset.label}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+
+                                            {config.dataset && (
+                                                <FormControl size="small" fullWidth>
+                                                    <InputLabel>Metric</InputLabel>
+                                                    <Select
+                                                        value={config.metric}
+                                                        onChange={(e) => onUpdateMapConfig(config.id, { 
+                                                            metric: e.target.value 
+                                                        })}
+                                                        label="Metric"
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>Select Metric</em>
+                                                        </MenuItem>
+                                                        {dataset && dataset[config.dataset] && 
+                                                            Object.keys(dataset[config.dataset].columnThresholds || {}).map(metricName => (
+                                                                <MenuItem key={metricName} value={metricName}>
+                                                                    {metricName}
+                                                                </MenuItem>
+                                                            ))
+                                                        }
+                                                    </Select>
+                                                </FormControl>
+                                            )}
+                                        </Box>
+                                    )}
+                                </Box>
                             ))}
-                        </Select>
-                    </FormControl>
+                        </Box>
+                    </Stack>
+                </Collapse>
+            </Box>
 
-                    {activeDataset && (
+            <Divider className={styles['section-divider']} />
+
+            {/* Vulnerability Indicators Section */}
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('vulnerability')}
+                >
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Primary Map Settings
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.vulnerability ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
+
+                <Collapse in={expandedSections.vulnerability}>
+                    <Stack spacing={2} className={styles['section-content']}>
                         <FormControl fullWidth size="small">
-                            <InputLabel>Metric</InputLabel>
+                            <InputLabel>Dataset</InputLabel>
                             <Select
-                                value={activeDatasetMetric}
-                                label="Metric"
-                                onChange={(event) => onMetricChange(event.target.value as string)}
-                                className={styles['mui-select']}
+                                value={activeDataset}
+                                label="Dataset"
+                                onChange={(event) => onDatasetChange(event.target.value as string)}
                             >
                                 <MenuItem value="">
-                                    <em>Select Metric</em>
+                                    <em>Select Dataset</em>
                                 </MenuItem>
-                                {datasetMetrics.map(metric => (
-                                    <MenuItem key={metric.id} value={metric.id}>
-                                        {metric.label}
+                                {datasetList.map(dataset => (
+                                    <MenuItem key={dataset.id} value={dataset.id}>
+                                        {dataset.label}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
-                    )}
-                </Stack>
-            </div>
+
+                        {activeDataset && (
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Metric</InputLabel>
+                                <Select
+                                    value={activeDatasetMetric}
+                                    label="Metric"
+                                    onChange={(event) => onMetricChange(event.target.value as string)}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Metric</em>
+                                    </MenuItem>
+                                    {datasetMetrics.map(metric => (
+                                        <MenuItem key={metric.id} value={metric.id}>
+                                            {metric.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+
+                        <Button
+                            onClick={() => console.log('Snapshot')}
+                            variant="contained"
+                            startIcon={<Camera />}
+                            fullWidth
+                            size="small"
+                        >
+                            Take Snapshot
+                        </Button>
+                    </Stack>
+                </Collapse>
+            </Box>
 
             <Divider className={styles['section-divider']} />
 
-            <div className={styles['snapshot-section']}>
-                <Button
-                    onClick={onTakeSnapshot}
-                    variant="contained"
-                    startIcon={<Camera />}
-                    fullWidth
-                    aria-label="Take a snapshot of the current map view"
-                    className={styles['snapshot-button']}
+            {/* Points of Interest Section */}
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('points')}
                 >
-                    Take Snapshot
-                </Button>
-            </div>
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Points of Interest
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.points ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
 
-            <Divider className={styles['section-divider']} />
+                <Collapse in={expandedSections.points}>
+                    <Stack spacing={1} className={styles['section-content']}>
+                        {pointLayers.map(layer => {
+                            const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
 
-            <div className={styles['points-section']}>
-                <Typography variant="h6" className={styles['points-title']}>
-                    Points of Interest
-                </Typography>
-
-                <Stack spacing={1}>
-                    {pointLayers.map(layer => {
-                        const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-
-                        return (
-                            <div key={layer.id} className={styles['layer-toggle']}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={layer.visible}
-                                            onChange={() => togglePointLayer(layer.id)}
-                                            size="small"
-                                        />
-                                    }
-                                    label={
-                                        <div className={styles['layer-label']}>
-                                            <span
-                                                className={styles['layer-icon']}
-                                                style={{ color: layer.color }}
-                                            >
-                                                <IconComponent size="1rem" />
-                                            </span>
-                                            {layer.name}
-                                        </div>
-                                    }
-                                />
-                            </div>
-                        );
-                    })}
-                </Stack>
-            </div>
+                            return (
+                                <div key={layer.id} className={styles['layer-toggle']}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={layer.visible}
+                                                onChange={() => togglePointLayer(layer.id)}
+                                                size="small"
+                                            />
+                                        }
+                                        label={
+                                            <div className={styles['layer-label']}>
+                                                <span
+                                                    className={styles['layer-icon']}
+                                                    style={{ color: layer.color }}
+                                                >
+                                                    <IconComponent size="1rem" />
+                                                </span>
+                                                {layer.name}
+                                            </div>
+                                        }
+                                    />
+                                </div>
+                            );
+                        })}
+                    </Stack>
+                </Collapse>
+            </Box>
         </Paper>
     );
 };
+

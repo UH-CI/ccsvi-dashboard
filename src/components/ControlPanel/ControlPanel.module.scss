@@ -1,38 +1,11 @@
-.control-panel {
-  display: flex;
-  width: 20vw;
-  min-width: 20vw;
-  max-width: 20vw;
-  flex-direction: column;
-  gap: 10px;
-  background: #f5f5f5;
-  padding: 1rem;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
 .control-title {
   margin: 0 !important;
   text-align: center;
 }
 
-.vulnerability-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .section-title {
   font-weight: 500 !important;
   margin-bottom: 5px !important;
-}
-
-.mui-select {
-  background-color: #f5f5f5;
-
-  .MuiOutlinedInput-root {
-    background-color: #f5f5f5;
-  }
 }
 
 .section-divider {
@@ -48,11 +21,6 @@
     outline: 2px solid #1976d2;
     outline-offset: 2px;
   }
-}
-
-.points-title {
-  margin-bottom: 10px !important;
-  font-size: 16px !important;
 }
 
 .layer-toggle {
@@ -227,29 +195,6 @@
 
 // Custom scrollbar for integrated panel
 .integrated-control-panel {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-  }
-}
-
-// Custom scrollbar for controls
-.controls-content {
-  max-height: 60vh;
-  overflow-y: auto;
-
   &::-webkit-scrollbar {
     width: 6px;
   }

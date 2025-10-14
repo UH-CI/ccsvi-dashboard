@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import './App.css';
 import styles from './App.module.scss';
+import { ControlPanel } from './components/ControlPanel';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useAppStore, useIsReady, usePointLayerStore } from './stores';
+import { useAppStore, useIsReady, useMapStore, usePointLayerStore } from './stores';
 import { useUrlState } from './hooks/useUrlState';
 
 const App: React.FC = () => {
@@ -23,8 +24,19 @@ const App: React.FC = () => {
     const {
         fetchPointLayerConfigs,
         setVisibleLayerIds,
-        fetchPointLayerData
+        fetchPointLayerData,
+        pointLayerConfigs,
+        visibleLayerIds
     } = usePointLayerStore();
+
+    // Map store
+    const {
+        mapConfigs,
+        addMap,
+        removeMap,
+        updateMapConfig,
+        toggleMapVisibility
+    } = useMapStore();
 
     // Fetch all data on mount
     useEffect(() => {
@@ -79,6 +91,14 @@ const App: React.FC = () => {
         updateUrlState({ pointLayers: newVisible });
     };
 
+    const pointLayers = React.useMemo(() =>
+            pointLayerConfigs.map(config => ({
+                ...config,
+                visible: visibleLayerIds.has(config.id)
+            })),
+        [pointLayerConfigs, visibleLayerIds]
+    );
+
     // // Snapshot handler
     // const handleTakeSnapshot = useCallback(async () => {
     //     try {
@@ -127,7 +147,6 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer
                     maxMaps={4}
-                    togglePointLayer={handlePointLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
                 />
 
@@ -138,17 +157,21 @@ const App: React.FC = () => {
                 />
             </div>
 
-            {/*<ControlPanel*/}
-            {/*    dataset={dataset}*/}
-            {/*    activeDataset={urlState.dataset}*/}
-            {/*    activeDatasetMetric={urlState.metric}*/}
-            {/*    onDatasetChange={handleDatasetChange}*/}
-            {/*    onMetricChange={handleMetricChange}*/}
-            {/*    pointLayers={pointLayers}*/}
-            {/*    togglePointLayer={handlePointLayerToggle}*/}
-            {/*    onTakeSnapshot={handleTakeSnapshot}*/}
-            {/*/>*/}
-
+            <ControlPanel
+                dataset={blockGroupData}
+                mapConfigs={mapConfigs}
+                activeDataset={urlState.dataset}
+                activeDatasetMetric={urlState.metric}
+                onDatasetChange={(value) => updateUrlState({ dataset: value, metric: '' })}
+                onMetricChange={(value) => updateUrlState({ metric: value })}
+                pointLayers={pointLayers}
+                togglePointLayer={handlePointLayerToggle}
+                onAddMap={addMap}
+                onRemoveMap={removeMap}
+                onUpdateMapConfig={updateMapConfig}
+                onToggleVisibility={toggleMapVisibility}
+                maxMaps={4}
+            />
         </div>
     );
 };

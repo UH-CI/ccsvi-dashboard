@@ -1,48 +1,22 @@
 import React, { useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
-import { MultiMapControlPanel } from '../ControlPanel';
-import { useUrlState } from '../../hooks/useUrlState';
-import { useAppStore, useMapStore, useVisibleMaps, usePointLayerStore, usePointLayerConfigs } from '../../stores';
+import { useVisibleMaps } from '../../stores';
 import styles from './MultiMapContainer.module.scss';
 
 
 interface MultiMapContainerProps {
     maxMaps?: number;
-    togglePointLayer: (id: string) => void;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
     maxMaps = 4,
-    togglePointLayer,
 }) => {
-    const { blockGroupData } = useAppStore();
 
-    const {
-        mapConfigs,
-        addMap,
-        removeMap,
-        updateMapConfig,
-        toggleMapVisibility
-    } = useMapStore();
-
-    // Get all point layer configs and visibility state
-    const pointLayerConfigs = usePointLayerConfigs();
-    const visibleLayerIds = usePointLayerStore(state => state.visibleLayerIds);
-    
-    // Create point layers with visibility for control panel (memoized)
-    const pointLayers = useMemo(() => 
-        pointLayerConfigs.map(config => ({
-            ...config,
-            visible: visibleLayerIds.has(config.id)
-        })), 
-        [pointLayerConfigs, visibleLayerIds]
-    );
-
-    // Wse visible maps from mapStore
+    // Use visible maps from mapStore
     const visibleMaps = useVisibleMaps();
 
     // URL state management
-    const { urlState, updateUrlState } = useUrlState();
+    // const { urlState, updateUrlState } = useUrlState();
 
     const gridLayout = useMemo(() => {
         const count = visibleMaps.length;
@@ -71,30 +45,10 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                 mapId={config.id}
                                 isPrimary={index === 0}
                                 mapConfigsLength={visibleMaps.length}
-                                // Handlers
-                                // onUpdateActiveFeature={(activeFeature) =>
-                                //     updateMapActiveFeature(config.id, activeFeature)
-                                // }
                             />
                         </div>
                     ))}
                 </div>
-
-                <MultiMapControlPanel
-                    dataset={blockGroupData}
-                    mapConfigs={mapConfigs}
-                    activeDataset={urlState.dataset}
-                    activeDatasetMetric={urlState.metric}
-                    onDatasetChange={(value) => updateUrlState({ dataset: value, metric: '' })}
-                    onMetricChange={(value) => updateUrlState({ metric: value })}
-                    pointLayers={pointLayers}
-                    togglePointLayer={togglePointLayer}
-                    onAddMap={addMap}
-                    onRemoveMap={removeMap}
-                    onUpdateMapConfig={updateMapConfig}
-                    onToggleVisibility={toggleMapVisibility}
-                    maxMaps={maxMaps}
-                />
             </div>
         </div>
     );
