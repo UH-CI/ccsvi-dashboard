@@ -5,13 +5,29 @@ import { MapConfig } from '../types';
 interface MapState {
   // Map configurations
   mapConfigs: MapConfig[];
-  
-  // Actions
+
+  // Map state
+  primaryMapDataset: string;
+  primaryMapMetric: string;
+
+  // UI state
+  expandedSections: {
+      maps: boolean;
+      vulnerability: boolean;
+      points: boolean;
+  };
+
+    // Actions
   addMap: () => void;
   removeMap: (mapId: string) => void;
   updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
   toggleMapVisibility: (mapId: string) => void;
   updateMapActiveFeature: (mapId: string, activeFeature: MapConfig['activeFeature']) => void;
+  setPrimaryMapDataset: (dataset: string) => void;
+  setPrimaryMapMetric: (metric: string) => void;
+
+  // UI actions
+  toggleSection: (section: keyof MapState['expandedSections']) => void;
   
   // Reset
   reset: () => void;
@@ -25,9 +41,18 @@ const initialMapConfig: MapConfig = {
   visible: true,
 };
 
+const initialExpandedSections: MapState['expandedSections'] = {
+    maps: true,
+    vulnerability: true,
+    points: true,
+};
+
 export const useMapStore = create<MapState>((set, get) => ({
   // Initial state
   mapConfigs: [initialMapConfig],
+    primaryMapDataset: '',
+    primaryMapMetric: '',
+    expandedSections: initialExpandedSections,
 
   // Map config actions
   addMap: () => {
@@ -74,9 +99,31 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ mapConfigs: newConfigs });
   },
 
+    setPrimaryMapDataset: (dataset) => {
+        set({ primaryMapDataset: dataset, primaryMapMetric: '' });
+    },
+
+    setPrimaryMapMetric: (metric) => {
+        set({ primaryMapMetric: metric });
+    },
+
+    // UI actions
+    toggleSection: (section) => {
+      set((state) => ({
+          expandedSections: {
+            ...state.expandedSections,
+            [section]: !state.expandedSections[section]
+          }
+      }))
+    },
+
   reset: () => {
     set({
       mapConfigs: [initialMapConfig],
+        primaryMapDataset: '',
+        primaryMapMetric: '',
+        expandedSections: initialExpandedSections,
+
     });
   },
 }));
@@ -92,4 +139,13 @@ export const useMapConfig = (mapId: string) => {
   return useMapStore((state) => 
     state.mapConfigs.find(config => config.id === mapId)
   );
+};
+
+export const usePrimaryMapState = () => {
+    return useMapStore(useShallow((state) => ({
+        dataset: state.primaryMapDataset,
+        metric: state.primaryMapMetric,
+        setDataset: state.setPrimaryMapDataset,
+        setMetric: state.setPrimaryMapMetric,
+    })));
 };

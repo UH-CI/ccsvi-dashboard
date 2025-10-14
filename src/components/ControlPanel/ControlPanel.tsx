@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
     Typography,
     FormControl,
@@ -25,52 +25,32 @@ import {
     VisibilityOff,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
-import { Dataset, PointLayerConfig, MapConfig } from '../../types';
+import { Dataset, PointLayerConfig } from '../../types';
+import { useMapStore, usePrimaryMapState } from "../../stores/useMapStore.ts";
 import styles from './ControlPanel.module.scss';
 
 interface IntegratedControlPanelProps {
     dataset: Dataset | null;
-    mapConfigs: MapConfig[];
-    activeDataset: string;
-    activeDatasetMetric: string;
-    onDatasetChange: (value: string) => void;
-    onMetricChange: (value: string) => void;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
-    onAddMap: () => void;
-    onRemoveMap: (mapId: string) => void;
-    onUpdateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
-    onToggleVisibility: (mapId: string) => void;
     maxMaps: number;
 }
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     dataset,
-    mapConfigs,
-    activeDataset,
-    activeDatasetMetric,
-    onDatasetChange,
-    onMetricChange,
     pointLayers,
     togglePointLayer,
-    onAddMap,
-    onRemoveMap,
-    onUpdateMapConfig,
-    onToggleVisibility,
     maxMaps
 }) => {
-    const [expandedSections, setExpandedSections] = useState({
-        maps: true,
-        vulnerability: true,
-        points: true
-    });
+    const mapConfigs = useMapStore(state => state.mapConfigs);
+    const addMap = useMapStore(state => state.addMap);
+    const removeMap = useMapStore(state => state.removeMap);
+    const updateMapConfig = useMapStore(state => state.updateMapConfig);
+    const toggleMapVisibility = useMapStore(state => state.toggleMapVisibility);
+    const expandedSections = useMapStore(state => state.expandedSections);
+    const toggleSection = useMapStore(state => state.toggleSection);
 
-    const toggleSection = (section: keyof typeof expandedSections) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [section]: !prev[section]
-        }));
-    };
+    const { dataset: activeDataset, metric: activeDatasetMetric, setDataset, setMetric } = usePrimaryMapState();
 
     const datasetList = useMemo(() => {
         if (!dataset) return [];
@@ -130,7 +110,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                 <Button
                                     variant="outlined"
                                     size="small"
-                                    onClick={onAddMap}
+                                    onClick={addMap}
                                     startIcon={<Layers />}
                                 >
                                     Add Map
@@ -148,7 +128,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                         <Box className={styles['map-item-actions']}>
                                             <IconButton
                                                 size="small"
-                                                onClick={() => onToggleVisibility(config.id)}
+                                                onClick={() => toggleMapVisibility(config.id)}
                                                 title={config.visible ? 'Hide map' : 'Show map'}
                                             >
                                                 {config.visible ? <Visibility /> : <VisibilityOff />}
@@ -156,7 +136,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                             {canRemoveMap && (
                                                 <IconButton
                                                     size="small"
-                                                    onClick={() => onRemoveMap(config.id)}
+                                                    onClick={() => removeMap(config.id)}
                                                     title="Remove map"
                                                 >
                                                     <ExpandLess />
@@ -171,7 +151,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                 <InputLabel>Dataset</InputLabel>
                                                 <Select
                                                     value={config.dataset}
-                                                    onChange={(e) => onUpdateMapConfig(config.id, { 
+                                                    onChange={(e) => updateMapConfig(config.id, {
                                                         dataset: e.target.value, 
                                                         metric: '' 
                                                     })}
@@ -193,7 +173,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                     <InputLabel>Metric</InputLabel>
                                                     <Select
                                                         value={config.metric}
-                                                        onChange={(e) => onUpdateMapConfig(config.id, { 
+                                                        onChange={(e) => updateMapConfig(config.id, {
                                                             metric: e.target.value 
                                                         })}
                                                         label="Metric"
@@ -243,7 +223,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             <Select
                                 value={activeDataset}
                                 label="Dataset"
-                                onChange={(event) => onDatasetChange(event.target.value as string)}
+                                onChange={(event) => setDataset(event.target.value as string)}
                             >
                                 <MenuItem value="">
                                     <em>Select Dataset</em>
@@ -262,7 +242,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                 <Select
                                     value={activeDatasetMetric}
                                     label="Metric"
-                                    onChange={(event) => onMetricChange(event.target.value as string)}
+                                    onChange={(event) => setMetric(event.target.value as string)}
                                 >
                                     <MenuItem value="">
                                         <em>Select Metric</em>
