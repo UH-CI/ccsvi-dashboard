@@ -4,39 +4,20 @@ import styles from './App.module.scss';
 import { ControlPanel } from './components/ControlPanel';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useAppStore, useIsReady, useMapStore, usePointLayerStore } from './stores';
+import { useAppStore, useIsReady, usePointLayerStore } from './stores';
 import { useUrlState } from './hooks/useUrlState';
 
 const App: React.FC = () => {
     // Get URL state (currently broken)
-    const { urlState, updateUrlState } = useUrlState();
+    const { urlState } = useUrlState();
     
     // Get data from stores
-    const { 
-        blockGroupData,
-        errors,
-        fetchAllData 
-    } = useAppStore();
+    const errors = useAppStore(state => state.errors);
+    const fetchAllData = useAppStore(state => state.fetchAllData);
+    const fetchPointLayerConfigs = usePointLayerStore(state => state.fetchPointLayerConfigs);
+    const blockGroupData = useAppStore(state => state.blockGroupData);
     
     const isReady = useIsReady();
-    
-    // Point layers store
-    const {
-        fetchPointLayerConfigs,
-        setVisibleLayerIds,
-        fetchPointLayerData,
-        pointLayerConfigs,
-        visibleLayerIds
-    } = usePointLayerStore();
-
-    // Map store
-    const {
-        mapConfigs,
-        addMap,
-        removeMap,
-        updateMapConfig,
-        toggleMapVisibility
-    } = useMapStore();
 
     // Fetch all data on mount
     useEffect(() => {
@@ -44,18 +25,14 @@ const App: React.FC = () => {
         fetchPointLayerConfigs(urlState.pointLayers);
     }, []);
 
-    useEffect(() => {
-        setVisibleLayerIds(urlState.pointLayers);
-    }, [urlState.pointLayers]);
-
     // Load data for visible layers
-    useEffect(() => {
-        if (urlState.pointLayers.length > 0) {
-            urlState.pointLayers.forEach(layerId => {
-                fetchPointLayerData(layerId);
-            });
-        }
-    }, [urlState.pointLayers, fetchPointLayerData]);
+    // useEffect(() => {
+    //     if (urlState.pointLayers.length > 0) {
+    //         urlState.pointLayers.forEach(layerId => {
+    //             fetchPointLayerData(layerId);
+    //         });
+    //     }
+    // }, [urlState.pointLayers, fetchPointLayerData]);
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {
@@ -79,40 +56,6 @@ const App: React.FC = () => {
     // };
 
     // Event handlers
-    const handlePointLayerToggle = (layerId: string) => {
-        const { toggleLayerVisibility } = usePointLayerStore.getState();
-        toggleLayerVisibility(layerId);
-        
-        // Update URL state
-        const currentVisible = urlState.pointLayers;
-        const newVisible = currentVisible.includes(layerId)
-            ? currentVisible.filter(id => id !== layerId)
-            : [...currentVisible, layerId];
-        updateUrlState({ pointLayers: newVisible });
-    };
-
-    const pointLayers = React.useMemo(() =>
-            pointLayerConfigs.map(config => ({
-                ...config,
-                visible: visibleLayerIds.has(config.id)
-            })),
-        [pointLayerConfigs, visibleLayerIds]
-    );
-
-    // // Snapshot handler
-    // const handleTakeSnapshot = useCallback(async () => {
-    //     try {
-    //         await takeSnapshot({
-    //             activeDataset: urlState.dataset,
-    //             activeDatasetMetric: urlState.metric,
-    //             customPrefix: 'hawaii-census-map',
-    //             quality: 0.9
-    //         }, mapWrapperRef);
-    //     } catch (error) {
-    //         alert(`Failed to take snapshot. Please try again. ${error}`);
-    //     }
-    // }, [takeSnapshot, urlState.dataset, urlState.metric]);
-    // }, []);
 
     // Check for errors
     const hasErrors = Object.values(errors).some(error => error !== null);
@@ -158,18 +101,6 @@ const App: React.FC = () => {
             </div>
 
             <ControlPanel
-                dataset={blockGroupData}
-                mapConfigs={mapConfigs}
-                activeDataset={urlState.dataset}
-                activeDatasetMetric={urlState.metric}
-                onDatasetChange={(value) => updateUrlState({ dataset: value, metric: '' })}
-                onMetricChange={(value) => updateUrlState({ metric: value })}
-                pointLayers={pointLayers}
-                togglePointLayer={handlePointLayerToggle}
-                onAddMap={addMap}
-                onRemoveMap={removeMap}
-                onUpdateMapConfig={updateMapConfig}
-                onToggleVisibility={toggleMapVisibility}
                 maxMaps={4}
             />
         </div>

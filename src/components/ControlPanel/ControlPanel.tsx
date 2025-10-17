@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
     Typography,
     FormControl,
@@ -23,25 +23,25 @@ import {
     Layers,
     Visibility,
     VisibilityOff,
+    Close,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
-import { Dataset, PointLayerConfig } from '../../types';
-import { useMapStore, usePrimaryMapState } from "../../stores/useMapStore.ts";
+import {useAppStore, useMapStore, usePointLayerStore, usePrimaryMapState} from "../../stores";
+import { useUrlState } from '../../hooks/useUrlState';
 import styles from './ControlPanel.module.scss';
 
 interface IntegratedControlPanelProps {
-    dataset: Dataset | null;
-    pointLayers: PointLayerConfig[];
-    togglePointLayer: (id: string) => void;
     maxMaps: number;
 }
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
-    dataset,
-    pointLayers,
-    togglePointLayer,
     maxMaps
 }) => {
+    // Get URL state (currently broken)
+    const { urlState, updateUrlState } = useUrlState();
+
+    const dataset = useAppStore(state => state.blockGroupData);
+
     const mapConfigs = useMapStore(state => state.mapConfigs);
     const addMap = useMapStore(state => state.addMap);
     const removeMap = useMapStore(state => state.removeMap);
@@ -51,6 +51,18 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const toggleSection = useMapStore(state => state.toggleSection);
 
     const { dataset: activeDataset, metric: activeDatasetMetric, setDataset, setMetric } = usePrimaryMapState();
+
+    const pointLayerConfigs = usePointLayerStore(state => state.pointLayerConfigs);
+    const visibleLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    const toggleLayerVisibility = usePointLayerStore(state => state.toggleLayerVisibility);
+
+    const pointLayers = useMemo(() =>
+    pointLayerConfigs.map(config => ({
+        ...config,
+        visible: visibleLayerIds.has(config.id)
+    })),
+        [pointLayerConfigs, visibleLayerIds]
+    );
 
     const datasetList = useMemo(() => {
         if (!dataset) return [];
@@ -71,9 +83,42 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         }));
     }, [dataset, activeDataset]);
 
-    const visibleMaps = mapConfigs.filter(config => config.visible);
+    const visibleMaps = useMemo(() =>
+        mapConfigs.filter((config) => config.visible),
+        [mapConfigs]
+    );
     const canAddMap = mapConfigs.length < maxMaps;
     const canRemoveMap = mapConfigs.length > 1;
+
+    const handlePointLayerToggle = useCallback((layerId: string) => {
+        toggleLayerVisibility(layerId);
+
+        // Update URL state
+        const currentVisible = urlState.pointLayers;
+        const newVisible = currentVisible.includes(layerId)
+            ? currentVisible.filter(id => id !== layerId)
+            : [...currentVisible, layerId];
+        updateUrlState({ pointLayers: newVisible });
+    }, [toggleLayerVisibility, urlState.pointLayers, updateUrlState]);
+
+    const handleSnapshot = useCallback(() => {
+        console.log('Snapshot');
+    }, []);
+
+    // // Snapshot handler
+    // const handleTakeSnapshot = useCallback(async () => {
+    //     try {
+    //         await takeSnapshot({
+    //             activeDataset: urlState.dataset,
+    //             activeDatasetMetric: urlState.metric,
+    //             customPrefix: 'hawaii-census-map',
+    //             quality: 0.9
+    //         }, mapWrapperRef);
+    //     } catch (error) {
+    //         alert(`Failed to take snapshot. Please try again. ${error}`);
+    //     }
+    // }, [takeSnapshot, urlState.dataset, urlState.metric]);
+    // }, []);
 
     return (
         <Paper className={styles['integrated-control-panel']} elevation={2}>
@@ -139,7 +184,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                     onClick={() => removeMap(config.id)}
                                                     title="Remove map"
                                                 >
-                                                    <ExpandLess />
+                                                    <Close />
                                                 </IconButton>
                                             )}
                                         </Box>
@@ -257,7 +302,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                         )}
 
                         <Button
-                            onClick={() => console.log('Snapshot')}
+                            onClick={() => handleSnapshot()}
                             variant="contained"
                             startIcon={<Camera />}
                             fullWidth
@@ -296,7 +341,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                         control={
                                             <Checkbox
                                                 checked={layer.visible}
-                                                onChange={() => togglePointLayer(layer.id)}
+                                                onChange={() => handlePointLayerToggle(layer.id)}
                                                 size="small"
                                             />
                                         }

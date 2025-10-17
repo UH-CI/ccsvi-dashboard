@@ -53,13 +53,14 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
 
     // Actions
     toggleLayerVisibility: (layerId) => {
-        const { visibleLayerIds, setVisibleLayerIds } = get();
+        const { visibleLayerIds, setVisibleLayerIds, fetchPointLayerData } = get();
         const newVisibleIds = new Set(visibleLayerIds);
 
         if (newVisibleIds.has(layerId)) {
             newVisibleIds.delete(layerId);
         } else {
             newVisibleIds.add(layerId);
+            fetchPointLayerData(layerId);
         }
 
         setVisibleLayerIds(Array.from(newVisibleIds));
