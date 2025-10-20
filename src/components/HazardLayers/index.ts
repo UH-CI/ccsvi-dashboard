@@ -1,1 +1,0 @@
-export { GenericHazardLayer } from './GenericHazardLayer';
