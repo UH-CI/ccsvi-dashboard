@@ -10,12 +10,14 @@ import {
     HawaiianHomelandProperties,
     PointLayerConfig
 } from '../../types';
+import { HazardLayerWithSubs } from '../../hooks/useHazardLayers';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
 import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
+import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
 
 interface SingleMapViewProps {
     config: MapConfig;
@@ -27,6 +29,7 @@ interface SingleMapViewProps {
         [key: string]: FeatureCollection | null;
     }
     pointLayers: PointLayerConfig[];
+    hazardLayers?: HazardLayerWithSubs[];
     onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
@@ -83,6 +86,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      metricsData,
                                                                      polygonLayers,
                                                                      pointLayers,
+                                                                     hazardLayers = [],
                                                                      onUpdateActiveFeature
                                                                  }) => {
     const effectiveDataset = config.dataset;
@@ -286,6 +290,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
                     {pointLayers.map(layer => (
                         <GenericPointMarkers key={layer.id} layer={layer} />
+                    ))}
+
+                    {/* Render hazard layers */}
+                    {hazardLayers.map(layer => (
+                        <HazardLayerRenderer key={layer.id} layer={layer} />
                     ))}
                 </MapContainer>
 

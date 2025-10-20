@@ -25,7 +25,8 @@ import {
     VisibilityOff,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
-import { Dataset, PointLayerConfig, MapConfig } from '../../types';
+import { Dataset, PointLayerConfig, MapConfig, HazardLayerConfig } from '../../types';
+import { HazardLayerWithSubs } from '../../hooks/useHazardLayers';
 import styles from './ControlPanel.module.scss';
 
 interface IntegratedControlPanelProps {
@@ -37,6 +38,10 @@ interface IntegratedControlPanelProps {
     onMetricChange: (value: string) => void;
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
+
+    hazardLayers?: HazardLayerWithSubs[];
+    toggleHazardLayer?: (id: string, isParent?: boolean) => void;
+
     onAddMap: () => void;
     onRemoveMap: (mapId: string) => void;
     onUpdateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
@@ -53,6 +58,10 @@ export const MultiMapControlPanel: React.FC<IntegratedControlPanelProps> = ({
     onMetricChange,
     pointLayers,
     togglePointLayer,
+
+    hazardLayers = [],
+    toggleHazardLayer,
+
     onAddMap,
     onRemoveMap,
     onUpdateMapConfig,
@@ -62,7 +71,8 @@ export const MultiMapControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const [expandedSections, setExpandedSections] = useState({
         maps: true,
         vulnerability: true,
-        points: true
+        points: true,
+        hazards: true
     });
 
     const toggleSection = (section: keyof typeof expandedSections) => {
@@ -332,6 +342,94 @@ export const MultiMapControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                             </div>
                                         }
                                     />
+                                </div>
+                            );
+                        })}
+                    </Stack>
+                </Collapse>
+            </Box>
+
+            <Divider className={styles['section-divider']} />
+
+           <Box className={styles['control-section']}>
+                <Box
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('hazards')}
+                >
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Hazard Layers
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.hazards ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
+
+                <Collapse in={expandedSections.hazards}>
+                    <Stack spacing={1} className={styles['section-content']}>
+                        {hazardLayers.map((hazard) => {
+                            const IconComponent =
+                                FaIcons[hazard.icon as keyof typeof FaIcons] ||
+                                FaIcons.FaExclamationTriangle;
+
+                            const [subLayersOpen, setSubLayersOpen] = useState(false);
+
+                            return (
+                                <div key={hazard.id} className={styles['layer-toggle']}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between'
+                                        }}
+                                    >
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={hazard.visible}
+                                                    onChange={() => toggleHazardLayer?.(hazard.id, true)}
+                                                    size="small"
+                                                />
+                                            }
+                                            label={
+                                                <div className={styles['layer-label']}>
+                                                    <span
+                                                        className={styles['layer-icon']}
+                                                        style={{ color: hazard.color }}
+                                                    >
+                                                        <IconComponent size="1rem" />
+                                                    </span>
+                                                    {hazard.name}
+                                                </div>
+                                            }
+                                        />
+                                        {hazard.subLayers?.length > 0 && (
+                                            <IconButton 
+                                                size="small" 
+                                                onClick={() => setSubLayersOpen(!subLayersOpen)}
+                                                title={subLayersOpen ? 'Hide sub-layers' : 'Show sub-layers'}
+                                            >
+                                                {subLayersOpen ? <ExpandLess /> : <ExpandMore />}
+                                            </IconButton>
+                                        )}
+                                    </div>
+
+                                    <Collapse in={subLayersOpen}>
+                                        <Stack spacing={0.5} sx={{ pl: 4 }}>
+                                            {hazard.subLayers?.map((sub) => (
+                                                <FormControlLabel
+                                                    key={sub.id}
+                                                    control={
+                                                        <Checkbox
+                                                            checked={sub.visible}
+                                                            onChange={() => toggleHazardLayer?.(sub.id, false)}
+                                                            size="small"
+                                                        />
+                                                    }
+                                                    label={sub.name}
+                                                />
+                                            ))}
+                                        </Stack>
+                                    </Collapse>
                                 </div>
                             );
                         })}

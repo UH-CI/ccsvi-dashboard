@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
 import { MultiMapControlPanel } from '../ControlPanel';
 import { MapConfig, MetricsData, Dataset, PointLayerConfig } from '../../types';
+import { HazardLayerWithSubs } from '../../hooks/useHazardLayers';
 import { FeatureCollection } from "geojson";
 import { useUrlState } from '../../hooks/useUrlState';
 import styles from './MultiMapContainer.module.scss';
@@ -16,6 +17,8 @@ interface MultiMapContainerProps {
     }
     pointLayers: PointLayerConfig[];
     togglePointLayer: (id: string) => void;
+    hazardLayers?: HazardLayerWithSubs[];
+    toggleHazardLayer?: (id: string, isParent?: boolean) => void;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
@@ -25,6 +28,8 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     polygonLayers,
     pointLayers,
     togglePointLayer,
+    hazardLayers = [],
+    toggleHazardLayer,
 }) => {
     // URL state management
     const { urlState, updateUrlState } = useUrlState();
@@ -128,6 +133,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                                     hawaiianHomelands: polygonLayers?.hawaiianHomelands || null
                                 }}
                                 pointLayers={pointLayers}
+                                hazardLayers={hazardLayers}
                                 // Handlers
                                 onUpdateActiveFeature={(activeFeature) =>
                                     updateMapActiveFeature(config.id, activeFeature)
@@ -146,6 +152,8 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                     onMetricChange={(value) => updateUrlState({ metric: value })}
                     pointLayers={pointLayers}
                     togglePointLayer={togglePointLayer}
+                    hazardLayers={hazardLayers}
+                    toggleHazardLayer={toggleHazardLayer}
                     onAddMap={addMap}
                     onRemoveMap={removeMap}
                     onUpdateMapConfig={updateMapConfig}

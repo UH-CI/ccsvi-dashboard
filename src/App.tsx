@@ -2,21 +2,22 @@ import React from 'react';
 import './App.css';
 import styles from './App.module.scss';
 import { MultiMapContainer } from './components/MultiMapContainer';
-import { GenericHazardLayer } from "./components/HazardLayers/GenericHazardLayer.tsx";
+//import { GenericHazardLayer } from "./components/HazardLayers/GenericHazardLayer.tsx";
 import { TableViewer } from './components/TableViewer';
 //import { GenericPolygonLayer } from './components/GenericPolygonLayer';
-import { useMapSnapshot } from './hooks/useMapSnapshot';
+//import { useMapSnapshot } from './hooks/useMapSnapshot';
 //import { usePointLayers } from "./hooks/usePointLayers.ts";
-import { useGeometryLayers } from "./hooks/useGeometryLayers.ts"
+//import { useGeometryLayers } from "./hooks/useGeometryLayers.ts"
 //import { useDataLoader } from './hooks/useDataLoader';
 //import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
+import { useHazardLayers } from './hooks/useHazardLayers';
 import { useDataFetcher } from "./hooks/useDataFetcher.ts";
 import { MetricsData, Dataset, BlockGroupProperties, HawaiianHomelandProperties } from "./types"
 import { FeatureCollection, Geometry } from "geojson";
-import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config/";
-import { useState, useEffect, useRef } from 'react';
+import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
+//import { useState, useEffect, useRef } from 'react';
 
 const App: React.FC = () => {
     const { urlState, updateUrlState } = useUrlState();
@@ -44,12 +45,13 @@ const App: React.FC = () => {
     );
 
     const pointLayers = usePointLayers(urlState.pointLayers);
+    const hazardLayers = useHazardLayers(urlState.hazardLayers);
 
     // Check if all data is ready
-    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null
+    const isPolygonLayersLoaded = censusBlockGroups.data !== null && hawaiianHomelands.data !== null;
 
     // Check if all data is ready
-    const isReady = metricsData.loaded && blockGroupData.loaded && pointLayers.isInitialized && isPolygonLayersLoaded;
+    const isReady = metricsData.loaded && blockGroupData.loaded && pointLayers.isInitialized && hazardLayers.isInitialized && isPolygonLayersLoaded;
 
     // // Handle table size changes with smooth animation
     // const handleTableSizeChange = useCallback(() => {
@@ -81,91 +83,59 @@ const App: React.FC = () => {
         updateUrlState({ pointLayers: newVisible });
     };
 
-    // const handleHazardLayerToggle = (layerId: string) => {
-    //     console.log("handleHazardLayerToggle called for:", layerId);
-
-    //     const currentVisible = urlState.hazardLayers ?? [];
-    //     const newVisible = currentVisible.includes(layerId)
-    //         ? currentVisible.filter(id => id !== layerId)
-    //         : [...currentVisible, layerId];
-
-    //     console.log('Updating URL with new layers:', newVisible);
-    //     updateUrlState({ hazardLayers: newVisible });
-    // }
     const handleHazardLayerToggle = (layerId: string, isParent = false) => {
-        console.log("handleHazardLayerToggle called for:", layerId);
-    
         const currentVisible = urlState.hazardLayers ?? [];
         let newVisible = [...currentVisible];
-    
-        // recursive finder
-        const findLayer = (layers: typeof hazardLayers, id: string): any | undefined => {
-            for (const layer of layers) {
-                if (layer.id === id) return layer;
-                if (layer.children) {
-                    const found = findLayer(layer.children, id);
-                    if (found) return found;
-                }
-            }
-            return undefined;
-        };
-    
-        const layer = findLayer(hazardLayers, layerId);
-        if (!layer) return;
-    
-        if (isParent && layer.children) {
-            // If parent → toggle all children
-            const allChildIds = layer.children.map(c => c.id);
-            const allVisible = allChildIds.every(id => currentVisible.includes(id));
-    
-            if (allVisible) {
-                // remove all
+
+        if (isParent) {
+            // Find the parent layer
+            const parentLayer = hazardLayers.hazardLayers.find(layer => layer.id === layerId);
+            if (!parentLayer) return;
+
+            const allChildIds = parentLayer.subLayers.map(sub => sub.id);
+            
+            // Check if ANY children are currently visible
+            const anyChildrenVisible = allChildIds.some(id => currentVisible.includes(id));
+
+            if (anyChildrenVisible) {
+                // If some children are on, turn ALL off (parent and all children)
                 newVisible = newVisible.filter(id => !allChildIds.includes(id) && id !== layerId);
             } else {
-                // add all
+                // If no children are on, turn ALL on (parent and all children)
                 newVisible = Array.from(new Set([...newVisible, layerId, ...allChildIds]));
             }
         } else {
-            // Toggle single (child or independent parent)
+            // Single toggle (child layer)
             if (newVisible.includes(layerId)) {
                 newVisible = newVisible.filter(id => id !== layerId);
             } else {
                 newVisible.push(layerId);
             }
-    
-            // If it’s a child, sync parent visibility
-            hazardLayers.forEach(parent => {
-                if (parent.children?.some(c => c.id === layerId)) {
-                    const allVisible = parent.children.every(c => newVisible.includes(c.id));
-                    if (allVisible) {
-                        if (!newVisible.includes(parent.id)) newVisible.push(parent.id);
+
+            // Update parent visibility based on child states
+            hazardLayers.hazardLayers.forEach(parent => {
+                if (parent.subLayers.some(sub => sub.id === layerId)) {
+                    const anyChildrenVisible = parent.subLayers.some(sub =>
+                        newVisible.includes(sub.id)
+                    );
+                    
+                    if (anyChildrenVisible) {
+                        // If ANY child is visible, ensure parent is visible
+                        if (!newVisible.includes(parent.id)) {
+                            newVisible.push(parent.id);
+                        }
                     } else {
+                        // If NO children are visible, remove parent
                         newVisible = newVisible.filter(id => id !== parent.id);
                     }
                 }
             });
         }
-    
-        console.log('Updating URL with new hazard layers:', newVisible);
+
         updateUrlState({ hazardLayers: newVisible });
     };
 
-    // Snapshot handler
-    const handleTakeSnapshot = useCallback(async () => {
-        try {
-            await takeSnapshot({
-                activeDataset: urlState.dataset,
-                activeDatasetMetric: urlState.metric,
-                customPrefix: 'hawaii-census-map',
-                quality: 0.9
-            }, mapWrapperRef);
-        } catch (error) {
-            alert(`Failed to take snapshot. Please try again. ${error}`);
-        }
-    }, [takeSnapshot, urlState.dataset, urlState.metric]);
-
-    // Error handling
-    if (error) {
+    if (metricsData.error || blockGroupData.error) {
         return (
             <div className={styles['error-container']}>
                 <h2>Error loading data</h2>
@@ -203,68 +173,13 @@ const App: React.FC = () => {
                     }}
                     pointLayers={pointLayers.pointLayers}
                     togglePointLayer={handlePointLayerToggle}
+                    hazardLayers={hazardLayers.hazardLayers}
+                    toggleHazardLayer={handleHazardLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
                 />
-                <div className={styles['map-wrapper']} ref={mapWrapperRef}>
-                    <MapContainer
-                        center={mapCenter}
-                        zoom={mapZoom}
-                        minZoom={mapParams.minZoom}
-                        maxBounds={mapParams.maxBounds}
-                        maxBoundsViscosity={mapParams.maxBoundsViscosity}
-                        className={styles['map-container']}
-                    >
-                        <MapResizeHandler />
-                        <MapEvents />
-                        <MapComponent
-                            activeFeature={activeFeature}
-                            onMapMove={handleMapMove}
-                            initialPosition={initialMapPosition}
-                        />
-                        <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; OpenStreetMap contributors'
-                        />
-                        {geoData && metricsData && dataset && (
-                            <GenericPolygonLayer<BlockGroupProperties>
-                                key={`census-${urlState.dataset}-${urlState.metric}`}
-                                data={geoData.features}
-                                style={censusStyle}
-                                onFeatureClick={highlightFeature}
-                                geoidProperty="geoid20"
-                                getMetricValue={getMetricValue}
-                                activeMetric={urlState.metric}
-                                popupConfig={censusPopupConfig}
-                                ref={onGeoJsonLoad}
-                            />
-                        )}
-                        {hawaiianHomelands && homelandsData && (
-                            <GenericPolygonLayer<HawaiianHomelandProperties>
-                                key={`homelands-${urlState.dataset}-${urlState.metric}`}
-                                data={homelandsData.features}
-                                style={homelandStyle}
-                                onFeatureClick={highlightFeature}
-                                geoidProperty="GEOID10"
-                                getMetricValue={getMetricValue}
-                                activeMetric={urlState.metric}
-                                popupConfig={homelandsPopupConfig}
-                                ref={onHomelandsLoad}
-                            />
-                        )}
-                        {pointLayers.map(layer => (
-                            <GenericPointMarkers key={layer.id} layer={layer} />
-                        ))}
-                        {hazardLayers.map((layer) => (
-                            <GenericHazardLayer key={layer.id} layer={layer} />
-                        ))}
-                    </MapContainer>
 
-                    <MapLegend
-                        dataset={dataset}
-                        activeDataset={urlState.dataset}
-                        activeDatasetMetric={urlState.metric}
-                    />
-                </div>
+
+
 
                 <TableViewer
                     activeDataset={urlState.dataset}

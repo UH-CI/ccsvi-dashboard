@@ -1,14 +1,15 @@
 import React from "react";
 import { GeoJSON } from "react-leaflet";
 import { FeatureCollection, Geometry } from "geojson";
-import { HazardLayerConfig, SubHazardLayerConfig } from "../../types";
+import { SubHazardLayerConfig } from "../../types";
 import L from "leaflet";
 
 interface Props {
-  layer: HazardLayerConfig & { data?: FeatureCollection<Geometry> };
+  layer: SubHazardLayerConfig & { data?: FeatureCollection<Geometry> };
+  color?: string;
 }
 
-export const GenericHazardLayer: React.FC<Props> = ({ layer }) => {
+export const SubHazardLayer: React.FC<Props> = ({ layer, color = "orange" }) => {
   if (!layer.visible || !layer.data) return null;
 
   try {
@@ -17,10 +18,10 @@ export const GenericHazardLayer: React.FC<Props> = ({ layer }) => {
       key={layer.id}
       data={layer.data}
       style={{
-        color: layer.color || "red",
+        color: color,
         weight: 2,
+        opacity: 0.8,
       }}
-      //renderer={L.canvas()}
       onEachFeature={(feature, geoLayer) => {
         // Build popup content
         let popupContent: string;
@@ -29,7 +30,7 @@ export const GenericHazardLayer: React.FC<Props> = ({ layer }) => {
           const title =
             titleField && feature.properties?.[titleField]
               ? `<strong>${feature.properties[titleField]}</strong><br/>`
-              : "<strong>No title</strong><br/>";
+              : `<strong>${layer.name}</strong><br/>`;
 
           const fields = layer.popupConfig.fields
             ?.map((f) => {
@@ -40,11 +41,15 @@ export const GenericHazardLayer: React.FC<Props> = ({ layer }) => {
 
           popupContent = `${title}${fields || ""}`;
         } else {
-          popupContent = `<pre>${JSON.stringify(
-            feature.properties,
-            null,
-            2
-          )}</pre>`;
+          // Fallback to basic property information
+          popupContent = `<strong>${layer.name}</strong><br/>`;
+          if (feature.properties) {
+            Object.entries(feature.properties).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) {
+                popupContent += `<b>${key}:</b> ${value}<br/>`;
+              }
+            });
+          }
         }
 
         geoLayer.bindPopup(popupContent);
@@ -60,7 +65,7 @@ export const GenericHazardLayer: React.FC<Props> = ({ layer }) => {
     />
   );
   } catch (error) {
-    console.error('Error in GenericHazardLayer:', error);
+    console.error('Error in SubHazardLayer:', error);
     return null;
   }
 };

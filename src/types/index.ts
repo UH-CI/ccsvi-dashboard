@@ -80,23 +80,36 @@ export interface PointLayerConfig {
     };
 }
 
-export interface HazardLayerConfig {
+export interface SubHazardLayerConfig {
     id: string;
     name: string;
     visible: boolean;
-    icon: string;
-    color?: string;
-    children?: HazardLayerConfig[]; // can now have sub sections
-    filePath: string;
-    data?: import('geojson').FeatureCollection<Geometry>; 
-    popupConfig: {
-        titleField: string;
-        fields: Array<{
-            key: string;
-            label: string;
-        }>;
+    filePath?: string;
+    popupConfig?: {
+      titleField?: string;
+      fields?: { key: string; label: string }[];
     };
-}
+  }
+  
+  export interface SubHazardLayerGroup {
+    id: string;
+    name: string;
+    subLayers: SubHazardLayerConfig[];
+  }
+  
+  export interface HazardLayerConfig {
+    id: string;
+    name: string;
+    icon?: string;
+    color?: string;
+    visible: boolean;
+    filePath?: string;
+    popupConfig?: {
+      titleField?: string;
+      fields?: { key: string; label: string }[];
+    };
+    subLayers?: SubHazardLayerConfig[];
+  }
 
 export type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 export type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;

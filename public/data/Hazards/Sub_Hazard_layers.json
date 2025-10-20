@@ -1,13 +1,61 @@
 {
     "subHazardLayers": [
         {
-            "id": "floods",
+            "id": "flood_hazard",
             "name": "Flood Hazards",
             "subLayers": [
-              { "id": "river_flood", "name": "River Flooding", "visible": false },
-              { "id": "coastal_flood", "name": "Coastal Flooding", "visible": false },
-              { "id": "flash_flood", "name": "Flash Flooding", "visible": false },
-              { "id": "urban_flood", "name": "Urban Flooding", "visible": false }
+              { 
+                "id": "Zone_VE", 
+                "name": "Costal High Risk", 
+                "visible": false, 
+                "filePath": "data/Hazards/Flood_Hazard_VE.geojson",
+                "popupConfig": {
+                  "titleField": "Costal High Risk",
+                  "fields": [
+                    { "key": "fld_zone", "label": "Flood Zone" },
+                    { "key": "static_bfe", "label": "Base Flood Elevation" }
+                  ]
+                }
+              },
+              { 
+                "id": "Zone_AE", 
+                "name": "Base Flood Area", 
+                "visible": false, 
+                "filePath": "data/Hazards/Flood_Hazard_AE.geojson",
+                "popupConfig": {
+                  "titleField": "Base Flood Area",
+                  "fields": [
+                    { "key": "fld_zone", "label": "Flood Zone" },
+                    { "key": "static_bfe", "label": "Base Flood Elevation" }
+                  ]
+                }
+              },
+              { 
+                "id": "Zone_AO", 
+                "name": "Shallow Sheet Flow", 
+                "visible": false, 
+                "filePath": "data/Hazards/Flood_Hazard_AO.geojson",
+                "popupConfig": {
+                  "titleField": "Shallow Sheet Flow",
+                  "fields": [
+                    { "key": "fld_zone", "label": "Flood Zone" },
+                    { "key": "depth", "label": "Depth" }
+                  ]
+                }
+              },
+              { 
+                "id": "Zone_AH", 
+                "name": "Shallow Ponding", 
+                "visible": false, 
+                "filePath": "data/Hazards/Flood_Hazard_AH.geojson",
+                "popupConfig": {
+                  "titleField": "Shallow Ponding",
+                  "fields": [
+                    { "key": "fld_zone", "label": "Flood Zone" },
+                    { "key": "static_bfe", "label": "Base Flood Elevation" }
+                  ]
+                }
+              }
             ]
           }
     ]

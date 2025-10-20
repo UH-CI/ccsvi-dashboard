@@ -28,7 +28,7 @@ interface ControlPanelProps {
     pointLayers: PointLayerConfig[];
     hazardLayers: HazardLayerConfig[];
     togglePointLayer: (id: string) => void;
-    toggleHazardLayer: (id: string) => void;
+    toggleHazardLayer: (id: string, isParent: boolean) => void;
     onTakeSnapshot: () => void;
 }
 
@@ -213,7 +213,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                             />
 
                             {/* Children Layers */}
-                            {layer.children && (
+                            {/* {layer.children && (
                             <Stack spacing={1} sx={{ pl: 3 }}>
                                 {layer.children.map((child) => {
                                 const ChildIcon =
@@ -245,7 +245,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                 );
                                 })}
                             </Stack>
-                            )}
+                            )} */}
                         </div>
                         );
                     })}
