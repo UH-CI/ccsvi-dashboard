@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from "react";
+import React, { useCallback, useMemo } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
 import { BlockGroupProperties, MetricsData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
@@ -15,39 +15,34 @@ interface CensusPolygonLayerProps {
     activeMetric: string;
     activeFeatureGeoid?: string | null;
     getColor: (value: number | null) => string;
-    grayOut?: boolean;
     onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
 }
 
 const LAYER_CONFIG = POLYGON_LAYERS.censusBlockGroups;
 
 export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
-    data,
-    metricsData,
-    getMetricValue,
-    mapId,
-    // activeDataset,
-    activeMetric,
-    activeFeatureGeoid,
-    getColor,
-    grayOut = false,
-    onFeatureClick
-}) => {
+                                                                          data,
+                                                                          metricsData,
+                                                                          getMetricValue,
+                                                                          mapId,
+                                                                          // activeDataset,
+                                                                          activeMetric,
+                                                                          activeFeatureGeoid,
+                                                                          getColor,
+                                                                          onFeatureClick
+                                                                      }) => {
 
     const getStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
         if (!feature) {
             return LAYER_CONFIG.styles.default;
         }
-        
+
         const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
 
         if (!geoid) {
             return LAYER_CONFIG.styles.default;
         }
 
-        if (grayOut) {
-            return LAYER_CONFIG.styles.grayedOut;
-        }
 
         const metricValue = getMetricValue(String(geoid));
         const fillColor = getColor(metricValue);
@@ -56,7 +51,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             ...LAYER_CONFIG.styles.default,
             fillColor
         }
-    }, [grayOut, getMetricValue, getColor])
+    }, [getMetricValue, getColor]);
 
     const getHighlightStyle = useCallback((feature: Feature<Geometry, BlockGroupProperties>, baseStyle: StyleConfig | undefined): StyleConfig => {
         return {
@@ -88,6 +83,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         <GenericPolygonLayer
             data={data}
             mapId={mapId}
+            layerType="census"
             geoidProperty={LAYER_CONFIG.geoidProperty}
             getStyle={getStyle}
             getHighlightStyle={getHighlightStyle}

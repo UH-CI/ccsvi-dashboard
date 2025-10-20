@@ -12,7 +12,7 @@ export interface PopupConfig {
 
 export interface LayerStyleConfig {
     default: PathOptions;
-    highlight: PathOptions;
+    highlight?: PathOptions;
     grayedOut?: PathOptions;
     noData?: PathOptions;
 }
@@ -28,7 +28,7 @@ export interface PolygonLayerConfig {
 export const POLYGON_LAYERS = {
     censusBlockGroups: {
         name: 'Census Block Groups',
-        path: './data/2020_Census_Block_Groups_WGS84.geojson',
+        path: './data/2020_Census_Block_Groups_Stripped.geojson',
         geoidProperty: 'geoid20',
         popup: {
             title: 'Census Block Group',
@@ -50,27 +50,20 @@ export const POLYGON_LAYERS = {
                 color: '#000000',
                 opacity: 1,
                 fillOpacity: 0.8
-            },
-            grayedOut: {
-                fillColor: '#e0e0e0',
-                weight: 0.8,
-                opacity: 0.5,
-                color: '#999',
-                fillOpacity: 0.8,
-                dashArray: '5, 5'
             }
         }
     } satisfies PolygonLayerConfig,
 
     hawaiianHomelands: {
         name: 'Hawaiian Homelands',
-        path: './data/Census_Hawaiian_Homelands_hhl10.geojson',
+        path: './data/Census_Hawaiian_Homelands_hhl10_Stripped.geojson',
         geoidProperty: 'GEOID10',
         popup: {
             title: 'Hawaiian Homeland',
             fields: [
                 { key: 'GEOID10', label: 'Geo ID' },
-                // { key: 'NAME10', label: 'Name' }
+                { key: 'NAME10', label: 'Name' },
+                { key: 'POP10', label: 'Population' }
             ]
         },
         styles: {
@@ -79,13 +72,44 @@ export const POLYGON_LAYERS = {
                 weight: 0.5,
                 opacity: 1,
                 color: '#333',
-                fillOpacity: 0.3
+                fillOpacity: 0.6
             },
             highlight: {
                 weight: 4,
                 color: '#000000',
                 opacity: 1,
                 fillOpacity: 0.8
+            }
+        }
+    } satisfies PolygonLayerConfig,
+
+    countyBoundaries: {
+        name: 'County Boundaries',
+        path: './data/2020_Census_County_Boundaries_Stripped.geojson',
+        geoidProperty: 'NAME20',
+        popup: {
+            title: 'County',
+            fields: [
+                { key: 'NAME20', label: 'County Name' },
+                { key: 'POP20', label: '2020 Population' }
+            ]
+        },
+        styles: {
+            default: {
+                fillColor: '#cccccc',
+                weight: 0.5,
+                opacity: 0.3,
+                color: '#999',
+                fillOpacity: 0.2,
+                dashArray: '5, 5'
+            },
+            grayedOut: {
+                fillColor: '#e0e0e0',
+                weight: 0.8,
+                opacity: 0.5,
+                color: '#999',
+                fillOpacity: 0.8,
+                dashArray: '5, 5'
             }
         }
     } satisfies PolygonLayerConfig

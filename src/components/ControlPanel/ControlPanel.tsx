@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
     Typography,
     FormControl,
@@ -10,15 +10,29 @@ import {
     Checkbox,
     Paper,
     Divider,
-    Stack
+    Stack,
+    Collapse,
+    IconButton,
+    Box,
+    Chip
 } from '@mui/material';
-import { Camera } from '@mui/icons-material';
+import {
+    Camera,
+    ExpandMore,
+    ExpandLess,
+    Layers,
+    Visibility,
+    VisibilityOff,
+    Close,
+} from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
-import { Dataset } from '../../types';
-import { PointLayerConfig } from "../../types";
-import { HazardLayerConfig } from "../../types";
+import {useAppStore, useMapStore, usePointLayerStore, usePrimaryMapState } from "../../types";
+import { HazardLayerConfig } from "../../stores";
+import { useUrlState } from '../../hooks/useUrlState';
 import styles from './ControlPanel.module.scss';
 
+interface IntegratedControlPanelProps {
+    maxMaps: number;
 interface ControlPanelProps {
     dataset: Dataset | null;
     activeDataset: string;
@@ -32,6 +46,35 @@ interface ControlPanelProps {
     onTakeSnapshot: () => void;
 }
 
+export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
+    maxMaps
+}) => {
+    // Get URL state (currently broken)
+    const { urlState, updateUrlState } = useUrlState();
+
+    const dataset = useAppStore(state => state.blockGroupData);
+
+    const mapConfigs = useMapStore(state => state.mapConfigs);
+    const addMap = useMapStore(state => state.addMap);
+    const removeMap = useMapStore(state => state.removeMap);
+    const updateMapConfig = useMapStore(state => state.updateMapConfig);
+    const toggleMapVisibility = useMapStore(state => state.toggleMapVisibility);
+    const expandedSections = useMapStore(state => state.expandedSections);
+    const toggleSection = useMapStore(state => state.toggleSection);
+
+    const { dataset: activeDataset, metric: activeDatasetMetric, setDataset, setMetric } = usePrimaryMapState();
+
+    const pointLayerConfigs = usePointLayerStore(state => state.pointLayerConfigs);
+    const visibleLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    const toggleLayerVisibility = usePointLayerStore(state => state.toggleLayerVisibility);
+
+    const pointLayers = useMemo(() =>
+    pointLayerConfigs.map(config => ({
+        ...config,
+        visible: visibleLayerIds.has(config.id)
+    })),
+        [pointLayerConfigs, visibleLayerIds]
+    );
 export const ControlPanel: React.FC<ControlPanelProps> = ({
                                                               dataset,
                                                               activeDataset,
@@ -48,7 +91,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     const datasetList = useMemo(() => {
         
         if (!dataset) return [];
-        return Object.entries(dataset).map(([key, config]) => ({
+        return Object.entries(dataset).map(([key, config]: [string, any]) => ({
             id: key,
             label: config.metricLabel || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             hawaiianHomelands: config.hawaiianHomelands || false
@@ -66,14 +109,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     }, [dataset, activeDataset]);
 
     return (
-        <Paper className={styles['control-panel']} elevation={2}>
-            <Typography variant="h5" component="h2" className={styles['control-title']}>
-                Controls
-            </Typography>
-
-            <div className={styles['vulnerability-section']}>
-                <Typography variant="subtitle1" className={styles['section-title']}>
-                    Vulnerability Indicators
+        <Paper className={styles['integrated-control-panel']} elevation={2}>
+            <Box className={styles['control-header']}>
+                <Typography variant="h6" component="h2" className={styles['control-title']}>
+                    Multi-Map Controls
                 </Typography>
 
                 <Stack spacing={2}>
@@ -96,83 +135,88 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         </Select>
                     </FormControl>
 
-                    {activeDataset && (
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Metric</InputLabel>
-                            <Select
-                                value={activeDatasetMetric}
-                                label="Metric"
-                                onChange={(event) => onMetricChange(event.target.value as string)}
+                        {activeDataset && (
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Metric</InputLabel>
+                                <Select
+                                    value={activeDatasetMetric}
+                                    label="Metric"
+                                    onChange={(event) => setMetric(event.target.value as string)}
                                 
-                                className={styles['mui-select']}
-                            >
-                                <MenuItem value="">
-                                    <em>Select Metric</em>
-                                </MenuItem>
-                                {datasetMetrics.map(metric => (
-                                    <MenuItem key={metric.id} value={metric.id}>
-                                        {metric.label}
+                                >
+                                    <MenuItem value="">
+                                        <em>Select Metric</em>
                                     </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    )}
-                </Stack>
-            </div>
+                                    {datasetMetrics.map(metric => (
+                                        <MenuItem key={metric.id} value={metric.id}>
+                                            {metric.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+
+                        <Button
+                            onClick={() => handleSnapshot()}
+                            variant="contained"
+                            startIcon={<Camera />}
+                            fullWidth
+                            size="small"
+                        >
+                            Take Snapshot
+                        </Button>
+                    </Stack>
+                </Collapse>
+            </Box>
 
             <Divider className={styles['section-divider']} />
 
-            <div className={styles['snapshot-section']}>
-                <Button
-                    onClick={onTakeSnapshot}
-                    variant="contained"
-                    startIcon={<Camera />}
-                    fullWidth
-                    aria-label="Take a snapshot of the current map view"
-                    className={styles['snapshot-button']}
+            {/* Points of Interest Section */}
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('points')}
                 >
-                    Take Snapshot
-                </Button>
-            </div>
-
-            <Divider className={styles['section-divider']} />
-
-            <div className={styles['points-section']}>
-                <Typography variant="h6" className={styles['points-title']}>
-                    Points of Interest
-                </Typography>
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Points of Interest
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.points ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
 
                 <Stack spacing={1}>
                     {pointLayers.map(layer => {
                         const IconComponent = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
 
-                        return (
-                            <div key={layer.id} className={styles['layer-toggle']}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={layer.visible}
-                                            onChange={() => togglePointLayer(layer.id)}
-                                            size="small"
-                                        />
-                                    }
-                                    label={
-                                        <div className={styles['layer-label']}>
-                                            <span
-                                                className={styles['layer-icon']}
-                                                style={{ color: layer.color }}
-                                            >
-                                                <IconComponent size="1rem" />
-                                            </span>
-                                            {layer.name}
-                                        </div>
-                                    }
-                                />
-                            </div>
-                        );
-                    })}
-                </Stack>
-            </div>
+                            return (
+                                <div key={layer.id} className={styles['layer-toggle']}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={layer.visible}
+                                                onChange={() => handlePointLayerToggle(layer.id)}
+                                                size="small"
+                                            />
+                                        }
+                                        label={
+                                            <div className={styles['layer-label']}>
+                                                <span
+                                                    className={styles['layer-icon']}
+                                                    style={{ color: layer.color }}
+                                                >
+                                                    <IconComponent size="1rem" />
+                                                </span>
+                                                {layer.name}
+                                            </div>
+                                        }
+                                    />
+                                </div>
+                            );
+                        })}
+                    </Stack>
+                </Collapse>
+            </Box>
 
             <Divider className={styles['section-divider']} />
 
@@ -256,3 +300,4 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </Paper>
     );
 };
+

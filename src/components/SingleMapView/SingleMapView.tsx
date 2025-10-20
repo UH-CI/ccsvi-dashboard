@@ -3,26 +3,26 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 import L, { LeafletMouseEvent } from 'leaflet';
 import {
-    MapConfig,
-    MetricsData,
-    Dataset,
     BlockGroupProperties,
     HawaiianHomelandProperties,
-    PointLayerConfig
+    CountyBoundariesProperties,
 } from '../../types';
 import { HazardLayerWithSubs } from '../../hooks/useHazardLayers';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
-import {CensusPolygonLayer} from "../PolygonLayers/CensusPolygonLayer";
+import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
+import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
+import { useAppStore, useMapStore, useMapConfig, usePointLayerStore } from "../../stores";
 
 interface SingleMapViewProps {
-    config: MapConfig;
+    mapId: string;
     isPrimary: boolean;
     mapConfigsLength: number;
+    // onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
     dataset: Dataset | null;
     metricsData: MetricsData | null;
     polygonLayers?: {
@@ -79,9 +79,10 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
 };
 
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
-                                                                     config,
+                                                                     mapId,
                                                                      isPrimary,
                                                                      mapConfigsLength,
+                                                                     // onUpdateActiveFeature
                                                                      dataset,
                                                                      metricsData,
                                                                      polygonLayers,
@@ -89,9 +90,36 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      hazardLayers = [],
                                                                      onUpdateActiveFeature
                                                                  }) => {
-    const effectiveDataset = config.dataset;
-    const effectiveMetric = config.metric;
     const mapRef = useRef<L.Map | null>(null);
+
+    const config = useMapConfig(mapId)
+
+    const {
+        blockGroupData,
+        metricsData,
+        censusBlockGroups,
+        hawaiianHomelands,
+        countyBoundaries
+    } = useAppStore();
+
+    const { updateMapActiveFeature } = useMapStore();
+
+    const effectiveDataset = config?.dataset;
+    const effectiveMetric = config?.metric;
+
+    const configs = usePointLayerStore((state: any) => state.pointLayerConfigs);
+    const data = usePointLayerStore((state: any) => state.pointLayerData);
+    const visibleIds = usePointLayerStore((state: any) => state.visibleLayerIds);
+
+    const visiblePointLayers = useMemo(() => {
+        return configs
+            .filter((config: any) => visibleIds.has(config.id))
+            .map((config: any) => ({
+                ...config,
+                visible: true,
+                data: data.get(config.id),
+            }));
+    }, [configs, data, visibleIds]);
 
     useEffect(() => {
         if (mapRef.current) {
@@ -103,9 +131,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     }, [mapConfigsLength]);
 
     const activeDatasetObject = useMemo(() => {
-        if (!dataset || !effectiveDataset) return null;
-        return dataset[effectiveDataset];
-    }, [dataset, effectiveDataset]);
+        if (!blockGroupData || !effectiveDataset) return null;
+        return blockGroupData[effectiveDataset];
+    }, [blockGroupData, effectiveDataset]);
 
     const shouldShowHawaiianHomelands = useMemo(() => {
         return activeDatasetObject?.hawaiianHomelands || false;
@@ -122,7 +150,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         }
 
         const lookup = new Map<string, number>();
-        Object.entries(metricsData).forEach(([geoid, data]) => {
+        Object.entries(metricsData).forEach(([geoid, data]: [string, any]) => {
             const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
             if (value !== undefined && value !== null) {
                 lookup.set(geoid, value);
@@ -157,7 +185,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         const layer = e.target;
         layer.bringToFront();
 
-        if (!feature || !onUpdateActiveFeature) return;
+        if (!feature) return;
 
         // Extract geoid - check both census and homelands properties
         const geoid = (feature.properties as BlockGroupProperties)?.geoid20 || 
@@ -170,7 +198,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         const center = map.getCenter();
         const zoom = map.getZoom();
 
-        onUpdateActiveFeature({
+        updateMapActiveFeature(mapId, {
             geoid,
             lat: center.lat,
             lng: center.lng,
@@ -181,21 +209,18 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [20, 20] });
         }
-    }, [onUpdateActiveFeature]);
-
-    const censusBlockGroups = polygonLayers?.censusBlockGroups;
-    const hawaiianHomelands = polygonLayers?.hawaiianHomelands;
+    }, [mapId, updateMapActiveFeature]);
 
     const shouldRenderCensus = effectiveDataset && effectiveMetric &&
-        censusBlockGroups && metricsData && dataset && !shouldShowHawaiianHomelands;
+        censusBlockGroups && metricsData && blockGroupData && !shouldShowHawaiianHomelands;
 
     const shouldRenderHawaiianHomelands = effectiveDataset && effectiveMetric &&
         shouldShowHawaiianHomelands && hawaiianHomelands && metricsData;
 
-    const shouldRenderCensusAsBackground = effectiveDataset && effectiveMetric &&
-        shouldShowHawaiianHomelands && censusBlockGroups && metricsData && dataset;
+    const shouldRenderCountyBoundariesBackground = effectiveDataset && effectiveMetric &&
+        shouldShowHawaiianHomelands && countyBoundaries;
 
-    if (!config.visible) {
+    if (!config?.visible) {
         return null;
     }
 
@@ -239,20 +264,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     />
 
                     {
-                        shouldRenderCensusAsBackground && (
-                        <CensusPolygonLayer
-                            data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
-                            metricsData={metricsData}
-                            getMetricValue={getMetricValue}
-                            mapId={config.id}
-                            // activeDataset={effectiveDataset}
-                            activeMetric={effectiveMetric}
-                            activeFeatureGeoid={config.activeFeature?.geoid}
-                            getColor={getColor}
-                            grayOut={true}
-                            onFeatureClick={handleFeatureClick}
-                        />
-                    )
+                        shouldRenderCountyBoundariesBackground && (
+                            <CountyBoundariesBackgroundLayer
+                                data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
+                                mapId={config.id}
+                            />
+                        )
                     }
 
 
@@ -288,7 +305,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         )
                     }
 
-                    {pointLayers.map(layer => (
+                    {visiblePointLayers.map((layer: any) => (
                         <GenericPointMarkers key={layer.id} layer={layer} />
                     ))}
 
@@ -299,7 +316,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                 </MapContainer>
 
                 <MapLegend
-                    dataset={dataset}
+                    dataset={blockGroupData}
                     activeDataset={effectiveDataset}
                     activeDatasetMetric={effectiveMetric}
                 />

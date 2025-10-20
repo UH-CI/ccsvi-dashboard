@@ -4,8 +4,8 @@ import styles from './MapLegend.module.scss';
 
 interface MapLegendProps {
     dataset: Dataset | null;
-    activeDataset: string;
-    activeDatasetMetric: string;
+    activeDataset: string | undefined;
+    activeDatasetMetric: string | undefined;
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({

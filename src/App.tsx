@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import styles from './App.module.scss';
+import { ControlPanel } from './components/ControlPanel';
 import { MultiMapContainer } from './components/MultiMapContainer';
 //import { GenericHazardLayer } from "./components/HazardLayers/GenericHazardLayer.tsx";
 import { TableViewer } from './components/TableViewer';
@@ -10,6 +11,7 @@ import { TableViewer } from './components/TableViewer';
 //import { useGeometryLayers } from "./hooks/useGeometryLayers.ts"
 //import { useDataLoader } from './hooks/useDataLoader';
 //import { useAnimatedMapResize, MapResizeHandler } from './hooks/useMapResize';
+import { useAppStore, useIsReady, usePointLayerStore } from './stores';
 import { useUrlState } from './hooks/useUrlState';
 import { usePointLayers } from './hooks/usePointLayers';
 import { useHazardLayers } from './hooks/useHazardLayers';
@@ -20,6 +22,31 @@ import { DATASETS_CONFIG, POLYGON_LAYERS} from "./config";
 //import { useState, useEffect, useRef } from 'react';
 
 const App: React.FC = () => {
+    // Get URL state (currently broken)
+    const { urlState } = useUrlState();
+    
+    // Get data from stores
+    const errors = useAppStore(state => state.errors);
+    const fetchAllData = useAppStore(state => state.fetchAllData);
+    const fetchPointLayerConfigs = usePointLayerStore(state => state.fetchPointLayerConfigs);
+    const blockGroupData = useAppStore(state => state.blockGroupData);
+    
+    const isReady = useIsReady();
+
+    // Fetch all data on mount
+    useEffect(() => {
+        fetchAllData();
+        fetchPointLayerConfigs(urlState.pointLayers);
+    }, []);
+
+    // Load data for visible layers
+    // useEffect(() => {
+    //     if (urlState.pointLayers.length > 0) {
+    //         urlState.pointLayers.forEach(layerId => {
+    //             fetchPointLayerData(layerId);
+    //         });
+    //     }
+    // }, [urlState.pointLayers, fetchPointLayerData]);
     const { urlState, updateUrlState } = useUrlState();
 
     // Contains actual demographic metric values per geographic block group
@@ -74,73 +101,17 @@ const App: React.FC = () => {
     //     return null;
     // };
 
-    // Event handlers that update URL state
-    const handlePointLayerToggle = (layerId: string) => {
-        const currentVisible = urlState.pointLayers;
-        const newVisible = currentVisible.includes(layerId)
-            ? currentVisible.filter(id => id !== layerId)
-            : [...currentVisible, layerId];
-        updateUrlState({ pointLayers: newVisible });
-    };
+    // Event handlers
 
-    const handleHazardLayerToggle = (layerId: string, isParent = false) => {
-        const currentVisible = urlState.hazardLayers ?? [];
-        let newVisible = [...currentVisible];
-
-        if (isParent) {
-            // Find the parent layer
-            const parentLayer = hazardLayers.hazardLayers.find(layer => layer.id === layerId);
-            if (!parentLayer) return;
-
-            const allChildIds = parentLayer.subLayers.map(sub => sub.id);
-            
-            // Check if ANY children are currently visible
-            const anyChildrenVisible = allChildIds.some(id => currentVisible.includes(id));
-
-            if (anyChildrenVisible) {
-                // If some children are on, turn ALL off (parent and all children)
-                newVisible = newVisible.filter(id => !allChildIds.includes(id) && id !== layerId);
-            } else {
-                // If no children are on, turn ALL on (parent and all children)
-                newVisible = Array.from(new Set([...newVisible, layerId, ...allChildIds]));
-            }
-        } else {
-            // Single toggle (child layer)
-            if (newVisible.includes(layerId)) {
-                newVisible = newVisible.filter(id => id !== layerId);
-            } else {
-                newVisible.push(layerId);
-            }
-
-            // Update parent visibility based on child states
-            hazardLayers.hazardLayers.forEach(parent => {
-                if (parent.subLayers.some(sub => sub.id === layerId)) {
-                    const anyChildrenVisible = parent.subLayers.some(sub =>
-                        newVisible.includes(sub.id)
-                    );
-                    
-                    if (anyChildrenVisible) {
-                        // If ANY child is visible, ensure parent is visible
-                        if (!newVisible.includes(parent.id)) {
-                            newVisible.push(parent.id);
-                        }
-                    } else {
-                        // If NO children are visible, remove parent
-                        newVisible = newVisible.filter(id => id !== parent.id);
-                    }
-                }
-            });
-        }
-
-        updateUrlState({ hazardLayers: newVisible });
-    };
-
-    if (metricsData.error || blockGroupData.error) {
+    // Check for errors
+    const hasErrors = Object.values(errors).some(error => error !== null);
+    if (hasErrors) {
         return (
             <div className={styles['error-container']}>
                 <h2>Error loading data</h2>
-                {metricsData.error && <p>{metricsData.error}</p>}
-                {blockGroupData.error && <p>{blockGroupData.error}</p>}
+                {Object.entries(errors).map(([key, error]) => 
+                    error && <p key={key}>{error}</p>
+                )}
                 <button onClick={() => window.location.reload()}>
                     Retry
                 </button>
@@ -156,8 +127,8 @@ const App: React.FC = () => {
         );
     }
 
-    const activeDatasetObject = blockGroupData.data && urlState.dataset
-        ? blockGroupData.data[urlState.dataset]
+    const activeDatasetObject = blockGroupData && urlState.dataset
+        ? blockGroupData[urlState.dataset]
         : null;
 
     return (
@@ -165,14 +136,6 @@ const App: React.FC = () => {
             <div className={styles['map-section']}>
                 <MultiMapContainer
                     maxMaps={4}
-                    dataset={blockGroupData.data}
-                    metricsData={metricsData.data}
-                    polygonLayers={{
-                        censusBlockGroups: censusBlockGroups.data,
-                        hawaiianHomelands: hawaiianHomelands.data
-                    }}
-                    pointLayers={pointLayers.pointLayers}
-                    togglePointLayer={handlePointLayerToggle}
                     hazardLayers={hazardLayers.hazardLayers}
                     toggleHazardLayer={handleHazardLayerToggle}
                     // onTakeSnapshot={handleTakeSnapshot}
@@ -188,6 +151,9 @@ const App: React.FC = () => {
                 />
             </div>
 
+            <ControlPanel
+                maxMaps={4}
+            />
             {/*<ControlPanel*/}
             {/*    dataset={dataset}*/}
             {/*    activeDataset={urlState.dataset}*/}

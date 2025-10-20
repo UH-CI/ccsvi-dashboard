@@ -16,7 +16,6 @@ interface HawaiianHomelandsPolygonLayerProps {
     activeMetric: string;
     activeFeatureGeoid?: string | null;
     getColor: (value: number | null) => string;
-    // grayOut?: boolean;
     onFeatureClick?: (feature: Feature<Geometry, HawaiianHomelandProperties>, e: LeafletMouseEvent) => void;
 }
 
@@ -31,7 +30,6 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
                                                                           activeMetric,
                                                                           activeFeatureGeoid,
                                                                           getColor,
-                                                                          // grayOut = false,
                                                                           onFeatureClick
                                                                       }) => {
 
@@ -53,7 +51,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
             ...LAYER_CONFIG.styles.default,
             fillColor
         }
-    }, [getMetricValue, getColor])
+    }, [getMetricValue, getColor]);
 
     const getHighlightStyle = useCallback((feature: Feature<Geometry, HawaiianHomelandProperties>, baseStyle: StyleConfig | undefined): StyleConfig => {
         return {
@@ -85,6 +83,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         <GenericPolygonLayer
             data={data}
             mapId={mapId}
+            layerType="hawaiian-homelands"
             geoidProperty={LAYER_CONFIG.geoidProperty}
             getStyle={getStyle}
             getHighlightStyle={getHighlightStyle}

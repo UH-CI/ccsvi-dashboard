@@ -1,2 +1,1 @@
-export { ControlPanel } from './ControlPanel';
-export { MultiMapControlPanel } from './MultiMapControlPanel';
+export { ControlPanel } from './ControlPanel.tsx';
