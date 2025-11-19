@@ -6,6 +6,43 @@
       "visible": false,
       "icon": "FaWater",
       "color": "#0000FF"
+    },
+    {
+      "id": "erosion",
+      "name": "Costline Erosion",
+      "visible": false,
+      "icon": "FaUmbrellaBeach",
+      "color": "#A89C90"
+    },
+    {
+      "id": "potential_flood_highways",
+      "name": "Potential Flooded Highways",
+      "visible": false,
+      "icon": "FaRoad",
+      "color": "#000000"
+    }, 
+    {
+      "id": "potential_economic_loss",
+      "name": "Potential Economic Loss",
+      "visible": false,
+      "icon": "FaPiggyBank",
+      "color": "#d1d12e"
+    }, 
+    {
+      "id": "exposure_area",
+      "name": "Exposure Area",
+      "visible": false,
+      "icon": "FaRadiationAlt",
+      "color": "#7ea834"
+    }, 
+    {
+      "id": "passive_flood",
+      "name": "Passive Flood",
+      "visible": false,
+      "icon": "FaTint",
+      "color": "#37bbf0"
     }
+    
+    
   ]
 }

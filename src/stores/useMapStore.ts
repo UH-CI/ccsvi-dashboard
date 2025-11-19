@@ -15,6 +15,7 @@ interface MapState {
       maps: boolean;
       vulnerability: boolean;
       points: boolean;
+      hazards: boolean;
   };
 
     // Actions
@@ -45,6 +46,7 @@ const initialExpandedSections: MapState['expandedSections'] = {
     maps: true,
     vulnerability: true,
     points: true,
+    hazards: true,
 };
 
 export const useMapStore = create<MapState>((set, get) => ({

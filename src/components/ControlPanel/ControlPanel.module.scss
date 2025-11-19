@@ -123,6 +123,7 @@
 
 .section-content {
   padding: 16px;
+  overflow-x: hidden;
 }
 
 .section-divider {
@@ -178,7 +179,24 @@
 
 .layer-toggle {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.layer-toggle > div {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.expand-icon {
+  margin-left: auto;
+  padding: 4px;
+  display: flex; 
+  align-items: center;
+  justify-content: center;
 }
 
 .layer-label {

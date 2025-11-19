@@ -88,21 +88,23 @@ export interface PointLayerConfig {
 export interface SubHazardLayerConfig {
     id: string;
     name: string;
+    color?: string;
     visible: boolean;
     filePath?: string;
     popupConfig?: {
-      titleField?: string;
-      fields?: { key: string; label: string }[];
+        titleField?: string;
+        fields?: { key: string; label: string }[];
     };
-  }
-  
-  export interface SubHazardLayerGroup {
+    subLayers?: SubHazardLayerConfig[];
+}
+
+export interface SubHazardLayerGroup {
     id: string;
     name: string;
     subLayers: SubHazardLayerConfig[];
-  }
-  
-  export interface HazardLayerConfig {
+}
+
+export interface HazardLayerConfig {
     id: string;
     name: string;
     icon?: string;
@@ -110,11 +112,11 @@ export interface SubHazardLayerConfig {
     visible: boolean;
     filePath?: string;
     popupConfig?: {
-      titleField?: string;
-      fields?: { key: string; label: string }[];
+        titleField?: string;
+        fields?: { key: string; label: string }[];
     };
     subLayers?: SubHazardLayerConfig[];
-  }
+}
 
 export type StyleFunction = (feature: Feature<Geometry, BlockGroupProperties> | undefined) => PathOptions;
 export type HomelandsStyleFunction = (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined) => PathOptions;
@@ -138,6 +140,3 @@ export interface PolygonLayerConfig {
     inactiveFillOpacity: number;
   };
 }
-
-
-

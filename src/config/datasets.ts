@@ -14,8 +14,6 @@ export const DATASETS_CONFIG = {
     },
     blockGroupData: {
         path: './data/metrics/census_datasets_config.json',
-    hazardDatasetPath: './data/Hazards/Hazard_layers.json',
-    hazardChildrenPath: './data/Hazards/Sub_Hazard_layers.json',
         errorPrefix: 'Failed to fetch dataset metadata',
     },
     censusBlockGroups: {

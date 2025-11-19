@@ -7,30 +7,21 @@ import {
     HawaiianHomelandProperties,
     CountyBoundariesProperties,
 } from '../../types';
-import { HazardLayerWithSubs } from '../../hooks/useHazardLayers';
 import { GenericPointMarkers } from '../PointLayers';
 import { MapLegend } from '../MapLegend';
 import { MAP_CONFIG } from "../../config";
 import styles from './SingleMapView.module.scss';
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
-import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
 import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
-import { useAppStore, useMapStore, useMapConfig, usePointLayerStore } from "../../stores";
+import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore } from "../../stores";
+import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
 
 interface SingleMapViewProps {
     mapId: string;
     isPrimary: boolean;
     mapConfigsLength: number;
     // onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
-    dataset: Dataset | null;
-    metricsData: MetricsData | null;
-    polygonLayers?: {
-        [key: string]: FeatureCollection | null;
-    }
-    pointLayers: PointLayerConfig[];
-    hazardLayers?: HazardLayerWithSubs[];
-    onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
 const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
@@ -83,12 +74,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      isPrimary,
                                                                      mapConfigsLength,
                                                                      // onUpdateActiveFeature
-                                                                     dataset,
-                                                                     metricsData,
-                                                                     polygonLayers,
-                                                                     pointLayers,
-                                                                     hazardLayers = [],
-                                                                     onUpdateActiveFeature
                                                                  }) => {
     const mapRef = useRef<L.Map | null>(null);
 
@@ -107,14 +92,19 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
 
-    const configs = usePointLayerStore((state: any) => state.pointLayerConfigs);
-    const data = usePointLayerStore((state: any) => state.pointLayerData);
-    const visibleIds = usePointLayerStore((state: any) => state.visibleLayerIds);
+    const configs = usePointLayerStore(state => state.pointLayerConfigs);
+    const data = usePointLayerStore(state => state.pointLayerData);
+    const visibleIds = usePointLayerStore(state => state.visibleLayerIds);
+
+    const hazardLayers = useHazardLayersStore(state => state.hazardLayers);
+    const visibleHazards = hazardLayers.filter(
+        h => h.visible || h.subLayers?.some(s => s.visible)
+    );
 
     const visiblePointLayers = useMemo(() => {
         return configs
-            .filter((config: any) => visibleIds.has(config.id))
-            .map((config: any) => ({
+            .filter(config => visibleIds.has(config.id))
+            .map(config => ({
                 ...config,
                 visible: true,
                 data: data.get(config.id),
@@ -150,7 +140,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         }
 
         const lookup = new Map<string, number>();
-        Object.entries(metricsData).forEach(([geoid, data]: [string, any]) => {
+        Object.entries(metricsData).forEach(([geoid, data]) => {
             const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
             if (value !== undefined && value !== null) {
                 lookup.set(geoid, value);
@@ -305,13 +295,20 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         )
                     }
 
-                    {visiblePointLayers.map((layer: any) => (
-                        <GenericPointMarkers key={layer.id} layer={layer} />
+                    {/* --- Hazard Layers --- */}
+                    {hazardLayers.map(h => (
+                        <React.Fragment key={h.id}>
+                            {h.visible && <HazardLayerRenderer parentId={h.id} />}
+                            {h.subLayers?.map(sub =>
+                            sub.visible ? (
+                                <HazardLayerRenderer key={sub.id} parentId={h.id} layerId={sub.id} />
+                            ) : null
+                            )}
+                        </React.Fragment>
                     ))}
 
-                    {/* Render hazard layers */}
-                    {hazardLayers.map(layer => (
-                        <HazardLayerRenderer key={layer.id} layer={layer} />
+                    {visiblePointLayers.map(layer => (
+                        <GenericPointMarkers key={layer.id} layer={layer} />
                     ))}
                 </MapContainer>
 
