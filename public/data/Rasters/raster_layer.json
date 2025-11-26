@@ -1,0 +1,12 @@
+{
+    "rasterLayers": [
+        {
+            "id": "storm_surge",
+            "name": "Storm Surge",
+            "visible": false,
+            "icon": "FaWater", 
+            "color": "#0000FF",
+            "type": "raster"
+        }
+    ]
+}

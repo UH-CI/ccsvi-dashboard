@@ -20,6 +20,8 @@
     "@mui/x-data-grid": "^8.9.2",
     "dom-to-image-more": "^3.6.0",
     "geojson": "^0.5.0",
+    "georaster": "^1.6.0",
+    "georaster-layer-for-leaflet": "^4.1.2",
     "leaflet": "^1.9.4",
     "papaparse": "^5.5.3",
     "react": "^19.0.0",
