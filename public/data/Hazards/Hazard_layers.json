@@ -41,6 +41,14 @@
       "visible": false,
       "icon": "FaTint",
       "color": "#37bbf0"
+    },
+    {
+      "id": "storm_surge",
+      "name": "Storm Surge",
+      "visible": false,
+      "icon": "FaWater", 
+      "color": "#0000FF",
+      "filePath": "data/Rasters/Hawaii_Category1_MOM_Inundation_HighTide.tif"
     }
     
     

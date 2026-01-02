@@ -4,8 +4,9 @@ import styles from './App.module.scss';
 import { ControlPanel } from './components/ControlPanel';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useAppStore, useIsReady, usePointLayerStore, useHazardLayersStore } from './stores';
+import { useAppStore, useIsReady, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from './stores';
 import { useUrlState } from './hooks/useUrlState';
+//import initializeRasterLayer from './components/RasterLayers/leaflet-raster-layer.service';
 
 const App: React.FC = () => {
     // Get URL state (currently broken)
@@ -22,6 +23,12 @@ const App: React.FC = () => {
     const hazardLoading = useHazardLayersStore((state) => state.loading);
     const hazardError = useHazardLayersStore((state) => state.error);
     
+    const fetchRasterLayers = useRasterLayersStore(
+      (state) => state.fetchRasterLayers
+    );
+    const rasterLoading = useRasterLayersStore((state) => state.loading);
+    const rasterError = useRasterLayersStore((state) => state.error);
+    
     const isReady = useIsReady();
 
     // Fetch all data on mount
@@ -29,7 +36,9 @@ const App: React.FC = () => {
         fetchAllData();
         fetchPointLayerConfigs(urlState.pointLayers);
         fetchHazardLayers();
-  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayers]);
+        fetchRasterLayers();
+        //initializeRasterLayer();
+  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayers, fetchRasterLayers]);
 
     // Load data for visible layers
     // useEffect(() => {
@@ -66,7 +75,7 @@ const App: React.FC = () => {
     // Check for errors
     // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
-  if (hasErrors || hazardError) {
+  if (hasErrors || hazardError || rasterError) {
     return (
       <div className={styles['error-container']}>
         <h2>Error loading data</h2>
@@ -74,13 +83,14 @@ const App: React.FC = () => {
           ([key, error]) => error && <p key={key}>{error}</p>
         )}
         {hazardError && <p>{hazardError}</p>}
+        {rasterError && <p>{rasterError}</p>}
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
   // === Loading ===
-  if (!isReady || hazardLoading) {
+  if (!isReady || hazardLoading || rasterLoading) {
     return (
       <div className={styles['loading-container']}>
         <div>Loading data...</div>

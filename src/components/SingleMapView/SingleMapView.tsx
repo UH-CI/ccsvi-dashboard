@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
 import L, { LeafletMouseEvent } from 'leaflet';
@@ -14,8 +14,9 @@ import styles from './SingleMapView.module.scss';
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
-import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore } from "../../stores";
+import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from "../../stores";
 import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
+import { RasterLayerRenderer } from '../RasterLayers';
 
 interface SingleMapViewProps {
     mapId: string;
@@ -27,6 +28,7 @@ interface SingleMapViewProps {
 const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
     const map = useMap();
     const containerRef = useRef<HTMLElement | null>(null);
+    
 
     useEffect(() => {
         containerRef.current = map.getContainer();
@@ -69,6 +71,8 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
     return null;
 };
 
+
+
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      mapId,
                                                                      isPrimary,
@@ -76,6 +80,29 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      // onUpdateActiveFeature
                                                                  }) => {
     const mapRef = useRef<L.Map | null>(null);
+
+    const [mapZoom, setMapZoom] = useState<number>(MAP_CONFIG.zoom);
+
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        const map = mapRef.current;
+
+        const onZoomEnd = () => {
+            const z = map.getZoom();
+            console.log("[SingleMapView] zoom =", z);
+            //setMapZoom(map.getZoom());
+            setMapZoom(z);
+        };
+
+        map.on("zoomend", onZoomEnd);
+
+        setMapZoom(map.getZoom());
+
+        return () => {
+            map.off("zoomend", onZoomEnd);
+        };
+    }, [mapRef.current]); 
 
     const config = useMapConfig(mapId)
 
@@ -99,6 +126,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const hazardLayers = useHazardLayersStore(state => state.hazardLayers);
     const visibleHazards = hazardLayers.filter(
         h => h.visible || h.subLayers?.some(s => s.visible)
+    );
+
+    const rasterLayers = useRasterLayersStore(state => state.rasterLayers);
+    const visibleRasters = rasterLayers.filter(
+        r => r.visible || r.subLayers?.some(s => s.visible)
     );
 
     const visiblePointLayers = useMemo(() => {
@@ -307,6 +339,18 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         </React.Fragment>
                     ))}
 
+                    {/* --- Raster Layers --- */}
+                    {rasterLayers.map(r => (
+                        <React.Fragment key={r.id}>
+                            {r.visible && <RasterLayerRenderer parentId={r.id} mapZoom={mapZoom}/>}
+                            {r.subLayers?.map(sub =>
+                            sub.visible ? (
+                                <RasterLayerRenderer key={sub.id} parentId={r.id} layerId={sub.id} mapZoom={mapZoom}/>
+                            ) : null
+                            )}
+                        </React.Fragment>
+                    ))}
+
                     {visiblePointLayers.map(layer => (
                         <GenericPointMarkers key={layer.id} layer={layer} />
                     ))}
@@ -319,5 +363,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                 />
             </div>
         </div>
+        
     );
+
+    
 });
