@@ -27,6 +27,8 @@ import {
     Close,
     ChevronLeft,
     ChevronRight,
+    LocationOn,
+    Warning,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
 import {
@@ -454,12 +456,12 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                         </Tooltip>
                         <Tooltip title="Points of Interest" placement="left">
                             <Box className={styles['collapsed-section']} onClick={() => setIsPanelCollapsed(false)}>
-                                <FaIcons.FaMapMarkerAlt />
+                                <LocationOn />
                             </Box>
                         </Tooltip>
                         <Tooltip title="Hazards" placement="left">
                             <Box className={styles['collapsed-section']} onClick={() => setIsPanelCollapsed(false)}>
-                                <FaIcons.FaExclamationTriangle />
+                                <Warning />
                             </Box>
                         </Tooltip>
                     </Box>
