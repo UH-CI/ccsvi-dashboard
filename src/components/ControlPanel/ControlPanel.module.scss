@@ -56,6 +56,38 @@
   margin-right: 8px;
 }
 
+// Panel wrapper with collapse chip
+.panel-wrapper {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+
+// Collapse toggle button - subtle icon button on the left side
+.collapse-toggle {
+  position: absolute !important;
+  left: -16px;
+  top: 16px;
+  z-index: 1001;
+  background-color: white !important;
+  border: 1px solid #e0e0e0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 4px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f5f5f5 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16) !important;
+  }
+
+  .MuiSvgIcon-root {
+    font-size: 20px;
+    color: #666;
+  }
+}
+
 // Integrated Control Panel
 .integrated-control-panel {
   width: 320px;
@@ -67,6 +99,14 @@
   border-left: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+
+  // Collapsed state - shows slim sidebar
+  &.collapsed {
+    width: 60px;
+    min-width: 60px;
+    overflow: hidden;
+  }
 }
 
 .control-header {
@@ -194,7 +234,7 @@
 .expand-icon {
   margin-left: auto;
   padding: 4px;
-  display: flex; 
+  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -228,5 +268,39 @@
 
   &::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+  }
+}
+
+// Collapsed sidebar styles
+.collapsed-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 12px;
+  height: 100%;
+}
+
+.collapsed-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f0f0;
+    border-color: #d0d0d0;
+    transform: translateX(-2px);
+  }
+
+  svg {
+    font-size: 20px;
+    color: #666;
   }
 }

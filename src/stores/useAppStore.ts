@@ -1,4 +1,3 @@
-// src/stores/useAppStore.ts
 import { create } from 'zustand'
 import { DATASETS_CONFIG, DataSourceKey, DataSourceTypeMap } from '../config'
 import { MetricsData, Dataset, PointLayerConfig } from '../types'

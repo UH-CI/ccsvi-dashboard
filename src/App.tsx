@@ -61,9 +61,6 @@ const App: React.FC = () => {
     //     return null;
     // };
 
-    // Event handlers
-
-    // Check for errors
     // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
   if (hasErrors || hazardError) {

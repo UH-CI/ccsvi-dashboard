@@ -13,7 +13,7 @@ interface MapState {
   // UI state
   expandedSections: {
       maps: boolean;
-      vulnerability: boolean;
+      utils: boolean;
       points: boolean;
       hazards: boolean;
   };
@@ -44,7 +44,7 @@ const initialMapConfig: MapConfig = {
 
 const initialExpandedSections: MapState['expandedSections'] = {
     maps: true,
-    vulnerability: true,
+    utils: true,
     points: true,
     hazards: true,
 };
