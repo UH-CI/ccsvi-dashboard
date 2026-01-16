@@ -149,14 +149,14 @@ export const useAppStore = create<AppState>((set, get) => {
 
     fetchHazardLayers: async () => {
       const { setLoading, setError, setHazardLayers } = get();
-      const { fetchHazardLayers, hazardLayers } = useHazardLayersStore.getState();
+      const { fetchHazardLayerConfigs, hazardLayerConfigs } = useHazardLayersStore.getState();
 
       setLoading('hazardLayers', true);
       setError('hazardLayers', null);
 
       try {
-        await fetchHazardLayers();
-        const { hazardLayers: updated } = useHazardLayersStore.getState();
+        await fetchHazardLayerConfigs();
+        const { hazardLayerConfigs: updated } = useHazardLayersStore.getState();
         setHazardLayers(updated);
       } catch (err) {
         console.error('Failed to fetch hazard layers:', err);

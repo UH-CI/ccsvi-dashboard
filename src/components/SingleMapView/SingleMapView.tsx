@@ -96,10 +96,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const data = usePointLayerStore(state => state.pointLayerData);
     const visibleIds = usePointLayerStore(state => state.visibleLayerIds);
 
-    const hazardLayers = useHazardLayersStore(state => state.hazardLayers);
-    const visibleHazards = hazardLayers.filter(
-        h => h.visible || h.subLayers?.some(s => s.visible)
-    );
+    const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
+    const visibleHazardIds = useHazardLayersStore(state => state.visibleLayerIds);
 
     const visiblePointLayers = useMemo(() => {
         return configs
@@ -296,14 +294,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     }
 
                     {/* --- Hazard Layers --- */}
-                    {hazardLayers.map(h => (
-                        <React.Fragment key={h.id}>
-                            {h.visible && <HazardLayerRenderer parentId={h.id} />}
-                            {h.subLayers?.map(sub =>
-                            sub.visible ? (
-                                <HazardLayerRenderer key={sub.id} parentId={h.id} layerId={sub.id} />
-                            ) : null
+                    {hazardLayerConfigs.map(layer => (
+                        <React.Fragment key={layer.id}>
+                            {layer.filePath && visibleHazardIds.has(layer.id) && (
+                                <HazardLayerRenderer parentId={layer.id} />
                             )}
+
+                            {layer.subLayers?.map(sub => (
+                                visibleHazardIds.has(sub.id) ? (
+                                    <HazardLayerRenderer key={sub.id} parentId={layer.id} layerId={sub.id} />
+                                ) : null
+                            ))}
                         </React.Fragment>
                     ))}
 

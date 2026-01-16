@@ -16,8 +16,8 @@ const App: React.FC = () => {
     const fetchAllData = useAppStore(state => state.fetchAllData);
     const fetchPointLayerConfigs = usePointLayerStore(state => state.fetchPointLayerConfigs);
     const blockGroupData = useAppStore(state => state.blockGroupData);
-    const fetchHazardLayers = useHazardLayersStore(
-      (state) => state.fetchHazardLayers
+    const fetchHazardLayerConfigs = useHazardLayersStore(
+        (state) => state.fetchHazardLayerConfigs
     );
     const hazardLoading = useHazardLayersStore((state) => state.loading);
     const hazardError = useHazardLayersStore((state) => state.error);
@@ -28,8 +28,8 @@ const App: React.FC = () => {
     useEffect(() => {
         fetchAllData();
         fetchPointLayerConfigs(urlState.pointLayers);
-        fetchHazardLayers();
-  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayers]);
+        fetchHazardLayerConfigs();
+    }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs]);
 
     // Load data for visible layers
     // useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Typography,
     FormControl,
@@ -29,6 +30,7 @@ import {
     ChevronRight,
     LocationOn,
     Warning,
+    Refresh,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
 import {
@@ -38,7 +40,6 @@ import {
     usePrimaryMapState,
     useHazardLayersStore
 } from "../../stores";
-import { useUrlState } from '../../hooks/useUrlState';
 import styles from './ControlPanel.module.scss';
 
 interface IntegratedControlPanelProps {
@@ -48,9 +49,7 @@ interface IntegratedControlPanelProps {
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                         maxMaps
                                                                     }) => {
-    // Get URL state (currently broken)
-    const { urlState, updateUrlState } = useUrlState();
-
+    const navigate = useNavigate();
     const dataset = useAppStore(state => state.blockGroupData);
 
     const mapConfigs = useMapStore(state => state.mapConfigs);
@@ -60,23 +59,20 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const toggleMapVisibility = useMapStore(state => state.toggleMapVisibility);
     const expandedSections = useMapStore(state => state.expandedSections);
     const toggleSection = useMapStore(state => state.toggleSection);
+    const resetMapStore = useMapStore(state => state.reset);
 
     const { dataset: activeDataset, metric: activeDatasetMetric, setDataset, setMetric } = usePrimaryMapState();
 
     const pointLayerConfigs = usePointLayerStore(state => state.pointLayerConfigs);
-    const visibleLayerIds = usePointLayerStore(state => state.visibleLayerIds);
-    const toggleLayerVisibility = usePointLayerStore(state => state.toggleLayerVisibility);
+    const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    const togglePointLayerVisibility = usePointLayerStore(state => state.toggleLayerVisibility);
+    const setVisiblePointLayerIds = usePointLayerStore(state => state.setVisibleLayerIds);
 
-    const hazardLayers = useHazardLayersStore((state) => state.hazardLayers);
-    const toggleHazardLayerVisibility = useHazardLayersStore((s) => s.toggleHazardLayerVisibility);
-    const toggleSubLayerVisibility = useHazardLayersStore((s) => s.toggleSubLayerVisibility);
-
-    const toggleParent = useHazardLayersStore(
-        (state) => state.toggleHazardLayerVisibility
-    );
-    const toggleChild = useHazardLayersStore(
-        (state) => state.toggleSubLayerVisibility
-    );
+    const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
+    const visibleHazardLayerIds = useHazardLayersStore(state => state.visibleLayerIds);
+    const toggleHazardLayerVisibility = useHazardLayersStore(state => state.toggleHazardLayerVisibility);
+    const toggleSubLayerVisibility = useHazardLayersStore(state => state.toggleSubLayerVisibility);
+    const setVisibleHazardLayerIds = useHazardLayersStore(state => state.setVisibleLayerIds);
 
     const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
     const toggleExpand = useCallback((id: string) => {
@@ -91,9 +87,21 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const pointLayers = useMemo(() =>
             pointLayerConfigs.map(config => ({
                 ...config,
-                visible: visibleLayerIds.has(config.id)
+                visible: visiblePointLayerIds.has(config.id)
             })),
-        [pointLayerConfigs, visibleLayerIds]
+        [pointLayerConfigs, visiblePointLayerIds]
+    );
+
+    const hazardLayers = useMemo(() =>
+            hazardLayerConfigs.map(config => ({
+                ...config,
+                visible: visibleHazardLayerIds.has(config.id),
+                subLayers: config.subLayers?.map(sub => ({
+                    ...sub,
+                    visible: visibleHazardLayerIds.has(sub.id)
+                }))
+            })),
+        [hazardLayerConfigs, visibleHazardLayerIds]
     );
 
     const datasetList = useMemo(() => {
@@ -113,15 +121,20 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const canRemoveMap = mapConfigs.length > 1;
 
     const handlePointLayerToggle = useCallback((layerId: string) => {
-        toggleLayerVisibility(layerId);
+        togglePointLayerVisibility(layerId);
+    }, [togglePointLayerVisibility]);
 
-        // Update URL state
-        const currentVisible = urlState.pointLayers;
-        const newVisible = currentVisible.includes(layerId)
-            ? currentVisible.filter(id => id !== layerId)
-            : [...currentVisible, layerId];
-        updateUrlState({ pointLayers: newVisible });
-    }, [toggleLayerVisibility, urlState.pointLayers, updateUrlState]);
+    const handleResetView = useCallback(() => {
+        // Reset stores
+        resetMapStore();
+        setDataset('');
+        setMetric('');
+        setVisiblePointLayerIds([]);
+        setVisibleHazardLayerIds([]);
+
+        // Clear URL
+        navigate('/', { replace: true });
+    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, navigate]);
 
     const handleSnapshot = useCallback(() => {
         console.log('Snapshot');
@@ -230,7 +243,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                 label="Dataset"
                                                             >
                                                                 {datasetList.map((ds) => (
-                                                                    <MenuItem key={ds.id} value={ds.id}>
+                                                                     <MenuItem key={ds.id} value={ds.id}>
                                                                         {ds.label}
                                                                     </MenuItem>
                                                                 ))}
@@ -295,6 +308,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                         size="small"
                                     >
                                         Take Snapshot
+                                    </Button>
+                                    <Button
+                                        onClick={handleResetView}
+                                        variant="outlined"
+                                        startIcon={<Refresh />}
+                                        fullWidth
+                                        size="small"
+                                        color="secondary"
+                                    >
+                                        Reset View
                                     </Button>
                                 </Stack>
                             </Collapse>
