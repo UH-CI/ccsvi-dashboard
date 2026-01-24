@@ -21,11 +21,13 @@
     "dom-to-image-more": "^3.6.0",
     "geojson": "^0.5.0",
     "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
     "papaparse": "^5.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-leaflet": "^5.0.0",
+    "react-leaflet-cluster": "^4.0.0",
     "react-router-dom": "^7.8.2",
     "shpjs": "^6.1.0"
   },

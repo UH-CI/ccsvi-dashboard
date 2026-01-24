@@ -1,25 +1,39 @@
+import domToImage from "dom-to-image-more";
+
 export interface SnapshotOptions {
   activeDataset?: string;
   activeDatasetMetric?: string;
   customPrefix?: string;
-  format?: 'png' | 'jpeg';
+  format?: "png" | "jpeg";
   quality?: number;
+  includeLegend?: boolean;
+  includeTitle?: boolean;
+  extraText?: string;
+  layerSelection?:
+    | "all"
+    | "visible"
+    | { mode: "single"; layerId: string }
+    | { mode: "list"; layerIds: string[] };
 }
 
-/**
- * Generates a descriptive filename for the snapshot based on current map state
- */
-export const generateSnapshotFilename = (options: SnapshotOptions = {}): string => {
+// Generates a descriptive filename for the snapshot based on current map state
+const pad = (n: number) => n.toString().padStart(2, "0");
+
+export const generateSnapshotFilename = (
+  options: SnapshotOptions = {}
+): string => {
   const {
     activeDataset,
     activeDatasetMetric,
-    customPrefix = 'census-map',
-    format = 'png'
+    customPrefix = "census-map",
+    format = "png",
   } = options;
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-  const datasetName = activeDataset ? activeDataset.replace(/_/g, '-') : 'map';
-  const metricName = activeDatasetMetric ? activeDatasetMetric.replace(/_/g, '-') : '';
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+  const datasetName = activeDataset ? activeDataset.replace(/_/g, "-") : "map";
+  const metricName = activeDatasetMetric
+    ? activeDatasetMetric.replace(/_/g, "-")
+    : "";
 
   const parts = [customPrefix, datasetName];
   if (metricName) {
@@ -27,7 +41,7 @@ export const generateSnapshotFilename = (options: SnapshotOptions = {}): string 
   }
   parts.push(timestamp);
 
-  return `${parts.join('-')}.${format}`;
+  return `${parts.join("-")}.${format}`;
 };
 
 /**
@@ -35,7 +49,7 @@ export const generateSnapshotFilename = (options: SnapshotOptions = {}): string 
  */
 export const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   link.download = filename;
 
@@ -54,8 +68,8 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
 const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
   return new Promise((resolve) => {
     // Wait for tiles
-    const tiles = mapContainer.querySelectorAll('.leaflet-tile');
-    const images = mapContainer.querySelectorAll('img');
+    const tiles = mapContainer.querySelectorAll(".leaflet-tile");
+    const images = mapContainer.querySelectorAll("img");
 
     let loadingCount = 0;
     const checkComplete = () => {
@@ -71,17 +85,17 @@ const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
       const img = tile as HTMLImageElement;
       if (!img.complete && img.src) {
         loadingCount++;
-        img.addEventListener('load', checkComplete, { once: true });
-        img.addEventListener('error', checkComplete, { once: true });
+        img.addEventListener("load", checkComplete, { once: true });
+        img.addEventListener("error", checkComplete, { once: true });
       }
     });
 
     // Check other images
     images.forEach((img) => {
-      if (!img.complete && img.src && !img.src.includes('data:')) {
+      if (!img.complete && img.src && !img.src.includes("data:")) {
         loadingCount++;
-        img.addEventListener('load', checkComplete, { once: true });
-        img.addEventListener('error', checkComplete, { once: true });
+        img.addEventListener("load", checkComplete, { once: true });
+        img.addEventListener("error", checkComplete, { once: true });
       }
     });
 
@@ -96,55 +110,71 @@ const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
  * Captures all layers including GeoJSON features and point markers
  */
 export const takeMapSnapshot = async (
-    mapContainer: HTMLElement,
-    options: SnapshotOptions = {}
+  targetElement: HTMLElement,
+  options: SnapshotOptions = {},
+  allLayersIds: string[] = []
 ): Promise<void> => {
+  // minor polyfills / safety (dom-to-image-more can choke in some browsers)
+  if (!window.URL) (window as any).URL = window.URL || {};
+
+  const format = options.format ?? "png";
+  const quality =
+    typeof options.quality === "number"
+      ? options.quality
+      : format === "jpeg"
+      ? 0.95
+      : undefined;
+
   try {
     // Wait for all elements to load
-    await waitForMapElements(mapContainer);
+    await waitForMapElements(targetElement);
 
     // Dynamic import
-    const domtoimage = (await import('dom-to-image-more')).default;
+    const domtoimage = (await import("dom-to-image-more")).default;
 
-    const format = options.format || 'png';
+    const format = options.format || "png";
     const quality = options.quality || 0.9;
 
     let dataUrl: string;
 
-    if (format === 'jpeg') {
-      dataUrl = await domtoimage.toJpeg(mapContainer, {
+    if (format === "jpeg") {
+      dataUrl = await domtoimage.toJpeg(targetElement, {
         quality,
-        bgcolor: '#ffffff',
+        bgcolor: "#ffffff",
         style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
+          transform: "scale(1)",
+          transformOrigin: "top left",
         },
         filter: (node: HTMLElement) => {
           // Include all nodes but exclude some problematic elements
           if (node.classList) {
             // Exclude attribution and zoom controls if they cause issues
-            return !node.classList.contains('leaflet-control-attribution') &&
-                !node.classList.contains('leaflet-bar');
+            return (
+              !node.classList.contains("leaflet-control-attribution") &&
+              !node.classList.contains("leaflet-bar")
+            );
           }
           return true;
-        }
+        },
       });
     } else {
-      dataUrl = await domtoimage.toPng(mapContainer, {
-        bgcolor: '#ffffff',
+      dataUrl = await domtoimage.toPng(targetElement, {
+        bgcolor: "#ffffff",
         style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
+          transform: "scale(1)",
+          transformOrigin: "top left",
         },
         filter: (node: HTMLElement) => {
           // Include all nodes but exclude some problematic elements
           if (node.classList) {
             // Keep all map layers, just exclude controls that might cause issues
-            return !node.classList.contains('leaflet-control-attribution') &&
-                !node.classList.contains('leaflet-bar');
+            return (
+              !node.classList.contains("leaflet-control-attribution") &&
+              !node.classList.contains("leaflet-bar")
+            );
           }
           return true;
-        }
+        },
       });
     }
 
@@ -153,13 +183,16 @@ export const takeMapSnapshot = async (
     const blob = await response.blob();
 
     if (!blob) {
-      throw new Error('Failed to create image blob');
+      throw new Error("Failed to create image blob");
     }
 
     const filename = generateSnapshotFilename(options);
     downloadBlob(blob, filename);
-
   } catch (error) {
-    throw new Error(`Failed to take snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to take snapshot: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 };
