@@ -22,7 +22,6 @@ interface SingleMapViewProps {
     mapId: string;
     isPrimary: boolean;
     mapConfigsLength: number;
-    // onUpdateActiveFeature?: (activeFeature: MapConfig['activeFeature']) => void;
 }
 
 const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
@@ -77,7 +76,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                                                      mapId,
                                                                      isPrimary,
                                                                      mapConfigsLength,
-                                                                     // onUpdateActiveFeature
+                                                                     
                                                                  }) => {
     const mapRef = useRef<L.Map | null>(null);
 
@@ -91,7 +90,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         const onZoomEnd = () => {
             const z = map.getZoom();
             console.log("[SingleMapView] zoom =", z);
-            //setMapZoom(map.getZoom());
+           
             setMapZoom(z);
         };
 
@@ -124,14 +123,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const visibleIds = usePointLayerStore(state => state.visibleLayerIds);
 
     const hazardLayers = useHazardLayersStore(state => state.hazardLayers);
-    const visibleHazards = hazardLayers.filter(
-        h => h.visible || h.subLayers?.some(s => s.visible)
-    );
 
     const rasterLayers = useRasterLayersStore(state => state.rasterLayers);
-    const visibleRasters = rasterLayers.filter(
-        r => r.visible || r.subLayers?.some(s => s.visible)
-    );
 
     const visiblePointLayers = useMemo(() => {
         return configs
@@ -302,7 +295,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                 metricsData={metricsData}
                                 getMetricValue={getMetricValue}
                                 mapId={config.id}
-                                // activeDataset={effectiveDataset}
                                 activeMetric={effectiveMetric}
                                 activeFeatureGeoid={config.activeFeature?.geoid}
                                 getColor={getColor}
@@ -318,7 +310,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                 metricsData={metricsData}
                                 getMetricValue={getMetricValue}
                                 mapId={config.id}
-                                // activeDataset={effectiveDataset}
+                                
                                 activeMetric={effectiveMetric}
                                 activeFeatureGeoid={config.activeFeature?.geoid}
                                 getColor={getColor}
@@ -327,7 +319,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         )
                     }
 
-                    {/* --- Hazard Layers --- */}
+                    {/* --- Hazard Layers Shapes --- */}
                     {hazardLayers.map(h => (
                         <React.Fragment key={h.id}>
                             {h.visible && <HazardLayerRenderer parentId={h.id} />}
@@ -339,7 +331,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         </React.Fragment>
                     ))}
 
-                    {/* --- Raster Layers --- */}
+                    {/* --- Hazard Layers Rasters--- */}
                     {rasterLayers.map(r => (
                         <React.Fragment key={r.id}>
                             {r.visible && <RasterLayerRenderer parentId={r.id} mapZoom={mapZoom}/>}

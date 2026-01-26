@@ -1,3 +1,4 @@
+
 import {RasterData, IndexedValues, UpdateFlags} from "./RasterData";
 
 // Import worker using Vite's worker syntax

@@ -13,7 +13,38 @@ interface RasterLayersState {
   setRasterData: (layerId: string, data: RasterData) => void;
   getRasterData: (layerId: string) => RasterData | undefined;
   fetchRasterLayers: () => Promise<void>;
+  clearAllRasters: () => void;
 }
+
+const disableAllExcept = (
+  layers: RasterLayerConfig[],
+  keep: { parentId: string; subId?: string }
+): RasterLayerConfig[] =>
+  layers.map(layer => {
+    const isTargetParent = layer.id === keep.parentId;
+
+    // Parent WITH sublayers
+    if (layer.subLayers?.length) {
+      const updatedSubs = layer.subLayers.map(sub => ({
+        ...sub,
+        visible: isTargetParent && sub.id === keep.subId,
+      }));
+
+      return {
+        ...layer,
+        subLayers: updatedSubs,
+        visible: updatedSubs.some(s => s.visible),
+      };
+    }
+
+    // Parent WITHOUT sublayers
+    return {
+      ...layer,
+      visible: isTargetParent && !keep.subId,
+    };
+  });
+
+
 
 export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   rasterLayers: [],
@@ -35,39 +66,55 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     return get().rasterData.get(layerId);
   },
 
+  clearAllRasters: () => {
+    set((state) => ({
+      rasterLayers: state.rasterLayers.map(layer => ({
+        ...layer,
+        visible: false,
+        subLayers: layer.subLayers?.map(sub => ({
+          ...sub,
+          visible: false,
+        })),
+      })),
+    }));
+  }, 
+
   toggleRasterLayerVisibility: (id, visible) => {
     set((state) => {
-      const updated = state.rasterLayers.map(layer => {
-        if (layer.id === id) {
-          const newVisible = visible ?? !layer.visible;
-          const updatedSubs = layer.subLayers?.map(s => ({ ...s, visible: newVisible })) ?? [];
-          return { ...layer, visible: newVisible, subLayers: updatedSubs };
-        }
-        return layer;
-      });
-      return { rasterLayers: updated };
+      const layer = state.rasterLayers.find(l => l.id === id);
+
+      if (layer?.subLayers?.length) return state;
+
+      const shouldEnable = visible ?? !layer?.visible;
+
+      return {
+        rasterLayers: shouldEnable
+          ? disableAllExcept(state.rasterLayers, { parentId: id })
+          : state.rasterLayers.map(l => ({ ...l, visible: false })),
+      };
     });
   },
 
   toggleSubRasterLayerVisibility: (parentId, subId, visible) => {
     set((state) => {
-      const updatedLayers = state.rasterLayers.map((layer) => {
-        if (layer.id === parentId && layer.subLayers) {
-          const updatedSubLayers = layer.subLayers.map((sub) => {
-            if (sub.id === subId) {
-              return { ...sub, visible: visible ?? !sub.visible };
-            }
-            return sub;
-          });
+      const parent = state.rasterLayers.find(l => l.id === parentId);
+      if (!parent?.subLayers) return state;
 
-          // Determine if parent should stay on or off
-          const anyVisible = updatedSubLayers.some((s) => s.visible);
-          return { ...layer, subLayers: updatedSubLayers, visible: anyVisible };
-        }
-        return layer;
-      });
+      const sub = parent.subLayers.find(s => s.id === subId);
+      const shouldEnable = visible ?? !sub?.visible;
 
-      return { rasterLayers: updatedLayers };
+      return {
+        rasterLayers: shouldEnable
+          ? disableAllExcept(state.rasterLayers, { parentId, subId })
+          : state.rasterLayers.map(layer => ({
+              ...layer,
+              subLayers: layer.subLayers?.map(s => ({
+                ...s,
+                visible: false,
+              })),
+              visible: false,
+            })),
+      };
     });
   },
 
@@ -97,13 +144,15 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 
       const linkedRasters = rasterLayersRaw.map((raster) => {
         const match = subRasterLayersRaw.find((sub) => sub.id === raster.id);
-        const subLayersWithColor = (match?.subLayers || []).map((sub) => ({
-            ...sub,
-            color: sub.color ?? raster.color ?? "#666666",
-          }));
+
         return {
           ...raster,
-          subLayers: match?.subLayers || [],
+          visible: false,
+          subLayers: match?.subLayers.map(sub => ({
+            ...sub,
+            visible: false,
+            color: sub.color ?? raster.color ?? '#666666',
+          })),
         };
       });
 
@@ -111,7 +160,10 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     } catch (err) {
       console.error('Error loading raster layers:', err);
       set({
-        error: err instanceof Error ? err.message : 'Unknown error loading raster layers',
+        error:
+          err instanceof Error
+            ? err.message
+            : 'Unknown error loading raster layers',
         loading: false,
       });
     }

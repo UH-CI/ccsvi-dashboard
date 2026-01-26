@@ -481,11 +481,15 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             <Collapse in={expandedHazards[parent.id]}>
                               <Stack spacing={1} sx={{ pl: 3 }}>
                                 {parent.subLayers.map((sub) => {
-                                  // const SubIcon =
-                                  //   FaIcons[sub.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
 
                                   return (
                                     <FormControlLabel
+                                      sx={{
+                                        ml: 0,        
+                                        '& .MuiFormControlLabel-label': {
+                                          ml: -4.2,       
+                                        },
+                                      }}
                                       key={sub.id}
                                       control={
                                         <Checkbox
@@ -520,7 +524,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
             <Divider className={styles['section-divider']} />
 
-            {/* 🗺️ Raster Layers */}
+
             <Box className={styles['control-section']}>
                 <Box 
                     className={styles['section-header']}
@@ -536,81 +540,109 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
                 <Collapse in={expandedSections.rasters}>
                   <Stack spacing={1} className={styles['section-content']}>
-                    {rasterLayers.map((parent) => {
-                      const ParentIcon =
-                        FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
+                  {rasterLayers.map((parent) => {
+                    const ParentIcon =
+                      FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
 
-                      return (
-                        <Box key={parent.id} className={styles['layer-toggle']}>
-                          {/* --- Parent checkbox + expand toggle --- */}
-                          <Box display="flex" alignItems="center">
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={parent.visible}
-                                  onChange={() => toggleRasterLayerVisibility(parent.id)}
-                                  size="small"
-                                />
-                              }
-                              label={
-                                <div className={styles['layer-label']}>
-                                  <span
-                                    className={styles['layer-icon']}
-                                    style={{ color: parent.color }}
-                                  >
-                                    <ParentIcon size="1rem" />
-                                  </span>
-                                  {parent.name}
-                                </div>
-                              }
-                            />
-                            {(parent.subLayers ?? []).length > 0 && (
-                              <IconButton 
-                                size="small" 
-                                className={styles['expand-icon']}
-                                onClick={() => toggleExpandRasters(parent.id)}>
-                                {expandedRasters[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                              </IconButton>
+                    const hasChildren = !!parent.subLayers?.length;
+                    const CHECKBOX_WIDTH = 15;
+                    // const anyChildVisible =
+                    //   hasChildren && parent.subLayers!.some((s) => s.visible);
+
+                    return (
+                      <Box key={parent.id} className={styles['layer-toggle']}>
+                        {/* === Parent row === */}
+                        <Box display="flex" alignItems="center">
+                          {/* Checkbox OR spacer */}
+                          <Box
+                            sx={{
+                              width: CHECKBOX_WIDTH,
+                              display: 'flex',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {!hasChildren && (
+                              <Checkbox
+                                checked={parent.visible}
+                                onChange={() =>
+                                  toggleRasterLayerVisibility(parent.id)
+                                }
+                                size="small"
+                              />
                             )}
                           </Box>
-
-                          {/* --- Sublayers (collapsible, independent of visibility) --- */}
-                          {parent.subLayers && parent.subLayers.length > 0 && (
-                            <Collapse in={expandedRasters[parent.id]}>
-                              <Stack spacing={1} sx={{ pl: 3 }}>
-                                {parent.subLayers.map((sub) => {
-                                  return (
-                                    <FormControlLabel
-                                      key={sub.id}
-                                      control={
-                                        <Checkbox
-                                          checked={sub.visible}
-                                          onChange={() => toggleSubRasterLayerVisibility(parent.id, sub.id)}
-                                          size="small"
-                                        />
-                                      }
-                                      label={
-                                        <div className={styles['layer-label']}>
-                                          <span
-                                            className={styles['layer-icon']}
-                                            style={{ color: sub.color ?? parent.color ?? '#666' }}
-                                          >
-                                            
-                                          </span>
-                                          {sub.name}
-                                        </div>
-                                      }
-                                    />
-                                  );
-                                })}
-                              </Stack>
-                            </Collapse>
+            
+                          {/* Label */}
+                          <Typography
+                            className={styles['layer-label']}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              flexGrow: 1,
+                              ml: '21px', 
+                            }}
+                          >
+                            <span
+                              className={styles['layer-icon']}
+                              style={{ color: parent.color }}
+                            >
+                              <ParentIcon size="1rem" />
+                            </span>
+                            {parent.name}
+                          </Typography>
+            
+                          {/* Expand */}
+                          {hasChildren && (
+                            <IconButton
+                              size="small"
+                              className={styles['expand-icon']}
+                              onClick={() => toggleExpandRasters(parent.id)}
+                            >
+                              {expandedRasters[parent.id] ? (
+                                <ExpandLess />
+                              ) : (
+                                <ExpandMore />
+                              )}
+                            </IconButton>
                           )}
                         </Box>
-                      );
-                    })}
-                  </Stack>
-                </Collapse>
+            
+                        {/* === Sublayers === */}
+                        {hasChildren && (
+                          <Collapse in={expandedRasters[parent.id]}>
+                            <Stack spacing={1} sx={{ pl: 3 }}>
+                              {parent.subLayers!.map((sub) => (
+                                <FormControlLabel
+                                  sx={{
+                                    ml: 0,        
+                                    '& .MuiFormControlLabel-label': {
+                                      ml: 0.9,       
+                                    },
+                                  }}
+                                  key={sub.id}
+                                  control={
+                                    <Checkbox
+                                      checked={sub.visible}
+                                      onChange={() =>
+                                        toggleSubRasterLayerVisibility(
+                                          parent.id,
+                                          sub.id
+                                        )
+                                      }
+                                      size="small"
+                                    />
+                                  }
+                                  label={sub.name}
+                                />
+                              ))}
+                            </Stack>
+                          </Collapse>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Collapse>
             </Box>
           </Paper>
         );

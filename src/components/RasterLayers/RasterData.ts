@@ -109,13 +109,11 @@ export class RasterData {
         };
         let data = this.data.data[oldName];
         let newValid = this.data.data[newName];
-        //old band name must exist, new band name must not
         if(data != undefined && newValid == undefined) {
             this.data.data[newName] = data;
             delete this.data.data[oldName];
         }
         else {
-            //set appropriate errors
             if(data == undefined) {
                 stat.code |= UpdateFlags.ERROR_INVALID_BAND;
             }
