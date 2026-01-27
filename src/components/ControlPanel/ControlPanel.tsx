@@ -31,14 +31,16 @@ import {
     LocationOn,
     Warning,
     Refresh,
+    Terrain,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
 import {
-    useAppStore,
-    useMapStore,
-    usePointLayerStore,
-    usePrimaryMapState,
-    useHazardLayersStore
+  useAppStore, 
+  useMapStore, 
+  usePointLayerStore, 
+  usePrimaryMapState,
+  useHazardLayersStore,
+  useRasterLayersStore
 } from "../../stores";
 import styles from './ControlPanel.module.scss';
 
@@ -79,9 +81,18 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         setExpandedHazards(prev => ({ ...prev, [id]: !prev[id] }));
     }, []);
 
+    const rasterLayers = useRasterLayersStore((state) => state.rasterLayers);
+    const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
+    const toggleSubRasterLayerVisibility = useRasterLayersStore((s) => s.toggleSubRasterLayerVisibility);
+
     const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
     const togglePanelCollapse = useCallback(() => {
         setIsPanelCollapsed(prev => !prev);
+    }, []);
+
+    const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
+    const toggleExpandRasters = useCallback((id: string) => {
+      setExpandedRasters(prev => ({ ...prev, [id]: !prev[id] }));
     }, []);
 
     const pointLayers = useMemo(() =>
@@ -464,6 +475,229 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                 </Stack>
                             </Collapse>
                         </Box>
+                        <Divider className={styles['section-divider']} />
+
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('hazards')}
+                >
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Hazards (Shapes)
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.hazards ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
+
+                <Collapse in={expandedSections.hazards}>
+                  <Stack spacing={1} className={styles['section-content']}>
+                    {hazardLayers.map((parent) => {
+                      const ParentIcon =
+                        FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
+
+                      return (
+                        <Box key={parent.id} className={styles['layer-toggle']}>
+                          {/* --- Parent checkbox + expand toggle --- */}
+                          <Box display="flex" alignItems="center">
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={parent.visible}
+                                  onChange={() => toggleHazardLayerVisibility(parent.id)}
+                                  size="small"
+                                />
+                              }
+                              label={
+                                <div className={styles['layer-label']}>
+                                  <span
+                                    className={styles['layer-icon']}
+                                    style={{ color: parent.color }}
+                                  >
+                                    <ParentIcon size="1rem" />
+                                  </span>
+                                  {parent.name}
+                                </div>
+                              }
+                            />
+                            {(parent.subLayers ?? []).length > 0 && (
+                              <IconButton 
+                                size="small" 
+                                className={styles['expand-icon']}
+                                onClick={() => toggleExpandHazards(parent.id)}>
+                                {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
+                              </IconButton>
+                            )}
+                          </Box>
+
+                          {/* --- Sublayers (collapsible, independent of visibility) --- */}
+                          {parent.subLayers && parent.subLayers.length > 0 && (
+                            <Collapse in={expandedHazards[parent.id]}>
+                              <Stack spacing={1} sx={{ pl: 3 }}>
+                                {parent.subLayers.map((sub) => {
+
+                                  return (
+                                    <FormControlLabel
+                                      sx={{
+                                        ml: 0,        
+                                        '& .MuiFormControlLabel-label': {
+                                          ml: -4.2,       
+                                        },
+                                      }}
+                                      key={sub.id}
+                                      control={
+                                        <Checkbox
+                                          checked={sub.visible}
+                                          onChange={() => toggleSubLayerVisibility(parent.id, sub.id)}
+                                          size="small"
+                                        />
+                                      }
+                                      label={
+                                        <div className={styles['layer-label']}>
+                                          <span
+                                            className={styles['layer-icon']}
+                                            style={{ color: sub.color ?? parent.color ?? '#666' }}
+                                          >
+                                            
+                                          </span>
+                                          {sub.name}
+                                        </div>
+                                      }
+                                    />
+                                  );
+                                })}
+                              </Stack>
+                            </Collapse>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Collapse>
+            </Box>
+
+            <Divider className={styles['section-divider']} />
+
+
+            <Box className={styles['control-section']}>
+                <Box 
+                    className={styles['section-header']}
+                    onClick={() => toggleSection('rasters')}
+                >
+                    <Typography variant="subtitle1" className={styles['section-title']}>
+                        Hazards (Rasters)
+                    </Typography>
+                    <IconButton size="small">
+                        {expandedSections.rasters ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                </Box>
+
+                <Collapse in={expandedSections.rasters}>
+                  <Stack spacing={1} className={styles['section-content']}>
+                  {rasterLayers.map((parent) => {
+                    const ParentIcon =
+                      FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
+
+                    const hasChildren = !!parent.subLayers?.length;
+                    const CHECKBOX_WIDTH = 15;
+                    // const anyChildVisible =
+                    //   hasChildren && parent.subLayers!.some((s) => s.visible);
+
+                    return (
+                      <Box key={parent.id} className={styles['layer-toggle']}>
+                        {/* === Parent row === */}
+                        <Box display="flex" alignItems="center">
+                          {/* Checkbox OR spacer */}
+                          <Box
+                            sx={{
+                              width: CHECKBOX_WIDTH,
+                              display: 'flex',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {!hasChildren && (
+                              <Checkbox
+                                checked={parent.visible}
+                                onChange={() =>
+                                  toggleRasterLayerVisibility(parent.id)
+                                }
+                                size="small"
+                              />
+                            )}
+                          </Box>
+            
+                          {/* Label */}
+                          <Typography
+                            className={styles['layer-label']}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              flexGrow: 1,
+                              ml: '21px', 
+                            }}
+                          >
+                            <span
+                              className={styles['layer-icon']}
+                              style={{ color: parent.color }}
+                            >
+                              <ParentIcon size="1rem" />
+                            </span>
+                            {parent.name}
+                          </Typography>
+            
+                          {/* Expand */}
+                          {hasChildren && (
+                            <IconButton
+                              size="small"
+                              className={styles['expand-icon']}
+                              onClick={() => toggleExpandRasters(parent.id)}
+                            >
+                              {expandedRasters[parent.id] ? (
+                                <ExpandLess />
+                              ) : (
+                                <ExpandMore />
+                              )}
+                            </IconButton>
+                          )}
+                        </Box>
+            
+                        {/* === Sublayers === */}
+                        {hasChildren && (
+                          <Collapse in={expandedRasters[parent.id]}>
+                            <Stack spacing={1} sx={{ pl: 3 }}>
+                              {parent.subLayers!.map((sub) => (
+                                <FormControlLabel
+                                  sx={{
+                                    ml: 0,        
+                                    '& .MuiFormControlLabel-label': {
+                                      ml: 0.9,       
+                                    },
+                                  }}
+                                  key={sub.id}
+                                  control={
+                                    <Checkbox
+                                      checked={sub.visible}
+                                      onChange={() =>
+                                        toggleSubRasterLayerVisibility(
+                                          parent.id,
+                                          sub.id
+                                        )
+                                      }
+                                      size="small"
+                                    />
+                                  }
+                                  label={sub.name}
+                                />
+                              ))}
+                            </Stack>
+                          </Collapse>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Collapse>
+            </Box>
                     </>
                 ) : (
                     <Box className={styles['collapsed-sidebar']}>
@@ -487,6 +721,11 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                 <Warning />
                             </Box>
                         </Tooltip>
+                            <Tooltip title="Hazards (Rasters)" placement="left">
+        <Box className={styles['collapsed-section']} onClick={() => setIsPanelCollapsed(false)}>
+            <Terrain />
+        </Box>
+    </Tooltip>
                     </Box>
                 )}
             </Paper>

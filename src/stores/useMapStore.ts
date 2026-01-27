@@ -16,6 +16,7 @@ interface MapState {
       utils: boolean;
       points: boolean;
       hazards: boolean;
+      rasters: boolean;
   };
 
     // Actions
@@ -47,6 +48,7 @@ const initialExpandedSections: MapState['expandedSections'] = {
     utils: true,
     points: true,
     hazards: true,
+    rasters: true,
 };
 
 export const useMapStore = create<MapState>((set, get) => ({
