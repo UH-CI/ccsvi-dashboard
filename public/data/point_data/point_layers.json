@@ -105,9 +105,25 @@
       "filePath": "/data/point_data/National_Bridge_Inventory.geojson",
       "popupConfig": {
         "fields": [
-          {"key":  "structure_", "label": "Structure ID"},
+          { "key": "structure_", "label": "Structure ID" },
           { "key": "year_built", "label": "Year Built" },
-          {"key":  "bridge_con", "label":  "Bridge Condition"}
+          { "key": "bridge_con", "label": "Bridge Condition" }
+        ]
+      }
+    },
+    {
+      "id": "sewage",
+      "name": "Sewage Disposal Systems",
+      "visible": false,
+      "icon": "FaToilet",
+      "color": "#964B00",
+      "filePath": "data/point_data/HI_Onsite_Sewage_Disposal_Systems.geojson",
+      "popupConfig": {
+        "titleField": "island",
+        "fields": [
+          { "key": "osds_qty", "label": "OSDS Quantity" },
+          { "key": "ttl_osds", "label": "Total OSDS" },
+          { "key": "rsk_score", "label": "Risk Score" }
         ]
       }
     }
