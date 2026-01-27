@@ -4,6 +4,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import { renderToString } from "react-dom/server";
 import * as FaIcons from "react-icons/fa";
 import L from "leaflet";
+import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
 import styles from "./PointLayers.module.scss";
 import { PointLayerConfig } from "../../types";
@@ -73,7 +74,7 @@ export const GenericPointMarkers: React.FC<{
     return `<div class="${styles.popupContent}"><b>${title}</b><br/>${fields}</div>`;
   };
 
-  const createClusterIcon = (cluster: any) =>
+  const createClusterIcon = (cluster: L.MarkerCluster) =>
     L.divIcon({
       html: `
         <div style="
