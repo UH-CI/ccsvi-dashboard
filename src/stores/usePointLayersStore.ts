@@ -86,7 +86,10 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
             const configs: PointLayerConfig[] = config.pointLayers || [];
 
             setPointLayerConfigs(configs);
-            setVisibleLayerIds(initialVisibleIds);
+            // Only set visible layer IDs if explicitly provided, otherwise keep existing
+            if (initialVisibleIds.length > 0) {
+                setVisibleLayerIds(initialVisibleIds);
+            }
             setIsLoaded(true);
 
         } catch (err) {
