@@ -4,7 +4,7 @@ import { RasterData } from '../components/RasterLayers/RasterData';
 
 interface RasterLayersState {
   rasterLayers: RasterLayerConfig[];
-  rasterData: Map<string, RasterData>; // Cache loaded raster data by layer ID
+  rasterData: Map<string, RasterData>; 
   loading: boolean;
   error: string | null;
   setRasterLayers: (layers: RasterLayerConfig[]) => void;

@@ -67,7 +67,7 @@
             "name": "Erosion",
             "subLayers": [
               { 
-                "id": "0.5ft", 
+                "id": "0.5ft_erosion", 
                 "name": "0.5ft", 
                 "color": "#736a62",
                 "visible": false, 
@@ -78,7 +78,7 @@
                 }
               },
               { 
-                "id": "1.1ft", 
+                "id": "1.1ft_erosion", 
                 "name": "1.1ft", 
                 "color": "#63584f",
                 "visible": false, 
@@ -89,7 +89,7 @@
                 }
               },
               { 
-                "id": "2.0ft", 
+                "id": "2.0ft_erosion", 
                 "name": "2.0ft", 
                 "color": "#5c4e42",
                 "visible": false, 
@@ -100,7 +100,7 @@
                 }
               },
               { 
-                "id": "3.2ft", 
+                "id": "3.2ft_erosion", 
                 "name": "3.2ft", 
                 "color": "#524032",
                 "visible": false, 
@@ -118,7 +118,7 @@
             "name": "Potential Flooded Highways",
             "subLayers": [
               {
-                "id": "0.5ft", 
+                "id": "0.5ft_pfh", 
                 "name": "0.5ft",
                 "color": "#000000",
                 "visible": false, 
@@ -133,7 +133,7 @@
                 }
               },
               {
-                "id": "1.1ft", 
+                "id": "1.1ft_pfh", 
                 "name": "1.1ft",
                 "color": "#2e2e2e",
                 "visible": false, 
@@ -148,7 +148,7 @@
                 }
               },
               {
-                "id": "2.0ft", 
+                "id": "2.0ft_pfh", 
                 "name": "2.0ft",
                 "color": "#575757",
                 "visible": false, 
@@ -163,7 +163,7 @@
                 }
               },
               {
-                "id": "3.2ft", 
+                "id": "3.2ft_pfh", 
                 "name": "3.2ft",
                 "color": "#808080",
                 "visible": false, 
@@ -184,7 +184,7 @@
             "name": "Potential Economic Loss",
             "subLayers": [
               {
-                "id": "0.5ft", 
+                "id": "0.5ft_pel", 
                 "name": "0.5ft",
                 "color": "#d1d12e",
                 "visible": false, 
@@ -199,7 +199,7 @@
                 }
               },
               {
-                "id": "1.1ft", 
+                "id": "1.1ft_pel", 
                 "name": "1.1ft",
                 "color": "#d1d12e",
                 "visible": false, 
@@ -214,7 +214,7 @@
                 }
               },
               {
-                "id": "2.0ft", 
+                "id": "2.0ft_pel", 
                 "name": "2.0ft",
                 "color": "#d1d12e",
                 "visible": false, 
@@ -229,7 +229,7 @@
                 }
               },
               {
-                "id": "3.2ft", 
+                "id": "3.2ft_pel", 
                 "name": "3.2ft",
                 "color": "#d1d12e",
                 "visible": false, 
@@ -250,7 +250,7 @@
             "name": "Exposure Area",
             "subLayers": [
               {
-                "id": "0.5ft", 
+                "id": "0.5ft_ea", 
                 "name": "0.5ft",
                 "color": "#7ea834",
                 "visible": false, 
@@ -261,7 +261,7 @@
                 }
               },
               {
-                "id": "1.1ft", 
+                "id": "1.1ft_ea", 
                 "name": "1.1ft",
                 "color": "#7ea834",
                 "visible": false, 
@@ -272,7 +272,7 @@
                 }
               },
               {
-                "id": "2.0ft", 
+                "id": "2.0ft_ea", 
                 "name": "2.0ft",
                 "color": "#7ea834",
                 "visible": false, 
@@ -283,7 +283,7 @@
                 }
               },
               {
-                "id": "3.2ft", 
+                "id": "3.2ft_ea", 
                 "name": "3.2ft",
                 "color": "#7ea834",
                 "visible": false, 
@@ -300,7 +300,7 @@
             "name": "Passive Flood",
             "subLayers": [
               {
-                "id": "0.5ft", 
+                "id": "0.5ft_pf", 
                 "name": "0.5ft",
                 "color": "#37bbf0",
                 "visible": false, 
@@ -314,7 +314,7 @@
                 }
               },
               {
-                "id": "1.1ft", 
+                "id": "1.1ft_pf", 
                 "name": "1.1ft",
                 "color": "#2c9cc9",
                 "visible": false, 
@@ -328,7 +328,7 @@
                 }
               },
               {
-                "id": "2.0ft", 
+                "id": "2.0ft_pf", 
                 "name": "2.0ft",
                 "color": "#22799c",
                 "visible": false, 
@@ -342,7 +342,7 @@
                 }
               },
               {
-                "id": "3.2ft", 
+                "id": "3.2ft_pf", 
                 "name": "3.2ft",
                 "color": "#1a5d78",
                 "visible": false, 
