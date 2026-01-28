@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Typography,
     FormControl,
@@ -49,7 +48,6 @@ interface IntegratedControlPanelProps {
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                         maxMaps
                                                                     }) => {
-    const navigate = useNavigate();
     const dataset = useAppStore(state => state.blockGroupData);
 
     const mapConfigs = useMapStore(state => state.mapConfigs);
@@ -131,10 +129,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         setMetric('');
         setVisiblePointLayerIds([]);
         setVisibleHazardLayerIds([]);
-
-        // Clear URL
-        navigate('/', { replace: true });
-    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, navigate]);
+    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds]);
 
     const handleSnapshot = useCallback(() => {
         console.log('Snapshot');

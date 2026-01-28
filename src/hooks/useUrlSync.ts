@@ -17,7 +17,7 @@ import { initializeStoresFromUrl } from '../utils/storeInitializer';
  *
  */
 export function useUrlSync(isInitialized: boolean) {
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [, setSearchParams] = useSearchParams();
 
     // Track URL update to prevent circular updates
     const isUpdatingFromUrl = useRef(false);
@@ -28,73 +28,48 @@ export function useUrlSync(isInitialized: boolean) {
 
     // --- STORE > URL SYNC ---
 
-    // Sync map configs
+    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|');
+    const pointLayerKey = Array.from(visiblePointLayers).sort().join(',');
+    const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
+
     useEffect(() => {
         if (!isInitialized || isUpdatingFromUrl.current) return;
+
+        const isDefaultMapState = mapConfigs.length === 1
+            && !mapConfigs[0].dataset
+            && !mapConfigs[0].metric;
 
         const serialized = serializeMapConfigs(mapConfigs);
 
         setSearchParams((prev) => {
             const newParams = new URLSearchParams(prev);
 
-            newParams.set('maps', serialized.maps);
-
-            // Update datasets - remove old ones first
+            // --- Map configs ---
             Array.from(prev.keys()).forEach((key) => {
-                if (key.startsWith('d_')) newParams.delete(key);
-            });
-            Object.entries(serialized.datasets).forEach(([key, val]) => {
-                newParams.set(key, val);
+                if (key.startsWith('d_') || key.startsWith('m_')) newParams.delete(key);
             });
 
-            // Update metrics - remove old ones first
-            Array.from(prev.keys()).forEach((key) => {
-                if (key.startsWith('m_')) newParams.delete(key);
-            });
-            Object.entries(serialized.metrics).forEach(([key, val]) => {
-                newParams.set(key, val);
-            });
+            if (isDefaultMapState) {
+                newParams.delete('maps');
+            } else {
+                newParams.set('maps', serialized.maps);
 
-            return newParams;
-        }, { replace: true });
-    },
-        // Dependency: serialize map config state for comparison
-        [
-        mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|'),
-        setSearchParams,
-        isInitialized,
-    ]);
+                Object.entries(serialized.datasets).forEach(([key, val]) => {
+                    newParams.set(key, val);
+                });
+                Object.entries(serialized.metrics).forEach(([key, val]) => {
+                    newParams.set(key, val);
+                });
+            }
 
-    // Sync point layer visibility
-    useEffect(() => {
-        if (!isInitialized || isUpdatingFromUrl.current) return;
-
-        setSearchParams((prev) => {
-            const newParams = new URLSearchParams(prev);
-
+            // --- Point layers ---
             if (visiblePointLayers.size > 0) {
                 newParams.set('layers', Array.from(visiblePointLayers).sort().join(','));
             } else {
                 newParams.delete('layers');
             }
 
-            return newParams;
-        }, { replace: true });
-    },
-        // Dependency: sorted layer IDs as string
-        [
-        Array.from(visiblePointLayers).sort().join(','),
-        setSearchParams,
-        isInitialized,
-    ]);
-
-    // Sync hazard layer visibility
-    useEffect(() => {
-        if (!isInitialized || isUpdatingFromUrl.current) return;
-
-        setSearchParams((prev) => {
-            const newParams = new URLSearchParams(prev);
-
+            // --- Hazard layers ---
             if (visibleHazardLayers.size > 0) {
                 newParams.set('hazards', Array.from(visibleHazardLayers).sort().join(','));
             } else {
@@ -103,13 +78,7 @@ export function useUrlSync(isInitialized: boolean) {
 
             return newParams;
         }, { replace: true });
-    },
-        // Dependency: sorted layer IDs as string
-        [
-        Array.from(visibleHazardLayers).sort().join(','),
-        setSearchParams,
-        isInitialized,
-    ]);
+    }, [mapConfigKey, pointLayerKey, hazardLayerKey, setSearchParams, isInitialized]);
 
     // --- URL > STORE SYNC ---
 

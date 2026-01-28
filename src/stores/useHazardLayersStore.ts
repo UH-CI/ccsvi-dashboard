@@ -74,7 +74,9 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
             // Show parent and all sublayers
             newVisibleIds.add(id);
 
-            fetchHazardLayerData(id);
+            if (layer.filePath) {
+                fetchHazardLayerData(id);
+            }
 
             layer.subLayers?.forEach(sub => {
                 const fullSubId = `${id}.${sub.id}`;
@@ -201,6 +203,7 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         } else {
             // Parent layer
             const parentLayer = hazardLayerConfigs.find(l => l.id === layerId);
+            if (parentLayer?.subLayers?.length) return;
             filePath = parentLayer?.filePath;
         }
 
