@@ -63,58 +63,5 @@ function initializeHazardLayers(hazardIds: string[]): void {
     if (hazardIds.length === 0) return;
 
     const store = useHazardLayersStore.getState();
-
-    const parentIds = new Set<string>();
-    const childMap = new Map<string, string[]>();
-
-    hazardIds.forEach((id) => {
-        if (id.includes('.')) {
-            const [parentId, ...childParts] = id.split('.');
-            const childId = childParts.join('.');
-
-            parentIds.add(parentId);
-
-            if (!childMap.has(parentId)) {
-                childMap.set(parentId, []);
-            }
-            childMap.get(parentId)!.push(childId);
-        } else {
-            parentIds.add(id);
-        }
-    });
-
-    // Build the complete set of visible IDs
-    const visibleIds = new Set<string>();
-
-    // Add all parent IDs
-    parentIds.forEach((parentId) => {
-        visibleIds.add(parentId);
-    });
-
-    // Add all child IDs with full path
-    childMap.forEach((children, parentId) => {
-        children.forEach((childId) => {
-            visibleIds.add(`${parentId}.${childId}`);
-        });
-    });
-
-    // Set all visible IDs at once
-    store.setVisibleLayerIds(Array.from(visibleIds));
-
-    // Fetch data for all visible layers
-    parentIds.forEach((parentId) => {
-        const layer = store.hazardLayerConfigs.find(l => l.id === parentId);
-        if (layer?.filePath) {
-            store.fetchHazardLayerData(parentId, layer.filePath);
-        }
-
-        // Fetch child layer data
-        const childIds = childMap.get(parentId) || [];
-        childIds.forEach((childId) => {
-            const subLayer = layer?.subLayers?.find(s => s.id === childId);
-            if (subLayer?.filePath) {
-                store.fetchHazardLayerData(subLayer.id, subLayer.filePath);
-            }
-        });
-    });
+    store.setVisibleLayerIds(hazardIds);
 }

@@ -21,7 +21,7 @@ interface HazardLayersState {
 
     // Data fetching
     fetchHazardLayerConfigs: () => Promise<void>;
-    fetchHazardLayerData: (layerId: string, filePath: string) => Promise<void>;
+    fetchHazardLayerData: (layerId: string) => Promise<void>;
 
     loading: boolean;
     error: string | null;
@@ -69,20 +69,17 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         if (newVisibleIds.has(id)) {
             // Hide parent and all sublayers
             newVisibleIds.delete(id);
-            layer.subLayers?.forEach(sub => newVisibleIds.delete(sub.id));
+            layer.subLayers?.forEach(sub => newVisibleIds.delete(`${id}.${sub.id}`));
         } else {
             // Show parent and all sublayers
             newVisibleIds.add(id);
 
-            if (layer.filePath) {
-                fetchHazardLayerData(id, layer.filePath);
-            }
+            fetchHazardLayerData(id);
 
             layer.subLayers?.forEach(sub => {
-                newVisibleIds.add(sub.id);
-                if (sub.filePath) {
-                    fetchHazardLayerData(sub.id, sub.filePath);
-                }
+                const fullSubId = `${id}.${sub.id}`;
+                newVisibleIds.add(fullSubId);
+                fetchHazardLayerData(fullSubId);
             });
         }
 
@@ -99,26 +96,26 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         const subLayer = parentLayer.subLayers.find(s => s.id === subId);
         if (!subLayer) return;
 
-        if (newVisibleIds.has(subId)) {
+        const fullSubId = `${parentId}.${subId}`;
+
+        if (newVisibleIds.has(fullSubId)) {
             // Hide this sublayer
-            newVisibleIds.delete(subId);
+            newVisibleIds.delete(fullSubId);
 
             // If no sublayers are visible, hide parent too
             const anySubVisible = parentLayer.subLayers.some(s =>
-                s.id !== subId && newVisibleIds.has(s.id)
+                s.id !== subId && newVisibleIds.has(`${parentId}.${s.id}`)
             );
             if (!anySubVisible) {
                 newVisibleIds.delete(parentId);
             }
         } else {
             // Show this sublayer and ensure parent is visible
-            newVisibleIds.add(subId);
+            newVisibleIds.add(fullSubId);
             newVisibleIds.add(parentId);
 
             // Fetch data if needed
-            if (subLayer.filePath) {
-                fetchHazardLayerData(subId, subLayer.filePath);
-            }
+            fetchHazardLayerData(fullSubId);
         }
 
         setVisibleLayerIds(Array.from(newVisibleIds));
@@ -169,6 +166,12 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
 
             set({ hazardLayerConfigs: linkedHazards, loading: false });
             setIsLoaded(true);
+
+            // Fetch data for any layers already marked visible (e.g., from URL initialization)
+            const { visibleLayerIds } = get();
+            visibleLayerIds.forEach(layerId => {
+                get().fetchHazardLayerData(layerId);
+            });
         } catch (err) {
             console.error('Error loading hazard layers:', err);
             set({
@@ -178,11 +181,33 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         }
     },
 
-    fetchHazardLayerData: async (layerId, filePath) => {
-        const { hazardLayerData, setHazardLayerData } = get();
+    fetchHazardLayerData: async (layerId) => {
+        const { hazardLayerData, hazardLayerConfigs, setHazardLayerData } = get();
 
         // Skip if already loaded
         if (hazardLayerData.has(layerId)) return;
+
+        // Look up filePath from configs
+        // Sublayer IDs use "parentId.subId" format for uniqueness
+        let filePath: string | undefined;
+
+        if (layerId.includes('.')) {
+            // Sublayer: parse parent.child format
+            const [parentId, ...subParts] = layerId.split('.');
+            const subId = subParts.join('.');
+            const parentLayer = hazardLayerConfigs.find(l => l.id === parentId);
+            const subLayer = parentLayer?.subLayers?.find(s => s.id === subId);
+            filePath = subLayer?.filePath;
+        } else {
+            // Parent layer
+            const parentLayer = hazardLayerConfigs.find(l => l.id === layerId);
+            filePath = parentLayer?.filePath;
+        }
+
+        if (!filePath) {
+            console.warn(`Hazard layer config not found: ${layerId}`);
+            return;
+        }
 
         const ext = filePath.split('.').pop()?.toLowerCase();
 

@@ -98,7 +98,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                 visible: visibleHazardLayerIds.has(config.id),
                 subLayers: config.subLayers?.map(sub => ({
                     ...sub,
-                    visible: visibleHazardLayerIds.has(sub.id)
+                    visible: visibleHazardLayerIds.has(`${config.id}.${sub.id}`)
                 }))
             })),
         [hazardLayerConfigs, visibleHazardLayerIds]

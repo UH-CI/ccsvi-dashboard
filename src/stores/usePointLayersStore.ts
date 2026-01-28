@@ -92,6 +92,12 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
             }
             setIsLoaded(true);
 
+            // Fetch data for any layers already marked visible (e.g., from URL initialization)
+            const { visibleLayerIds } = get();
+            visibleLayerIds.forEach(layerId => {
+                get().fetchPointLayerData(layerId);
+            });
+
         } catch (err) {
             console.error('Error loading point layers configuration:', err);
         }

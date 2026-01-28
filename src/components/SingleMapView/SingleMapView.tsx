@@ -301,7 +301,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                             )}
 
                             {layer.subLayers?.map(sub => (
-                                visibleHazardIds.has(sub.id) ? (
+                                visibleHazardIds.has(`${layer.id}.${sub.id}`) ? (
                                     <HazardLayerRenderer key={sub.id} parentId={layer.id} layerId={sub.id} />
                                 ) : null
                             ))}
