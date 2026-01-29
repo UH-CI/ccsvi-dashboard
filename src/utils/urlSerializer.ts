@@ -42,13 +42,19 @@ export function serializeMapConfigs(configs: MapConfig[]): SerializedMapState {
 }
 
 export function deserializeMapConfigs(params: URLSearchParams): DeserializedState {
+    const layersParam = params.get('layers');
+    const pointLayers = layersParam ? layersParam.split(',').filter(Boolean) : [];
+
+    const hazardsParam = params.get('hazards');
+    const hazardLayers = hazardsParam ? hazardsParam.split(',').filter(Boolean) : [];
+
     const mapsParam = params.get('maps');
 
     if (!mapsParam) {
         return {
             mapConfigs: [],
-            pointLayers: [],
-            hazardLayers: [],
+            pointLayers,
+            hazardLayers,
         };
     }
 
@@ -63,14 +69,6 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
         };
     });
 
-    // Parse point layers
-    const layersParam = params.get('layers');
-    const pointLayers = layersParam ? layersParam.split(',').filter(Boolean) : [];
-
-    // Parse hazard layers
-    const hazardsParam = params.get('hazards');
-    const hazardLayers = hazardsParam ? hazardsParam.split(',').filter(Boolean) : [];
-
     return { mapConfigs, pointLayers, hazardLayers };
 }
 
@@ -82,15 +80,6 @@ export function validateAndNormalize(state: DeserializedState): DeserializedStat
         // Ensure valid map ID format (map1, map2, etc.)
         return config.id && /^map\d+$/.test(config.id);
     });
-
-    // If no valid maps, return empty state
-    if (validMapConfigs.length === 0) {
-        return {
-            mapConfigs: [],
-            pointLayers: [],
-            hazardLayers: [],
-        };
-    }
 
     // Limit to 4 maps maximum
     const limitedMapConfigs = validMapConfigs.slice(0, 4);

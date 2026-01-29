@@ -25,7 +25,7 @@ interface PointLayerState {
     toggleLayerVisibility: (layerId: string) => void;
 
     // Data fetching
-    fetchPointLayerConfigs: (initialVisibleIds?: string[]) => Promise<void>;
+    fetchPointLayerConfigs: () => Promise<void>;
     fetchPointLayerData: (layerId: string) => Promise<void>;
 }
 
@@ -84,8 +84,8 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
     },
 
     // Data fetching
-    fetchPointLayerConfigs: async (initialVisibleIds = []) => {
-        const { isLoaded, setPointLayerConfigs, setVisibleLayerIds, setIsLoaded } = get();
+    fetchPointLayerConfigs: async () => {
+        const { isLoaded, visibleLayerIds, setPointLayerConfigs, setIsLoaded, fetchPointLayerData } = get();
 
         // Prevent duplicate loads
         if (isLoaded) {
@@ -104,15 +104,12 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
             const configs: PointLayerConfig[] = config.pointLayers || [];
 
             setPointLayerConfigs(configs);
-            // Always set visibility (empty array clears all)
-            setVisibleLayerIds(initialVisibleIds);
             setIsLoaded(true);
             set({ loading: false });
 
             // Fetch data for any layers already marked visible (e.g., from URL initialization)
-            const { visibleLayerIds } = get();
             visibleLayerIds.forEach(layerId => {
-                get().fetchPointLayerData(layerId);
+                fetchPointLayerData(layerId);
             });
 
         } catch (err) {
