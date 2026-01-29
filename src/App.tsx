@@ -1,17 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import styles from './App.module.scss';
 import { ControlPanel } from './components/ControlPanel';
 import { MultiMapContainer } from './components/MultiMapContainer';
 import { TableViewer } from './components/TableViewer';
-import { useAppStore, useIsReady, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from './stores';
-import { useUrlState } from './hooks/useUrlState';
-//import initializeRasterLayer from './components/RasterLayers/leaflet-raster-layer.service';
+import {
+    useAppStore,
+    useIsReady,
+    usePointLayerStore,
+    useHazardLayersStore,
+    useRasterLayersStore,
+    useMapStore
+} from './stores';
+import { useUrlSync } from './hooks/useUrlSync';
+import { deserializeMapConfigs, validateAndNormalize } from './utils/urlSerializer';
+import { initializeStoresFromUrl } from './utils/storeInitializer';
 
 const App: React.FC = () => {
-    // Get URL state (currently broken)
-    const { urlState } = useUrlState();
-    
+    const [isUrlInitialized, setIsUrlInitialized] = useState(false);
+
+    // TEMPORARY - Get primary map's dataset for table viewer
+    // Just uses the first map for now
+    const primaryDataset = useMapStore((state) => state.mapConfigs[0]?.dataset || '');
+
     // Get data from stores
     const errors = useAppStore(state => state.errors);
     const fetchAllData = useAppStore(state => state.fetchAllData);
@@ -31,44 +42,27 @@ const App: React.FC = () => {
     
     const isReady = useIsReady();
 
+    // Initialize stores from URL on mount (runs once)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const urlState = deserializeMapConfigs(params);
+        const validatedState = validateAndNormalize(urlState);
+
+        initializeStoresFromUrl(validatedState);
+        setIsUrlInitialized(true);
+    }, []);
+
+    // Enable bidirectional URL sync after initialization
+    useUrlSync(isUrlInitialized);
+
     // Fetch all data on mount
     useEffect(() => {
         fetchAllData();
-        fetchPointLayerConfigs(urlState.pointLayers);
+        fetchPointLayerConfigs();
         fetchHazardLayerConfigs();
         fetchRasterLayers();
         //initializeRasterLayer();
   }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayers]);
-
-    // Load data for visible layers
-    // useEffect(() => {
-    //     if (urlState.pointLayers.length > 0) {
-    //         urlState.pointLayers.forEach(layerId => {
-    //             fetchPointLayerData(layerId);
-    //         });
-    //     }
-    // }, [urlState.pointLayers, fetchPointLayerData]);
-
-    // // Handle table size changes with smooth animation
-    // const handleTableSizeChange = useCallback(() => {
-    //     animateResize(mapRef);
-    // }, [animateResize, mapRef]);
-    //
-    // // Map events component
-    // const MapEvents = () => {
-    //     const map = useMap();
-    //
-    //     useEffect(() => {
-    //         mapRef.current = map;
-    //     }, [map]);
-    //
-    //     useMapEvents({
-    //         click: () => {
-    //             setActiveFeature(null);
-    //         },
-    //     });
-    //     return null;
-    // };
 
     // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
@@ -86,35 +80,35 @@ const App: React.FC = () => {
     );
   }
 
-  // === Loading ===
+    // === Loading ===
   if (!isReady || hazardLoading || rasterLoading) {
+        return (
+            <div className={styles['loading-container']}>
+                <div>Loading data...</div>
+            </div>
+        );
+    }
+
+    // === Main UI ===
+    const activeDatasetObject =
+        blockGroupData && primaryDataset
+            ? blockGroupData[primaryDataset]
+            : null;
+
     return (
-      <div className={styles['loading-container']}>
-        <div>Loading data...</div>
-      </div>
+        <div className={styles['app-container']}>
+            <div className={styles['map-section']}>
+                <MultiMapContainer maxMaps={4} />
+
+                <TableViewer
+                    activeDataset={primaryDataset}
+                    datasetInfo={activeDatasetObject}
+                />
+            </div>
+
+            <ControlPanel maxMaps={4} />
+        </div>
     );
-  }
-
-  // === Main UI ===
-  const activeDatasetObject =
-    blockGroupData && urlState.dataset
-      ? blockGroupData[urlState.dataset]
-      : null;
-
-  return (
-    <div className={styles['app-container']}>
-      <div className={styles['map-section']}>
-        <MultiMapContainer maxMaps={4} />
-
-        <TableViewer
-          activeDataset={urlState.dataset}
-          datasetInfo={activeDatasetObject}
-        />
-      </div>
-
-      <ControlPanel maxMaps={4} />
-    </div>
-  );
 };
 
 export default App;

@@ -22,7 +22,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ parent
       : undefined;
 
   const activeLayer = subLayer ?? parentLayer;
-  const activeLayerId = layerId ?? parentId;
+  const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
 
     const isVisible = useIsHazardLayerVisible(activeLayerId);
   const layerData = useHazardLayerData(activeLayerId);
