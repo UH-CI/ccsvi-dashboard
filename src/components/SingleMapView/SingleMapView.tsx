@@ -15,7 +15,7 @@ import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
 import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore } from "../../stores";
-import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
+import { HazardLayerRenderer } from '../HazardLayers';
 
 interface SingleMapViewProps {
     mapId: string;
@@ -92,22 +92,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
 
-    const configs = usePointLayerStore(state => state.pointLayerConfigs);
-    const data = usePointLayerStore(state => state.pointLayerData);
-    const visibleIds = usePointLayerStore(state => state.visibleLayerIds);
+    // Get visible point layer IDs from store (components will fetch their own data)
+    const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIds);
 
+    // Get hazard layer configs and visible IDs from refactored store
     const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
     const visibleHazardIds = useHazardLayersStore(state => state.visibleLayerIds);
-
-    const visiblePointLayers = useMemo(() => {
-        return configs
-            .filter(config => visibleIds.has(config.id))
-            .map(config => ({
-                ...config,
-                visible: true,
-                data: data.get(config.id),
-            }));
-    }, [configs, data, visibleIds]);
 
     useEffect(() => {
         if (mapRef.current) {
@@ -176,8 +166,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         if (!feature) return;
 
         // Extract geoid - check both census and homelands properties
-        const geoid = (feature.properties as BlockGroupProperties)?.geoid20 || 
-              (feature.properties as HawaiianHomelandProperties)?.GEOID10;
+        const geoid = (feature.properties as BlockGroupProperties)?.geoid20 ||
+            (feature.properties as HawaiianHomelandProperties)?.GEOID10;
         if (!geoid) return;
 
         const map = mapRef.current;
@@ -293,23 +283,31 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         )
                     }
 
-                    {/* --- Hazard Layers --- */}
+                    {/* Render hazard layers based on visibility state */}
                     {hazardLayerConfigs.map(layer => (
                         <React.Fragment key={layer.id}>
+                            {/* Render parent layer if it has a filePath and is visible */}
                             {layer.filePath && visibleHazardIds.has(layer.id) && (
                                 <HazardLayerRenderer parentId={layer.id} />
                             )}
 
-                            {layer.subLayers?.map(sub => (
-                                visibleHazardIds.has(`${layer.id}.${sub.id}`) ? (
-                                    <HazardLayerRenderer key={sub.id} parentId={layer.id} layerId={sub.id} />
-                                ) : null
-                            ))}
+                            {/* Render sublayers that are visible */}
+                            {layer.subLayers?.map(sub => {
+                                const compositeId = `${layer.id}.${sub.id}`;
+                                return visibleHazardIds.has(compositeId) ? (
+                                    <HazardLayerRenderer
+                                        key={compositeId}
+                                        parentId={layer.id}
+                                        layerId={sub.id}
+                                    />
+                                ) : null;
+                            })}
                         </React.Fragment>
                     ))}
 
-                    {visiblePointLayers.map(layer => (
-                        <GenericPointMarkers key={layer.id} layer={layer} />
+                    {/* Render point layers - components fetch their own data from store */}
+                    {Array.from(visiblePointLayerIds).map(layerId => (
+                        <GenericPointMarkers key={layerId} layerId={layerId} />
                     ))}
                 </MapContainer>
 
