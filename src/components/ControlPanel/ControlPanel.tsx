@@ -79,9 +79,11 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         setExpandedHazards(prev => ({ ...prev, [id]: !prev[id] }));
     }, []);
 
-    const rasterLayers = useRasterLayersStore((state) => state.rasterLayers);
+    const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
+    const visibleRasterLayerIds = useRasterLayersStore((state) => state.visibleLayerIds);
     const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
     const toggleSubRasterLayerVisibility = useRasterLayersStore((s) => s.toggleSubRasterLayerVisibility);
+    const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
 
     const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
     const togglePanelCollapse = useCallback(() => {
@@ -113,6 +115,18 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         [hazardLayerConfigs, visibleHazardLayerIds]
     );
 
+    const rasterLayers = useMemo(() =>
+            rasterLayerConfigs.map(config => ({
+                ...config,
+                visible: visibleRasterLayerIds.has(config.id),
+                subLayers: config.subLayers?.map(sub => ({
+                    ...sub,
+                    visible: visibleRasterLayerIds.has(`${config.id}.${sub.id}`)
+                }))
+            })),
+        [rasterLayerConfigs, visibleRasterLayerIds]
+    );
+
     const datasetList = useMemo(() => {
         if (!dataset) return [];
         return Object.entries(dataset).map(([key, config]) => ({
@@ -140,7 +154,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         setMetric('');
         setVisiblePointLayerIds([]);
         setVisibleHazardLayerIds([]);
-    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds]);
+        setVisibleRasterLayerIds([]);
+    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, setVisibleRasterLayerIds]);
 
     const handleSnapshot = useCallback(() => {
         console.log('Snapshot');

@@ -124,7 +124,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     // Get hazard layer configs and visible IDs from refactored store
     const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
     const visibleHazardIds = useHazardLayersStore(state => state.visibleLayerIds);
-    const rasterLayers = useRasterLayersStore(state => state.rasterLayers);
+
+    // Get raster layer configs and visible IDs from refactored store
+    const rasterLayerConfigs = useRasterLayersStore(state => state.rasterLayerConfigs);
+    const visibleRasterIds = useRasterLayersStore(state => state.visibleLayerIds);
 
     useEffect(() => {
         if (mapRef.current) {
@@ -331,15 +334,26 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         </React.Fragment>
                     ))}
 
-                    {/* --- Hazard Layers Rasters--- */}
-                    {rasterLayers.map(r => (
-                        <React.Fragment key={r.id}>
-                            {r.visible && <RasterLayerRenderer parentId={r.id} mapZoom={mapZoom}/>}
-                            {r.subLayers?.map(sub =>
-                            sub.visible ? (
-                                <RasterLayerRenderer key={sub.id} parentId={r.id} layerId={sub.id} mapZoom={mapZoom}/>
-                            ) : null
+                    {/* Render raster layers based on visibility state */}
+                    {rasterLayerConfigs.map(layer => (
+                        <React.Fragment key={layer.id}>
+                            {/* Render parent layer if it has a filePath and is visible */}
+                            {layer.filePath && visibleRasterIds.has(layer.id) && (
+                                <RasterLayerRenderer parentId={layer.id} mapZoom={mapZoom} />
                             )}
+
+                            {/* Render sublayers that are visible */}
+                            {layer.subLayers?.map(sub => {
+                                const compositeId = `${layer.id}.${sub.id}`;
+                                return visibleRasterIds.has(compositeId) ? (
+                                    <RasterLayerRenderer
+                                        key={compositeId}
+                                        parentId={layer.id}
+                                        layerId={sub.id}
+                                        mapZoom={mapZoom}
+                                    />
+                                ) : null;
+                            })}
                         </React.Fragment>
                     ))}
 

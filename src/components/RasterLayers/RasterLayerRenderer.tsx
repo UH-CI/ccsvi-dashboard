@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import JSZip from 'jszip';
-import { useRasterLayersStore } from '../../stores';
+import { useRasterLayersStore, useIsRasterLayerVisible, useRasterLayerData } from '../../stores';
 import { DataProcessorService } from './data-processor.service';
 import { initializeRasterLayer, R, RasterOptions } from './leaflet-raster-layer.service';
 import { ColorGeneratorService } from './color-generator.service';
@@ -31,34 +30,39 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 }) => {
   const map = useMap();
 
-// references
+  // References for layer management
   const activeLayerRef = useRef<L.Layer | null>(null);
   const pendingLayerRef = useRef<L.Layer | null>(null);
   const currentOverviewRef = useRef<number | null>(null);
   const loadIdRef = useRef(0);
 
+  // Services
   const dataProcessorRef = useRef<DataProcessorService | null>(null);
   const colorGeneratorRef = useRef<ColorGeneratorService | null>(null);
 
-// state
+  // Local state for rendering
   const [leafletLayer, setLeafletLayer] = useState<L.Layer | null>(null);
   const [rasterData, setRasterData] = useState<RasterData | null>(null);
   const [colorScale, setColorScale] = useState<ColorScale | null>(null);
 
-// layer store
-  const rasterLayers = useRasterLayersStore(state => state.rasterLayers);
-  const parentLayer = rasterLayers.find(r => r.id === parentId);
+  // Get config from store
+  const rasterLayerConfigs = useRasterLayersStore(state => state.rasterLayerConfigs);
+  const parentLayer = rasterLayerConfigs.find(r => r.id === parentId);
   const subLayer =
     layerId && parentLayer?.subLayers
       ? parentLayer.subLayers.find(s => s.id === layerId)
       : undefined;
 
   const layerConfig = subLayer ?? parentLayer;
-  const isVisible = !!layerConfig?.visible;
-  const filePath = layerConfig?.filePath;
+  const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
+
+  // Get visibility and data from store
+  const isVisible = useIsRasterLayerVisible(activeLayerId);
+  const arrayBuffer = useRasterLayerData(activeLayerId);
+
   const opacity = layerConfig?.opacity ?? 0.7;
 
-// init 
+  // Initialize services
   useEffect(() => {
     if (!dataProcessorRef.current) {
       dataProcessorRef.current = new DataProcessorService();
@@ -68,7 +72,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     }
   }, []);
 
-// removes layers for overview
+  // Cleanup layers on unmount
   useEffect(() => {
     return () => {
       if (!map) return;
@@ -86,7 +90,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     };
   }, [map]);
 
-  // removes layers for toggle off 
+  // Remove layers when visibility is toggled off
   useEffect(() => {
     if (!map || isVisible) return;
 
@@ -105,41 +109,17 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     setRasterData(null);
   }, [isVisible, map]);
 
-// zoom swapper
+  // Process and render raster when data is available or zoom changes
   useEffect(() => {
-    if (!map || !isVisible || !filePath) return;
+    if (!map || !isVisible || !arrayBuffer) return;
     if (!dataProcessorRef.current || !colorGeneratorRef.current) return;
 
     let cancelled = false;
     const loadId = ++loadIdRef.current;
 
-    const loadRaster = async () => {
+    const processAndRender = async () => {
       try {
-        
-        const base = import.meta.env.BASE_URL || '';
-        const fullPath =
-          filePath.startsWith('http') || filePath.startsWith('/')
-            ? filePath
-            : `${base}${filePath}`;
-
-        const response = await fetch(fullPath);
-        if (!response.ok) throw new Error('Failed to fetch raster');
-
-        let arrayBuffer: ArrayBuffer;
-        const ext = filePath.split('.').pop()?.toLowerCase();
-
-        if (ext === 'zip') {
-          const zip = await JSZip.loadAsync(await response.blob());
-          const tifName = Object.keys(zip.files).find(f =>
-            /\.(tif|tiff|geotiff)$/i.test(f)
-          );
-          if (!tifName) throw new Error('ZIP contains no TIFF');
-          arrayBuffer = await zip.file(tifName)!.async('arraybuffer');
-        } else {
-          arrayBuffer = await response.arrayBuffer();
-        }
-
-        // default overview
+        // Calculate overview index based on zoom
         const overviewIndex =
           getOverviewForZoom(mapZoom, layerConfig?.overviewZoom) ??
           (mapZoom <= 7 ? 4 :
@@ -147,6 +127,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
            mapZoom <= 9 ? 2 :
            mapZoom <= 10 ? 1 : 0);
 
+        // Skip if same overview is already rendered
         if (
           currentOverviewRef.current === overviewIndex &&
           activeLayerRef.current
@@ -154,7 +135,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
           return;
         }
 
-        // processing 
+        // Process the ArrayBuffer into raster data
         if (!dataProcessorRef.current) return;
         const raster =
           await dataProcessorRef.current
@@ -178,6 +159,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
         setRasterData(raster);
 
+        // Calculate min/max for color scale
         let min = Infinity, max = -Infinity;
         band.forEach(v => {
           if (!isNaN(v)) {
@@ -193,7 +175,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
         setColorScale(scale);
 
-        // generate next layer
+        // Create and add the Leaflet layer
         initializeRasterLayer();
 
         const rasterLayer = (R as any).gridLayer.RasterLayer({
@@ -206,7 +188,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
         rasterLayer.addTo(map);
         pendingLayerRef.current = rasterLayer;
 
-        // swap to following zoom level once load completes
+        // Swap layers once new one is loaded
         rasterLayer.once('load', () => {
           if (cancelled || loadId !== loadIdRef.current || !isVisible) {
             map.removeLayer(rasterLayer);
@@ -228,20 +210,21 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       }
     };
 
-    loadRaster();
+    processAndRender();
 
     return () => {
       cancelled = true;
     };
-  }, [map, mapZoom, filePath, isVisible, opacity]);
+  }, [map, mapZoom, arrayBuffer, isVisible, opacity, layerConfig?.overviewZoom]);
 
-  // update 
+  // Update opacity when it changes
   useEffect(() => {
     if (leafletLayer) {
       (leafletLayer as any).setOpacity(opacity);
     }
   }, [leafletLayer, opacity]);
 
+  // Update color scale when it changes
   useEffect(() => {
     if (leafletLayer && colorScale && rasterData) {
       (leafletLayer as any).setColorScale(colorScale);

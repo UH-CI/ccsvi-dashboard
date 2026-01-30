@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
-import { useMapStore, usePointLayerStore, useHazardLayersStore } from '../stores';
+import { useMapStore, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from '../stores';
 import {
     serializeMapConfigs,
     deserializeMapConfigs,
@@ -25,12 +25,14 @@ export function useUrlSync(isInitialized: boolean) {
     const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
     const visiblePointLayers = usePointLayerStore((state) => state.visibleLayerIds);
     const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
+    const visibleRasterLayers = useRasterLayersStore((state) => state.visibleLayerIds);
 
     // --- STORE > URL SYNC ---
 
     const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|');
     const pointLayerKey = Array.from(visiblePointLayers).sort().join(',');
     const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
+    const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
 
     useEffect(() => {
         if (!isInitialized || isUpdatingFromUrl.current) return;
@@ -76,9 +78,16 @@ export function useUrlSync(isInitialized: boolean) {
                 newParams.delete('hazards');
             }
 
+            // --- Raster layers ---
+            if (visibleRasterLayers.size > 0) {
+                newParams.set('rasters', Array.from(visibleRasterLayers).sort().join(','));
+            } else {
+                newParams.delete('rasters');
+            }
+
             return newParams;
         }, { replace: true });
-    }, [mapConfigKey, pointLayerKey, hazardLayerKey, setSearchParams, isInitialized]);
+    }, [mapConfigKey, pointLayerKey, hazardLayerKey, rasterLayerKey, setSearchParams, isInitialized]);
 
     // --- URL > STORE SYNC ---
 

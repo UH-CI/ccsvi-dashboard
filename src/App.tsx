@@ -34,8 +34,8 @@ const App: React.FC = () => {
     const hazardLoading = useHazardLayersStore((state) => state.loading);
     const hazardError = useHazardLayersStore((state) => state.error);
     
-    const fetchRasterLayers = useRasterLayersStore(
-      (state) => state.fetchRasterLayers
+    const fetchRasterLayerConfigs = useRasterLayersStore(
+      (state) => state.fetchRasterLayerConfigs
     );
     const rasterLoading = useRasterLayersStore((state) => state.loading);
     const rasterError = useRasterLayersStore((state) => state.error);
@@ -60,9 +60,8 @@ const App: React.FC = () => {
         fetchAllData();
         fetchPointLayerConfigs();
         fetchHazardLayerConfigs();
-        fetchRasterLayers();
-        //initializeRasterLayer();
-  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayers]);
+        fetchRasterLayerConfigs();
+  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
 
     // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);

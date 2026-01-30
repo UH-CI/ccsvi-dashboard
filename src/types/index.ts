@@ -122,7 +122,6 @@ export interface SubRasterLayerConfig {
     id: string;
     name: string;
     color?: string;
-    visible: boolean;
     filePath?: string;
     popupConfig?: {
         titleField?: string;
@@ -144,7 +143,6 @@ export interface RasterLayerConfig {
     name: string;
     icon?: string;
     color?: string;
-    visible: boolean;
     filePath?: string;
     opacity?: number;
     type?: 'raster';

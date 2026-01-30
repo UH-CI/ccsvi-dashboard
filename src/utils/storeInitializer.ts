@@ -1,4 +1,4 @@
-import { useMapStore, usePointLayerStore, useHazardLayersStore } from '../stores';
+import { useMapStore, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from '../stores';
 import { DeserializedState } from './urlSerializer';
 
 /**
@@ -9,6 +9,7 @@ export function initializeStoresFromUrl(urlState: DeserializedState): void {
     initializeMapStore(urlState.mapConfigs);
     initializePointLayers(urlState.pointLayers);
     initializeHazardLayers(urlState.hazardLayers);
+    initializeRasterLayers(urlState.rasterLayers);
 }
 
 /**
@@ -64,4 +65,14 @@ function initializeHazardLayers(hazardIds: string[]): void {
 
     const store = useHazardLayersStore.getState();
     store.setVisibleLayerIds(hazardIds);
+}
+
+/**
+ * Initializes raster layer visibility from URL
+ */
+function initializeRasterLayers(rasterIds: string[]): void {
+    if (rasterIds.length === 0) return;
+
+    const store = useRasterLayersStore.getState();
+    store.setVisibleLayerIds(rasterIds);
 }

@@ -1,124 +1,120 @@
 import { create } from 'zustand';
 import type { RasterLayerConfig, SubRasterLayerConfig } from '../types';
-import { RasterData } from '../components/RasterLayers/RasterData';
 
 interface RasterLayersState {
-  rasterLayers: RasterLayerConfig[];
-  rasterData: Map<string, RasterData>; 
+  // Core data
+  rasterLayerConfigs: RasterLayerConfig[];
+  rasterLayerData: Map<string, ArrayBuffer>;
+  visibleLayerIds: Set<string>;
+  isLoaded: boolean;
+
+  // Loading and error states
   loading: boolean;
   error: string | null;
-  setRasterLayers: (layers: RasterLayerConfig[]) => void;
-  toggleRasterLayerVisibility: (id: string, visible?: boolean) => void;
-  toggleSubRasterLayerVisibility: (parentId: string, subId: string, visible?: boolean) => void;
-  setRasterData: (layerId: string, data: RasterData) => void;
-  getRasterData: (layerId: string) => RasterData | undefined;
-  fetchRasterLayers: () => Promise<void>;
-  clearAllRasters: () => void;
+  loadingLayers: Set<string>;
+  errorLayers: Map<string, string>;
+
+  // Setters
+  setRasterLayerConfigs: (configs: RasterLayerConfig[]) => void;
+  setRasterLayerData: (layerId: string, data: ArrayBuffer) => void;
+  setVisibleLayerIds: (ids: string[]) => void;
+  setIsLoaded: (loaded: boolean) => void;
+
+  // Actions (mutual exclusivity: only one raster visible at a time)
+  toggleRasterLayerVisibility: (id: string) => void;
+  toggleSubRasterLayerVisibility: (parentId: string, subId: string) => void;
+
+  // Data fetching
+  fetchRasterLayerConfigs: () => Promise<void>;
+  fetchRasterLayerData: (layerId: string) => Promise<void>;
 }
 
-const disableAllExcept = (
-  layers: RasterLayerConfig[],
-  keep: { parentId: string; subId?: string }
-): RasterLayerConfig[] =>
-  layers.map(layer => {
-    const isTargetParent = layer.id === keep.parentId;
-
-    // Parent WITH sublayers
-    if (layer.subLayers?.length) {
-      const updatedSubs = layer.subLayers.map(sub => ({
-        ...sub,
-        visible: isTargetParent && sub.id === keep.subId,
-      }));
-
-      return {
-        ...layer,
-        subLayers: updatedSubs,
-        visible: updatedSubs.some(s => s.visible),
-      };
-    }
-
-    // Parent WITHOUT sublayers
-    return {
-      ...layer,
-      visible: isTargetParent && !keep.subId,
-    };
-  });
-
-
-
 export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
-  rasterLayers: [],
-  rasterData: new Map(),
+  // Initial state
+  rasterLayerConfigs: [],
+  rasterLayerData: new Map(),
+  visibleLayerIds: new Set(),
+  isLoaded: false,
   loading: false,
   error: null,
+  loadingLayers: new Set(),
+  errorLayers: new Map(),
 
-  setRasterLayers: (layers) => set({ rasterLayers: layers }),
+  // Setters
+  setRasterLayerConfigs: (configs) => {
+    set({ rasterLayerConfigs: configs });
+  },
 
-  setRasterData: (layerId, data) => {
+  setRasterLayerData: (layerId, data) => {
     set((state) => {
-      const newData = new Map(state.rasterData);
+      const newData = new Map(state.rasterLayerData);
       newData.set(layerId, data);
-      return { rasterData: newData };
+      return { rasterLayerData: newData };
     });
   },
 
-  getRasterData: (layerId) => {
-    return get().rasterData.get(layerId);
+  setVisibleLayerIds: (ids) => {
+    set({ visibleLayerIds: new Set(ids) });
   },
 
-  clearAllRasters: () => {
-    set((state) => ({
-      rasterLayers: state.rasterLayers.map(layer => ({
-        ...layer,
-        visible: false,
-        subLayers: layer.subLayers?.map(sub => ({
-          ...sub,
-          visible: false,
-        })),
-      })),
-    }));
-  }, 
-
-  toggleRasterLayerVisibility: (id, visible) => {
-    set((state) => {
-      const layer = state.rasterLayers.find(l => l.id === id);
-
-      if (layer?.subLayers?.length) return state;
-
-      const shouldEnable = visible ?? !layer?.visible;
-
-      return {
-        rasterLayers: shouldEnable
-          ? disableAllExcept(state.rasterLayers, { parentId: id })
-          : state.rasterLayers.map(l => ({ ...l, visible: false })),
-      };
-    });
+  setIsLoaded: (loaded) => {
+    set({ isLoaded: loaded });
   },
 
-  toggleSubRasterLayerVisibility: (parentId, subId, visible) => {
-    set((state) => {
-      const parent = state.rasterLayers.find(l => l.id === parentId);
-      if (!parent?.subLayers) return state;
+  // Actions - Raster layers are mutually exclusive (only one visible at a time)
+  toggleRasterLayerVisibility: (id) => {
+    const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
 
-      const sub = parent.subLayers.find(s => s.id === subId);
-      const shouldEnable = visible ?? !sub?.visible;
+    const layer = rasterLayerConfigs.find(l => l.id === id);
+    if (!layer) {
+      console.warn(`Raster layer config not found: ${id}`);
+      return;
+    }
 
-      return {
-        rasterLayers: shouldEnable
-          ? disableAllExcept(state.rasterLayers, { parentId, subId })
-          : state.rasterLayers.map(layer => ({
-              ...layer,
-              subLayers: layer.subLayers?.map(s => ({
-                ...s,
-                visible: false,
-              })),
-              visible: false,
-            })),
-      };
-    });
+    // If layer has sublayers, don't toggle parent directly
+    if (layer.subLayers?.length) return;
+
+    const isCurrentlyVisible = visibleLayerIds.has(id);
+
+    if (isCurrentlyVisible) {
+      // Turn off - clear all visibility
+      setVisibleLayerIds([]);
+    } else {
+      // Turn on - clear others and set only this one (mutual exclusivity)
+      setVisibleLayerIds([id]);
+      fetchRasterLayerData(id);
+    }
   },
 
-  fetchRasterLayers: async () => {
+  toggleSubRasterLayerVisibility: (parentId, subId) => {
+    const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
+
+    const parentLayer = rasterLayerConfigs.find(l => l.id === parentId);
+    if (!parentLayer?.subLayers) return;
+
+    const subLayer = parentLayer.subLayers.find(s => s.id === subId);
+    if (!subLayer) return;
+
+    const fullSubId = `${parentId}.${subId}`;
+    const isCurrentlyVisible = visibleLayerIds.has(fullSubId);
+
+    if (isCurrentlyVisible) {
+      // Turn off - clear all visibility
+      setVisibleLayerIds([]);
+    } else {
+      // Turn on - clear others and set only this sublayer + parent (mutual exclusivity)
+      setVisibleLayerIds([parentId, fullSubId]);
+      fetchRasterLayerData(fullSubId);
+    }
+  },
+
+  // Data fetching
+  fetchRasterLayerConfigs: async () => {
+    const { isLoaded, setIsLoaded, visibleLayerIds, fetchRasterLayerData } = get();
+
+    // Prevent duplicate loads
+    if (isLoaded) return;
+
     set({ loading: true, error: null });
     try {
       const base = import.meta.env.BASE_URL || '';
@@ -144,29 +140,130 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 
       const linkedRasters = rasterLayersRaw.map((raster) => {
         const match = subRasterLayersRaw.find((sub) => sub.id === raster.id);
-
         return {
           ...raster,
-          visible: false,
           subLayers: match?.subLayers.map(sub => ({
             ...sub,
-            visible: false,
             color: sub.color ?? raster.color ?? '#666666',
           })),
         };
       });
 
-      set({ rasterLayers: linkedRasters, loading: false });
+      set({ rasterLayerConfigs: linkedRasters, loading: false });
+      setIsLoaded(true);
+
+      // Fetch data for any layers already marked visible (e.g., from URL initialization)
+      visibleLayerIds.forEach(layerId => {
+        fetchRasterLayerData(layerId);
+      });
     } catch (err) {
       console.error('Error loading raster layers:', err);
       set({
-        error:
-          err instanceof Error
-            ? err.message
-            : 'Unknown error loading raster layers',
+        error: err instanceof Error ? err.message : 'Unknown error loading raster layers',
         loading: false,
+      });
+    }
+  },
+
+  fetchRasterLayerData: async (layerId) => {
+    const { rasterLayerData, rasterLayerConfigs, setRasterLayerData, loadingLayers } = get();
+
+    // Skip if already loaded
+    if (rasterLayerData.has(layerId)) return;
+
+    // Skip if currently loading
+    if (loadingLayers.has(layerId)) return;
+
+    // Look up filePath from configs
+    let filePath: string | undefined;
+
+    if (layerId.includes('.')) {
+      // Sublayer: parse parent.child format
+      const [parentId, ...subParts] = layerId.split('.');
+      const subId = subParts.join('.');
+      const parentLayer = rasterLayerConfigs.find(l => l.id === parentId);
+      const subLayer = parentLayer?.subLayers?.find(s => s.id === subId);
+      filePath = subLayer?.filePath;
+    } else {
+      // Parent layer
+      const parentLayer = rasterLayerConfigs.find(l => l.id === layerId);
+      // If parent has sublayers, don't fetch parent directly
+      if (parentLayer?.subLayers?.length) return;
+      filePath = parentLayer?.filePath;
+    }
+
+    if (!filePath) {
+      console.warn(`Raster layer config not found: ${layerId}`);
+      return;
+    }
+
+    // Mark as loading
+    set(state => ({
+      loadingLayers: new Set(state.loadingLayers).add(layerId),
+      errorLayers: new Map(state.errorLayers).set(layerId, ''),
+    }));
+
+    try {
+      const base = import.meta.env.BASE_URL || '';
+      const fullPath =
+        filePath.startsWith('http') || filePath.startsWith('/')
+          ? filePath
+          : `${base}${filePath}`;
+
+      const response = await fetch(fullPath);
+
+      if (!response.ok) {
+        throw new Error(`Failed to load ${filePath}: ${response.statusText}`);
+      }
+
+      const ext = filePath.split('.').pop()?.toLowerCase();
+      let arrayBuffer: ArrayBuffer;
+
+      if (ext === 'zip') {
+        // Handle ZIP files containing TIFF
+        const JSZip = (await import('jszip')).default;
+        const zip = await JSZip.loadAsync(await response.blob());
+        const tifName = Object.keys(zip.files).find(f =>
+          /\.(tif|tiff|geotiff)$/i.test(f)
+        );
+        if (!tifName) throw new Error('ZIP contains no TIFF');
+        arrayBuffer = await zip.file(tifName)!.async('arraybuffer');
+      } else {
+        arrayBuffer = await response.arrayBuffer();
+      }
+
+      setRasterLayerData(layerId, arrayBuffer);
+
+      // Clear loading state
+      set(state => {
+        const newLoadingLayers = new Set(state.loadingLayers);
+        newLoadingLayers.delete(layerId);
+        const newErrorLayers = new Map(state.errorLayers);
+        newErrorLayers.delete(layerId);
+        return { loadingLayers: newLoadingLayers, errorLayers: newErrorLayers };
+      });
+
+    } catch (err) {
+      console.error(`Error loading raster layer data for ${layerId}:`, err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+
+      set(state => {
+        const newLoadingLayers = new Set(state.loadingLayers);
+        newLoadingLayers.delete(layerId);
+        const newErrorLayers = new Map(state.errorLayers);
+        newErrorLayers.set(layerId, errorMessage);
+        return { loadingLayers: newLoadingLayers, errorLayers: newErrorLayers };
       });
     }
   },
 }));
 
+// Selector hooks
+export const useRasterLayerConfigs = () =>
+  useRasterLayersStore(state => state.rasterLayerConfigs);
+
+export const useIsRasterLayerVisible = (layerId: string) =>
+  useRasterLayersStore(state => state.visibleLayerIds.has(layerId));
+
+export const useRasterLayerData = (layerId: string) =>
+  useRasterLayersStore(state => state.rasterLayerData.get(layerId));

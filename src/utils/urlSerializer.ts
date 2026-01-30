@@ -10,6 +10,7 @@ export interface DeserializedState {
     mapConfigs: Partial<MapConfig>[];
     pointLayers: string[];
     hazardLayers: string[];
+    rasterLayers: string[];
 }
 
 /**
@@ -48,6 +49,9 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
     const hazardsParam = params.get('hazards');
     const hazardLayers = hazardsParam ? hazardsParam.split(',').filter(Boolean) : [];
 
+    const rastersParam = params.get('rasters');
+    const rasterLayers = rastersParam ? rastersParam.split(',').filter(Boolean) : [];
+
     const mapsParam = params.get('maps');
 
     if (!mapsParam) {
@@ -55,6 +59,7 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
             mapConfigs: [],
             pointLayers,
             hazardLayers,
+            rasterLayers,
         };
     }
 
@@ -69,11 +74,11 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
         };
     });
 
-    return { mapConfigs, pointLayers, hazardLayers };
+    return { mapConfigs, pointLayers, hazardLayers, rasterLayers };
 }
 
 export function validateAndNormalize(state: DeserializedState): DeserializedState {
-    const { mapConfigs, pointLayers, hazardLayers } = state;
+    const { mapConfigs, pointLayers, hazardLayers, rasterLayers } = state;
 
     // Validate map configs
     const validMapConfigs = mapConfigs.filter((config) => {
@@ -88,5 +93,6 @@ export function validateAndNormalize(state: DeserializedState): DeserializedStat
         mapConfigs: limitedMapConfigs,
         pointLayers,
         hazardLayers,
+        rasterLayers,
     };
 }
