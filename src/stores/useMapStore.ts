@@ -18,6 +18,16 @@ interface MapState {
       hazards: boolean;
       rasters: boolean;
   };
+  expandedSectionsByMap: Record<
+    string,
+    {
+      maps: boolean;
+      utils: boolean;
+      points: boolean;
+      hazards: boolean;
+      rasters: boolean;
+    }
+  >;
 
     // Actions
   addMap: () => void;
@@ -30,6 +40,10 @@ interface MapState {
 
   // UI actions
   toggleSection: (section: keyof MapState['expandedSections']) => void;
+  toggleSectionByMap: (
+    mapId: string,
+    section: 'maps' | 'utils' | 'points' | 'hazards' | 'rasters'
+  ) => void;
   
   // Reset
   reset: () => void;
@@ -51,12 +65,21 @@ const initialExpandedSections: MapState['expandedSections'] = {
     rasters: true,
 };
 
+const defaultExpandedSections = {
+  maps: true,
+  utils: true,
+  points: false,
+  hazards: true,
+  rasters: true,
+};
+
 export const useMapStore = create<MapState>((set, get) => ({
   // Initial state
   mapConfigs: [initialMapConfig],
     primaryMapDataset: '',
     primaryMapMetric: '',
     expandedSections: initialExpandedSections,
+    expandedSectionsByMap: {[initialMapConfig.id]: {...defaultExpandedSections}},
 
   // Map config actions
   addMap: () => {
@@ -69,13 +92,26 @@ export const useMapStore = create<MapState>((set, get) => ({
       metric: '',
       visible: true,
     };
-    set({ mapConfigs: [...mapConfigs, newMap] });
+    set((state) => ({
+      mapConfigs: [...state.mapConfigs, newMap],
+      expandedSectionsByMap: {
+        ...state.expandedSectionsByMap,
+        [newMapId]: { ...defaultExpandedSections },
+      },
+     }));
   },
 
   removeMap: (mapId) => {
     const { mapConfigs } = get();
     if (mapConfigs.length > 1) {
       set({ mapConfigs: mapConfigs.filter(config => config.id !== mapId) });
+      set((state) => {
+        const { [mapId]: _, ...rest } = state.expandedSectionsByMap;
+        return {
+          mapConfigs: state.mapConfigs.filter(config => config.id !== mapId),
+          expandedSectionsByMap: rest,
+        };
+      });
     }
   },
 
@@ -120,6 +156,17 @@ export const useMapStore = create<MapState>((set, get) => ({
           }
       }))
     },
+    toggleSectionByMap: (mapId, section) => {
+      set((state) => ({
+        expandedSectionsByMap: {
+          ...state.expandedSectionsByMap,
+          [mapId]: {
+            ...state.expandedSectionsByMap[mapId],
+            [section]: !state.expandedSectionsByMap[mapId]?.[section],
+          },
+        },
+      }));
+    },
 
   reset: () => {
     set({
@@ -127,7 +174,9 @@ export const useMapStore = create<MapState>((set, get) => ({
         primaryMapDataset: '',
         primaryMapMetric: '',
         expandedSections: initialExpandedSections,
-
+        expandedSectionsByMap: {
+          [initialMapConfig.id]: { ...defaultExpandedSections },
+        },
     });
   },
 }));

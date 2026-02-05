@@ -11,9 +11,10 @@ import { usePointLayerStore } from "../../stores";
 
 interface GenericPointMarkersProps {
     layerId: string;
+    mapId: string;
 }
 
-export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerId }) => {
+export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerId, mapId }) => {
     const map = useMap() as L.Map;
     const [zoom, setZoom] = useState(map.getZoom());
 
@@ -22,7 +23,11 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
         state.pointLayerConfigs.find(c => c.id === layerId)
     );
     const data = usePointLayerStore(state => state.pointLayerData.get(layerId));
-    const isVisible = usePointLayerStore(state => state.visibleLayerIds.has(layerId));
+    // const isVisible = usePointLayerStore(state => state.visibleLayerIds.has(layerId));
+    const isVisible = usePointLayerStore(state => {
+        const mapLayers = state.visibleLayerIdsByMap[mapId];
+        return mapLayers ? mapLayers.has(layerId) : false;
+    });
 
     // Track zoom level
     useEffect(() => {
@@ -84,25 +89,75 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
         return `<div class="${styles.popupContent}"><b>${title}</b><br/>${fields}</div>`;
     };
 
+    // const createClusterIcon = (cluster: L.MarkerCluster) =>
+    //     L.divIcon({
+    //         html: `
+    //     <div style="
+    //     background:${config.color};
+    //     width:40px;
+    //     height:40px;
+    //     border-radius:50%;
+    //     display:flex;
+    //     align-items:center;
+    //     justify-content:center;
+    //     color:white;
+    //     font-weight:bold;
+    //     box-shadow: 0 0 0 4px rgba(0,0,0,0.2);
+    //     ">
+    //     ${cluster.getChildCount()}
+    //     </div>`,
+    //         className: "",
+    //         iconSize: [40, 40],
+    //     });
     const createClusterIcon = (cluster: L.MarkerCluster) =>
         L.divIcon({
-            html: `
-        <div style="
-        background:${config.color};
-        width:40px;
-        height:40px;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color:white;
-        font-weight:bold;
-        box-shadow: 0 0 0 4px rgba(0,0,0,0.2);
-        ">
-        ${cluster.getChildCount()}
-        </div>`,
-            className: "",
-            iconSize: [40, 40],
+            html: renderToString(
+                <div
+                    className={styles.iconContainer}
+                    style={{
+                        position: "relative",
+                        width: "32px",
+                        height: "32px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: config.color,
+                    }}
+                >
+                    {/* POI icon */}
+                    <div style={{ zIndex: 1 }}>
+                        <IconComponent size={22} />
+                    </div>
+    
+                    {/* Count text ON TOP */}
+                    <span
+                        style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            color: "#fff",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            pointerEvents: "none",
+                            zIndex: 2, // 👈 critical
+    
+                            textShadow: `
+                                -1px -1px 0 #000,
+                                 1px -1px 0 #000,
+                                -1px  1px 0 #000,
+                                 1px  1px 0 #000,
+                                 0  0  4px rgba(0,0,0,0.9)
+                            `,
+                        }}
+                    >
+                        {cluster.getChildCount()}
+                    </span>
+                </div>
+            ),
+            className: styles.genericPointMarker,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
         });
 
     return (
