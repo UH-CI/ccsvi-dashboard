@@ -294,6 +294,23 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                 </Select>
                                                             </FormControl>
                                                         )}
+
+                                                        {config.dataset && config.metric && (
+                                                            <FormControl size="small" fullWidth>
+                                                                <InputLabel>Color Scheme</InputLabel>
+                                                                <Select
+                                                                    value={config.colorScheme || 'viridis'}
+                                                                    onChange={(e) => updateMapConfig(config.id, {
+                                                                        colorScheme: e.target.value as 'viridis' | 'reds' | 'blues'
+                                                                    })}
+                                                                    label="Color Scheme"
+                                                                >
+                                                                    <MenuItem value="viridis">Viridis</MenuItem>
+                                                                    <MenuItem value="reds">Reds</MenuItem>
+                                                                    <MenuItem value="blues">Blues</MenuItem>
+                                                                </Select>
+                                                            </FormControl>
+                                                        )}
                                                     </Box>
                                                 )}
                                             </Box>

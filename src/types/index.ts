@@ -1,12 +1,15 @@
 import {Feature, Geometry} from 'geojson';
 import { PathOptions } from 'leaflet';
 
+export type ColorSchemeName = 'viridis' | 'reds' | 'blues';
+
 export interface MapConfig {
     id: string;
     title: string;
     dataset: string;
     metric: string;
     visible: boolean;
+    colorScheme: ColorSchemeName;
     activeFeature?: {
         geoid: string;
         lat: number;

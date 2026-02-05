@@ -1,17 +1,19 @@
 import React, { useMemo } from 'react';
-import { Dataset } from '../../types';
+import { Dataset, ColorSchemeName } from '../../types';
 import styles from './MapLegend.module.scss';
 
 interface MapLegendProps {
     dataset: Dataset | null;
     activeDataset: string | undefined;
     activeDatasetMetric: string | undefined;
+    colorScheme?: ColorSchemeName;
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({
                                                         dataset,
                                                         activeDataset,
-                                                        activeDatasetMetric
+                                                        activeDatasetMetric,
+                                                        colorScheme = 'viridis'
                                                     }) => {
     const activeDatasetMetricObject = useMemo(() => {
         if (!dataset || !activeDataset || !activeDatasetMetric) return null;
@@ -21,7 +23,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
     const legendLevels = useMemo(() => {
         if (!activeDatasetMetricObject) return [];
 
-        const colors = activeDatasetMetricObject.colorSchemes.viridis;
+        const colors = activeDatasetMetricObject.colorSchemes[colorScheme];
         const items = [];
         for (let i = activeDatasetMetricObject.thresholds.length - 1; i >= 0; i--) {
             const low = activeDatasetMetricObject.thresholds[i];
@@ -47,7 +49,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
             );
         }
         return items;
-    }, [activeDatasetMetricObject]);
+    }, [activeDatasetMetricObject, colorScheme]);
 
     if (!dataset || !activeDataset || !activeDatasetMetric) {
         return null;

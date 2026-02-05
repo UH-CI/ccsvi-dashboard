@@ -173,13 +173,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         };
     }, [metricsData, effectiveDataset, effectiveMetric]);
 
+    const activeColorScheme = config?.colorScheme || 'viridis';
+
     const getColor = useMemo(() => {
         return (value: number | null): string => {
             if (value === null || !activeDatasetMetricObject) {
                 return '#cccccc';
             }
             const { thresholds, colorSchemes } = activeDatasetMetricObject;
-            const colors = colorSchemes.viridis;
+            const colors = colorSchemes[activeColorScheme];
             for (let i = 0; i < thresholds.length; i++) {
                 if (value <= thresholds[i]) {
                     return colors[i];
@@ -187,7 +189,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
             }
             return '#333';
         };
-    }, [activeDatasetMetricObject]);
+    }, [activeDatasetMetricObject, activeColorScheme]);
 
     const handleFeatureClick = useCallback((
         feature: Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties> | null,
@@ -370,6 +372,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     dataset={blockGroupData}
                     activeDataset={effectiveDataset}
                     activeDatasetMetric={effectiveMetric}
+                    colorScheme={activeColorScheme}
                 />
             </div>
         </div>
