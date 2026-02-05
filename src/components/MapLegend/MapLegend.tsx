@@ -21,6 +21,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
     const legendLevels = useMemo(() => {
         if (!activeDatasetMetricObject) return [];
 
+        const colors = activeDatasetMetricObject.colorSchemes.viridis;
         const items = [];
         for (let i = activeDatasetMetricObject.thresholds.length - 1; i >= 0; i--) {
             const low = activeDatasetMetricObject.thresholds[i];
@@ -39,7 +40,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
                 <div key={i} className={styles.legend__item}>
                     <div
                         className={styles['legend__item-color']}
-                        style={{ backgroundColor: activeDatasetMetricObject.colors[i] }}
+                        style={{ backgroundColor: colors[i] }}
                     ></div>
                     <span>{label}</span>
                 </div>

@@ -15,17 +15,32 @@ export interface MapConfig {
     };
 }
 
+export interface MetricValue {
+    absolute: number;
+    proportion: number;
+}
+
 export interface MetricsData {
     [geoid: string]: {
-        block_group: string;
-        census_tract: string;
-        county: string;
+        type?: string;
+        name?: string;
+        block_group: string | null;
+        census_tract: string | null;
+        county: string | null;
+        state?: string | null;
+        population?: number;
         metrics: {
             [datasetName: string]: {
-                [metricName: string]: number;
+                [metricName: string]: MetricValue;
             }
         };
     }
+}
+
+export interface ColorSchemes {
+    viridis: string[];
+    reds: string[];
+    blues: string[];
 }
 
 export interface Dataset {
@@ -36,7 +51,7 @@ export interface Dataset {
         columnThresholds: {
             [columnName: string]: {
                 thresholds: number[];
-                colors: string[];
+                colorSchemes: ColorSchemes;
             }
         }
     }

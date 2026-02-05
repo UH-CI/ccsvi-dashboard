@@ -159,7 +159,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
         const lookup = new Map<string, number>();
         Object.entries(metricsData).forEach(([geoid, data]) => {
-            const value = data.metrics?.[effectiveDataset]?.[effectiveMetric];
+            const metricObj = data.metrics?.[effectiveDataset]?.[effectiveMetric];
+            // Extract proportion from the metric object
+            const value = metricObj?.proportion;
             if (value !== undefined && value !== null) {
                 lookup.set(geoid, value);
             }
@@ -176,7 +178,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
             if (value === null || !activeDatasetMetricObject) {
                 return '#cccccc';
             }
-            const { thresholds, colors } = activeDatasetMetricObject;
+            const { thresholds, colorSchemes } = activeDatasetMetricObject;
+            const colors = colorSchemes.viridis;
             for (let i = 0; i < thresholds.length; i++) {
                 if (value <= thresholds[i]) {
                     return colors[i];
