@@ -6,7 +6,7 @@ import { DeserializedState } from './urlSerializer';
  * This should be called on app initialization or during browser navigation
  */
 export function initializeStoresFromUrl(urlState: DeserializedState): void {
-    initializeMapStore(urlState.mapConfigs);
+    initializeMapStore(urlState.mapConfigs, urlState.primaryMapId);
     initializePointLayers(urlState.pointLayers);
     initializeHazardLayers(urlState.hazardLayers);
     initializeRasterLayers(urlState.rasterLayers);
@@ -15,13 +15,16 @@ export function initializeStoresFromUrl(urlState: DeserializedState): void {
 /**
  * Initializes map store from URL
  */
-function initializeMapStore(mapConfigs: DeserializedState['mapConfigs']): void {
+function initializeMapStore(mapConfigs: DeserializedState['mapConfigs'], primaryMapId?: string): void {
     const mapStore = useMapStore.getState();
 
     mapStore.reset();
 
     // If no maps in URL, use default from reset()
     if (mapConfigs.length === 0) {
+        if (primaryMapId) {
+            mapStore.setPrimaryMap(primaryMapId);
+        }
         return;
     }
 
@@ -45,6 +48,11 @@ function initializeMapStore(mapConfigs: DeserializedState['mapConfigs']): void {
             });
         }
     });
+
+    // Set primary map from URL, falling back to first map
+    if (primaryMapId) {
+        mapStore.setPrimaryMap(primaryMapId);
+    }
 }
 
 /**

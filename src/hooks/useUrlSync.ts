@@ -23,6 +23,7 @@ export function useUrlSync(isInitialized: boolean) {
     const isUpdatingFromUrl = useRef(false);
 
     const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
+    const primaryMapId = useMapStore((state) => state.primaryMapId);
     const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
     const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
     const visibleRasterLayers = useRasterLayersStore((state) => state.visibleLayerIds);
@@ -90,9 +91,16 @@ export function useUrlSync(isInitialized: boolean) {
                 newParams.delete('rasters');
             }
 
+            // --- Active map ---
+            if (!isDefaultMapState && primaryMapId) {
+                newParams.set('active', primaryMapId);
+            } else {
+                newParams.delete('active');
+            }
+
             return newParams;
         }, { replace: true });
-    }, [mapConfigKey, pointLayerKey, hazardLayerKey, rasterLayerKey, setSearchParams, isInitialized]);
+    }, [mapConfigKey, primaryMapId, pointLayerKey, hazardLayerKey, rasterLayerKey, setSearchParams, isInitialized]);
 
     // --- URL > STORE SYNC ---
 
