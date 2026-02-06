@@ -37,6 +37,9 @@ function initializeMapStore(mapConfigs: DeserializedState['mapConfigs'], primary
                 metric: config.metric || '',
                 visible: config.visible ?? true,
             });
+            if (config.activeFeature) {
+                mapStore.updateMapActiveFeature('map1', config.activeFeature);
+            }
         } else {
             // Add additional maps
             mapStore.addMap();
@@ -46,6 +49,9 @@ function initializeMapStore(mapConfigs: DeserializedState['mapConfigs'], primary
                 metric: config.metric || '',
                 visible: config.visible ?? true,
             });
+            if (config.activeFeature) {
+                mapStore.updateMapActiveFeature(mapId, config.activeFeature);
+            }
         }
     });
 

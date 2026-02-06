@@ -4,6 +4,7 @@ export interface SerializedMapState {
     maps: string;
     datasets: Record<string, string>;
     metrics: Record<string, string>;
+    activeFeatures: Record<string, string>;
 }
 
 export interface DeserializedState {
@@ -40,7 +41,14 @@ export function serializeMapConfigs(configs: MapConfig[]): SerializedMapState {
         return acc;
     }, {} as Record<string, string>);
 
-    return { maps, datasets, metrics };
+    const activeFeatures = configs.reduce((acc, config) => {
+        if (config.activeFeature) {
+            acc[`af_${config.id}`] = config.activeFeature.geoid;
+        }
+        return acc;
+    }, {} as Record<string, string>);
+
+    return { maps, datasets, metrics, activeFeatures };
 }
 
 export function deserializeMapConfigs(params: URLSearchParams): DeserializedState {
@@ -70,12 +78,19 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
     const mapConfigs: Partial<MapConfig>[] = mapsParam.split(',').map((mapStr) => {
         const [id, vis] = mapStr.split(':');
 
-        return {
+        const config: Partial<MapConfig> = {
             id,
             visible: vis === 'vis',
             dataset: params.get(`d_${id}`) || '',
             metric: params.get(`m_${id}`) || '',
         };
+
+        const afParam = params.get(`af_${id}`);
+        if (afParam) {
+            config.activeFeature = { geoid: afParam, lat: 0, lng: 0, zoom: 0 };
+        }
+
+        return config;
     });
 
     return { mapConfigs, primaryMapId: activeParam, pointLayers, hazardLayers, rasterLayers };

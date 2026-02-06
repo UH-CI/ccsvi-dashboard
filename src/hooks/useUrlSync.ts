@@ -30,7 +30,7 @@ export function useUrlSync(isInitialized: boolean) {
 
     // --- STORE > URL SYNC ---
 
-    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|');
+    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ''}`).join('|');
     const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
     const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
     const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
@@ -49,7 +49,7 @@ export function useUrlSync(isInitialized: boolean) {
 
             // --- Map configs ---
             Array.from(prev.keys()).forEach((key) => {
-                if (key.startsWith('d_') || key.startsWith('m_')) newParams.delete(key);
+                if (key.startsWith('d_') || key.startsWith('m_') || key.startsWith('af_')) newParams.delete(key);
             });
 
             if (isDefaultMapState) {
@@ -61,6 +61,9 @@ export function useUrlSync(isInitialized: boolean) {
                     newParams.set(key, val);
                 });
                 Object.entries(serialized.metrics).forEach(([key, val]) => {
+                    newParams.set(key, val);
+                });
+                Object.entries(serialized.activeFeatures).forEach(([key, val]) => {
                     newParams.set(key, val);
                 });
             }

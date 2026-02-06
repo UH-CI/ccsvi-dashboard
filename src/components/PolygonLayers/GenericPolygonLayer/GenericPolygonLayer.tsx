@@ -1,7 +1,7 @@
-import { GeoJSON, GeoJSONProps } from 'react-leaflet';
+import { GeoJSON, GeoJSONProps, useMap } from 'react-leaflet';
 import {Feature, FeatureCollection, Geometry, GeoJsonProperties} from 'geojson';
-import {Layer, LeafletMouseEvent, PathOptions} from 'leaflet';
-import React, { useEffect, useCallback, memo } from 'react';
+import {Layer, LatLngBounds, LeafletMouseEvent, PathOptions} from 'leaflet';
+import React, { useEffect, useCallback, memo, useRef } from 'react';
 
 // Global ref to store layers per map across component remounts
 const globalLayersRef = new Map<string, Map<string, Layer>>();
@@ -39,6 +39,9 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
                                                                                               renderPopup,
                                                                                               ...geoJsonProps
                                                                                           }: GenericPolygonLayerProps<T>) => {
+    const map = useMap();
+    const lastFitBoundsGeoid = useRef<string | null>(null);
+
     // Create unique storage key combining mapId and layerType
     const storageKey = `${mapId}-${layerType}`;
     
@@ -109,8 +112,27 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
                 : baseStyle;
 
             (layer as { setStyle: (style: PathOptions) => void }).setStyle(highlightStyle);
+
+            // Fit map to active feature bounds (e.g. when restoring from URL)
+            if (isActive && geoid !== lastFitBoundsGeoid.current && 'getBounds' in layer) {
+                lastFitBoundsGeoid.current = geoid;
+                const bounds = (layer as Layer & { getBounds: () => LatLngBounds }).getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, { padding: [20, 20] });
+                    // Open popup after fitBounds animation completes
+                    if ('openPopup' in layer) {
+                        map.once('moveend', () => {
+                            (layer as Layer & { openPopup: () => void }).openPopup();
+                        });
+                    }
+                }
+            }
         });
-    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle]);
+
+        if (!activeFeatureGeoid) {
+            lastFitBoundsGeoid.current = null;
+        }
+    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle, map]);
 
     // Update popup content when renderPopup changes (e.g. metric change)
     useEffect(() => {
