@@ -26,6 +26,11 @@ export function renderPolygonPopup(
         if (metadataEntry?.block_group) metadata.push(metadataEntry.block_group);
         if (metadataEntry?.census_tract) metadata.push(metadataEntry.census_tract);
 
+        // Fallback for Hawaiian Homelands: use NAME10 as metadata title
+        if (metadata.length === 0 && feature.properties?.NAME10) {
+            metadata.push(feature.properties.NAME10);
+        }
+
         return FeaturePopup({
             metadata: metadata.length > 0 ? metadata : undefined,
             feature,
