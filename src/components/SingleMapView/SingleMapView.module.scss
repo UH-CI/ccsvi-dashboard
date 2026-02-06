@@ -23,6 +23,21 @@
   background: #f8f9fa;
   border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
+  transition: background 0.15s ease;
+
+  &.inactive-header {
+    cursor: pointer;
+
+    &:hover {
+      background: #eef0f2;
+    }
+  }
+}
+
+.map-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .map-title {

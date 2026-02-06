@@ -6,6 +6,9 @@ interface MapState {
   // Map configurations
   mapConfigs: MapConfig[];
 
+  // Which map drives the TableViewer
+  primaryMapId: string;
+
   // Map state
   primaryMapDataset: string;
   primaryMapMetric: string;
@@ -35,6 +38,7 @@ interface MapState {
   updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
   toggleMapVisibility: (mapId: string) => void;
   updateMapActiveFeature: (mapId: string, activeFeature: MapConfig['activeFeature']) => void;
+  setPrimaryMap: (mapId: string) => void;
   setPrimaryMapDataset: (dataset: string) => void;
   setPrimaryMapMetric: (metric: string) => void;
 
@@ -77,6 +81,7 @@ const defaultExpandedSections = {
 export const useMapStore = create<MapState>((set, get) => ({
   // Initial state
   mapConfigs: [initialMapConfig],
+    primaryMapId: initialMapConfig.id,
     primaryMapDataset: '',
     primaryMapMetric: '',
     expandedSections: initialExpandedSections,
@@ -104,13 +109,18 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   removeMap: (mapId) => {
-    const { mapConfigs } = get();
+    const { mapConfigs, primaryMapId } = get();
     if (mapConfigs.length > 1) {
-      set({ mapConfigs: mapConfigs.filter(config => config.id !== mapId) });
+      const remaining = mapConfigs.filter(config => config.id !== mapId);
+      // If removing the primary map, fall back to first visible (or first overall)
+      const newPrimaryId = mapId === primaryMapId
+        ? (remaining.find(c => c.visible)?.id ?? remaining[0].id)
+        : primaryMapId;
       set((state) => {
         const { [mapId]: _, ...rest } = state.expandedSectionsByMap;
         return {
-          mapConfigs: state.mapConfigs.filter(config => config.id !== mapId),
+          mapConfigs: remaining,
+          primaryMapId: newPrimaryId,
           expandedSectionsByMap: rest,
         };
       });
@@ -135,10 +145,14 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   updateMapActiveFeature: (mapId, activeFeature) => {
     const { mapConfigs } = get();
-    const newConfigs = mapConfigs.map(config => 
+    const newConfigs = mapConfigs.map(config =>
       config.id === mapId ? { ...config, activeFeature } : config
     );
     set({ mapConfigs: newConfigs });
+  },
+
+  setPrimaryMap: (mapId) => {
+    set({ primaryMapId: mapId });
   },
 
     setPrimaryMapDataset: (dataset) => {
@@ -173,6 +187,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   reset: () => {
     set({
       mapConfigs: [initialMapConfig],
+        primaryMapId: initialMapConfig.id,
         primaryMapDataset: '',
         primaryMapMetric: '',
         expandedSections: initialExpandedSections,

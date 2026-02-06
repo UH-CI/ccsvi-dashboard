@@ -14,6 +14,7 @@ import styles from './SingleMapView.module.scss';
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
 import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
+import { Chip } from '@mui/material';
 import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from "../../stores";
 import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
 import { RasterLayerRenderer } from '../RasterLayers';
@@ -113,7 +114,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
         countyBoundaries
     } = useAppStore();
 
-    const { updateMapActiveFeature } = useMapStore();
+    const { updateMapActiveFeature, setPrimaryMap } = useMapStore();
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
@@ -245,8 +246,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     return (
         <div className={`${styles['single-map-view']} ${isPrimary ? styles['primary-map'] : ''}`}>
-            <div className={styles['map-header']}>
-                <h3 className={styles['map-title']}>{config.title}</h3>
+            <div
+                className={`${styles['map-header']} ${isPrimary ? styles['primary-header'] : styles['inactive-header']}`}
+                onClick={() => !isPrimary && setPrimaryMap(mapId)}
+            >
+                <div className={styles['map-title-row']}>
+                    <h3 className={styles['map-title']}>{config.title}</h3>
+                    {isPrimary && <Chip label="Active" size="small" color="primary" />}
+                </div>
                 <div className={styles['map-info']}>
                     {effectiveDataset && effectiveMetric ? (
                         <>

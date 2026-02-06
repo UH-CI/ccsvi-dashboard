@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { SingleMapView } from '../SingleMapView';
-import { useVisibleMaps } from '../../stores';
+import { useVisibleMaps, useMapStore } from '../../stores';
 import styles from './MultiMapContainer.module.scss';
 
 
@@ -14,6 +14,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
 
     // Use visible maps from mapStore
     const visibleMaps = useVisibleMaps();
+    const primaryMapId = useMapStore(state => state.primaryMapId);
 
     // URL state management
     // const { urlState, updateUrlState } = useUrlState();
@@ -43,7 +44,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
                         <div key={config.id} className={styles['map-wrapper']}>
                             <SingleMapView
                                 mapId={config.id}
-                                isPrimary={index === 0}
+                                isPrimary={config.id === primaryMapId}
                                 mapConfigsLength={visibleMaps.length}
                             />
                         </div>

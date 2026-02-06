@@ -19,9 +19,11 @@ import { initializeStoresFromUrl } from './utils/storeInitializer';
 const App: React.FC = () => {
     const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
-    // TEMPORARY - Get primary map's dataset for table viewer
-    // Just uses the first map for now
-    const primaryDataset = useMapStore((state) => state.mapConfigs[0]?.dataset || '');
+    // Get the active/primary map's dataset for the table viewer
+    const primaryDataset = useMapStore((state) => {
+        const primary = state.mapConfigs.find(c => c.id === state.primaryMapId);
+        return primary?.dataset || '';
+    });
 
     // Get data from stores
     const errors = useAppStore(state => state.errors);
