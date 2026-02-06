@@ -112,6 +112,23 @@ export const GenericPolygonLayer = memo(<T extends GeoJsonProperties = GeoJsonPr
         });
     }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle]);
 
+    // Update popup content when renderPopup changes (e.g. metric change)
+    useEffect(() => {
+        if (!renderPopup) return;
+
+        layersRef.forEach((layer) => {
+            if (!('setPopupContent' in layer)) return;
+
+            const layerWithFeature = layer as Layer & { feature?: Feature<Geometry, T> };
+            const feature = layerWithFeature.feature;
+            if (!feature) return;
+
+            const popupContent = renderPopup(feature);
+            if (popupContent) {
+                (layer as Layer & { setPopupContent: (content: string) => void }).setPopupContent(popupContent);
+            }
+        });
+    }, [renderPopup, layersRef]);
 
     if (!data) {
         return null;
