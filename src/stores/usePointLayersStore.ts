@@ -6,7 +6,8 @@ interface PointLayerState {
     // Core data
     pointLayerConfigs: PointLayerConfig[];
     pointLayerData: Map<string, FeatureCollection<Point>>;
-    visibleLayerIds: Set<string>;
+    //visibleLayerIds: Set<string>;
+    visibleLayerIdsByMap: Record<string, Set<string>>
     isLoaded: boolean;
 
     // Loading and error states
@@ -18,11 +19,13 @@ interface PointLayerState {
     // Setters
     setPointLayerConfigs: (configs: PointLayerConfig[]) => void;
     setPointLayerData: (layerId: string, data: FeatureCollection<Point>) => void;
-    setVisibleLayerIds: (ids: string[]) => void;
+    //setVisibleLayerIds: (ids: string[]) => void;
+    setVisibleLayerIds: (mapId: string, ids: string[]) => void;
     setIsLoaded: (loaded: boolean) => void;
 
     // Actions
-    toggleLayerVisibility: (layerId: string) => void;
+    //toggleLayerVisibility: (layerId: string) => void;
+    toggleLayerVisibility: (mapId: string, layerId: string) => void;
 
     // Data fetching
     fetchPointLayerConfigs: () => Promise<void>;
@@ -33,7 +36,8 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
     // Initial state
     pointLayerConfigs: [],
     pointLayerData: new Map(),
-    visibleLayerIds: new Set(),
+    //visibleLayerIds: new Set(),
+    visibleLayerIdsByMap: {},
     isLoaded: false,
     loading: false,
     error: null,
@@ -53,8 +57,16 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
         });
     },
 
-    setVisibleLayerIds: (ids) => {
-        set({ visibleLayerIds: new Set(ids) });
+    // setVisibleLayerIds: (ids) => {
+    //     set({ visibleLayerIds: new Set(ids) });
+    // },
+    setVisibleLayerIds: (mapId, ids) => {
+        set((state) => ({
+            visibleLayerIdsByMap: {
+                ...state.visibleLayerIdsByMap,
+                [mapId]: new Set(ids),
+            },
+        }));
     },
 
     setIsLoaded: (loaded) => {
@@ -62,30 +74,37 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
     },
 
     // Actions
-    toggleLayerVisibility: (layerId) => {
-        const { pointLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchPointLayerData } = get();
-
-        // Validate layer exists
+    // toggleLayerVisibility: (layerId) => {
+    //     const { pointLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchPointLayerData } = get();
+    toggleLayerVisibility: (mapId, layerId) => {
+        const {
+            pointLayerConfigs,
+            visibleLayerIdsByMap,
+            setVisibleLayerIds,
+            fetchPointLayerData,
+        } = get();
+    
         if (!pointLayerConfigs.some(l => l.id === layerId)) {
             console.warn(`Point layer config not found: ${layerId}`);
             return;
         }
-
-        const newVisibleIds = new Set(visibleLayerIds);
-
+    
+        const currentVisible = visibleLayerIdsByMap[mapId] ?? new Set();
+        const newVisibleIds = new Set(currentVisible);
+    
         if (newVisibleIds.has(layerId)) {
             newVisibleIds.delete(layerId);
         } else {
             newVisibleIds.add(layerId);
             fetchPointLayerData(layerId);
         }
-
-        setVisibleLayerIds(Array.from(newVisibleIds));
+    
+        setVisibleLayerIds(mapId, Array.from(newVisibleIds));
     },
 
     // Data fetching
     fetchPointLayerConfigs: async () => {
-        const { isLoaded, visibleLayerIds, setPointLayerConfigs, setIsLoaded, fetchPointLayerData } = get();
+        const { isLoaded, visibleLayerIdsByMap, setPointLayerConfigs, setIsLoaded, fetchPointLayerData } = get();
 
         // Prevent duplicate loads
         if (isLoaded) {
@@ -108,8 +127,11 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
             set({ loading: false });
 
             // Fetch data for any layers already marked visible (e.g., from URL initialization)
-            visibleLayerIds.forEach(layerId => {
-                fetchPointLayerData(layerId);
+            // visibleLayerIds.forEach(layerId => {
+            //     fetchPointLayerData(layerId);
+            // });
+            Object.values(visibleLayerIdsByMap).forEach((layerSet) => {
+                layerSet.forEach(fetchPointLayerData);
             });
 
         } catch (err) {
@@ -182,8 +204,12 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
 export const usePointLayerConfigs = () =>
     usePointLayerStore(state => state.pointLayerConfigs);
 
-export const useIsLayerVisible = (layerId: string) =>
-    usePointLayerStore(state => state.visibleLayerIds.has(layerId));
+// export const useIsLayerVisible = (layerId: string) =>
+//     usePointLayerStore(state => state.visibleLayerIds.has(layerId));
+export const useIsLayerVisible = (mapId: string, layerId: string) =>
+    usePointLayerStore(
+        state => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false
+    );
 
 export const usePointLayerData = (layerId: string) =>
     usePointLayerStore(state => state.pointLayerData.get(layerId));

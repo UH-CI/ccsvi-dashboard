@@ -58,13 +58,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const updateMapConfig = useMapStore(state => state.updateMapConfig);
     const toggleMapVisibility = useMapStore(state => state.toggleMapVisibility);
     const expandedSections = useMapStore(state => state.expandedSections);
+    const expandedSectionsByMap = useMapStore(state => state.expandedSectionsByMap);
     const toggleSection = useMapStore(state => state.toggleSection);
+    const toggleSectionByMap = useMapStore(state => state.toggleSectionByMap);
     const resetMapStore = useMapStore(state => state.reset);
 
     const { dataset: activeDataset, metric: activeDatasetMetric, setDataset, setMetric } = usePrimaryMapState();
 
     const pointLayerConfigs = usePointLayerStore(state => state.pointLayerConfigs);
-    const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    //const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    const visiblePointLayerIdsByMap = usePointLayerStore(state => state.visibleLayerIdsByMap);
     const togglePointLayerVisibility = usePointLayerStore(state => state.toggleLayerVisibility);
     const setVisiblePointLayerIds = usePointLayerStore(state => state.setVisibleLayerIds);
 
@@ -95,13 +98,13 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       setExpandedRasters(prev => ({ ...prev, [id]: !prev[id] }));
     }, []);
 
-    const pointLayers = useMemo(() =>
-            pointLayerConfigs.map(config => ({
-                ...config,
-                visible: visiblePointLayerIds.has(config.id)
-            })),
-        [pointLayerConfigs, visiblePointLayerIds]
-    );
+    // const pointLayers = useMemo(() =>
+    //         pointLayerConfigs.map(config => ({
+    //             ...config,
+    //             visible: visiblePointLayerIds.has(config.id)
+    //         })),
+    //     [pointLayerConfigs, visiblePointLayerIds]
+    // );
 
     const hazardLayers = useMemo(() =>
             hazardLayerConfigs.map(config => ({
@@ -143,19 +146,33 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const canAddMap = mapConfigs.length < maxMaps;
     const canRemoveMap = mapConfigs.length > 1;
 
-    const handlePointLayerToggle = useCallback((layerId: string) => {
-        togglePointLayerVisibility(layerId);
-    }, [togglePointLayerVisibility]);
+    // const handlePointLayerToggle = useCallback((layerId: string) => {
+    //     togglePointLayerVisibility(layerId);
+    // }, [togglePointLayerVisibility]);
+
+
+    const handleMapVisibilityToggle = useCallback((mapId: string) => {
+        // Simply toggle map visibility - don't clear point layers
+        toggleMapVisibility(mapId);
+    }, [toggleMapVisibility]);
+
+    const handleRemoveMap = useCallback((mapId: string) => {
+        // Clear point layers for the map being removed
+        setVisiblePointLayerIds(mapId, []);
+        // Remove the map
+        removeMap(mapId);
+    }, [removeMap, setVisiblePointLayerIds]);
 
     const handleResetView = useCallback(() => {
         // Reset stores
         resetMapStore();
         setDataset('');
         setMetric('');
-        setVisiblePointLayerIds([]);
+        //setVisiblePointLayerIds([]);
+        mapConfigs.forEach((map) => { setVisiblePointLayerIds(map.id, []); });
         setVisibleHazardLayerIds([]);
         setVisibleRasterLayerIds([]);
-    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, setVisibleRasterLayerIds]);
+    }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, setVisibleRasterLayerIds, mapConfigs]);
 
     const handleSnapshot = useCallback(() => {
         console.log('Snapshot');
@@ -192,7 +209,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                         <Box className={styles['control-section']}>
                             <Box
                                 className={styles['section-header']}
-                                onClick={() => toggleSection('maps')}
+                                onClick={() => toggleSection( 'maps')}
                             >
                                 <Typography variant="subtitle1" className={styles['section-title']}>
                                     <Layers className={styles['section-icon']} />
@@ -228,7 +245,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                     <Box className={styles['map-item-actions']}>
                                                         <IconButton
                                                             size="small"
-                                                            onClick={() => toggleMapVisibility(config.id)}
+                                                            onClick={() => handleMapVisibilityToggle(config.id)}
                                                             title={config.visible ? 'Hide map' : 'Show map'}
                                                         >
                                                             {config.visible ? (
@@ -240,7 +257,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                         {canRemoveMap && (
                                                             <IconButton
                                                                 size="small"
-                                                                onClick={() => removeMap(config.id)}
+                                                                onClick={() => handleRemoveMap(config.id)}
                                                                 title="Remove map"
                                                                 color="error"
                                                             >
@@ -311,6 +328,57 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                 </Select>
                                                             </FormControl>
                                                         )}
+                                                        <Divider className={styles['section-divider']} />
+                                                        {/* Add stuff withing these brackerts */}
+                                                        <Box
+                                                            className={styles['section-header']}
+                                                            onClick={() => toggleSectionByMap(config.id, 'points')}
+                                                        >
+                                                            <Typography variant="subtitle1" className={styles['section-title']}>
+                                                                Points of Interest
+                                                            </Typography>
+                                                            <IconButton size="small">
+                                                                {expandedSectionsByMap[config.id]?.points ? <ExpandLess /> : <ExpandMore />}
+                                                            </IconButton>
+                                                        </Box>
+                                                        <Collapse in={expandedSectionsByMap[config.id]?.points ?? false}>
+                                                        
+                                                          <Stack spacing={1}>
+                                                            {pointLayerConfigs.map((layer) => {
+                                                              const IconComponent = 
+                                                                FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                                                              const isVisible = 
+                                                                visiblePointLayerIdsByMap[config.id]?.has(layer.id) ?? false;
+                                                              
+                                                                return (
+                                                                  <FormControlLabel
+                                                                    key={layer.id}
+                                                                    control={
+                                                                      <Checkbox 
+                                                                        checked={isVisible}
+                                                                        onChange={() =>
+                                                                          togglePointLayerVisibility(config.id, layer.id)
+                                                                        }
+                                                                        size="small"
+                                                                        />
+                                                                    }
+                                                                    label={
+                                                                      <div className={styles['layer-label']}>
+                                                                        <span
+                                                                          className={styles['layer-icon']}
+                                                                          style={{ color: layer.color}}
+                                                                        >
+                                                                          <IconComponent size="1rem" />
+                                                                        </span>
+                                                                        {layer.name}
+                                                                      </div>
+                                                                    }
+                                                                  />
+                                                                );
+                                                            })}
+                                                          </Stack>
+                                                        </Collapse>
+                                                        {/* end of section */}
                                                     </Box>
                                                 )}
                                             </Box>
@@ -364,7 +432,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                         <Divider className={styles['section-divider']} />
 
                         {/* Points of Interest Section */}
-                        <Box className={styles['control-section']}>
+                        {/* <Box className={styles['control-section']}>
                             <Box
                                 className={styles['section-header']}
                                 onClick={() => toggleSection('points')}
@@ -409,7 +477,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                     })}
                                 </Stack>
                             </Collapse>
-                        </Box>
+                        </Box> */}
 
                         <Divider className={styles['section-divider']} />
 

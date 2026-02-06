@@ -119,7 +119,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
     const effectiveMetric = config?.metric;
 
     // Get visible point layer IDs from store (components will fetch their own data)
-    const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIds);
+    //const visiblePointLayerIds = usePointLayerStore(state => state.visibleLayerIdsBy);
+    const visiblePointLayerIdsByMap = usePointLayerStore(state => state.visibleLayerIdsByMap);
 
     // Get hazard layer configs and visible IDs from refactored store
     const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
@@ -137,6 +138,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
             return () => clearTimeout(timeoutId);
         }
     }, [mapConfigsLength]);
+
+    const visiblePointLayerIds = useMemo(
+        () => visiblePointLayerIdsByMap[mapId] ?? new Set<string>(),
+        [visiblePointLayerIdsByMap, mapId]
+    );
 
     const activeDatasetObject = useMemo(() => {
         if (!blockGroupData || !effectiveDataset) return null;
@@ -364,7 +370,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
                     {/* Render point layers - components fetch their own data from store */}
                     {Array.from(visiblePointLayerIds).map(layerId => (
-                        <GenericPointMarkers key={layerId} layerId={layerId} />
+                        <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
                     ))}
                 </MapContainer>
 
