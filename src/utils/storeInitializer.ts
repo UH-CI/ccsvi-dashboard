@@ -49,12 +49,31 @@ function initializeMapStore(mapConfigs: DeserializedState['mapConfigs']): void {
 
 /**
  * Initializes point layers from URL
+ * layerIds are in "mapId:layerId" format (e.g. ["map1:hospitals", "map2:schools"])
  */
 function initializePointLayers(layerIds: string[]): void {
+    const pointLayerStore = usePointLayerStore.getState();
+
+    // Clear existing visibility state
+    pointLayerStore.clearAllVisibility();
+
     if (layerIds.length === 0) return;
 
-    const pointLayerStore = usePointLayerStore.getState();
-    pointLayerStore.setVisibleLayerIds(layerIds);
+    // Group layer IDs by map
+    const layersByMap: Record<string, string[]> = {};
+    for (const entry of layerIds) {
+        const colonIndex = entry.indexOf(':');
+        if (colonIndex === -1) continue;
+        const mapId = entry.substring(0, colonIndex);
+        const layerId = entry.substring(colonIndex + 1);
+        if (!layersByMap[mapId]) layersByMap[mapId] = [];
+        layersByMap[mapId].push(layerId);
+    }
+
+    // Set visibility per map
+    for (const [mapId, ids] of Object.entries(layersByMap)) {
+        pointLayerStore.setVisibleLayerIds(mapId, ids);
+    }
 }
 
 /**

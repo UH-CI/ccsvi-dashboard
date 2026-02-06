@@ -23,7 +23,6 @@ export function useUrlSync(isInitialized: boolean) {
     const isUpdatingFromUrl = useRef(false);
 
     const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
-    //const visiblePointLayers = usePointLayerStore((state) => state.visibleLayerIds);
     const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
     const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
     const visibleRasterLayers = useRasterLayersStore((state) => state.visibleLayerIds);
@@ -31,8 +30,7 @@ export function useUrlSync(isInitialized: boolean) {
     // --- STORE > URL SYNC ---
 
     const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|');
-    //const pointLayerKey = Array.from(visiblePointLayers).sort().join(',');
-    const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => '${mapId}:${layerId}')).sort().join(',');
+    const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
     const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
     const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
 
@@ -67,11 +65,6 @@ export function useUrlSync(isInitialized: boolean) {
             }
 
             // --- Point layers ---
-            // if (visiblePointLayers.size > 0) {
-            //     newParams.set('layers', Array.from(visiblePointLayers).sort().join(','));
-            // } else {
-            //     newParams.delete('layers');
-            // }
             const serializedPointLayers = Object.entries(visiblePointLayersByMap)
                 .flatMap(([mapId, layers]) =>
                     Array.from(layers).map((layerId) => `${mapId}:${layerId}`)

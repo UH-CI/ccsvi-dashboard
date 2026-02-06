@@ -26,6 +26,7 @@ interface PointLayerState {
     // Actions
     //toggleLayerVisibility: (layerId: string) => void;
     toggleLayerVisibility: (mapId: string, layerId: string) => void;
+    clearAllVisibility: () => void;
 
     // Data fetching
     fetchPointLayerConfigs: () => Promise<void>;
@@ -71,6 +72,10 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
 
     setIsLoaded: (loaded) => {
         set({ isLoaded: loaded });
+    },
+
+    clearAllVisibility: () => {
+        set({ visibleLayerIdsByMap: {} });
     },
 
     // Actions
