@@ -35,11 +35,15 @@ interface TableViewerProps {
     initialCollapsed?: boolean;
 }
 
+const PLACEHOLDER_VALUES = new Set(['', '—', '-', '**', 'N/A', 'n/a', 'x', 'null', 'NULL', 'na']);
+
 const detectColumnType = (columnData: string[]): 'number' | 'string' => {
-    const numericValues = columnData.filter(val =>
-        val && val !== '—' && !isNaN(Number(val.replace(/[,$%]/g, '')))
+    const realValues = columnData.filter(val => !PLACEHOLDER_VALUES.has(val.trim()));
+    if (realValues.length === 0) return 'string';
+    const allNumeric = realValues.every(val =>
+        !isNaN(Number(val.replace(/[,$%]/g, '')))
     );
-    return numericValues.length > columnData.length * 0.7 ? 'number' : 'string';
+    return allNumeric ? 'number' : 'string';
 };
 
 const cleanHeaderForDisplay = (header: string): string => {
@@ -129,7 +133,23 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                     ? (value: unknown) => {
                         if (value === null || value === undefined || value === '—') return '—';
                         const num = parseFloat(String(value).replace(/[,$%]/g, ''));
-                        return isNaN(num) ? String(value) : num.toLocaleString();
+                        if (isNaN(num)) return String(value);
+                        // Locale formatting rounds decimals inconsistently with stored precision.
+                        // Use toLocaleString for integers (comma formatting), fixed decimals otherwise.
+                        // return num.toLocaleString();
+                        return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(4);
+                    }
+                    : undefined,
+                // MUI's default quick filter for number columns does exact equality.
+                // Override to use substring matching so searching "0.8" matches "0.8007".
+                getApplyQuickFilterFn: columnTypes[index] === 'number'
+                    ? (filterValue: string) => {
+                        if (filterValue == null || filterValue === '') return null;
+                        const search = String(filterValue).toLowerCase();
+                        return (cellValue: unknown) => {
+                            if (cellValue == null) return false;
+                            return String(cellValue).toLowerCase().includes(search);
+                        };
                     }
                     : undefined,
             };
@@ -138,7 +158,13 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         const rowData = tableData.rows.map((row: string[], index: number) => {
             const rowObj: Record<string, string | number> = { id: index };
             row.forEach((cell: string, cellIndex: number) => {
-                rowObj[`col_${cellIndex}`] = cell || '—';
+                if (columnTypes[cellIndex] === 'number' && cell && !PLACEHOLDER_VALUES.has(cell.trim())) {
+                    const num = parseFloat(cell.replace(/[,$%]/g, ''));
+                    const rounded = Number.isInteger(num) ? num : Math.round(num * 1e4) / 1e4;
+                    rowObj[`col_${cellIndex}`] = isNaN(num) ? (cell || '—') : rounded;
+                } else {
+                    rowObj[`col_${cellIndex}`] = cell || '—';
+                }
             });
             return rowObj;
         });
