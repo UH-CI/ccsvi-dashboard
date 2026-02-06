@@ -15,7 +15,8 @@ import {
     IconButton,
     Box,
     Chip,
-    Tooltip
+    Tooltip,
+    Menu
 } from '@mui/material';
 import {
     Camera,
@@ -31,6 +32,7 @@ import {
     Warning,
     Refresh,
     Terrain,
+    Palette,
 } from '@mui/icons-material';
 import * as FaIcons from 'react-icons/fa';
 import {
@@ -87,6 +89,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
     const toggleSubRasterLayerVisibility = useRasterLayersStore((s) => s.toggleSubRasterLayerVisibility);
     const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
+
+    const [colorSchemeAnchor, setColorSchemeAnchor] = useState<Record<string, HTMLElement | null>>({});
 
     const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
     const togglePanelCollapse = useCallback(() => {
@@ -243,6 +247,35 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                         Map {config.id}
                                                     </Typography>
                                                     <Box className={styles['map-item-actions']}>
+                                                        {config.visible && config.dataset && config.metric && (
+                                                            <>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={(e) => setColorSchemeAnchor(prev => ({ ...prev, [config.id]: e.currentTarget }))}
+                                                                    title="Color scheme"
+                                                                >
+                                                                    <Palette fontSize="small" />
+                                                                </IconButton>
+                                                                <Menu
+                                                                    anchorEl={colorSchemeAnchor[config.id] || null}
+                                                                    open={Boolean(colorSchemeAnchor[config.id])}
+                                                                    onClose={() => setColorSchemeAnchor(prev => ({ ...prev, [config.id]: null }))}
+                                                                >
+                                                                    {['viridis', 'reds', 'blues'].map(scheme => (
+                                                                        <MenuItem
+                                                                            key={scheme}
+                                                                            selected={config.colorScheme === scheme || (!config.colorScheme && scheme === 'viridis')}
+                                                                            onClick={() => {
+                                                                                updateMapConfig(config.id, { colorScheme: scheme as 'viridis' | 'reds' | 'blues' });
+                                                                                setColorSchemeAnchor(prev => ({ ...prev, [config.id]: null }));
+                                                                            }}
+                                                                        >
+                                                                            {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </Menu>
+                                                            </>
+                                                        )}
                                                         <IconButton
                                                             size="small"
                                                             onClick={() => handleMapVisibilityToggle(config.id)}
@@ -312,24 +345,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                             </FormControl>
                                                         )}
 
-                                                        {config.dataset && config.metric && (
-                                                            <FormControl size="small" fullWidth>
-                                                                <InputLabel>Color Scheme</InputLabel>
-                                                                <Select
-                                                                    value={config.colorScheme || 'viridis'}
-                                                                    onChange={(e) => updateMapConfig(config.id, {
-                                                                        colorScheme: e.target.value as 'viridis' | 'reds' | 'blues'
-                                                                    })}
-                                                                    label="Color Scheme"
-                                                                >
-                                                                    <MenuItem value="viridis">Viridis</MenuItem>
-                                                                    <MenuItem value="reds">Reds</MenuItem>
-                                                                    <MenuItem value="blues">Blues</MenuItem>
-                                                                </Select>
-                                                            </FormControl>
-                                                        )}
                                                         <Divider className={styles['section-divider']} />
-                                                        {/* Add stuff withing these brackerts */}
+                                                        {/* Add stuff within these brackerts */}
                                                         <Box
                                                             className={styles['section-header']}
                                                             onClick={() => toggleSectionByMap(config.id, 'points')}
