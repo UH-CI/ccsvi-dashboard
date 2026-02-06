@@ -46,7 +46,10 @@ export function FeaturePopup({
         ${metricName && metricValue !== null && metricValue !== undefined ? `
           <div class="${styles['popup-field']}">
             <span class="${styles['popup-field-label']}">${escapeHtml(metricName)}:</span>
-            <span class="${styles['popup-field-value']}">${metricValue.toFixed(2)}</span>
+            <span class="${styles['popup-field-value-group']}">
+              <span class="${styles['popup-field-value']}">${metricValue.toFixed(2)}</span>
+              <span class="${styles['popup-metric-subheader']}">(Per Capita)</span>
+            </span>
           </div>
         ` : ''}
       </div>
