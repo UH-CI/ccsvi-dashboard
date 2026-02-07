@@ -140,18 +140,16 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                         return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(4);
                     }
                     : undefined,
-                // MUI's default quick filter for number columns does exact equality.
-                // Override to use substring matching so searching "0.8" matches "0.8007".
-                getApplyQuickFilterFn: columnTypes[index] === 'number'
-                    ? (filterValue: string) => {
-                        if (filterValue == null || filterValue === '') return null;
-                        const search = String(filterValue).toLowerCase();
-                        return (cellValue: unknown) => {
-                            if (cellValue == null) return false;
-                            return String(cellValue).toLowerCase().includes(search);
-                        };
-                    }
-                    : undefined,
+                // Override quick filter to use substring matching for all columns.
+                // MUI's default does exact equality for numbers and prefix matching for strings.
+                getApplyQuickFilterFn: (filterValue: string) => {
+                    if (filterValue == null || filterValue === '') return null;
+                    const search = String(filterValue).toLowerCase();
+                    return (cellValue: unknown) => {
+                        if (cellValue == null) return false;
+                        return String(cellValue).toLowerCase().includes(search);
+                    };
+                },
             };
         });
 
@@ -259,7 +257,13 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                                         printOptions: {
                                             hideFooter: true,
                                             hideToolbar: true,
-                                        }
+                                        },
+                                        quickFilterProps: {
+                                            // Treat the entire search input as one term instead of
+                                            // splitting by spaces. Splitting causes short tokens
+                                            // like "1" to match every row via numeric columns.
+                                            quickFilterParser: (input: string) => [input],
+                                        },
                                     }
                                 }}
                                 initialState={{
