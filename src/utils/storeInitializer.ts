@@ -102,10 +102,26 @@ function initializeHazardLayers(hazardIds: string[]): void {
 
 /**
  * Initializes raster layer visibility from URL
+ * rasterIds are in "mapId:layerId" format (e.g. ["map1:rainfall.annual", "map2:elevation"])
  */
 function initializeRasterLayers(rasterIds: string[]): void {
+    const store = useRasterLayersStore.getState();
+
     if (rasterIds.length === 0) return;
 
-    const store = useRasterLayersStore.getState();
-    store.setVisibleLayerIds(rasterIds);
+    // Group layer IDs by map
+    const layersByMap: Record<string, string[]> = {};
+    for (const entry of rasterIds) {
+        const colonIndex = entry.indexOf(':');
+        if (colonIndex === -1) continue;
+        const mapId = entry.substring(0, colonIndex);
+        const layerId = entry.substring(colonIndex + 1);
+        if (!layersByMap[mapId]) layersByMap[mapId] = [];
+        layersByMap[mapId].push(layerId);
+    }
+
+    // Set visibility per map
+    for (const [mapId, ids] of Object.entries(layersByMap)) {
+        store.setVisibleLayerIds(mapId, ids);
+    }
 }
