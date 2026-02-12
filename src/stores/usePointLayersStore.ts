@@ -7,7 +7,7 @@ interface PointLayerState {
     pointLayerConfigs: PointLayerConfig[];
     pointLayerData: Map<string, FeatureCollection<Point>>;
     //visibleLayerIds: Set<string>;
-    visibleLayerIdsByMap: Record<string, Set<string>>
+    visibleLayerIdsByMap: Record<string, Set<string>>;
     isLoaded: boolean;
 
     // Loading and error states

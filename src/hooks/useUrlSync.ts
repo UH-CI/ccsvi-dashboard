@@ -26,14 +26,15 @@ export function useUrlSync(isInitialized: boolean) {
     const primaryMapId = useMapStore((state) => state.primaryMapId);
     const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
     const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
-    const visibleRasterLayers = useRasterLayersStore((state) => state.visibleLayerIds);
+    const VisibleRasterLayersByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
 
     // --- STORE > URL SYNC ---
 
     const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ''}`).join('|');
     const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
     const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
-    const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
+    //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
+    const rasterLayerKey = Object.entries(VisibleRasterLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
 
     useEffect(() => {
         if (!isInitialized || isUpdatingFromUrl.current) return;
@@ -88,8 +89,13 @@ export function useUrlSync(isInitialized: boolean) {
             }
 
             // --- Raster layers ---
-            if (visibleRasterLayers.size > 0) {
-                newParams.set('rasters', Array.from(visibleRasterLayers).sort().join(','));
+            const serializedRasterLayers = Object.entries(VisibleRasterLayersByMap)
+                .flatMap(([mapId, layers]) =>
+                    Array.from(layers).map((layerId) => `${mapId}:${layerId}`)
+                );
+
+            if (serializedRasterLayers.length > 0) {
+                newParams.set('rasters', Array.from(serializedRasterLayers).sort().join(','));
             } else {
                 newParams.delete('rasters');
             }

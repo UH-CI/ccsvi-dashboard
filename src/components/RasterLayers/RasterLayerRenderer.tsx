@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useRasterLayersStore, useIsRasterLayerVisible, useRasterLayerData } from '../../stores';
+import { useRasterLayersStore, useRasterLayerData } from '../../stores';
 import { DataProcessorService } from './data-processor.service';
 import { initializeRasterLayer, R, RasterOptions } from './leaflet-raster-layer.service';
 import { ColorGeneratorService } from './color-generator.service';
@@ -12,6 +12,7 @@ interface RasterLayerRendererProps {
   parentId: string;
   layerId?: string;
   mapZoom: number;
+  mapId: string;
 }
 
 /** Optional custom zoom → overview rules */
@@ -26,7 +27,8 @@ const getOverviewForZoom = (
 export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   parentId,
   layerId,
-  mapZoom
+  mapZoom,
+  mapId
 }) => {
   const map = useMap();
 
@@ -57,7 +59,11 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
 
   // Get visibility and data from store
-  const isVisible = useIsRasterLayerVisible(activeLayerId);
+  //const isVisible = useIsRasterLayerVisible(activeLayerId);
+  const isVisible = useRasterLayersStore( state => {
+    const mapLayers = state.visibleLayerIdsByMap[mapId];
+    return mapLayers ? mapLayers.has(activeLayerId) : false;
+  })
   const arrayBuffer = useRasterLayerData(activeLayerId);
 
   const opacity = layerConfig?.opacity ?? 0.7;

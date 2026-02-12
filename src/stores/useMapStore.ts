@@ -75,7 +75,7 @@ const defaultExpandedSections = {
   utils: true,
   points: false,
   hazards: true,
-  rasters: true,
+  rasters: false,
 };
 
 export const useMapStore = create<MapState>((set, get) => ({

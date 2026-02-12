@@ -85,7 +85,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     }, []);
 
     const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-    const visibleRasterLayerIds = useRasterLayersStore((state) => state.visibleLayerIds);
+    //const visibleRasterLayerIds = useRasterLayersStore((state) => state.visibleLayerIds);
+    const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
     const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
     const toggleSubRasterLayerVisibility = useRasterLayersStore((s) => s.toggleSubRasterLayerVisibility);
     const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
@@ -98,8 +99,9 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     }, []);
 
     const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
-    const toggleExpandRasters = useCallback((id: string) => {
-      setExpandedRasters(prev => ({ ...prev, [id]: !prev[id] }));
+    const toggleExpandRasters = useCallback((mapId: string, id: string) => {
+      const key = `${mapId}.${id}`;
+      setExpandedRasters(prev => ({ ...prev, [key]: !prev[key] }));
     }, []);
 
     // const pointLayers = useMemo(() =>
@@ -122,17 +124,17 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         [hazardLayerConfigs, visibleHazardLayerIds]
     );
 
-    const rasterLayers = useMemo(() =>
-            rasterLayerConfigs.map(config => ({
-                ...config,
-                visible: visibleRasterLayerIds.has(config.id),
-                subLayers: config.subLayers?.map(sub => ({
-                    ...sub,
-                    visible: visibleRasterLayerIds.has(`${config.id}.${sub.id}`)
-                }))
-            })),
-        [rasterLayerConfigs, visibleRasterLayerIds]
-    );
+    // const rasterLayers = useMemo(() =>
+    //         rasterLayerConfigs.map(config => ({
+    //             ...config,
+    //             visible: visibleRasterLayerIds.has(config.id),
+    //             subLayers: config.subLayers?.map(sub => ({
+    //                 ...sub,
+    //                 visible: visibleRasterLayerIds.has(`${config.id}.${sub.id}`)
+    //             }))
+    //         })),
+    //     [rasterLayerConfigs, visibleRasterLayerIds]
+    // );
 
     const datasetList = useMemo(() => {
         if (!dataset) return [];
@@ -175,7 +177,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         //setVisiblePointLayerIds([]);
         mapConfigs.forEach((map) => { setVisiblePointLayerIds(map.id, []); });
         setVisibleHazardLayerIds([]);
-        setVisibleRasterLayerIds([]);
+        //setVisibleRasterLayerIds([]);
+        mapConfigs.forEach((map) => { setVisibleRasterLayerIds(map.id, []); });
     }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, setVisibleRasterLayerIds, mapConfigs]);
 
     const handleSnapshot = useCallback(() => {
@@ -396,6 +399,134 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                           </Stack>
                                                         </Collapse>
                                                         {/* end of section */}
+
+                                                        <Divider className={styles['section-divider']} />
+                                                        {/* Add stuff withing these brackerts */}
+                                                        <Box 
+                                                            className={styles['section-header']}
+                                                            onClick={() => toggleSectionByMap(config.id, 'rasters')}
+                                                        >
+                                                            <Typography variant="subtitle1" className={styles['section-title']}>
+                                                                Hazards (Rasters)
+                                                            </Typography>
+                                                            <IconButton size="small">
+                                                                {expandedSectionsByMap[config.id]?.rasters ? <ExpandLess /> : <ExpandMore />}
+                                                            </IconButton>
+                                                        </Box>
+
+                                                        <Collapse in={expandedSectionsByMap[config.id]?.rasters ?? false}>
+                                                          <Stack spacing={1} className={styles['section-content']}>
+                                                          {rasterLayerConfigs.map((parent) => {
+                                                            const ParentIcon =
+                                                              FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
+
+                                                            const hasChildren = !!parent.subLayers?.length;
+                                                            const CHECKBOX_WIDTH = 15;
+                                                            const visibleRasterIdsForMap = visibleRasterLayerIdsByMap[config.id] ?? new Set<string>();
+                                                            const isParentVisible = visibleRasterIdsForMap.has(parent.id);
+
+                                                            return (
+                                                              <Box key={parent.id} className={styles['layer-toggle']}>
+                                                                {/* === Parent row === */}
+                                                                <Box display="flex" alignItems="center">
+                                                                  {/* Checkbox OR spacer */}
+                                                                  <Box
+                                                                    sx={{
+                                                                      width: CHECKBOX_WIDTH,
+                                                                      display: 'flex',
+                                                                      justifyContent: 'center',
+                                                                    }}
+                                                                  >
+                                                                    {!hasChildren && (
+                                                                      <Checkbox
+                                                                        checked={isParentVisible}
+                                                                        onChange={() =>
+                                                                          toggleRasterLayerVisibility(config.id, parent.id)
+                                                                        }
+                                                                        size="small"
+                                                                      />
+                                                                    )}
+                                                                  </Box>
+                                                    
+                                                                  {/* Label */}
+                                                                  <Typography
+                                                                    className={styles['layer-label']}
+                                                                    sx={{
+                                                                      display: 'flex',
+                                                                      alignItems: 'center',
+                                                                      flexGrow: 1,
+                                                                      ml: '21px', 
+                                                                    }}
+                                                                  >
+                                                                    <span
+                                                                      className={styles['layer-icon']}
+                                                                      style={{ color: parent.color }}
+                                                                    >
+                                                                      <ParentIcon size="1rem" />
+                                                                    </span>
+                                                                    {parent.name}
+                                                                  </Typography>
+                                                    
+                                                                  {/* Expand */}
+                                                                  {hasChildren && (
+                                                                    <IconButton
+                                                                      size="small"
+                                                                      className={styles['expand-icon']}
+                                                                      onClick={() => toggleExpandRasters(config.id,parent.id)}
+                                                                    >
+                                                                      {expandedRasters[`${config.id}.${parent.id}`] ? (
+                                                                        <ExpandLess />
+                                                                      ) : (
+                                                                        <ExpandMore />
+                                                                      )}
+                                                                    </IconButton>
+                                                                  )}
+                                                                </Box>
+                                                    
+                                                                {/* === Sublayers === */}
+                                                                {hasChildren && (
+                                                                  <Collapse in={expandedRasters[`${config.id}.${parent.id}`]}>
+                                                                    <Stack spacing={1} sx={{ pl: 3 }}>
+                                                                      {parent.subLayers!.map((sub) => {
+                                                                        const compositeId = `${parent.id}.${sub.id}`;
+                                                                        const isSubVisible = visibleRasterIdsForMap.has(compositeId);
+                                                                        return (
+                                                                          <FormControlLabel
+                                                                            sx={{
+                                                                              ml: 0,        
+                                                                              '& .MuiFormControlLabel-label': {
+                                                                                ml: 0.9,       
+                                                                              },
+                                                                            }}
+                                                                            key={sub.id}
+                                                                            control={
+                                                                              <Checkbox
+                                                                                checked={isSubVisible}
+                                                                                onChange={() =>
+                                                                                  toggleSubRasterLayerVisibility(
+                                                                                    config.id,
+                                                                                    parent.id,
+                                                                                    sub.id
+                                                                                  )
+                                                                                }
+                                                                                size="small"
+                                                                              />
+                                                                            }
+                                                                            label={sub.name}
+                                                                          />
+                                                                        );
+                                                                      })}
+                                                                    </Stack>
+                                                                  </Collapse>
+                                                                )}
+                                                              </Box>
+                                                            );
+                                                          })}
+                                                        </Stack>
+                                                      </Collapse>
+                                                        
+                                                        {/* end of section */}
+
                                                     </Box>
                                                 )}
                                             </Box>
@@ -601,7 +732,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
 
             <Box className={styles['control-section']}>
-                <Box 
+                {/* <Box 
                     className={styles['section-header']}
                     onClick={() => toggleSection('rasters')}
                 >
@@ -621,14 +752,12 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
                     const hasChildren = !!parent.subLayers?.length;
                     const CHECKBOX_WIDTH = 15;
-                    // const anyChildVisible =
-                    //   hasChildren && parent.subLayers!.some((s) => s.visible);
 
                     return (
                       <Box key={parent.id} className={styles['layer-toggle']}>
-                        {/* === Parent row === */}
+                        
                         <Box display="flex" alignItems="center">
-                          {/* Checkbox OR spacer */}
+                         
                           <Box
                             sx={{
                               width: CHECKBOX_WIDTH,
@@ -647,7 +776,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             )}
                           </Box>
             
-                          {/* Label */}
                           <Typography
                             className={styles['layer-label']}
                             sx={{
@@ -666,7 +794,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             {parent.name}
                           </Typography>
             
-                          {/* Expand */}
                           {hasChildren && (
                             <IconButton
                               size="small"
@@ -682,7 +809,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                           )}
                         </Box>
             
-                        {/* === Sublayers === */}
                         {hasChildren && (
                           <Collapse in={expandedRasters[parent.id]}>
                             <Stack spacing={1} sx={{ pl: 3 }}>
@@ -717,7 +843,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                     );
                   })}
                 </Stack>
-              </Collapse>
+              </Collapse> */}
             </Box>
                     </>
                 ) : (
