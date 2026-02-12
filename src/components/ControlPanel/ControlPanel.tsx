@@ -165,9 +165,10 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const handleRemoveMap = useCallback((mapId: string) => {
         // Clear point layers for the map being removed
         setVisiblePointLayerIds(mapId, []);
+        setVisibleRasterLayerIds(mapId, []);
         // Remove the map
         removeMap(mapId);
-    }, [removeMap, setVisiblePointLayerIds]);
+    }, [removeMap, setVisiblePointLayerIds, setVisibleRasterLayerIds]);
 
     const handleResetView = useCallback(() => {
         // Reset stores
