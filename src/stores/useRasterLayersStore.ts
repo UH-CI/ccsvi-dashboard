@@ -5,7 +5,8 @@ interface RasterLayersState {
   // Core data
   rasterLayerConfigs: RasterLayerConfig[];
   rasterLayerData: Map<string, ArrayBuffer>;
-  visibleLayerIds: Set<string>;
+  //visibleLayerIds: Set<string>;
+  visibleLayerIdsByMap: Record<string, Set<string>>;
   isLoaded: boolean;
 
   // Loading and error states
@@ -17,12 +18,15 @@ interface RasterLayersState {
   // Setters
   setRasterLayerConfigs: (configs: RasterLayerConfig[]) => void;
   setRasterLayerData: (layerId: string, data: ArrayBuffer) => void;
-  setVisibleLayerIds: (ids: string[]) => void;
+  //setVisibleLayerIds: (ids: string[]) => void;
+  setVisibleLayerIds: (mapId: string, ids: string[]) => void;
   setIsLoaded: (loaded: boolean) => void;
 
   // Actions (mutual exclusivity: only one raster visible at a time)
-  toggleRasterLayerVisibility: (id: string) => void;
-  toggleSubRasterLayerVisibility: (parentId: string, subId: string) => void;
+  //toggleRasterLayerVisibility: (id: string) => void;
+  toggleRasterLayerVisibility: (mapId: string, id: string) => void;
+  //toggleSubRasterLayerVisibility: (parentId: string, subId: string) => void;
+  toggleSubRasterLayerVisibility: (mapId: string, parentId: string, subId: string) => void;
 
   // Data fetching
   fetchRasterLayerConfigs: () => Promise<void>;
@@ -33,7 +37,8 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   // Initial state
   rasterLayerConfigs: [],
   rasterLayerData: new Map(),
-  visibleLayerIds: new Set(),
+  //visibleLayerIds: new Set(),
+  visibleLayerIdsByMap: {},
   isLoaded: false,
   loading: false,
   error: null,
@@ -53,8 +58,16 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     });
   },
 
-  setVisibleLayerIds: (ids) => {
-    set({ visibleLayerIds: new Set(ids) });
+  // setVisibleLayerIds: (ids) => {
+  //   set({ visibleLayerIds: new Set(ids) });
+  // },
+  setVisibleLayerIds: (mapId, ids) => {
+      set((state) => ({
+          visibleLayerIdsByMap: {
+              ...state.visibleLayerIdsByMap,
+              [mapId]: new Set(ids),
+          }
+      }))
   },
 
   setIsLoaded: (loaded) => {
@@ -62,8 +75,17 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   },
 
   // Actions - Raster layers are mutually exclusive (only one visible at a time)
-  toggleRasterLayerVisibility: (id) => {
-    const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
+  // toggleRasterLayerVisibility: (id) => {
+  //   const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
+
+  toggleRasterLayerVisibility: (mapId, id) => {
+    const {
+        rasterLayerConfigs,
+        visibleLayerIdsByMap,
+        setVisibleLayerIds,
+        fetchRasterLayerData,
+    } = get();
+     
 
     const layer = rasterLayerConfigs.find(l => l.id === id);
     if (!layer) {
@@ -74,20 +96,22 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     // If layer has sublayers, don't toggle parent directly
     if (layer.subLayers?.length) return;
 
-    const isCurrentlyVisible = visibleLayerIds.has(id);
+    // Check if this layer is currently visible for this map
+    const mapVisibleLayers = visibleLayerIdsByMap[mapId] ?? new Set<string>();
+    const isCurrentlyVisible = mapVisibleLayers.has(id);
 
     if (isCurrentlyVisible) {
       // Turn off - clear all visibility
-      setVisibleLayerIds([]);
+      setVisibleLayerIds(mapId, []);
     } else {
       // Turn on - clear others and set only this one (mutual exclusivity)
-      setVisibleLayerIds([id]);
+      setVisibleLayerIds(mapId, [id]);
       fetchRasterLayerData(id);
     }
   },
 
-  toggleSubRasterLayerVisibility: (parentId, subId) => {
-    const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
+  toggleSubRasterLayerVisibility: (mapId, parentId, subId) => {
+    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchRasterLayerData } = get();
 
     const parentLayer = rasterLayerConfigs.find(l => l.id === parentId);
     if (!parentLayer?.subLayers) return;
@@ -96,21 +120,23 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     if (!subLayer) return;
 
     const fullSubId = `${parentId}.${subId}`;
-    const isCurrentlyVisible = visibleLayerIds.has(fullSubId);
+    // Check if this sublayer is currently visible for this map
+    const mapVisibleLayers = visibleLayerIdsByMap[mapId] ?? new Set<string>();
+    const isCurrentlyVisible = mapVisibleLayers.has(fullSubId);
 
     if (isCurrentlyVisible) {
       // Turn off - clear all visibility
-      setVisibleLayerIds([]);
+      setVisibleLayerIds(mapId, []);
     } else {
       // Turn on - clear others and set only this sublayer + parent (mutual exclusivity)
-      setVisibleLayerIds([parentId, fullSubId]);
+      setVisibleLayerIds(mapId, [parentId, fullSubId]);
       fetchRasterLayerData(fullSubId);
     }
   },
 
   // Data fetching
   fetchRasterLayerConfigs: async () => {
-    const { isLoaded, setIsLoaded, visibleLayerIds, fetchRasterLayerData } = get();
+    const { isLoaded, setIsLoaded, visibleLayerIdsByMap, fetchRasterLayerData } = get();
 
     // Prevent duplicate loads
     if (isLoaded) return;
@@ -153,8 +179,11 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
       setIsLoaded(true);
 
       // Fetch data for any layers already marked visible (e.g., from URL initialization)
-      visibleLayerIds.forEach(layerId => {
-        fetchRasterLayerData(layerId);
+      // Object.values(visibleLayerIdsByMap).forEach(layerId => {
+      //   fetchRasterLayerData(layerId);
+      // });
+      Object.values(visibleLayerIdsByMap).forEach((layerSet) => {
+        layerSet.forEach(fetchRasterLayerData);
       });
     } catch (err) {
       console.error('Error loading raster layers:', err);
@@ -262,8 +291,10 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 export const useRasterLayerConfigs = () =>
   useRasterLayersStore(state => state.rasterLayerConfigs);
 
-export const useIsRasterLayerVisible = (layerId: string) =>
-  useRasterLayersStore(state => state.visibleLayerIds.has(layerId));
+export const useIsRasterLayerVisible = (mapId: string, layerId: string) => 
+  useRasterLayersStore(
+    state => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false
+  );
 
 export const useRasterLayerData = (layerId: string) =>
   useRasterLayersStore(state => state.rasterLayerData.get(layerId));

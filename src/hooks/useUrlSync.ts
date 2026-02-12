@@ -23,18 +23,18 @@ export function useUrlSync(isInitialized: boolean) {
     const isUpdatingFromUrl = useRef(false);
 
     const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
-    //const visiblePointLayers = usePointLayerStore((state) => state.visibleLayerIds);
+    const primaryMapId = useMapStore((state) => state.primaryMapId);
     const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
     const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
-    const visibleRasterLayers = useRasterLayersStore((state) => state.visibleLayerIds);
+    const VisibleRasterLayersByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
 
     // --- STORE > URL SYNC ---
 
-    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}`).join('|');
-    //const pointLayerKey = Array.from(visiblePointLayers).sort().join(',');
-    const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => '${mapId}:${layerId}')).sort().join(',');
+    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ''}`).join('|');
+    const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
     const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(',');
-    const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
+    //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
+    const rasterLayerKey = Object.entries(VisibleRasterLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
 
     useEffect(() => {
         if (!isInitialized || isUpdatingFromUrl.current) return;
@@ -50,7 +50,7 @@ export function useUrlSync(isInitialized: boolean) {
 
             // --- Map configs ---
             Array.from(prev.keys()).forEach((key) => {
-                if (key.startsWith('d_') || key.startsWith('m_')) newParams.delete(key);
+                if (key.startsWith('d_') || key.startsWith('m_') || key.startsWith('af_')) newParams.delete(key);
             });
 
             if (isDefaultMapState) {
@@ -64,14 +64,12 @@ export function useUrlSync(isInitialized: boolean) {
                 Object.entries(serialized.metrics).forEach(([key, val]) => {
                     newParams.set(key, val);
                 });
+                Object.entries(serialized.activeFeatures).forEach(([key, val]) => {
+                    newParams.set(key, val);
+                });
             }
 
             // --- Point layers ---
-            // if (visiblePointLayers.size > 0) {
-            //     newParams.set('layers', Array.from(visiblePointLayers).sort().join(','));
-            // } else {
-            //     newParams.delete('layers');
-            // }
             const serializedPointLayers = Object.entries(visiblePointLayersByMap)
                 .flatMap(([mapId, layers]) =>
                     Array.from(layers).map((layerId) => `${mapId}:${layerId}`)
@@ -91,15 +89,27 @@ export function useUrlSync(isInitialized: boolean) {
             }
 
             // --- Raster layers ---
-            if (visibleRasterLayers.size > 0) {
-                newParams.set('rasters', Array.from(visibleRasterLayers).sort().join(','));
+            const serializedRasterLayers = Object.entries(VisibleRasterLayersByMap)
+                .flatMap(([mapId, layers]) =>
+                    Array.from(layers).map((layerId) => `${mapId}:${layerId}`)
+                );
+
+            if (serializedRasterLayers.length > 0) {
+                newParams.set('rasters', Array.from(serializedRasterLayers).sort().join(','));
             } else {
                 newParams.delete('rasters');
             }
 
+            // --- Active map ---
+            if (!isDefaultMapState && primaryMapId) {
+                newParams.set('active', primaryMapId);
+            } else {
+                newParams.delete('active');
+            }
+
             return newParams;
         }, { replace: true });
-    }, [mapConfigKey, pointLayerKey, hazardLayerKey, rasterLayerKey, setSearchParams, isInitialized]);
+    }, [mapConfigKey, primaryMapId, pointLayerKey, hazardLayerKey, rasterLayerKey, setSearchParams, isInitialized]);
 
     // --- URL > STORE SYNC ---
 

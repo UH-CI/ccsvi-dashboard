@@ -128,7 +128,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     // Get raster layer configs and visible IDs from refactored store
     const rasterLayerConfigs = useRasterLayersStore(state => state.rasterLayerConfigs);
-    const visibleRasterIds = useRasterLayersStore(state => state.visibleLayerIds);
+    const visibleRasterLayerIdsByMap = useRasterLayersStore(state => state.visibleLayerIdsByMap);
+    const visibleRasterIds = useMemo(
+        () => visibleRasterLayerIdsByMap[mapId] ?? new Set<string>(),
+        [visibleRasterLayerIdsByMap, mapId]
+    );
 
     useEffect(() => {
         if (mapRef.current) {
@@ -345,7 +349,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                         <React.Fragment key={layer.id}>
                             {/* Render parent layer if it has a filePath and is visible */}
                             {layer.filePath && visibleRasterIds.has(layer.id) && (
-                                <RasterLayerRenderer parentId={layer.id} mapZoom={mapZoom} />
+                                <RasterLayerRenderer mapId={mapId} parentId={layer.id} mapZoom={mapZoom} />
                             )}
 
                             {/* Render sublayers that are visible */}
@@ -354,6 +358,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                                 return visibleRasterIds.has(compositeId) ? (
                                     <RasterLayerRenderer
                                         key={compositeId}
+                                        mapId={mapId}
                                         parentId={layer.id}
                                         layerId={sub.id}
                                         mapZoom={mapZoom}
