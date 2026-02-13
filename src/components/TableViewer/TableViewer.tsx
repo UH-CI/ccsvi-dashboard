@@ -16,6 +16,8 @@ import {
 import {
     KeyboardArrowUp,
     KeyboardArrowDown,
+    Fullscreen,
+    FullscreenExit,
 } from '@mui/icons-material';
 import { loadAndParseCSV, ParsedCSVData } from '../../utils/csvParser';
 import { useTableResize } from '../../hooks/useTableResize';
@@ -68,7 +70,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const { isCollapsed, toggleCollapse } = useTableResize({
+    const { isCollapsed, isFullHeight, toggleCollapse, toggleFullHeight } = useTableResize({
         onSizeChange,
         initialCollapsed
     });
@@ -176,7 +178,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     }, [activeDataset, datasetInfo]);
 
     // Calculate content height for proper scrolling
-    const contentHeight = isCollapsed ? 0 : 'calc(40vh - 3.125rem)';
+    const contentHeight = isCollapsed ? 0 : isFullHeight ? 'calc(100% - 3.125rem)' : 'calc(40vh - 3.125rem)';
 
     if (!activeDataset) {
         return null;
@@ -185,10 +187,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return (
         <Paper
             elevation={3}
-            className={`${styles['table-viewer']} ${isCollapsed ? styles['table-viewer--collapsed'] : styles['table-viewer--expanded']}`}
+            className={`${styles['table-viewer']} ${isFullHeight ? styles['table-viewer--full'] : isCollapsed ? styles['table-viewer--collapsed'] : styles['table-viewer--expanded']}`}
         >
             <Box
-                className={`${styles.header} ${isCollapsed ? styles['header--collapsed'] : styles['header--expanded']}`}
+                className={`${styles.header} ${isCollapsed && !isFullHeight ? styles['header--collapsed'] : styles['header--expanded']}`}
                 sx={{ backgroundColor: 'primary.main' }}
             >
                 <Box className={styles['header-content']}>
@@ -207,9 +209,19 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 <Box className={styles['header-actions']}>
                     <IconButton
                         size="small"
+                        onClick={toggleFullHeight}
+                        className={styles['toggle-button']}
+                        sx={{ color: 'white' }}
+                        title={isFullHeight ? 'Restore table' : 'Expand to full height'}
+                    >
+                        {isFullHeight ? <FullscreenExit /> : <Fullscreen />}
+                    </IconButton>
+                    <IconButton
+                        size="small"
                         onClick={toggleCollapse}
                         className={styles['toggle-button']}
                         sx={{ color: 'white' }}
+                        title={isCollapsed ? 'Expand table' : 'Collapse table'}
                     >
                         {isCollapsed ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                     </IconButton>

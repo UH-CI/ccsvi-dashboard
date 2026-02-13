@@ -18,6 +18,14 @@
     min-height: 12.5rem;
     height: 40vh;
   }
+
+  &--full {
+    position: absolute;
+    inset: 0;
+    z-index: 1100;
+    height: 100%;
+    flex: none;
+  }
 }
 
 .header {
