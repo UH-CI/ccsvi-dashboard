@@ -9,9 +9,10 @@ import GeoRasterLayer from 'georaster-layer-for-leaflet';
 interface HazardLayerRendererProps {
   parentId: string;
   layerId?: string; // optional: can render parent or sublayer
+  mapId: string;
 }
 
-export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ parentId, layerId }) => {
+export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ parentId, layerId, mapId }) => {
   const map = useMap();
 
   const hazardLayers = useHazardLayersStore(state => state.hazardLayerConfigs);
@@ -24,7 +25,11 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ parent
   const activeLayer = subLayer ?? parentLayer;
   const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
 
-    const isVisible = useIsHazardLayerVisible(activeLayerId);
+  //const isVisible = useIsHazardLayerVisible(activeLayerId);
+  const isVisible = useHazardLayersStore( state => {
+    const mapLayers = state.visibleLayerIdsByMap[mapId];
+    return mapLayers ? mapLayers.has(activeLayerId) : false;
+  })
   const layerData = useHazardLayerData(activeLayerId);
 
   const filePath = activeLayer?.filePath;

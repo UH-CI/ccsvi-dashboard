@@ -6,18 +6,21 @@ interface HazardLayersState {
     // Core data
     hazardLayerConfigs: HazardLayerConfig[];
     hazardLayerData: Map<string, FeatureCollection<Geometry> | ArrayBuffer>;
-    visibleLayerIds: Set<string>;
+    //visibleLayerIds: Set<string>;
+    visibleLayerIdsByMap: Record<string, Set<string>>;
     isLoaded: boolean;
 
     // Setters
     setHazardLayerConfigs: (layers: HazardLayerConfig[]) => void;
     setHazardLayerData: (layerId: string, data: FeatureCollection<Geometry> | ArrayBuffer) => void;
-    setVisibleLayerIds: (ids: string[]) => void;
+    setVisibleLayerIds: (mapId: string, ids: string[]) => void;
     setIsLoaded: (loaded: boolean) => void;
 
     // Actions
-    toggleHazardLayerVisibility: (id: string) => void;
-    toggleSubLayerVisibility: (parentId: string, subId: string) => void;
+    //toggleHazardLayerVisibility: (id: string) => void;
+    toggleHazardLayerVisibility: (mapId: string, id: string) => void;
+    //toggleSubLayerVisibility: (parentId: string, subId: string) => void;
+    toggleSubLayerVisibility: (mapId: string, parentId: string, subId: string) => void;
 
     // Data fetching
     fetchHazardLayerConfigs: () => Promise<void>;
@@ -31,7 +34,8 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
     // Initial state
     hazardLayerConfigs: [],
     hazardLayerData: new Map(),
-    visibleLayerIds: new Set(),
+    //visibleLayerIds: new Set(),
+    visibleLayerIdsByMap: {},
     isLoaded: false,
     loading: false,
     error: null,
@@ -49,8 +53,16 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         });
     },
 
-    setVisibleLayerIds: (ids) => {
-        set({ visibleLayerIds: new Set(ids) });
+    // setVisibleLayerIds: (ids) => {
+    //     set({ visibleLayerIds: new Set(ids) });
+    // },
+    setVisibleLayerIds: (mapId, ids) => {
+        set((state) => ({
+            visibleLayerIdsByMap: {
+                ...state.visibleLayerIdsByMap,
+                [mapId]: new Set(ids),
+            },
+        }));
     },
     // Prevent duplicate loading
     setIsLoaded: (loaded) => {
@@ -59,9 +71,9 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
 
 
     // Actions
-    toggleHazardLayerVisibility: (id) => {
-        const { visibleLayerIds, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } = get();
-        const newVisibleIds = new Set(visibleLayerIds);
+    toggleHazardLayerVisibility: (mapId, id) => {
+        const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } = get();
+        const newVisibleIds = visibleLayerIdsByMap[mapId] ?? new Set<string>();
 
         const layer = hazardLayerConfigs.find(l => l.id === id);
         if (!layer) return;
@@ -85,12 +97,12 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
             });
         }
 
-        setVisibleLayerIds(Array.from(newVisibleIds));
+        setVisibleLayerIds(mapId, Array.from(newVisibleIds));
     },
 
-    toggleSubLayerVisibility: (parentId, subId) => {
-        const { visibleLayerIds, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } = get();
-        const newVisibleIds = new Set(visibleLayerIds);
+    toggleSubLayerVisibility: (mapId, parentId, subId) => {
+        const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } = get();
+        const newVisibleIds = visibleLayerIdsByMap[mapId] ?? new Set<string>();
 
         const parentLayer = hazardLayerConfigs.find(l => l.id === parentId);
         if (!parentLayer?.subLayers) return;
@@ -120,7 +132,7 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
             fetchHazardLayerData(fullSubId);
         }
 
-        setVisibleLayerIds(Array.from(newVisibleIds));
+        setVisibleLayerIds(mapId, Array.from(newVisibleIds));
     },
 
     fetchHazardLayerConfigs: async () => {
@@ -170,9 +182,9 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
             setIsLoaded(true);
 
             // Fetch data for any layers already marked visible (e.g., from URL initialization)
-            const { visibleLayerIds } = get();
-            visibleLayerIds.forEach(layerId => {
-                get().fetchHazardLayerData(layerId);
+            const { visibleLayerIdsByMap } = get();
+            Object.values(visibleLayerIdsByMap).forEach((layerSet) => {
+                layerSet.forEach(layerId => get().fetchHazardLayerData(layerId));
             });
         } catch (err) {
             console.error('Error loading hazard layers:', err);
@@ -239,8 +251,8 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
 export const useHazardLayerConfigs = () =>
     useHazardLayersStore(state => state.hazardLayerConfigs);
 
-export const useIsHazardLayerVisible = (layerId: string) =>
-    useHazardLayersStore(state => state.visibleLayerIds.has(layerId));
+export const useIsHazardLayerVisible = (mapId: string, layerId: string) =>
+    useHazardLayersStore(state => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);
 
 export const useHazardLayerData = (layerId: string) =>
     useHazardLayersStore(state => state.hazardLayerData.get(layerId));

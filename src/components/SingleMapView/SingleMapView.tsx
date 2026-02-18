@@ -125,7 +125,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
 
     // Get hazard layer configs and visible IDs from refactored store
     const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
-    const visibleHazardIds = useHazardLayersStore(state => state.visibleLayerIds);
+    const visibleLayerIdsByMap = useHazardLayersStore(state => state.visibleLayerIdsByMap);
 
     // Get raster layer configs and visible IDs from refactored store
     const rasterLayerConfigs = useRasterLayersStore(state => state.rasterLayerConfigs);
@@ -338,16 +338,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({
                     {hazardLayerConfigs.map(layer => (
                         <React.Fragment key={layer.id}>
                             {/* Render parent layer if it has a filePath and is visible */}
-                            {layer.filePath && visibleHazardIds.has(layer.id) && (
-                                <HazardLayerRenderer parentId={layer.id} />
+                            {layer.filePath && visibleLayerIdsByMap[mapId]?.has(layer.id) && (
+                                <HazardLayerRenderer mapId={mapId} parentId={layer.id} />
                             )}
 
                             {/* Render sublayers that are visible */}
                             {layer.subLayers?.map(sub => {
                                 const compositeId = `${layer.id}.${sub.id}`;
-                                return visibleHazardIds.has(compositeId) ? (
+                                return visibleLayerIdsByMap[mapId]?.has(compositeId) ? (
                                     <HazardLayerRenderer
                                         key={compositeId}
+                                        mapId={mapId}
                                         parentId={layer.id}
                                         layerId={sub.id}
                                     />

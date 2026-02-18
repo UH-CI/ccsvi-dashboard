@@ -74,14 +74,15 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const setVisiblePointLayerIds = usePointLayerStore(state => state.setVisibleLayerIds);
 
     const hazardLayerConfigs = useHazardLayersStore(state => state.hazardLayerConfigs);
-    const visibleHazardLayerIds = useHazardLayersStore(state => state.visibleLayerIds);
+    const visibleHazardLayerIdsByMap = useHazardLayersStore(state => state.visibleLayerIdsByMap);
     const toggleHazardLayerVisibility = useHazardLayersStore(state => state.toggleHazardLayerVisibility);
     const toggleSubLayerVisibility = useHazardLayersStore(state => state.toggleSubLayerVisibility);
     const setVisibleHazardLayerIds = useHazardLayersStore(state => state.setVisibleLayerIds);
 
     const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
-    const toggleExpand = useCallback((id: string) => {
-        setExpandedHazards(prev => ({ ...prev, [id]: !prev[id] }));
+    const toggleExpand = useCallback((mapId: string, id: string) => {
+        const key = `${mapId}.${id}`;
+        setExpandedHazards(prev => ({ ...prev, [key]: !prev[key] }));
     }, []);
 
     const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
@@ -115,13 +116,9 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     const hazardLayers = useMemo(() =>
             hazardLayerConfigs.map(config => ({
                 ...config,
-                visible: visibleHazardLayerIds.has(config.id),
-                subLayers: config.subLayers?.map(sub => ({
-                    ...sub,
-                    visible: visibleHazardLayerIds.has(`${config.id}.${sub.id}`)
-                }))
+                subLayers: config.subLayers
             })),
-        [hazardLayerConfigs, visibleHazardLayerIds]
+        [hazardLayerConfigs]
     );
 
     // const rasterLayers = useMemo(() =>
@@ -166,6 +163,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         // Clear point layers for the map being removed
         setVisiblePointLayerIds(mapId, []);
         setVisibleRasterLayerIds(mapId, []);
+        setVisibleHazardLayerIds(mapId, []);
         // Remove the map
         removeMap(mapId);
     }, [removeMap, setVisiblePointLayerIds, setVisibleRasterLayerIds]);
@@ -177,7 +175,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         setMetric('');
         //setVisiblePointLayerIds([]);
         mapConfigs.forEach((map) => { setVisiblePointLayerIds(map.id, []); });
-        setVisibleHazardLayerIds([]);
+        mapConfigs.forEach((map) => { setVisibleHazardLayerIds(map.id, []); });
         //setVisibleRasterLayerIds([]);
         mapConfigs.forEach((map) => { setVisibleRasterLayerIds(map.id, []); });
     }, [resetMapStore, setDataset, setMetric, setVisiblePointLayerIds, setVisibleHazardLayerIds, setVisibleRasterLayerIds, mapConfigs]);
@@ -402,6 +400,109 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                         {/* end of section */}
 
                                                         <Divider className={styles['section-divider']} />
+                                                        {/* Add stuff withing these brackerts for hazards */}
+                                                        <Box
+                                                            className={styles['section-header']}
+                                                            onClick={() => toggleSectionByMap(config.id, 'hazards')}
+                                                        >
+                                                            <Typography variant="subtitle1" className={styles['section-title']}>
+                                                                Hazards (Shapes)
+                                                            </Typography>
+                                                            <IconButton size="small">
+                                                                {expandedSectionsByMap[config.id]?.hazards ? <ExpandLess /> : <ExpandMore />}
+                                                            </IconButton>
+                                                        </Box>
+
+                                                        <Collapse in={expandedSectionsByMap[config.id]?.hazards ?? false}>
+                                                            <Stack spacing={1} className={styles['section-content']}>
+                                                                {hazardLayers.map((parent) => {
+                                                                    const ParentIcon =
+                                                                        FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
+                                                                    const isParentVisible = visibleHazardLayerIdsByMap[config.id]?.has(parent.id) ?? false;
+
+                                                                    return (
+                                                                        <Box key={parent.id} className={styles['layer-toggle']}>
+                                                                          <Box display="flex" alignItems="center">
+                                                                            <FormControlLabel
+                                                                              control={
+                                                                                <Checkbox
+                                                                                  checked={isParentVisible}
+                                                                                  onChange={() => toggleHazardLayerVisibility(config.id, parent.id)}
+                                                                                  size="small"
+                                                                                />
+                                                                              }
+                                                                              label={
+                                                                                <div className={styles['layer-label']}>
+                                                                                  <span
+                                                                                      className={styles['layer-icon']}
+                                                                                      style={{ color: parent.color }}
+                                                                                  >
+                                                                                    <ParentIcon size="1rem" />
+                                                                                  </span>
+                                                                                  {parent.name}
+                                                                                </div>
+                                                                              }
+                                                                                />
+                                                                                {(parent.subLayers ?? []).length > 0 && (
+                                                                                    <IconButton
+                                                                                        size="small"
+                                                                                        className={styles['expand-icon']}
+                                                                                        onClick={() => toggleExpand(config.id, parent.id)}>
+                                                                                        {expandedHazards[`${config.id}.${parent.id}`] ? <ExpandLess /> : <ExpandMore />}
+                                                                                    </IconButton>
+                                                                                )}
+                                                                            </Box>
+
+                                                                            {parent.subLayers && parent.subLayers.length > 0 && (
+                                                                                <Collapse in={expandedHazards[`${config.id}.${parent.id}`]}>
+                                                                                    <Stack spacing={1} sx={{ pl: 3 }}>
+                                                                                        {parent.subLayers.map((sub) => {
+                                                                                            const compositeId = `${parent.id}.${sub.id}`;
+                                                                                            const isSubVisible = visibleHazardLayerIdsByMap[config.id]?.has(compositeId) ?? false;
+                                                                                            return (
+                                                                                                <FormControlLabel
+                                                                                                  sx={{
+                                                                                                    ml: 0,
+                                                                                                    '& .MuiFormControlLabel-label': {
+                                                                                                      ml: -4.2,
+                                                                                                    },
+                                                                                                  }}
+                                                                                                    key={sub.id}
+                                                                                                    control={
+                                                                                                        <Checkbox
+                                                                                                            checked={isSubVisible}
+                                                                                                            onChange={() => toggleSubLayerVisibility(config.id, parent.id, sub.id)}
+                                                                                                            size="small"
+                                                                                                        />
+                                                                                                    }
+                                                                                                    label={
+                                                                                                        <div className={styles['layer-label']}>
+                                                                                  <span
+                                                                                      className={styles['layer-icon']}
+                                                                                      style={{ color: sub.color ?? parent.color ?? '#666' }}
+                                                                                  >
+
+                                                                                  </span>
+                                                                                                            {sub.name}
+                                                                                                        </div>
+                                                                                                    }
+                                                                                                />
+                                                                                            );
+                                                                                        })}
+                                                                                    </Stack>
+                                                                                </Collapse>
+                                                                            )}
+                                                                        </Box>
+                                                                    );
+                                                                })}
+                                                            </Stack>
+                                                        </Collapse>
+
+
+
+                                                        {/* end stuff withing these brackerts for hazards */}
+                                                        <Divider className={styles['section-divider']} />
+                                                        
                                                         {/* Add stuff withing these brackerts */}
                                                         <Box 
                                                             className={styles['section-header']}
@@ -578,7 +679,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             </Collapse>
                         </Box>
 
-                        <Divider className={styles['section-divider']} />
+                        {/* <Divider className={styles['section-divider']} /> */}
 
                         {/* Points of Interest Section */}
                         {/* <Box className={styles['control-section']}>
@@ -628,10 +729,10 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                             </Collapse>
                         </Box> */}
 
-                        <Divider className={styles['section-divider']} />
+                        {/* <Divider className={styles['section-divider']} /> */}
 
-                        <Box className={styles['control-section']}>
-                            <Box
+                        {/* <Box className={styles['control-section']}> */}
+                            {/* <Box
                                 className={styles['section-header']}
                                 onClick={() => toggleSection('hazards')}
                             >
@@ -656,7 +757,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                   control={
                                                     <Checkbox
                                                       checked={parent.visible}
-                                                      onChange={() => toggleHazardLayerVisibility(parent.id)}
+                                                      onChange={() => toggleHazardLayerVisibility(config.id, parent.id)}
                                                       size="small"
                                                     />
                                                   }
@@ -676,7 +777,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                         <IconButton
                                                             size="small"
                                                             className={styles['expand-icon']}
-                                                            onClick={() => toggleExpand(parent.id)}>
+                                                            onClick={() => toggleExpand(config.id, parent.id)}>
                                                             {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
                                                         </IconButton>
                                                     )}
@@ -698,7 +799,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                                                         control={
                                                                             <Checkbox
                                                                                 checked={sub.visible}
-                                                                                onChange={() => toggleSubLayerVisibility(parent.id, sub.id)}
+                                                                                onChange={() => toggleSubLayerVisibility(config.id, parent.id, sub.id)}
                                                                                 size="small"
                                                                             />
                                                                         }
@@ -723,16 +824,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                         );
                                     })}
                                 </Stack>
-                            </Collapse>
-                      </Box>
+                            </Collapse> */}
+                      {/* </Box> */}
                     
 
             
 
-            <Divider className={styles['section-divider']} />
+           {/* <Divider className={styles['section-divider']} /> */}
 
 
-            <Box className={styles['control-section']}>
+            {/* <Box className={styles['control-section']}> */}
                 {/* <Box 
                     className={styles['section-header']}
                     onClick={() => toggleSection('rasters')}
@@ -845,7 +946,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                   })}
                 </Stack>
               </Collapse> */}
-            </Box>
+            {/* </Box> */}
                     </>
                 ) : (
                     <Box className={styles['collapsed-sidebar']}>
