@@ -5,6 +5,7 @@ import { MapConfig } from '../types';
 interface MapState {
   // Map configurations
   mapConfigs: MapConfig[];
+  nextMapId: number;
 
   // Which map drives the TableViewer
   primaryMapId: string;
@@ -70,7 +71,7 @@ const initialExpandedSections: MapState['expandedSections'] = {
     rasters: true,
 };
 
-const defaultExpandedSections = {
+export const defaultExpandedSections = {
   maps: true,
   utils: true,
   points: false,
@@ -81,6 +82,7 @@ const defaultExpandedSections = {
 export const useMapStore = create<MapState>((set, get) => ({
   // Initial state
   mapConfigs: [initialMapConfig],
+  nextMapId: 2,
     primaryMapId: initialMapConfig.id,
     primaryMapDataset: '',
     primaryMapMetric: '',
@@ -89,11 +91,11 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   // Map config actions
   addMap: () => {
-    const { mapConfigs } = get();
-    const newMapId = `map${mapConfigs.length + 1}`;
+    const { nextMapId } = get();
+    const newMapId = `map${nextMapId}`;
     const newMap: MapConfig = {
       id: newMapId,
-      title: `Map ${mapConfigs.length + 1}`,
+      title: `Map ${nextMapId}`,
       dataset: '',
       metric: '',
       visible: true,
@@ -101,6 +103,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     };
     set((state) => ({
       mapConfigs: [...state.mapConfigs, newMap],
+      nextMapId: state.nextMapId + 1,
       expandedSectionsByMap: {
         ...state.expandedSectionsByMap,
         [newMapId]: { ...defaultExpandedSections },
@@ -187,6 +190,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   reset: () => {
     set({
       mapConfigs: [initialMapConfig],
+      nextMapId: 2,
         primaryMapId: initialMapConfig.id,
         primaryMapDataset: '',
         primaryMapMetric: '',

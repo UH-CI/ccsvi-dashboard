@@ -1,4 +1,4 @@
-import { useMapStore, usePointLayerStore, useHazardLayersStore, useRasterLayersStore } from '../stores';
+import { useMapStore, usePointLayerStore, useHazardLayersStore, useRasterLayersStore, defaultExpandedSections } from '../stores';
 import { DeserializedState } from './urlSerializer';
 
 /**
@@ -28,34 +28,35 @@ function initializeMapStore(mapConfigs: DeserializedState['mapConfigs'], primary
         return;
     }
 
-    // Initialize maps from URL config
-    mapConfigs.forEach((config, index) => {
-        if (index === 0) {
-            // Update the default first map from reset()
-            mapStore.updateMapConfig('map1', {
-                dataset: config.dataset || '',
-                metric: config.metric || '',
-                visible: config.visible ?? true,
-            });
-            if (config.activeFeature) {
-                mapStore.updateMapActiveFeature('map1', config.activeFeature);
-            }
-        } else {
-            // Add additional maps
-            mapStore.addMap();
-            const mapId = `map${index + 1}`;
-            mapStore.updateMapConfig(mapId, {
-                dataset: config.dataset || '',
-                metric: config.metric || '',
-                visible: config.visible ?? true,
-            });
-            if (config.activeFeature) {
-                mapStore.updateMapActiveFeature(mapId, config.activeFeature);
-            }
-        }
+    // Build full MapConfig objects preserving original IDs from the URL.
+    // This ensures rasters/layers that reference e.g. "map6" still match.
+    const fullConfigs = mapConfigs.map((config) => ({
+        id: config.id!,
+        title: `Map ${config.id!.replace('map', '')}`,
+        dataset: config.dataset || '',
+        metric: config.metric || '',
+        visible: config.visible ?? true,
+        colorScheme: 'viridis' as const,
+        ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
+    }));
+
+    const expandedSectionsByMap = fullConfigs.reduce((acc, config) => {
+        acc[config.id] = { ...defaultExpandedSections };
+        return acc;
+    }, {} as Record<string, typeof defaultExpandedSections>);
+
+    // Set nextMapId above the highest URL map number to prevent future collisions
+    const maxMapNum = fullConfigs.reduce((max, config) => {
+        const num = parseInt(config.id.replace('map', ''), 10);
+        return isNaN(num) ? max : Math.max(max, num);
+    }, 1);
+
+    useMapStore.setState({
+        mapConfigs: fullConfigs,
+        nextMapId: maxMapNum + 1,
+        expandedSectionsByMap,
     });
 
-    // Set primary map from URL, falling back to first map
     if (primaryMapId) {
         mapStore.setPrimaryMap(primaryMapId);
     }
