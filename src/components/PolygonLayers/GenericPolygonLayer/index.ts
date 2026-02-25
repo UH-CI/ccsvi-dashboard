@@ -1,1 +1,1 @@
-export { GenericPolygonLayer } from './GenericPolygonLayer';
+export { GenericPolygonLayer } from "./GenericPolygonLayer";

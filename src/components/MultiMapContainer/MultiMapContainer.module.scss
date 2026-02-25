@@ -20,25 +20,25 @@
   flex: 1;
   overflow: hidden;
   min-width: 0; // Allow grid to shrink
-  
+
   // Single map layout
   &.single-map {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
   }
-  
+
   // Two maps layout
   &.two-maps {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr;
   }
-  
+
   // Three maps layout (2x2 with one empty)
   &.three-maps {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
   }
-  
+
   // Four maps layout
   &.four-maps {
     grid-template-columns: 1fr 1fr;
@@ -63,7 +63,7 @@
       grid-template-columns: 1fr;
       grid-template-rows: repeat(4, 1fr);
     }
-    
+
     &.three-maps {
       grid-template-columns: 1fr;
       grid-template-rows: repeat(3, 1fr);
@@ -77,26 +77,26 @@
     gap: 12px;
     align-items: stretch;
   }
-  
+
   .controls-actions {
     justify-content: center;
   }
-  
+
   .maps-grid {
     padding: 8px;
     gap: 8px;
   }
-  
+
   .map-header {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
-  
+
   .map-info {
     align-items: flex-start;
   }
-  
+
   .map-chips {
     justify-content: center;
   }

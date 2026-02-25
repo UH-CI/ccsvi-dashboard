@@ -6,7 +6,7 @@ export interface UseMapSnapshotReturn {
   mapRef: React.RefObject<LeafletMap | null>;
   takeSnapshot: (
     options?: SnapshotOptions,
-    wrapper?: React.RefObject<HTMLElement | null> | HTMLElement | null
+    wrapper?: React.RefObject<HTMLElement | null> | HTMLElement | null,
   ) => Promise<void>;
   isSnapshotAvailable: boolean;
 }
@@ -21,7 +21,7 @@ export const useMapSnapshot = (): UseMapSnapshotReturn => {
   const takeSnapshot = useCallback(
     async (
       options: SnapshotOptions = {},
-      wrapper?: React.RefObject<HTMLElement | null> | HTMLElement | null
+      wrapper?: React.RefObject<HTMLElement | null> | HTMLElement | null,
     ) => {
       await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -39,7 +39,7 @@ export const useMapSnapshot = (): UseMapSnapshotReturn => {
 
       await takeMapSnapshot(targetElement, options);
     },
-    []
+    [],
   );
 
   const isSnapshotAvailable = mapRef.current !== null;

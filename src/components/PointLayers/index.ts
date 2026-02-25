@@ -1,1 +1,1 @@
-export { GenericPointMarkers } from './PointLayers';
+export { GenericPointMarkers } from "./PointLayers";

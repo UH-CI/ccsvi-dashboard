@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { RasterLayerConfig, SubRasterLayerConfig } from '../types';
+import { create } from "zustand";
+import type { RasterLayerConfig, SubRasterLayerConfig } from "../types";
 
 interface RasterLayersState {
   // Core data
@@ -62,12 +62,12 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   //   set({ visibleLayerIds: new Set(ids) });
   // },
   setVisibleLayerIds: (mapId, ids) => {
-      set((state) => ({
-          visibleLayerIdsByMap: {
-              ...state.visibleLayerIdsByMap,
-              [mapId]: new Set(ids),
-          }
-      }))
+    set((state) => ({
+      visibleLayerIdsByMap: {
+        ...state.visibleLayerIdsByMap,
+        [mapId]: new Set(ids),
+      },
+    }));
   },
 
   setIsLoaded: (loaded) => {
@@ -79,15 +79,10 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   //   const { rasterLayerConfigs, visibleLayerIds, setVisibleLayerIds, fetchRasterLayerData } = get();
 
   toggleRasterLayerVisibility: (mapId, id) => {
-    const {
-        rasterLayerConfigs,
-        visibleLayerIdsByMap,
-        setVisibleLayerIds,
-        fetchRasterLayerData,
-    } = get();
-     
+    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchRasterLayerData } =
+      get();
 
-    const layer = rasterLayerConfigs.find(l => l.id === id);
+    const layer = rasterLayerConfigs.find((l) => l.id === id);
     if (!layer) {
       console.warn(`Raster layer config not found: ${id}`);
       return;
@@ -111,12 +106,13 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   },
 
   toggleSubRasterLayerVisibility: (mapId, parentId, subId) => {
-    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchRasterLayerData } = get();
+    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchRasterLayerData } =
+      get();
 
-    const parentLayer = rasterLayerConfigs.find(l => l.id === parentId);
+    const parentLayer = rasterLayerConfigs.find((l) => l.id === parentId);
     if (!parentLayer?.subLayers) return;
 
-    const subLayer = parentLayer.subLayers.find(s => s.id === subId);
+    const subLayer = parentLayer.subLayers.find((s) => s.id === subId);
     if (!subLayer) return;
 
     const fullSubId = `${parentId}.${subId}`;
@@ -143,34 +139,36 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      const base = import.meta.env.BASE_URL || '';
+      const base = import.meta.env.BASE_URL || "";
       const [rasterRes, subRasterRes] = await Promise.all([
         fetch(`${base}data/Rasters/raster_layer.json`),
         fetch(`${base}data/Rasters/sub_raster_layer.json`),
       ]);
 
       if (!rasterRes.ok || !subRasterRes.ok) {
-        throw new Error('Failed to fetch raster layer configs');
+        throw new Error("Failed to fetch raster layer configs");
       }
 
       const rasterJson = await rasterRes.json();
       const subRasterJson = await subRasterRes.json();
 
-      const rasterLayersRaw: RasterLayerConfig[] =
-        Array.isArray(rasterJson) ? rasterJson : rasterJson.rasterLayers || [];
+      const rasterLayersRaw: RasterLayerConfig[] = Array.isArray(rasterJson)
+        ? rasterJson
+        : rasterJson.rasterLayers || [];
 
-      const subRasterLayersRaw: { id: string; subLayers: SubRasterLayerConfig[] }[] =
-        Array.isArray(subRasterJson)
-          ? subRasterJson
-          : subRasterJson.subRasterLayers || [];
+      const subRasterLayersRaw: { id: string; subLayers: SubRasterLayerConfig[] }[] = Array.isArray(
+        subRasterJson,
+      )
+        ? subRasterJson
+        : subRasterJson.subRasterLayers || [];
 
       const linkedRasters = rasterLayersRaw.map((raster) => {
         const match = subRasterLayersRaw.find((sub) => sub.id === raster.id);
         return {
           ...raster,
-          subLayers: match?.subLayers.map(sub => ({
+          subLayers: match?.subLayers.map((sub) => ({
             ...sub,
-            color: sub.color ?? raster.color ?? '#666666',
+            color: sub.color ?? raster.color ?? "#666666",
           })),
         };
       });
@@ -186,9 +184,9 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
         layerSet.forEach(fetchRasterLayerData);
       });
     } catch (err) {
-      console.error('Error loading raster layers:', err);
+      console.error("Error loading raster layers:", err);
       set({
-        error: err instanceof Error ? err.message : 'Unknown error loading raster layers',
+        error: err instanceof Error ? err.message : "Unknown error loading raster layers",
         loading: false,
       });
     }
@@ -206,16 +204,16 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     // Look up filePath from configs
     let filePath: string | undefined;
 
-    if (layerId.includes('.')) {
+    if (layerId.includes(".")) {
       // Sublayer: parse parent.child format
-      const [parentId, ...subParts] = layerId.split('.');
-      const subId = subParts.join('.');
-      const parentLayer = rasterLayerConfigs.find(l => l.id === parentId);
-      const subLayer = parentLayer?.subLayers?.find(s => s.id === subId);
+      const [parentId, ...subParts] = layerId.split(".");
+      const subId = subParts.join(".");
+      const parentLayer = rasterLayerConfigs.find((l) => l.id === parentId);
+      const subLayer = parentLayer?.subLayers?.find((s) => s.id === subId);
       filePath = subLayer?.filePath;
     } else {
       // Parent layer
-      const parentLayer = rasterLayerConfigs.find(l => l.id === layerId);
+      const parentLayer = rasterLayerConfigs.find((l) => l.id === layerId);
       // If parent has sublayers, don't fetch parent directly
       if (parentLayer?.subLayers?.length) return;
       filePath = parentLayer?.filePath;
@@ -227,17 +225,15 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     }
 
     // Mark as loading
-    set(state => ({
+    set((state) => ({
       loadingLayers: new Set(state.loadingLayers).add(layerId),
-      errorLayers: new Map(state.errorLayers).set(layerId, ''),
+      errorLayers: new Map(state.errorLayers).set(layerId, ""),
     }));
 
     try {
-      const base = import.meta.env.BASE_URL || '';
+      const base = import.meta.env.BASE_URL || "";
       const fullPath =
-        filePath.startsWith('http') || filePath.startsWith('/')
-          ? filePath
-          : `${base}${filePath}`;
+        filePath.startsWith("http") || filePath.startsWith("/") ? filePath : `${base}${filePath}`;
 
       const response = await fetch(fullPath);
 
@@ -245,18 +241,16 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
         throw new Error(`Failed to load ${filePath}: ${response.statusText}`);
       }
 
-      const ext = filePath.split('.').pop()?.toLowerCase();
+      const ext = filePath.split(".").pop()?.toLowerCase();
       let arrayBuffer: ArrayBuffer;
 
-      if (ext === 'zip') {
+      if (ext === "zip") {
         // Handle ZIP files containing TIFF
-        const JSZip = (await import('jszip')).default;
+        const JSZip = (await import("jszip")).default;
         const zip = await JSZip.loadAsync(await response.blob());
-        const tifName = Object.keys(zip.files).find(f =>
-          /\.(tif|tiff|geotiff)$/i.test(f)
-        );
-        if (!tifName) throw new Error('ZIP contains no TIFF');
-        arrayBuffer = await zip.file(tifName)!.async('arraybuffer');
+        const tifName = Object.keys(zip.files).find((f) => /\.(tif|tiff|geotiff)$/i.test(f));
+        if (!tifName) throw new Error("ZIP contains no TIFF");
+        arrayBuffer = await zip.file(tifName)!.async("arraybuffer");
       } else {
         arrayBuffer = await response.arrayBuffer();
       }
@@ -264,19 +258,18 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
       setRasterLayerData(layerId, arrayBuffer);
 
       // Clear loading state
-      set(state => {
+      set((state) => {
         const newLoadingLayers = new Set(state.loadingLayers);
         newLoadingLayers.delete(layerId);
         const newErrorLayers = new Map(state.errorLayers);
         newErrorLayers.delete(layerId);
         return { loadingLayers: newLoadingLayers, errorLayers: newErrorLayers };
       });
-
     } catch (err) {
       console.error(`Error loading raster layer data for ${layerId}:`, err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
-      set(state => {
+      set((state) => {
         const newLoadingLayers = new Set(state.loadingLayers);
         newLoadingLayers.delete(layerId);
         const newErrorLayers = new Map(state.errorLayers);
@@ -289,12 +282,10 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 
 // Selector hooks
 export const useRasterLayerConfigs = () =>
-  useRasterLayersStore(state => state.rasterLayerConfigs);
+  useRasterLayersStore((state) => state.rasterLayerConfigs);
 
-export const useIsRasterLayerVisible = (mapId: string, layerId: string) => 
-  useRasterLayersStore(
-    state => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false
-  );
+export const useIsRasterLayerVisible = (mapId: string, layerId: string) =>
+  useRasterLayersStore((state) => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);
 
 export const useRasterLayerData = (layerId: string) =>
-  useRasterLayersStore(state => state.rasterLayerData.get(layerId));
+  useRasterLayersStore((state) => state.rasterLayerData.get(layerId));

@@ -1,7 +1,7 @@
-declare module 'react-leaflet-cluster' {
-  import { FC, ReactNode } from 'react';
-  import L from 'leaflet';
-  import 'leaflet.markercluster';
+declare module "react-leaflet-cluster" {
+  import { FC, ReactNode } from "react";
+  import L from "leaflet";
+  import "leaflet.markercluster";
 
   interface MarkerClusterGroupProps {
     children?: ReactNode;

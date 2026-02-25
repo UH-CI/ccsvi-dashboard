@@ -1,1 +1,1 @@
-export { SingleMapView } from './SingleMapView';
+export { SingleMapView } from "./SingleMapView";
