@@ -75,7 +75,7 @@ export const defaultExpandedSections = {
   maps: true,
   utils: true,
   points: false,
-  hazards: true,
+  hazards: false,
   rasters: false,
 };
 

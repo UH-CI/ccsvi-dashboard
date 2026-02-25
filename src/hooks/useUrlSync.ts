@@ -27,27 +27,19 @@ export function useUrlSync(isInitialized: boolean) {
   // Track URL update to prevent circular updates
   const isUpdatingFromUrl = useRef(false);
 
-  const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
-  const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const visibleHazardLayers = useHazardLayersStore((state) => state.visibleLayerIds);
-  const VisibleRasterLayersByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
+    const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
+    const primaryMapId = useMapStore((state) => state.primaryMapId);
+    const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
+    const visibleHazardLayersByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+    const VisibleRasterLayersByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
 
   // --- STORE > URL SYNC ---
 
-  const mapConfigKey = mapConfigs
-    .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
-    .join("|");
-  const pointLayerKey = Object.entries(visiblePointLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
-  const hazardLayerKey = Array.from(visibleHazardLayers).sort().join(",");
-  //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
-  const rasterLayerKey = Object.entries(VisibleRasterLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
+    const mapConfigKey = mapConfigs.map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ''}`).join('|');
+    const pointLayerKey = Object.entries(visiblePointLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
+    const hazardLayerKey = Object.entries(visibleHazardLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
+    //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
+    const rasterLayerKey = Object.entries(VisibleRasterLayersByMap).flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`)).sort().join(',');
 
   useEffect(() => {
     if (!isInitialized || isUpdatingFromUrl.current) return;
@@ -94,12 +86,17 @@ export function useUrlSync(isInitialized: boolean) {
           newParams.delete("layers");
         }
 
-        // --- Hazard layers ---
-        if (visibleHazardLayers.size > 0) {
-          newParams.set("hazards", Array.from(visibleHazardLayers).sort().join(","));
-        } else {
-          newParams.delete("hazards");
-        }
+            // --- Hazard layers ---
+            const serializedHazardLayers = Object.entries(visibleHazardLayersByMap)
+                .flatMap(([mapId, layers]) =>
+                    Array.from(layers).map((layerId) => `${mapId}:${layerId}`)
+                );
+
+            if (serializedHazardLayers.length > 0) {
+                newParams.set('hazards', serializedHazardLayers.sort().join(','));
+            } else {
+                newParams.delete('hazards');
+            }
 
         // --- Raster layers ---
         const serializedRasterLayers = Object.entries(VisibleRasterLayersByMap).flatMap(
