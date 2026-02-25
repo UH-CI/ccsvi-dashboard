@@ -1,56 +1,51 @@
-import React, { useMemo } from 'react';
-import { SingleMapView } from '../SingleMapView';
-import { useVisibleMaps, useMapStore } from '../../stores';
-import styles from './MultiMapContainer.module.scss';
-
+import React, { useMemo } from "react";
+import { SingleMapView } from "../SingleMapView";
+import { useVisibleMaps, useMapStore } from "../../stores";
+import styles from "./MultiMapContainer.module.scss";
 
 interface MultiMapContainerProps {
-    maxMaps?: number;
+  maxMaps?: number;
 }
 
-export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ 
-    maxMaps = 4,
+export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
+  maxMaps = 4,
 }) => {
+  // Use visible maps from mapStore
+  const visibleMaps = useVisibleMaps();
+  const primaryMapId = useMapStore((state) => state.primaryMapId);
 
-    // Use visible maps from mapStore
-    const visibleMaps = useVisibleMaps();
-    const primaryMapId = useMapStore(state => state.primaryMapId);
+  const gridLayout = useMemo(() => {
+    const count = visibleMaps.length;
 
-    // URL state management
-    // const { urlState, updateUrlState } = useUrlState();
+    if (count === 1) return { rows: 1, cols: 1 };
+    if (count === 2) return { rows: 1, cols: 2 };
+    if (count === 3) return { rows: 2, cols: 2 };
+    if (count === 4) return { rows: 2, cols: 2 };
 
-    const gridLayout = useMemo(() => {
-        const count = visibleMaps.length;
+    return { rows: 1, cols: 1 };
+  }, [visibleMaps]);
 
-        if (count === 1) return { rows: 1, cols: 1 };
-        if (count === 2) return { rows: 1, cols: 2 };
-        if (count === 3) return { rows: 2, cols: 2 };
-        if (count === 4) return { rows: 2, cols: 2 };
-
-        return { rows: 1, cols: 1 };
-    }, [visibleMaps]);
-
-    return (
-        <div className={styles['multi-map-container']}>
-            <div className={styles['maps-layout']}>
-                <div 
-                    className={styles['maps-grid']}
-                    style={{
-                        gridTemplateRows: `repeat(${gridLayout.rows}, 1fr)`,
-                        gridTemplateColumns: `repeat(${gridLayout.cols}, 1fr)`
-                    }}
-                >
-                    {visibleMaps.map((config, index) => (
-                        <div key={config.id} className={styles['map-wrapper']}>
-                            <SingleMapView
-                                mapId={config.id}
-                                isPrimary={config.id === primaryMapId}
-                                mapConfigsLength={visibleMaps.length}
-                            />
-                        </div>
-                    ))}
-                </div>
+  return (
+    <div className={styles["multi-map-container"]}>
+      <div className={styles["maps-layout"]}>
+        <div
+          className={styles["maps-grid"]}
+          style={{
+            gridTemplateRows: `repeat(${gridLayout.rows}, 1fr)`,
+            gridTemplateColumns: `repeat(${gridLayout.cols}, 1fr)`,
+          }}
+        >
+          {visibleMaps.map((config, index) => (
+            <div key={config.id} className={styles["map-wrapper"]}>
+              <SingleMapView
+                mapId={config.id}
+                isPrimary={config.id === primaryMapId}
+                mapConfigsLength={visibleMaps.length}
+              />
             </div>
+          ))}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
