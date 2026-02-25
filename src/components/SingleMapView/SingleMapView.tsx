@@ -1,7 +1,8 @@
-import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
-import L, { LeafletMouseEvent } from 'leaflet';
+import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from "react";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
+import L, { LeafletMouseEvent } from "leaflet";
 import {
   BlockGroupProperties,
   HawaiianHomelandProperties,
@@ -12,14 +13,22 @@ import { MapLegend } from "../MapLegend";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
-import { HawaiianHomelandsPolygonLayer } from '../PolygonLayers/HawaiianHomelandsPolygonLayer';
-import { CountyBoundariesBackgroundLayer } from '../PolygonLayers/CountyBoundariesBackgroundLayer';
-import { Chip, Snackbar, Alert } from '@mui/material';
-import { useAppStore, useMapStore, useMapConfig, usePointLayerStore, useHazardLayersStore, useRasterLayersStore, useSnapshotStore } from "../../stores";
-import { HazardLayerRenderer } from '../HazardLayers/HazardLayerRenderer';
-import { RasterLayerRenderer } from '../RasterLayers';
+import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
+import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
+import { Chip, Snackbar, Alert } from "@mui/material";
+import {
+  useAppStore,
+  useMapStore,
+  useMapConfig,
+  usePointLayerStore,
+  useHazardLayersStore,
+  useRasterLayersStore,
+  useSnapshotStore,
+} from "../../stores";
+import { HazardLayerRenderer } from "../HazardLayers";
+import { RasterLayerRenderer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
-import { AddressSearch } from '../AddressSearch';
+import { AddressSearch } from "../AddressSearch";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -27,11 +36,7 @@ interface SingleMapViewProps {
   mapConfigsLength: number;
 }
 
-const MapResizeHandler = ({
-  onMapRef,
-}: {
-  onMapRef: (map: L.Map | null) => void;
-}) => {
+const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
   const map = useMap();
   const containerRef = useRef<HTMLElement | null>(null);
 
@@ -94,20 +99,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const {
-      blockGroupData,
-      metricsData,
-      censusBlockGroups,
-      hawaiianHomelands,
-      countyBoundaries,
-    } = useAppStore();
+    const { blockGroupData, metricsData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
+      useAppStore();
 
     const { updateMapActiveFeature, setPrimaryMap } = useMapStore();
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
 
-    // Register this map’s snapshot function
+    // Register this map's snapshot function
     useEffect(() => {
       const fn = async () => {
         await takeSnapshot(
@@ -152,25 +152,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       };
     }, [mapRef]);
 
-    const visiblePointLayerIdsByMap = usePointLayerStore(
-      (state) => state.visibleLayerIdsByMap,
-    );
+    const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
 
     // Get hazard layer configs and visible IDs from refactored store
-    const hazardLayerConfigs = useHazardLayersStore(
-      (state) => state.hazardLayerConfigs,
-    );
-    const visibleHazardIds = useHazardLayersStore(
-      (state) => state.visibleLayerIds,
-    );
+    const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
+    const visibleHazardIds = useHazardLayersStore((state) => state.visibleLayerIds);
 
     // Get raster layer configs and visible IDs from refactored store
-    const rasterLayerConfigs = useRasterLayersStore(
-      (state) => state.rasterLayerConfigs,
-    );
-    const visibleRasterLayerIdsByMap = useRasterLayersStore(
-      (state) => state.visibleLayerIdsByMap,
-    );
+    const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
+    const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
     const visibleRasterIds = useMemo(
       () => visibleRasterLayerIdsByMap[mapId] ?? new Set<string>(),
       [visibleRasterLayerIdsByMap, mapId],
@@ -244,10 +234,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const handleFeatureClick = useCallback(
       (
-        feature: Feature<
-          Geometry,
-          BlockGroupProperties | HawaiianHomelandProperties
-        > | null,
+        feature: Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties> | null,
         e: LeafletMouseEvent,
       ) => {
         const layer = e.target;
@@ -282,20 +269,28 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [mapId, updateMapActiveFeature, mapRef],
     );
 
-    const handleAddressSearchResult = useCallback((geoid: string, lat: number, lng: number) => {
+    const handleAddressSearchResult = useCallback(
+      (geoid: string, lat: number, lng: number) => {
         const map = mapRef.current;
         const zoom = map?.getZoom() ?? MAP_CONFIG.zoom;
 
         updateMapActiveFeature(mapId, {
-            geoid,
-            lat,
-            lng,
-            zoom,
+          geoid,
+          lat,
+          lng,
+          zoom,
         });
-    }, [mapId, updateMapActiveFeature]);
+      },
+      [mapId, updateMapActiveFeature],
+    );
 
-    const shouldRenderCensus = effectiveDataset && effectiveMetric &&
-        censusBlockGroups && metricsData && blockGroupData && !shouldShowHawaiianHomelands;
+    const shouldRenderCensus =
+      effectiveDataset &&
+      effectiveMetric &&
+      censusBlockGroups &&
+      metricsData &&
+      blockGroupData &&
+      !shouldShowHawaiianHomelands;
 
     const shouldRenderHawaiianHomelands =
       effectiveDataset &&
@@ -305,19 +300,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       metricsData;
 
     const shouldRenderCountyBoundariesBackground =
-      effectiveDataset &&
-      effectiveMetric &&
-      shouldShowHawaiianHomelands &&
-      countyBoundaries;
+      effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && countyBoundaries;
 
     if (!config?.visible) {
       return null;
     }
 
     return (
-      <div
-        className={`${styles["single-map-view"]} ${isPrimary ? styles["primary-map"] : ""}`}
-      >
+      <div className={`${styles["single-map-view"]} ${isPrimary ? styles["primary-map"] : ""}`}>
         <div
           className={`${styles["map-header"]} ${isPrimary ? styles["primary-header"] : styles["inactive-header"]}`}
           onClick={() => !isPrimary && setPrimaryMap(mapId)}
@@ -334,14 +324,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                   <span className={styles["dataset-name"]}>
                     {effectiveDataset.replace(/_/g, " ").toUpperCase()}
                   </span>
-                  <span className={styles["metric-name"]}>
-                    {effectiveMetric}
-                  </span>
+                  <span className={styles["metric-name"]}>{effectiveMetric}</span>
                 </>
               ) : (
-                <span className={styles["empty-state"]}>
-                  Select dataset and metric
-                </span>
+                <span className={styles["empty-state"]}>Select dataset and metric</span>
               )}
             </div>
 
@@ -355,7 +341,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               title="Save snapshot"
               aria-label="Save snapshot"
             >
-              📸
+              <CameraAltIcon fontSize="small" />
             </button>
           </div>
         </div>
@@ -380,6 +366,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               }}
             />
 
+            <AddressSearch
+              features={
+                shouldShowHawaiianHomelands
+                  ? ((hawaiianHomelands as FeatureCollection<Geometry, GeoJsonProperties>) ?? null)
+                  : ((censusBlockGroups as FeatureCollection<Geometry, GeoJsonProperties>) ?? null)
+              }
+              geoidProperty={shouldShowHawaiianHomelands ? "GEOID10" : "geoid20"}
+              onBlockGroupFound={handleAddressSearchResult}
+              onSearchError={setSearchError}
+            />
+
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
@@ -387,24 +384,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
             {shouldRenderCountyBoundariesBackground && (
               <CountyBoundariesBackgroundLayer
-                data={
-                  countyBoundaries as FeatureCollection<
-                    Geometry,
-                    CountyBoundariesProperties
-                  >
-                }
+                data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
                 mapId={config.id}
               />
             )}
 
             {shouldRenderCensus && (
               <CensusPolygonLayer
-                data={
-                  censusBlockGroups as FeatureCollection<
-                    Geometry,
-                    BlockGroupProperties
-                  >
-                }
+                data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
                 mapId={config.id}
@@ -417,12 +404,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
             {shouldRenderHawaiianHomelands && (
               <HawaiianHomelandsPolygonLayer
-                data={
-                  hawaiianHomelands as FeatureCollection<
-                    Geometry,
-                    HawaiianHomelandProperties
-                  >
-                }
+                data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
                 mapId={config.id}
@@ -445,11 +427,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 {layer.subLayers?.map((sub) => {
                   const compositeId = `${layer.id}.${sub.id}`;
                   return visibleHazardIds.has(compositeId) ? (
-                    <HazardLayerRenderer
-                      key={compositeId}
-                      parentId={layer.id}
-                      layerId={sub.id}
-                    />
+                    <HazardLayerRenderer key={compositeId} parentId={layer.id} layerId={sub.id} />
                   ) : null;
                 })}
               </React.Fragment>
@@ -460,11 +438,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <React.Fragment key={layer.id}>
                 {/* Render parent layer if it has a filePath and is visible */}
                 {layer.filePath && visibleRasterIds.has(layer.id) && (
-                  <RasterLayerRenderer
-                    mapId={mapId}
-                    parentId={layer.id}
-                    mapZoom={mapZoom}
-                  />
+                  <RasterLayerRenderer mapId={mapId} parentId={layer.id} mapZoom={mapZoom} />
                 )}
 
                 {/* Render sublayers that are visible */}
@@ -485,11 +459,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
             {/* Render point layers - components fetch their own data from store */}
             {Array.from(visiblePointLayerIds).map((layerId) => (
-              <GenericPointMarkers
-                key={layerId}
-                layerId={layerId}
-                mapId={mapId}
-              />
+              <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
             ))}
           </MapContainer>
 
@@ -500,6 +470,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             colorScheme={activeColorScheme}
           />
         </div>
+
+        <Snackbar
+          open={!!searchError}
+          autoHideDuration={4000}
+          onClose={() => setSearchError(null)}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert severity="warning" onClose={() => setSearchError(null)} variant="filled">
+            {searchError}
+          </Alert>
+        </Snackbar>
       </div>
     );
   },
