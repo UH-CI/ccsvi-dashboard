@@ -13,8 +13,7 @@ type SnapshotState = {
 export const useSnapshotStore = create<SnapshotState>((set, get) => ({
   handlers: {},
 
-  register: (mapId, fn) =>
-    set((s) => ({ handlers: { ...s.handlers, [mapId]: fn } })),
+  register: (mapId, fn) => set((s) => ({ handlers: { ...s.handlers, [mapId]: fn } })),
 
   unregister: (mapId) =>
     set((s) => {

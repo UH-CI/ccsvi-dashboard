@@ -1,1 +1,1 @@
-export { MapLegend } from './MapLegend';
+export { MapLegend } from "./MapLegend";

@@ -7,9 +7,7 @@ interface MultiMapContainerProps {
   maxMaps?: number;
 }
 
-export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
-  maxMaps = 4,
-}) => {
+export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ maxMaps = 4 }) => {
   // Use visible maps from mapStore
   const visibleMaps = useVisibleMaps();
   const primaryMapId = useMapStore((state) => state.primaryMapId);

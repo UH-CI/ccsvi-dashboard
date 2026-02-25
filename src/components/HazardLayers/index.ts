@@ -1,1 +1,1 @@
-export { HazardLayerRenderer } from './HazardLayerRenderer';
+export { HazardLayerRenderer } from "./HazardLayerRenderer";
