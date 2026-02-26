@@ -14,6 +14,7 @@ interface HawaiianHomelandsPolygonLayerProps {
   // activeDataset: string;
   activeMetric: string;
   activeFeatureGeoid?: string | null;
+  layerOpacity?: number;
   getColor: (value: number | null) => string;
   onFeatureClick?: (
     feature: Feature<Geometry, HawaiianHomelandProperties>,
@@ -31,6 +32,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   // activeDataset,
   activeMetric,
   activeFeatureGeoid,
+  layerOpacity,
   getColor,
   onFeatureClick,
 }) => {
@@ -100,6 +102,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       mapId={mapId}
       layerType="hawaiian-homelands"
       geoidProperty={LAYER_CONFIG.geoidProperty}
+      layerOpacity={layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}

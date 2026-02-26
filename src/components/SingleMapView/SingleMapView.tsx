@@ -24,6 +24,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   useSnapshotStore,
+  DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
@@ -102,10 +103,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const { blockGroupData, metricsData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
       useAppStore();
 
-    const { updateMapActiveFeature, setPrimaryMap } = useMapStore();
+    const { updateMapActiveFeature, setPrimaryMap, layerOpacities } = useMapStore();
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
+    const mapOpacities = layerOpacities[mapId] || DEFAULT_LAYER_OPACITIES;
 
     // Register this map's snapshot function
     useEffect(() => {
@@ -386,6 +388,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <CountyBoundariesBackgroundLayer
                 data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
                 mapId={config.id}
+                layerOpacity={mapOpacities.countyBoundaries}
               />
             )}
 
@@ -397,6 +400,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeFeatureGeoid={config.activeFeature?.geoid}
+                layerOpacity={mapOpacities.census}
                 getColor={getColor}
                 onFeatureClick={handleFeatureClick}
               />
@@ -410,6 +414,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeFeatureGeoid={config.activeFeature?.geoid}
+                layerOpacity={mapOpacities.hawaiianHomelands}
                 getColor={getColor}
                 onFeatureClick={handleFeatureClick}
               />

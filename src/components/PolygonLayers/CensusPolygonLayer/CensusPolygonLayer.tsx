@@ -14,6 +14,7 @@ interface CensusPolygonLayerProps {
   // activeDataset: string;
   activeMetric: string;
   activeFeatureGeoid?: string | null;
+  layerOpacity?: number;
   getColor: (value: number | null) => string;
   onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
 }
@@ -28,6 +29,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   // activeDataset,
   activeMetric,
   activeFeatureGeoid,
+  layerOpacity,
   getColor,
   onFeatureClick,
 }) => {
@@ -96,6 +98,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
+      layerOpacity={layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}

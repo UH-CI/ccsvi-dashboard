@@ -17,6 +17,7 @@ import {
   Chip,
   Tooltip,
   Menu,
+  Slider,
 } from "@mui/material";
 import {
   Camera,
@@ -42,6 +43,7 @@ import {
   usePrimaryMapState,
   useHazardLayersStore,
   useRasterLayersStore,
+  DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 
@@ -62,6 +64,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   const toggleSection = useMapStore((state) => state.toggleSection);
   const toggleSectionByMap = useMapStore((state) => state.toggleSectionByMap);
   const resetMapStore = useMapStore((state) => state.reset);
+  const layerOpacities = useMapStore((state) => state.layerOpacities);
+  const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
   const {
     dataset: activeDataset,
@@ -276,6 +280,76 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                                       {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
                                     </MenuItem>
                                   ))}
+
+                                  <Divider />
+
+                                  {/* Opacity Controls */}
+                                  <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 1 }}>
+                                      Layer Opacity
+                                    </Typography>
+
+                                    {/* Show Census Blocks control only for non-Hawaiian Homelands datasets */}
+                                    {config.dataset && dataset?.[config.dataset] && !dataset[config.dataset].hawaiianHomelands && (
+                                      <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" gutterBottom display="block">
+                                          Census Blocks
+                                        </Typography>
+                                        <Slider
+                                          value={layerOpacities[config.id]?.census ?? DEFAULT_LAYER_OPACITIES.census}
+                                          onChange={(_, value) =>
+                                            setLayerOpacity(config.id, "census", value as number)
+                                          }
+                                          min={0}
+                                          max={1}
+                                          step={0.1}
+                                          marks
+                                          valueLabelDisplay="auto"
+                                          size="small"
+                                        />
+                                      </Box>
+                                    )}
+
+                                    {/* Show Hawaiian Homelands and County Boundaries controls only for Hawaiian Homelands datasets */}
+                                    {config.dataset && dataset?.[config.dataset]?.hawaiianHomelands && (
+                                      <>
+                                        <Box sx={{ mb: 2 }}>
+                                          <Typography variant="caption" gutterBottom display="block">
+                                            Hawaiian Homelands
+                                          </Typography>
+                                          <Slider
+                                            value={layerOpacities[config.id]?.hawaiianHomelands ?? DEFAULT_LAYER_OPACITIES.hawaiianHomelands}
+                                            onChange={(_, value) =>
+                                              setLayerOpacity(config.id, "hawaiianHomelands", value as number)
+                                            }
+                                            min={0}
+                                            max={1}
+                                            step={0.1}
+                                            marks
+                                            valueLabelDisplay="auto"
+                                            size="small"
+                                          />
+                                        </Box>
+                                        <Box>
+                                          <Typography variant="caption" gutterBottom display="block">
+                                            County Boundaries
+                                          </Typography>
+                                          <Slider
+                                            value={layerOpacities[config.id]?.countyBoundaries ?? DEFAULT_LAYER_OPACITIES.countyBoundaries}
+                                            onChange={(_, value) =>
+                                              setLayerOpacity(config.id, "countyBoundaries", value as number)
+                                            }
+                                            min={0}
+                                            max={1}
+                                            step={0.1}
+                                            marks
+                                            valueLabelDisplay="auto"
+                                            size="small"
+                                          />
+                                        </Box>
+                                      </>
+                                    )}
+                                  </Box>
                                 </Menu>
                               </>
                             )}

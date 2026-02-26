@@ -14,6 +14,16 @@ interface MapState {
   primaryMapDataset: string;
   primaryMapMetric: string;
 
+  // Layer opacity per map
+  layerOpacities: Record<
+    string,
+    {
+      census: number;
+      hawaiianHomelands: number;
+      countyBoundaries: number;
+    }
+  >;
+
   // UI state
   expandedSections: {
     maps: boolean;
@@ -30,6 +40,7 @@ interface MapState {
       points: boolean;
       hazards: boolean;
       rasters: boolean;
+      opacity: boolean;
     }
   >;
 
@@ -42,17 +53,28 @@ interface MapState {
   setPrimaryMap: (mapId: string) => void;
   setPrimaryMapDataset: (dataset: string) => void;
   setPrimaryMapMetric: (metric: string) => void;
+  setLayerOpacity: (
+    mapId: string,
+    layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
+    opacity: number,
+  ) => void;
 
   // UI actions
   toggleSection: (section: keyof MapState["expandedSections"]) => void;
   toggleSectionByMap: (
     mapId: string,
-    section: "maps" | "utils" | "points" | "hazards" | "rasters",
+    section: "maps" | "utils" | "points" | "hazards" | "rasters" | "opacity",
   ) => void;
 
   // Reset
   reset: () => void;
 }
+
+export const DEFAULT_LAYER_OPACITIES = {
+  census: 0.5,
+  hawaiianHomelands: 0.5,
+  countyBoundaries: 0.8,
+} as const;
 
 const initialMapConfig: MapConfig = {
   id: "map1",
@@ -77,6 +99,7 @@ export const defaultExpandedSections = {
   points: false,
   hazards: false,
   rasters: false,
+  opacity: false,
 };
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -86,6 +109,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   primaryMapId: initialMapConfig.id,
   primaryMapDataset: "",
   primaryMapMetric: "",
+  layerOpacities: {
+    [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
+  },
   expandedSections: initialExpandedSections,
   expandedSectionsByMap: { [initialMapConfig.id]: { ...defaultExpandedSections } },
 
@@ -104,6 +130,10 @@ export const useMapStore = create<MapState>((set, get) => ({
     set((state) => ({
       mapConfigs: [...state.mapConfigs, newMap],
       nextMapId: state.nextMapId + 1,
+      layerOpacities: {
+        ...state.layerOpacities,
+        [newMapId]: { ...DEFAULT_LAYER_OPACITIES },
+      },
       expandedSectionsByMap: {
         ...state.expandedSectionsByMap,
         [newMapId]: { ...defaultExpandedSections },
@@ -121,11 +151,15 @@ export const useMapStore = create<MapState>((set, get) => ({
           ? (remaining.find((c) => c.visible)?.id ?? remaining[0].id)
           : primaryMapId;
       set((state) => {
-        const { [mapId]: _, ...rest } = state.expandedSectionsByMap;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [mapId]: _removed, ...restExpandedSections } = state.expandedSectionsByMap;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [mapId]: _removedOpacity, ...restOpacities } = state.layerOpacities;
         return {
           mapConfigs: remaining,
           primaryMapId: newPrimaryId,
-          expandedSectionsByMap: rest,
+          expandedSectionsByMap: restExpandedSections,
+          layerOpacities: restOpacities,
         };
       });
     }
@@ -167,6 +201,18 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ primaryMapMetric: metric });
   },
 
+  setLayerOpacity: (mapId, layerType, opacity) => {
+    set((state) => ({
+      layerOpacities: {
+        ...state.layerOpacities,
+        [mapId]: {
+          ...state.layerOpacities[mapId],
+          [layerType]: opacity,
+        },
+      },
+    }));
+  },
+
   // UI actions
   toggleSection: (section) => {
     set((state) => ({
@@ -195,6 +241,9 @@ export const useMapStore = create<MapState>((set, get) => ({
       primaryMapId: initialMapConfig.id,
       primaryMapDataset: "",
       primaryMapMetric: "",
+      layerOpacities: {
+        [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
+      },
       expandedSections: initialExpandedSections,
       expandedSectionsByMap: {
         [initialMapConfig.id]: { ...defaultExpandedSections },

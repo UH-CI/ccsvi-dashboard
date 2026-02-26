@@ -5,6 +5,7 @@ export {
   useMapConfig,
   usePrimaryMapState,
   defaultExpandedSections,
+  DEFAULT_LAYER_OPACITIES,
 } from "./useMapStore";
 export { usePointLayerStore, usePointLayerConfigs, useIsLayerVisible } from "./usePointLayersStore";
 export {

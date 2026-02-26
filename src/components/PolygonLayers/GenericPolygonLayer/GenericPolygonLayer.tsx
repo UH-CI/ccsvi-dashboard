@@ -23,6 +23,7 @@ export interface GenericPolygonLayerProps<
   layerType: string;
   geoidProperty: string;
   activeFeatureGeoid?: string | null;
+  layerOpacity?: number;
   getStyle: (feature: Feature<Geometry, T> | undefined) => StyleConfig;
   getHighlightStyle?: (
     feature: Feature<Geometry, T>,
@@ -39,6 +40,7 @@ export const GenericPolygonLayer = memo(
     layerType,
     geoidProperty,
     activeFeatureGeoid,
+    layerOpacity,
     getStyle,
     getHighlightStyle,
     onFeatureClick,
@@ -59,19 +61,27 @@ export const GenericPolygonLayer = memo(
 
     const styleCallback = useCallback(
       (feature?: Feature<Geometry, T>): PathOptions => {
-        if (!feature) {
+        const baseStyle = feature
+          ? getStyle(feature)
+          : {
+              fillColor: "#cccccc",
+              weight: 0.5,
+              opacity: 1,
+              color: "#333",
+              fillOpacity: 0.3,
+            };
+
+        if (layerOpacity !== undefined) {
           return {
-            fillColor: "#cccccc",
-            weight: 0.5,
-            opacity: 1,
-            color: "#333",
-            fillOpacity: 0.3,
+            ...baseStyle,
+            opacity: layerOpacity,
+            fillOpacity: layerOpacity,
           };
         }
 
-        return getStyle(feature);
+        return baseStyle;
       },
-      [getStyle],
+      [getStyle, layerOpacity],
     );
 
     const onEachFeature = useCallback(
@@ -119,8 +129,16 @@ export const GenericPolygonLayer = memo(
         // Use the current getStyle function directly (not a ref)
         const baseStyle = getStyle(feature);
 
-        const highlightStyle =
+        let highlightStyle =
           isActive && getHighlightStyle ? getHighlightStyle(feature, baseStyle) : baseStyle;
+
+        if (layerOpacity !== undefined && !isActive) {
+          highlightStyle = {
+            ...highlightStyle,
+            opacity: layerOpacity,
+            fillOpacity: layerOpacity,
+          };
+        }
 
         (layer as { setStyle: (style: PathOptions) => void }).setStyle(highlightStyle);
 
@@ -143,7 +161,7 @@ export const GenericPolygonLayer = memo(
       if (!activeFeatureGeoid) {
         lastFitBoundsGeoid.current = null;
       }
-    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle, map]);
+    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle, layerOpacity, map]);
 
     // Update popup content when renderPopup changes (e.g. metric change)
     useEffect(() => {
@@ -199,6 +217,7 @@ export const GenericPolygonLayer = memo(
       prevProps.geoidProperty === nextProps.geoidProperty &&
       prevProps.mapId === nextProps.mapId &&
       prevProps.layerType === nextProps.layerType &&
+      prevProps.layerOpacity === nextProps.layerOpacity &&
       prevProps.getStyle === nextProps.getStyle &&
       prevProps.getHighlightStyle === nextProps.getHighlightStyle &&
       prevProps.onFeatureClick === nextProps.onFeatureClick &&
