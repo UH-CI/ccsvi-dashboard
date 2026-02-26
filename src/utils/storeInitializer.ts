@@ -4,6 +4,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   defaultExpandedSections,
+  DEFAULT_LAYER_OPACITIES,
 } from "../stores";
 import { DeserializedState } from "./urlSerializer";
 
@@ -57,6 +58,14 @@ function initializeMapStore(
     {} as Record<string, typeof defaultExpandedSections>,
   );
 
+  const layerOpacities = fullConfigs.reduce(
+    (acc, config) => {
+      acc[config.id] = { ...DEFAULT_LAYER_OPACITIES };
+      return acc;
+    },
+    {} as Record<string, { census: number; hawaiianHomelands: number; countyBoundaries: number }>,
+  );
+
   // Set nextMapId above the highest URL map number to prevent future collisions
   const maxMapNum = fullConfigs.reduce((max, config) => {
     const num = parseInt(config.id.replace("map", ""), 10);
@@ -67,6 +76,7 @@ function initializeMapStore(
     mapConfigs: fullConfigs,
     nextMapId: maxMapNum + 1,
     expandedSectionsByMap,
+    layerOpacities,
   });
 
   if (primaryMapId) {
