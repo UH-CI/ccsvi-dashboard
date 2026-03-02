@@ -109,8 +109,19 @@ function initializePointLayers(layerIds: string[]): void {
 function initializeHazardLayers(hazardIds: string[]): void {
   if (hazardIds.length === 0) return;
 
+  const layersByMap: Record<string, string[]> = {};
+  for (const entry of hazardIds) {
+    const colonIndex = entry.indexOf(":");
+    if (colonIndex === -1) continue;
+    const mapId = entry.substring(0, colonIndex);
+    const layerId = entry.substring(colonIndex + 1);
+    if (!layersByMap[mapId]) layersByMap[mapId] = [];
+    layersByMap[mapId].push(layerId);
+  }
+
+  // Set visibility per map
   const store = useHazardLayersStore.getState();
-  store.setVisibleLayerIds(hazardIds);
+  store.setVisibleLayerIdsByMap(layersByMap);
 }
 
 /**

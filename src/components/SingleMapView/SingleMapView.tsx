@@ -36,7 +36,12 @@ interface SingleMapViewProps {
   mapConfigsLength: number;
 }
 
-const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void }) => {
+interface MapResizeHandlerProps {
+  onMapRef: (map: L.Map | null) => void;
+  onZoomChange?: (zoom: number) => void;
+}
+
+const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomChange }) => {
   const map = useMap();
   const containerRef = useRef<HTMLElement | null>(null);
 
@@ -77,6 +82,22 @@ const MapResizeHandler = ({ onMapRef }: { onMapRef: (map: L.Map | null) => void 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [map]);
+
+  useEffect(() => {
+    if (!onZoomChange) return;
+
+    const handleZoomEnd = () => {
+      onZoomChange(map.getZoom());
+    };
+
+    // Initialize with current zoom
+    onZoomChange(map.getZoom());
+    map.on("zoomend", handleZoomEnd);
+
+    return () => {
+      map.off("zoomend", handleZoomEnd);
+    };
+  }, [map, onZoomChange]);
 
   return null;
 };
@@ -131,26 +152,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       effectiveDataset,
       effectiveMetric,
     ]);
-
-    // Track zoom changes
-    useEffect(() => {
-      if (!mapRef.current) return;
-
-      const map = mapRef.current;
-
-      const onZoomEnd = () => {
-        const z = map.getZoom();
-        console.log("[SingleMapView] zoom =", z);
-        setMapZoom(z);
-      };
-
-      map.on("zoomend", onZoomEnd);
-      setMapZoom(map.getZoom());
-
-      return () => {
-        map.off("zoomend", onZoomEnd);
-      };
-    }, [mapRef]);
 
     const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
 
@@ -363,6 +364,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             <MapResizeHandler
               onMapRef={(map) => {
                 mapRef.current = map;
+              }}
+              onZoomChange={(z) => {
+                setMapZoom(z);
               }}
             />
 

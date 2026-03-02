@@ -13,6 +13,8 @@ interface HazardLayersState {
   setHazardLayerConfigs: (layers: HazardLayerConfig[]) => void;
   setHazardLayerData: (layerId: string, data: FeatureCollection<Geometry> | ArrayBuffer) => void;
   setVisibleLayerIds: (mapId: string, ids: string[]) => void;
+  setVisibleLayerIdsByMap: (byMap: Record<string, string[]>) => void;
+
   setIsLoaded: (loaded: boolean) => void;
 
   // Actions
@@ -60,6 +62,14 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
 
   setIsLoaded: (loaded) => {
     set({ isLoaded: loaded });
+  },
+
+  setVisibleLayerIdsByMap: (byMap) => {
+    const visibleLayerIdsByMap: Record<string, Set<string>> = {};
+    for (const [mapId, ids] of Object.entries(byMap)) {
+      visibleLayerIdsByMap[mapId] = new Set(ids);
+    }
+    set({ visibleLayerIdsByMap });
   },
 
   // Actions
