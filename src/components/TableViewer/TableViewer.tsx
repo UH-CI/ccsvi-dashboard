@@ -63,6 +63,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   initialCollapsed = false,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
+  const primaryMapMetric = useMapStore((state) => {
+    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
+    return primary?.metric ?? "";
+  });
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
 
   const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
@@ -297,7 +301,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   },
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
-                onRowClick={geoidColIndex >= 0 ? handleRowClick : undefined}
+                onRowClick={geoidColIndex >= 0 && !!primaryMapMetric ? handleRowClick : undefined}
                 density="compact"
                 hideFooter={false}
                 // Enable column management
@@ -388,7 +392,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
                     outline: "none",
                   },
-                  ...(geoidColIndex >= 0 && {
+                  ...(geoidColIndex >= 0 && !!primaryMapMetric && {
                     "& .MuiDataGrid-row": { cursor: "pointer" },
                   }),
 
