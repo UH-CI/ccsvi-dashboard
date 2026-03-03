@@ -298,7 +298,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
                 onRowClick={geoidColIndex >= 0 ? handleRowClick : undefined}
-                disableRowSelectionOnClick
                 density="compact"
                 hideFooter={false}
                 // Enable column management
@@ -385,6 +384,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   // Row styling
                   "& .MuiDataGrid-row:hover": {
                     backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  },
+                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+                    outline: "none",
                   },
                   ...(geoidColIndex >= 0 && {
                     "& .MuiDataGrid-row": { cursor: "pointer" },
