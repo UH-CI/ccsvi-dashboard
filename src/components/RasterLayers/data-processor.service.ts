@@ -4,14 +4,7 @@ import { RasterData, IndexedValues, UpdateFlags } from "./RasterData";
 import GeoTiffWorker from "./geotiff.worker?worker";
 
 export class DataProcessorService {
-  private static workerInstance: Worker | null = null;
-
-  static getWorker(): Worker {
-    if (!DataProcessorService.workerInstance) {
-      DataProcessorService.workerInstance = new GeoTiffWorker();
-    }
-    return DataProcessorService.workerInstance;
-  }
+  private worker: Worker;
 
   // private resolver: (value: RasterData | PromiseLike<RasterData>) => void;
   // private workerId: number;
@@ -36,8 +29,8 @@ export class DataProcessorService {
   } | null = null;
 
   constructor() {
-    const worker = DataProcessorService.getWorker();
-    worker.onmessage = ({ data }) => {
+    this.worker = new GeoTiffWorker();
+    this.worker.onmessage = ({ data }) => {
       //let { header, bandData, id } = data;
       const { header, bandData, id } = data;
       this.lastReceivedId = id;
@@ -96,7 +89,7 @@ export class DataProcessorService {
       }
       //otherwise submit latest request data to worker
       else {
-        worker.postMessage(this.message);
+        this.worker.postMessage(this.message);
       }
     };
   }
@@ -126,9 +119,8 @@ export class DataProcessorService {
         overviewIndex: overviewIndex,
       };
       //if the last worker dispatched is the last request then immeddiately post message, otherwise push after current outbound worker returns to prevent a backup of messages
-      const worker = DataProcessorService.getWorker();
       if (this.workerId == this.lastReceivedId) {
-        worker.postMessage(this.message);
+        this.worker.postMessage(this.message);
       }
       this.workerId = workerId;
     });
