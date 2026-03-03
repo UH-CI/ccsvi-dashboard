@@ -71,9 +71,9 @@ interface MapState {
 }
 
 export const DEFAULT_LAYER_OPACITIES = {
-  census: 0.5,
-  hawaiianHomelands: 0.5,
-  countyBoundaries: 0.8,
+  census: 0.3,
+  hawaiianHomelands: 0.3,
+  countyBoundaries: 0.7,
 } as const;
 
 const initialMapConfig: MapConfig = {
