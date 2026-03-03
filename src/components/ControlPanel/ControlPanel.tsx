@@ -26,7 +26,6 @@ import {
 import {
   useMapStore,
   usePointLayerStore,
-  usePrimaryMapState,
   useHazardLayersStore,
   useRasterLayersStore,
 } from "../../stores";
@@ -44,8 +43,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   const expandedSections = useMapStore((state) => state.expandedSections);
   const toggleSection = useMapStore((state) => state.toggleSection);
   const resetMapStore = useMapStore((state) => state.reset);
-
-  const { setDataset, setMetric } = usePrimaryMapState();
 
   const setVisiblePointLayerIds = usePointLayerStore((state) => state.setVisibleLayerIds);
   const setVisibleHazardLayerIds = useHazardLayersStore((state) => state.setVisibleLayerIds);
@@ -70,8 +67,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
 
   const handleResetView = useCallback(() => {
     resetMapStore();
-    setDataset("");
-    setMetric("");
     mapConfigs.forEach((map) => {
       setVisiblePointLayerIds(map.id, []);
       setVisibleHazardLayerIds(map.id, []);
@@ -79,8 +74,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     });
   }, [
     resetMapStore,
-    setDataset,
-    setMetric,
     setVisiblePointLayerIds,
     setVisibleHazardLayerIds,
     setVisibleRasterLayerIds,

@@ -10,10 +10,6 @@ interface MapState {
   // Which map drives the TableViewer
   primaryMapId: string;
 
-  // Map state
-  primaryMapDataset: string;
-  primaryMapMetric: string;
-
   // Layer opacity per map
   layerOpacities: Record<
     string,
@@ -51,8 +47,6 @@ interface MapState {
   toggleMapVisibility: (mapId: string) => void;
   updateMapActiveFeature: (mapId: string, activeFeature: MapConfig["activeFeature"]) => void;
   setPrimaryMap: (mapId: string) => void;
-  setPrimaryMapDataset: (dataset: string) => void;
-  setPrimaryMapMetric: (metric: string) => void;
   setLayerOpacity: (
     mapId: string,
     layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
@@ -107,8 +101,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   mapConfigs: [initialMapConfig],
   nextMapId: 2,
   primaryMapId: initialMapConfig.id,
-  primaryMapDataset: "",
-  primaryMapMetric: "",
   layerOpacities: {
     [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
   },
@@ -193,14 +185,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ primaryMapId: mapId });
   },
 
-  setPrimaryMapDataset: (dataset) => {
-    set({ primaryMapDataset: dataset, primaryMapMetric: "" });
-  },
-
-  setPrimaryMapMetric: (metric) => {
-    set({ primaryMapMetric: metric });
-  },
-
   setLayerOpacity: (mapId, layerType, opacity) => {
     set((state) => ({
       layerOpacities: {
@@ -239,8 +223,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       mapConfigs: [initialMapConfig],
       nextMapId: 2,
       primaryMapId: initialMapConfig.id,
-      primaryMapDataset: "",
-      primaryMapMetric: "",
       layerOpacities: {
         [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
       },
@@ -263,11 +245,12 @@ export const useMapConfig = (mapId: string) => {
 
 export const usePrimaryMapState = () => {
   return useMapStore(
-    useShallow((state) => ({
-      dataset: state.primaryMapDataset,
-      metric: state.primaryMapMetric,
-      setDataset: state.setPrimaryMapDataset,
-      setMetric: state.setPrimaryMapMetric,
-    })),
+    useShallow((state) => {
+      const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
+      return {
+        dataset: primary?.dataset ?? "",
+        metric: primary?.metric ?? "",
+      };
+    }),
   );
 };
