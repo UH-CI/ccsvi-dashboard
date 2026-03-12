@@ -19,9 +19,7 @@ export interface SnapshotOptions {
 // Generates a descriptive filename for the snapshot based on current map state
 const pad = (n: number) => n.toString().padStart(2, "0");
 
-export const generateSnapshotFilename = (
-  options: SnapshotOptions = {}
-): string => {
+export const generateSnapshotFilename = (options: SnapshotOptions = {}): string => {
   const {
     activeDataset,
     activeDatasetMetric,
@@ -31,9 +29,7 @@ export const generateSnapshotFilename = (
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
   const datasetName = activeDataset ? activeDataset.replace(/_/g, "-") : "map";
-  const metricName = activeDatasetMetric
-    ? activeDatasetMetric.replace(/_/g, "-")
-    : "";
+  const metricName = activeDatasetMetric ? activeDatasetMetric.replace(/_/g, "-") : "";
 
   const parts = [customPrefix, datasetName];
   if (metricName) {
@@ -112,18 +108,14 @@ const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
 export const takeMapSnapshot = async (
   targetElement: HTMLElement,
   options: SnapshotOptions = {},
-  allLayersIds: string[] = []
+  allLayersIds: string[] = [],
 ): Promise<void> => {
   // minor polyfills / safety (dom-to-image-more can choke in some browsers)
   if (!window.URL) (window as any).URL = window.URL || {};
 
   const format = options.format ?? "png";
   const quality =
-    typeof options.quality === "number"
-      ? options.quality
-      : format === "jpeg"
-      ? 0.95
-      : undefined;
+    typeof options.quality === "number" ? options.quality : format === "jpeg" ? 0.95 : undefined;
 
   try {
     // Wait for all elements to load
@@ -190,9 +182,7 @@ export const takeMapSnapshot = async (
     downloadBlob(blob, filename);
   } catch (error) {
     throw new Error(
-      `Failed to take snapshot: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      `Failed to take snapshot: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
