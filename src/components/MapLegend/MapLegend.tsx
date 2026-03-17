@@ -1,41 +1,27 @@
 import React, { useMemo } from "react";
-import { Dataset, ColorSchemeName } from "../../types";
 import styles from "./MapLegend.module.scss";
 
 interface MapLegendProps {
-  dataset: Dataset | null;
-  activeDataset: string | undefined;
-  activeDatasetMetric: string | undefined;
-  colorScheme?: ColorSchemeName;
+  limits: number[] | null;
+  colors: string[] | null;
 }
 
-export const MapLegend: React.FC<MapLegendProps> = ({
-  dataset,
-  activeDataset,
-  activeDatasetMetric,
-  colorScheme = "viridis",
-}) => {
-  const activeDatasetMetricObject = useMemo(() => {
-    if (!dataset || !activeDataset || !activeDatasetMetric) return null;
-    return dataset[activeDataset]?.columnThresholds?.[activeDatasetMetric];
-  }, [dataset, activeDataset, activeDatasetMetric]);
-
+export const MapLegend: React.FC<MapLegendProps> = ({ limits, colors }) => {
   const legendLevels = useMemo(() => {
-    if (!activeDatasetMetricObject) return [];
+    if (!limits || !colors || limits.length < 2) return [];
 
-    const colors = activeDatasetMetricObject.colorSchemes[colorScheme];
     const items = [];
-    for (let i = activeDatasetMetricObject.thresholds.length - 1; i >= 0; i--) {
-      const low = activeDatasetMetricObject.thresholds[i];
-      const high = activeDatasetMetricObject.thresholds[i + 1];
+    for (let i = limits.length - 2; i >= 0; i--) {
+      const low = limits[i];
+      const high = limits[i + 1];
 
-      let label;
-      if (i === activeDatasetMetricObject.thresholds.length - 1) {
+      let label: string;
+      if (i === limits.length - 2) {
         label = `> ${low}`;
       } else if (i === 0) {
-        label = `${low}`;
+        label = `≤ ${high}`;
       } else {
-        label = `${low}-${high - 1}`;
+        label = `${low} – ${high}`;
       }
 
       items.push(
@@ -43,24 +29,21 @@ export const MapLegend: React.FC<MapLegendProps> = ({
           <div
             className={styles["legend__item-color"]}
             style={{ backgroundColor: colors[i] }}
-          ></div>
+          />
           <span>{label}</span>
         </div>,
       );
     }
     return items;
-  }, [activeDatasetMetricObject, colorScheme]);
+  }, [limits, colors]);
 
-  if (!dataset || !activeDataset || !activeDatasetMetric) {
+  if (!limits || !colors) {
     return null;
   }
 
   return (
     <div className={styles.legend}>
-      <div className={styles.legend__title}>
-        Map Legend
-        {/*{activeDatasetMetric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}*/}
-      </div>
+      <div className={styles.legend__title}>Map Legend</div>
       <div className={styles.legend__items}>{legendLevels}</div>
     </div>
   );

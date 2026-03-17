@@ -14,6 +14,7 @@ import {
   Box,
   Menu,
   Slider,
+  ListSubheader,
 } from "@mui/material";
 import {
   ExpandMore,
@@ -119,21 +120,33 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 open={Boolean(colorSchemeAnchor)}
                 onClose={() => setColorSchemeAnchor(null)}
               >
-                {["viridis", "reds", "blues"].map((scheme) => (
+                <ListSubheader>Sequential</ListSubheader>
+                {["Viridis", "YlOrRd", "YlGnBu", "Blues", "Reds", "Greens", "Purples", "Oranges", "GnBu", "BuPu"].map((scheme) => (
                   <MenuItem
                     key={scheme}
                     selected={
                       config.colorScheme === scheme ||
-                      (!config.colorScheme && scheme === "viridis")
+                      (!config.colorScheme && scheme === "Viridis")
                     }
                     onClick={() => {
-                      updateMapConfig(config.id, {
-                        colorScheme: scheme as "viridis" | "reds" | "blues",
-                      });
+                      updateMapConfig(config.id, { colorScheme: scheme });
                       setColorSchemeAnchor(null);
                     }}
                   >
-                    {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+                    {scheme}
+                  </MenuItem>
+                ))}
+                <ListSubheader>Diverging</ListSubheader>
+                {["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"].map((scheme) => (
+                  <MenuItem
+                    key={scheme}
+                    selected={config.colorScheme === scheme}
+                    onClick={() => {
+                      updateMapConfig(config.id, { colorScheme: scheme });
+                      setColorSchemeAnchor(null);
+                    }}
+                  >
+                    {scheme}
                   </MenuItem>
                 ))}
 

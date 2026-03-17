@@ -1,15 +1,13 @@
 import { Feature, Geometry } from "geojson";
 import { PathOptions } from "leaflet";
 
-export type ColorSchemeName = "viridis" | "reds" | "blues";
-
 export interface MapConfig {
   id: string;
   title: string;
   dataset: string;
   metric: string;
   visible: boolean;
-  colorScheme: ColorSchemeName;
+  colorScheme: string;
   activeFeature?: {
     geoid: string;
     lat: number;
@@ -40,10 +38,8 @@ export interface MetricsData {
   };
 }
 
-export interface ColorSchemes {
-  viridis: string[];
-  reds: string[];
-  blues: string[];
+export interface MetricConfig {
+  classificationMode?: string;
 }
 
 export interface Dataset {
@@ -52,10 +48,7 @@ export interface Dataset {
     metricLabel: string;
     hawaiianHomelands?: boolean;
     columnThresholds: {
-      [columnName: string]: {
-        thresholds: number[];
-        colorSchemes: ColorSchemes;
-      };
+      [columnName: string]: MetricConfig;
     };
   };
 }

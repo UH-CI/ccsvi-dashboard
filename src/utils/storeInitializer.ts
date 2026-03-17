@@ -46,7 +46,7 @@ function initializeMapStore(
     dataset: config.dataset || "",
     metric: config.metric || "",
     visible: config.visible ?? true,
-    colorScheme: "viridis" as const,
+    colorScheme: "Viridis",
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
   }));
 

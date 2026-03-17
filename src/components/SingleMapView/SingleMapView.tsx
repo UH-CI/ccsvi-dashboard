@@ -30,6 +30,7 @@ import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
+import { computeColorScale } from "../../utils/colorThresholds";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -197,6 +198,16 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
 
+    const allMetricValues = useMemo(() => {
+      if (!metricsData || !effectiveDataset || !effectiveMetric) return [];
+      const values: number[] = [];
+      Object.values(metricsData).forEach((data) => {
+        const val = data.metrics?.[effectiveDataset]?.[effectiveMetric]?.proportion;
+        if (val !== undefined && val !== null) values.push(val);
+      });
+      return values;
+    }, [metricsData, effectiveDataset, effectiveMetric]);
+
     const getMetricValue = useMemo(() => {
       if (!metricsData || !effectiveDataset || !effectiveMetric) {
         return () => null;
@@ -217,23 +228,23 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       };
     }, [metricsData, effectiveDataset, effectiveMetric]);
 
-    const activeColorScheme = config?.colorScheme || "viridis";
+    const activeColorScheme = config?.colorScheme || "Viridis";
+
+    const colorScale = useMemo(() => {
+      if (!activeDatasetMetricObject) return null;
+      return computeColorScale(
+        allMetricValues,
+        activeColorScheme,
+        activeDatasetMetricObject.classificationMode ?? "q",
+      );
+    }, [allMetricValues, activeColorScheme, activeDatasetMetricObject]);
 
     const getColor = useMemo(() => {
       return (value: number | null): string => {
-        if (value === null || !activeDatasetMetricObject) {
-          return "#cccccc";
-        }
-        const { thresholds, colorSchemes } = activeDatasetMetricObject;
-        const colors = colorSchemes[activeColorScheme];
-        for (let i = 0; i < thresholds.length; i++) {
-          if (value <= thresholds[i]) {
-            return colors[i];
-          }
-        }
-        return "#333";
+        if (value === null || !colorScale) return "#cccccc";
+        return colorScale.getColor(value);
       };
-    }, [activeDatasetMetricObject, activeColorScheme]);
+    }, [colorScale]);
 
     const handleFeatureClick = useCallback(
       (
@@ -478,10 +489,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           </MapContainer>
 
           <MapLegend
-            dataset={blockGroupData}
-            activeDataset={effectiveDataset}
-            activeDatasetMetric={effectiveMetric}
-            colorScheme={activeColorScheme}
+            limits={colorScale?.limits ?? null}
+            colors={colorScale?.getLegendColors() ?? null}
           />
         </div>
 
