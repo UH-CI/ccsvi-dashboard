@@ -6,6 +6,8 @@ export interface MapConfig {
   title: string;
   dataset: string;
   metric: string;
+  metric2?: string;
+  bivariateColorScheme?: string;
   visible: boolean;
   colorScheme: string;
   activeFeature?: {

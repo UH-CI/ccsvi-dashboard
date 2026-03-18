@@ -29,4 +29,54 @@
       margin-right: 5px;
     }
   }
+
+  &__bivariate {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+
+    &-label-y,
+    &-label-x {
+      font-size: 10px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &-label-y {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      max-height: 80px;
+    }
+
+    &-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    &-label-x {
+      max-width: 80px;
+    }
+
+    &-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    &-row {
+      display: flex;
+      gap: 2px;
+    }
+
+    &-cell {
+      width: 20px;
+      height: 20px;
+    }
+  }
 }

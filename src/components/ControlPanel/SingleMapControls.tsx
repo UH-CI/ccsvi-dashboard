@@ -150,6 +150,28 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   </MenuItem>
                 ))}
 
+                {config.metric2 && (
+                  <>
+                    <Divider />
+                    <ListSubheader>Bivariate Palette</ListSubheader>
+                    {["PurpleBlue", "OrangePurple", "GreenBlue"].map((scheme) => (
+                      <MenuItem
+                        key={scheme}
+                        selected={
+                          config.bivariateColorScheme === scheme ||
+                          (!config.bivariateColorScheme && scheme === "PurpleBlue")
+                        }
+                        onClick={() => {
+                          updateMapConfig(config.id, { bivariateColorScheme: scheme });
+                          setColorSchemeAnchor(null);
+                        }}
+                      >
+                        {scheme}
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+
                 <Divider />
 
                 {/* Opacity Controls */}
@@ -261,7 +283,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             <InputLabel>Dataset</InputLabel>
             <Select
               value={config.dataset || ""}
-              onChange={(e) => updateMapConfig(config.id, { dataset: e.target.value })}
+              onChange={(e) =>
+                updateMapConfig(config.id, { dataset: e.target.value, metric: "", metric2: "" })
+              }
               label="Dataset"
             >
               {datasetList.map((ds) => (
@@ -290,6 +314,30 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                       {metricName}
                     </MenuItem>
                   ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {config.dataset && config.metric && (
+            <FormControl size="small" fullWidth>
+              <InputLabel>Comparison Metric</InputLabel>
+              <Select
+                value={config.metric2 || ""}
+                onChange={(e) => updateMapConfig(config.id, { metric2: e.target.value || undefined })}
+                label="Comparison Metric"
+              >
+                <MenuItem value="">
+                  <em>None (univariate)</em>
+                </MenuItem>
+                {dataset &&
+                  dataset[config.dataset] &&
+                  Object.keys(dataset[config.dataset].columnThresholds || {})
+                    .filter((m) => m !== config.metric)
+                    .map((metricName) => (
+                      <MenuItem key={metricName} value={metricName}>
+                        {metricName}
+                      </MenuItem>
+                    ))}
               </Select>
             </FormControl>
           )}

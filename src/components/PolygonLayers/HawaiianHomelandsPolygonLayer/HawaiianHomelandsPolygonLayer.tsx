@@ -10,12 +10,13 @@ interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
   metricsData: MetricsData | null;
   getMetricValue: (geoid: string) => number | null;
+  getMetricValue2?: (geoid: string) => number | null;
   mapId: string;
   // activeDataset: string;
   activeMetric: string;
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
-  getColor: (value: number | null) => string;
+  getColor: (value: number | null, value2?: number | null) => string;
   onFeatureClick?: (
     feature: Feature<Geometry, HawaiianHomelandProperties>,
     e: LeafletMouseEvent,
@@ -28,6 +29,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   data,
   metricsData,
   getMetricValue,
+  getMetricValue2,
   mapId,
   // activeDataset,
   activeMetric,
@@ -49,15 +51,17 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         return LAYER_CONFIG.styles.default;
       }
 
-      const metricValue = getMetricValue(String(geoid));
-      const fillColor = getColor(metricValue);
+      const geoidStr = String(geoid);
+      const metricValue = getMetricValue(geoidStr);
+      const metricValue2 = getMetricValue2?.(geoidStr) ?? undefined;
+      const fillColor = getColor(metricValue, metricValue2);
 
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
       };
     },
-    [getMetricValue, getColor],
+    [getMetricValue, getMetricValue2, getColor],
   );
 
   const getHighlightStyle = useCallback(
