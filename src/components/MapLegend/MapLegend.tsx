@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Tooltip } from "@mui/material";
 import styles from "./MapLegend.module.scss";
 import { ComputedBivariateColorScale } from "../../utils/colorThresholds";
@@ -18,17 +18,20 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   metric1Label,
   metric2Label,
 }) => {
+  const [labelsHovered, setLabelsHovered] = useState(false);
+
   const legendLevels = useMemo(() => {
     if (bivariate || !limits || !colors || limits.length < 2) return [];
 
     const items = [];
     for (let i = limits.length - 2; i >= 0; i--) {
+      const fmt = (n: number) => n.toFixed(3);
       const label =
         i === limits.length - 2
-          ? `> ${limits[i]}`
+          ? `> ${fmt(limits[i])}`
           : i === 0
-            ? `≤ ${limits[i + 1]}`
-            : `${limits[i]} – ${limits[i + 1]}`;
+            ? `≤ ${fmt(limits[i + 1])}`
+            : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
       items.push(
         <div key={i} className={styles.legend__item}>
           <div className={styles["legend__item-color"]} style={{ backgroundColor: colors[i] }} />
@@ -43,11 +46,15 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
   return (
     <div className={styles.legend}>
-      <div className={styles.legend__title}>Legend</div>
+      {/*<div className={styles.legend__title}>Legend</div>*/}
       {bivariate ? (
         <div className={styles["legend__bivariate"]}>
-          <Tooltip title={metric2Label ?? ""} placement="left">
-            <span className={styles["legend__bivariate-label-y"]}>
+          <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
+            <span
+              className={styles["legend__bivariate-label-y"]}
+              onMouseEnter={() => setLabelsHovered(true)}
+              onMouseLeave={() => setLabelsHovered(false)}
+            >
               {metric2Label ?? "Metric 2"}
             </span>
           </Tooltip>
@@ -65,8 +72,12 @@ export const MapLegend: React.FC<MapLegendProps> = ({
                 </div>
               ))}
             </div>
-            <Tooltip title={metric1Label ?? ""} placement="bottom">
-              <span className={styles["legend__bivariate-label-x"]}>
+            <Tooltip title={metric1Label ?? ""} placement="bottom" open={labelsHovered}>
+              <span
+                className={styles["legend__bivariate-label-x"]}
+                onMouseEnter={() => setLabelsHovered(true)}
+                onMouseLeave={() => setLabelsHovered(false)}
+              >
                 {metric1Label ?? "Metric 1"}
               </span>
             </Tooltip>
