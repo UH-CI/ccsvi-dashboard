@@ -14,6 +14,7 @@ interface CensusPolygonLayerProps {
   mapId: string;
   // activeDataset: string;
   activeMetric: string;
+  activeMetric2?: string | null;
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   getColor: (value: number | null, value2?: number | null) => string;
@@ -30,6 +31,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   mapId,
   // activeDataset,
   activeMetric,
+  activeMetric2,
   activeFeatureGeoid,
   layerOpacity,
   getColor,
@@ -92,8 +94,10 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         activeMetric,
         getMetricValue,
         metricsData,
+        activeMetric2,
+        getMetricValue2,
       ),
-    [activeMetric, getMetricValue, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricValue2, metricsData],
   );
 
   return (

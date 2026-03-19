@@ -14,6 +14,7 @@ interface HawaiianHomelandsPolygonLayerProps {
   mapId: string;
   // activeDataset: string;
   activeMetric: string;
+  activeMetric2?: string | null;
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   getColor: (value: number | null, value2?: number | null) => string;
@@ -33,6 +34,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   mapId,
   // activeDataset,
   activeMetric,
+  activeMetric2,
   activeFeatureGeoid,
   layerOpacity,
   getColor,
@@ -96,8 +98,10 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         activeMetric,
         getMetricValue,
         metricsData,
+        activeMetric2,
+        getMetricValue2,
       ),
-    [activeMetric, getMetricValue, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricValue2, metricsData],
   );
 
   return (

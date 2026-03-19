@@ -13,6 +13,8 @@ interface FeaturePopupProps {
   fields: PopupField[];
   metricName?: string;
   metricValue?: number | null;
+  metricName2?: string;
+  metricValue2?: number | null;
 }
 
 export function FeaturePopup({
@@ -22,6 +24,8 @@ export function FeaturePopup({
   fields,
   metricName,
   metricValue,
+  metricName2,
+  metricValue2,
 }: FeaturePopupProps): string {
   const properties = feature.properties || {};
 
@@ -56,6 +60,19 @@ export function FeaturePopup({
             <span class="${styles["popup-field-label"]}">${escapeHtml(metricName)}:</span>
             <span class="${styles["popup-field-value-group"]}">
               <span class="${styles["popup-field-value"]}">${metricValue.toFixed(4)}</span>
+              <span class="${styles["popup-metric-subheader"]}">(Per Capita)</span>
+            </span>
+          </div>
+        `
+            : ""
+        }
+        ${
+          metricName2 && metricValue2 !== null && metricValue2 !== undefined
+            ? `
+          <div class="${styles["popup-field"]}">
+            <span class="${styles["popup-field-label"]}">${escapeHtml(metricName2)}:</span>
+            <span class="${styles["popup-field-value-group"]}">
+              <span class="${styles["popup-field-value"]}">${metricValue2.toFixed(4)}</span>
               <span class="${styles["popup-metric-subheader"]}">(Per Capita)</span>
             </span>
           </div>
