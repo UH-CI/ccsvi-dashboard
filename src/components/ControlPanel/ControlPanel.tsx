@@ -10,18 +10,16 @@ import {
   Box,
   Chip,
   Tooltip,
+  Popover,
 } from "@mui/material";
 import {
   Camera,
-  ExpandMore,
-  ExpandLess,
   Layers,
-  ChevronLeft,
-  ChevronRight,
   LocationOn,
   Warning,
   Refresh,
   Terrain,
+  ExpandMore,
 } from "@mui/icons-material";
 import {
   useMapStore,
@@ -37,12 +35,12 @@ interface IntegratedControlPanelProps {
   maxMaps: number;
 }
 
+type PopoverKey = "maps" | "utils" | "points" | "hazards" | "rasters" | null;
+
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
-  const expandedSections = useMapStore((state) => state.expandedSections);
-  const toggleSection = useMapStore((state) => state.toggleSection);
   const resetMapStore = useMapStore((state) => state.reset);
 
   const { setDataset, setMetric } = usePrimaryMapState();
@@ -51,12 +49,33 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   const setVisibleHazardLayerIds = useHazardLayersStore((state) => state.setVisibleLayerIds);
   const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
 
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
-  const togglePanelCollapse = useCallback(() => setIsPanelCollapsed((prev) => !prev), []);
+  const [activePopover, setActivePopover] = useState<PopoverKey>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const visibleMaps = useMemo(() => mapConfigs.filter((config) => config.visible), [mapConfigs]);
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
+
+  const openPopover = useCallback((key: PopoverKey, el: HTMLElement) => {
+    setActivePopover(key);
+    setAnchorEl(el);
+  }, []);
+
+  const closePopover = useCallback(() => {
+    setActivePopover(null);
+    setAnchorEl(null);
+  }, []);
+
+  const handleButtonClick = useCallback(
+    (key: PopoverKey, e: React.MouseEvent<HTMLElement>) => {
+      if (activePopover === key) {
+        closePopover();
+      } else {
+        openPopover(key, e.currentTarget);
+      }
+    },
+    [activePopover, openPopover, closePopover],
+  );
 
   const handleRemoveMap = useCallback(
     (mapId: string) => {
@@ -77,6 +96,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
       setVisibleHazardLayerIds(map.id, []);
       setVisibleRasterLayerIds(map.id, []);
     });
+    closePopover();
   }, [
     resetMapStore,
     setDataset,
@@ -85,160 +105,175 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     setVisibleHazardLayerIds,
     setVisibleRasterLayerIds,
     mapConfigs,
+    closePopover,
   ]);
 
   const handleSnapshot = useCallback(() => {
     console.log("Snapshot");
-  }, []);
+    closePopover();
+  }, [closePopover]);
+
+  const navItems: { key: PopoverKey; label: string; icon: React.ReactNode }[] = [
+    { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
+    { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
+    { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
+    { key: "rasters", label: "Terrain", icon: <Terrain fontSize="small" /> },
+  ];
 
   return (
-    <div className={styles["panel-wrapper"]}>
-      <IconButton onClick={togglePanelCollapse} className={styles["collapse-toggle"]} size="small">
-        {isPanelCollapsed ? <ChevronLeft /> : <ChevronRight />}
-      </IconButton>
+    <Paper className={styles["top-bar"]} elevation={3}>
+      {/* Brand / Title */}
+      <Box className={styles["top-bar-brand"]}>
+        <Typography variant="subtitle1" className={styles["top-bar-title"]}>
+          Multi-Map
+        </Typography>
+        <Chip
+          label={`${visibleMaps.length}/${mapConfigs.length}`}
+          size="small"
+          color="primary"
+          className={styles["map-count-chip"]}
+        />
+      </Box>
 
-      <Paper
-        className={`${styles["integrated-control-panel"]} ${isPanelCollapsed ? styles["collapsed"] : ""}`}
-        elevation={2}
-      >
-        {!isPanelCollapsed ? (
-          <>
-            <Box className={styles["control-header"]}>
-              <Typography variant="h6" component="h2" className={styles["control-title"]}>
-                Multi-Map Controls
-              </Typography>
-              <Chip
-                label={`${visibleMaps.length}/${mapConfigs.length} maps`}
-                size="small"
-                color="primary"
+      <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />
+
+      {/* Nav Buttons */}
+      <Box className={styles["top-bar-nav"]}>
+        {navItems.map(({ key, label, icon }) => (
+          <Button
+            key={key}
+            className={`${styles["nav-btn"]} ${activePopover === key ? styles["nav-btn--active"] : ""}`}
+            onClick={(e) => handleButtonClick(key, e)}
+            startIcon={icon}
+            endIcon={
+              <ExpandMore
+                fontSize="small"
+                className={activePopover === key ? styles["chevron-open"] : styles["chevron"]}
               />
-            </Box>
+            }
+            size="small"
+          >
+            {label}
+          </Button>
+        ))}
+      </Box>
 
-            {/* Maps Section */}
-            <Box className={styles["control-section"]}>
-              <Box className={styles["section-header"]} onClick={() => toggleSection("maps")}>
-                <Typography variant="subtitle1" className={styles["section-title"]}>
-                  <Layers className={styles["section-icon"]} />
-                  Map Management
-                </Typography>
-                <IconButton size="small">
-                  {expandedSections.maps ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-              </Box>
+      <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />
 
-              <Collapse in={expandedSections.maps}>
-                <Stack spacing={2} className={styles["section-content"]}>
-                  {canAddMap && (
-                    <Box className={styles["map-actions"]}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={addMap}
-                        startIcon={<Layers />}
-                      >
-                        Add Map
-                      </Button>
-                    </Box>
-                  )}
-                  <Box className={styles["map-list"]}>
-                    {mapConfigs.map((config) => (
-                      <SingleMapControls
-                        key={config.id}
-                        mapId={config.id}
-                        canRemoveMap={canRemoveMap}
-                        onRemove={handleRemoveMap}
-                      />
-                    ))}
-                  </Box>
-                </Stack>
-              </Collapse>
-            </Box>
+      {/* Utility Actions */}
+      <Box className={styles["top-bar-actions"]}>
+        <Tooltip title="Take Snapshot">
+          <Button
+            onClick={handleSnapshot}
+            variant="contained"
+            startIcon={<Camera fontSize="small" />}
+            size="small"
+            className={styles["action-btn"]}
+          >
+            Snapshot
+          </Button>
+        </Tooltip>
+        <Tooltip title="Reset View">
+          <IconButton onClick={handleResetView} size="small" className={styles["reset-btn"]}>
+            <Refresh fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
-            <Divider className={styles["section-divider"]} />
+      {/* Maps Popover */}
+      <Popover
+        open={activePopover === "maps"}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        classes={{ paper: styles["popover-paper"] }}
+      >
+        <Box className={styles["popover-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Map Management
+          </Typography>
+          {canAddMap && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={addMap}
+              startIcon={<Layers />}
+              fullWidth
+              className={styles["popover-add-btn"]}
+            >
+              Add Map
+            </Button>
+          )}
+          <Stack spacing={1} className={styles["map-list"]}>
+            {mapConfigs.map((config) => (
+              <SingleMapControls
+                key={config.id}
+                mapId={config.id}
+                canRemoveMap={canRemoveMap}
+                onRemove={handleRemoveMap}
+              />
+            ))}
+          </Stack>
+        </Box>
+      </Popover>
 
-            {/* Dashboard Utils Section */}
-            <Box className={styles["control-section"]}>
-              <Box className={styles["section-header"]} onClick={() => toggleSection("utils")}>
-                <Typography variant="subtitle1" className={styles["section-title"]}>
-                  Dashboard Utilities
-                </Typography>
-                <IconButton size="small">
-                  {expandedSections.utils ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-              </Box>
+      {/* Points Popover */}
+      <Popover
+        open={activePopover === "points"}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        classes={{ paper: styles["popover-paper"] }}
+      >
+        <Box className={styles["popover-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Points of Interest
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Point layer controls go here.
+          </Typography>
+        </Box>
+      </Popover>
 
-              <Collapse in={expandedSections.utils}>
-                <Stack spacing={2} className={styles["section-content"]}>
-                  <Button
-                    onClick={handleSnapshot}
-                    variant="contained"
-                    startIcon={<Camera />}
-                    fullWidth
-                    size="small"
-                  >
-                    Take Snapshot
-                  </Button>
-                  <Button
-                    onClick={handleResetView}
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    fullWidth
-                    size="small"
-                    color="secondary"
-                  >
-                    Reset View
-                  </Button>
-                </Stack>
-              </Collapse>
-            </Box>
+      {/* Hazards Popover */}
+      <Popover
+        open={activePopover === "hazards"}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        classes={{ paper: styles["popover-paper"] }}
+      >
+        <Box className={styles["popover-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Hazard Layers
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Hazard layer controls go here.
+          </Typography>
+        </Box>
+      </Popover>
 
-            <Divider className={styles["section-divider"]} />
-          </>
-        ) : (
-          <Box className={styles["collapsed-sidebar"]}>
-            <Tooltip title="Map Management" placement="left">
-              <Box
-                className={styles["collapsed-section"]}
-                onClick={() => setIsPanelCollapsed(false)}
-              >
-                <Layers />
-              </Box>
-            </Tooltip>
-            <Tooltip title="Dashboard Utilities" placement="left">
-              <Box
-                className={styles["collapsed-section"]}
-                onClick={() => setIsPanelCollapsed(false)}
-              >
-                <Camera />
-              </Box>
-            </Tooltip>
-            <Tooltip title="Points of Interest" placement="left">
-              <Box
-                className={styles["collapsed-section"]}
-                onClick={() => setIsPanelCollapsed(false)}
-              >
-                <LocationOn />
-              </Box>
-            </Tooltip>
-            <Tooltip title="Hazards" placement="left">
-              <Box
-                className={styles["collapsed-section"]}
-                onClick={() => setIsPanelCollapsed(false)}
-              >
-                <Warning />
-              </Box>
-            </Tooltip>
-            <Tooltip title="Hazards (Rasters)" placement="left">
-              <Box
-                className={styles["collapsed-section"]}
-                onClick={() => setIsPanelCollapsed(false)}
-              >
-                <Terrain />
-              </Box>
-            </Tooltip>
-          </Box>
-        )}
-      </Paper>
-    </div>
+      {/* Rasters Popover */}
+      <Popover
+        open={activePopover === "rasters"}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        classes={{ paper: styles["popover-paper"] }}
+      >
+        <Box className={styles["popover-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Terrain / Rasters
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Raster layer controls go here.
+          </Typography>
+        </Box>
+      </Popover>
+    </Paper>
   );
 };
