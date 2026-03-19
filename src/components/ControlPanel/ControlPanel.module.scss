@@ -1,6 +1,4 @@
-// ControlPanel.module.scss — top-bar layout (Zillow-style)
-
-// ─── Top Bar ────────────────────────────────────────────────────────────────
+// Top Bar ────────────────────────────────────────────────────────────────
 
 .top-bar {
   position: fixed;
@@ -22,7 +20,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-// ─── Brand ──────────────────────────────────────────────────────────────────
+// Brand ──────────────────────────────────────────────────────────────────
 
 .top-bar-brand {
   display: flex;
@@ -48,7 +46,7 @@
   align-self: center;
 }
 
-// ─── Nav Buttons ────────────────────────────────────────────────────────────
+// Nav Buttons ────────────────────────────────────────────────────────────
 
 .top-bar-nav {
   display: flex;
@@ -96,7 +94,7 @@
   transition: transform 0.2s ease;
 }
 
-// ─── Utility Actions ────────────────────────────────────────────────────────
+// Utility Actions ────────────────────────────────────────────────────────
 
 .top-bar-actions {
   display: flex;
@@ -122,22 +120,41 @@
   }
 }
 
-// ─── Popovers ───────────────────────────────────────────────────────────────
+// MUI Menu overrides ──────────────────────────────────────────────────────
 
-.popover-paper {
+.menu-paper {
   border-radius: 12px !important;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14) !important;
-  min-width: 260px;
-  max-width: 340px;
-  border: 1px solid #e0e0e0;
+  min-width: 260px !important;
+  max-width: 340px !important;
+  border: 1px solid #e0e0e0 !important;
+  margin-top: 4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
 }
 
-.popover-content {
+.menu-list {
+  padding: 0 !important;
+}
+
+.menu-content {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  outline: none;
 }
+
+// Shared dropdown content styles ─────────────────────────────────────────
 
 .popover-title {
   font-weight: 700 !important;
@@ -152,7 +169,7 @@
   border-radius: 8px !important;
 }
 
-// ─── Map List (inside popover) ───────────────────────────────────────────────
+// Map List ────────────────────────────────────────────────────────────────
 
 .map-list {
   display: flex;
@@ -195,7 +212,41 @@
   gap: 8px;
 }
 
-// ─── Layer Toggles ───────────────────────────────────────────────────────────
+// Section headers ─────────────────────────────────────────────────────────
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #fafafa;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+  font-size: 0.85rem !important;
+}
+
+.section-content {
+  padding: 8px 12px;
+}
+
+.section-divider {
+  margin: 0;
+}
+
+// Layer Toggles ───────────────────────────────────────────────────────────
 
 .layer-toggle {
   display: flex;
@@ -229,4 +280,50 @@
 .layer-icon {
   display: flex;
   align-items: center;
+}
+
+// Map Tab Selector ────────────────────────────────────────────────────────
+
+.map-tab-selector {
+  display: flex;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.map-tab-btn {
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  color: #444;
+  padding: 4px 10px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #111;
+  }
+
+  &--active {
+    background: rgba(25, 118, 210, 0.08);
+    color: #1976d2;
+    font-weight: 600;
+
+    &:hover {
+      background: rgba(25, 118, 210, 0.12);
+    }
+  }
 }

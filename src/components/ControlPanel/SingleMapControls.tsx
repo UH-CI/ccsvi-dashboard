@@ -90,8 +90,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
     if (!dataset) return [];
     return Object.entries(dataset).map(([key, cfg]) => ({
       id: key,
-      label:
-        cfg.metricLabel || key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      label: cfg.metricLabel || key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
       hawaiianHomelands: cfg.hawaiianHomelands || false,
     }));
   }, [dataset]);
@@ -123,8 +122,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   <MenuItem
                     key={scheme}
                     selected={
-                      config.colorScheme === scheme ||
-                      (!config.colorScheme && scheme === "viridis")
+                      config.colorScheme === scheme || (!config.colorScheme && scheme === "viridis")
                     }
                     onClick={() => {
                       updateMapConfig(config.id, {
@@ -139,7 +137,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
                 <Divider />
 
-                {/* Opacity Controls */}
                 <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
                     Layer Opacity
@@ -154,8 +151,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                         </Typography>
                         <Slider
                           value={
-                            layerOpacities[config.id]?.census ??
-                            DEFAULT_LAYER_OPACITIES.census
+                            layerOpacities[config.id]?.census ?? DEFAULT_LAYER_OPACITIES.census
                           }
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "census", value as number)
@@ -223,11 +219,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             onClick={() => toggleMapVisibility(config.id)}
             title={config.visible ? "Hide map" : "Show map"}
           >
-            {config.visible ? (
-              <Visibility fontSize="small" />
-            ) : (
-              <VisibilityOff fontSize="small" />
-            )}
+            {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
           </IconButton>
           {canRemoveMap && (
             <IconButton
@@ -434,8 +426,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           <Collapse in={expandedSectionsByMap[config.id]?.rasters ?? false}>
             <Stack spacing={1} className={styles["section-content"]}>
               {rasterLayerConfigs.map((parent) => {
-                const ParentIcon =
-                  FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
+                const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
                 const hasChildren = !!parent.subLayers?.length;
                 const CHECKBOX_WIDTH = 15;
                 const visibleRasterIdsForMap =

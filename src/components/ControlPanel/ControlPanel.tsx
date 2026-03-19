@@ -10,12 +10,9 @@ import {
   Box,
   Chip,
   Tooltip,
-  Popover,
   FormControlLabel,
   Checkbox,
   Menu,
-  MenuItem,
-  Slider,
 } from "@mui/material";
 import {
   Camera,
@@ -26,7 +23,6 @@ import {
   Terrain,
   ExpandMore,
   ExpandLess,
-  Palette,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -35,8 +31,6 @@ import {
   usePrimaryMapState,
   useHazardLayersStore,
   useRasterLayersStore,
-  useAppStore,
-  DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
@@ -47,17 +41,33 @@ interface IntegratedControlPanelProps {
 
 type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
 
+const MapTabSelector: React.FC<{
+  mapConfigs: { id: string }[];
+  selectedMapId: string;
+  onChange: (id: string) => void;
+}> = ({ mapConfigs, selectedMapId, onChange }) => {
+  if (mapConfigs.length <= 1) return null;
+  return (
+    <Box className={styles["map-tab-selector"]}>
+      {mapConfigs.map((c) => (
+        <button
+          key={c.id}
+          className={`${styles["map-tab-btn"]} ${selectedMapId === c.id ? styles["map-tab-btn--active"] : ""}`}
+          onClick={() => onChange(c.id)}
+        >
+          Map {c.id}
+        </button>
+      ))}
+    </Box>
+  );
+};
+
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
   const resetMapStore = useMapStore((state) => state.reset);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const layerOpacities = useMapStore((state) => state.layerOpacities);
-  const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
-  const updateMapConfig = useMapStore((state) => state.updateMapConfig);
-
-  const dataset = useAppStore((state) => state.blockGroupData);
 
   const { setDataset, setMetric } = usePrimaryMapState();
 
@@ -83,41 +93,49 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     (s) => s.toggleSubRasterLayerVisibility,
   );
 
-  const [activePopover, setActivePopover] = useState<PopoverKey>(null);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  // One anchor per nav button
+  const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
   const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
   const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
-  const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
+  const [pointsMapId, setPointsMapId] = useState<string>("");
+  const [hazardsMapId, setHazardsMapId] = useState<string>("");
+  const [rastersMapId, setRastersMapId] = useState<string>("");
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((config) => config.visible), [mapConfigs]);
+  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
 
-  // Use primary map for layer controls
-  const primaryConfig = useMemo(
-    () => mapConfigs.find((c) => c.id === primaryMapId),
-    [mapConfigs, primaryMapId],
+  const openMenu = useCallback(
+    (key: NonNullable<PopoverKey>, el: HTMLElement) => {
+      // Close all others, open this one
+      setAnchors({ [key]: el });
+      if (key === "points")
+        setPointsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
+      if (key === "hazards")
+        setHazardsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
+      if (key === "rasters")
+        setRastersMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
+    },
+    [primaryMapId, mapConfigs],
   );
 
-  const openPopover = useCallback((key: PopoverKey, el: HTMLElement) => {
-    setActivePopover(key);
-    setAnchorEl(el);
-  }, []);
-
-  const closePopover = useCallback(() => {
-    setActivePopover(null);
-    setAnchorEl(null);
+  const closeMenu = useCallback((key: NonNullable<PopoverKey>) => {
+    setAnchors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }, []);
 
   const handleButtonClick = useCallback(
-    (key: PopoverKey, e: React.MouseEvent<HTMLElement>) => {
-      if (activePopover === key) {
-        closePopover();
+    (key: NonNullable<PopoverKey>, e: React.MouseEvent<HTMLElement>) => {
+      if (anchors[key]) {
+        closeMenu(key);
       } else {
-        openPopover(key, e.currentTarget);
+        openMenu(key, e.currentTarget);
       }
     },
-    [activePopover, openPopover, closePopover],
+    [anchors, openMenu, closeMenu],
   );
 
   const handleRemoveMap = useCallback(
@@ -139,7 +157,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
       setVisibleHazardLayerIds(map.id, []);
       setVisibleRasterLayerIds(map.id, []);
     });
-    closePopover();
+    setAnchors({});
   }, [
     resetMapStore,
     setDataset,
@@ -148,13 +166,12 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     setVisibleHazardLayerIds,
     setVisibleRasterLayerIds,
     mapConfigs,
-    closePopover,
   ]);
 
   const handleSnapshot = useCallback(() => {
     console.log("Snapshot");
-    closePopover();
-  }, [closePopover]);
+    setAnchors({});
+  }, []);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -164,17 +181,27 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     setExpandedRasters((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const navItems: { key: PopoverKey; label: string; icon: React.ReactNode }[] = [
+  const navItems: { key: NonNullable<PopoverKey>; label: string; icon: React.ReactNode }[] = [
     { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
     { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
     { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
     { key: "rasters", label: "Terrain", icon: <Terrain fontSize="small" /> },
   ];
 
-  const popoverAnchorProps = {
+  const menuProps = {
     anchorOrigin: { vertical: "bottom" as const, horizontal: "left" as const },
     transformOrigin: { vertical: "top" as const, horizontal: "left" as const },
-    classes: { paper: styles["popover-paper"] },
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
+    disableRestoreFocus: true,
+    // Keep menu open when interacting with nested MUI components
+    keepMounted: false,
+    PaperProps: {
+      className: styles["menu-paper"],
+    },
+    MenuListProps: {
+      className: styles["menu-list"],
+    },
   };
 
   return (
@@ -182,7 +209,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
       {/* Brand */}
       <Box className={styles["top-bar-brand"]}>
         <Typography variant="subtitle1" className={styles["top-bar-title"]}>
-          Multi-Map
+          CCSVI
         </Typography>
         <Chip
           label={`${visibleMaps.length}/${mapConfigs.length}`}
@@ -199,13 +226,13 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
         {navItems.map(({ key, label, icon }) => (
           <Button
             key={key}
-            className={`${styles["nav-btn"]} ${activePopover === key ? styles["nav-btn--active"] : ""}`}
+            className={`${styles["nav-btn"]} ${anchors[key] ? styles["nav-btn--active"] : ""}`}
             onClick={(e) => handleButtonClick(key, e)}
             startIcon={icon}
             endIcon={
               <ExpandMore
                 fontSize="small"
-                className={activePopover === key ? styles["chevron-open"] : styles["chevron"]}
+                className={anchors[key] ? styles["chevron-open"] : styles["chevron"]}
               />
             }
             size="small"
@@ -237,14 +264,14 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
         </Tooltip>
       </Box>
 
-      {/* ── Maps Popover ── */}
-      <Popover
-        open={activePopover === "maps"}
-        anchorEl={anchorEl}
-        onClose={closePopover}
-        {...popoverAnchorProps}
+      {/* ── Maps Menu ── */}
+      <Menu
+        open={Boolean(anchors.maps)}
+        anchorEl={anchors.maps}
+        onClose={() => closeMenu("maps")}
+        {...menuProps}
       >
-        <Box className={styles["popover-content"]}>
+        <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
             Map Management
           </Typography>
@@ -271,32 +298,37 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
             ))}
           </Stack>
         </Box>
-      </Popover>
+      </Menu>
 
-      {/* ── Points Popover ── */}
-      <Popover
-        open={activePopover === "points"}
-        anchorEl={anchorEl}
-        onClose={closePopover}
-        {...popoverAnchorProps}
+      {/* ── Points Menu ── */}
+      <Menu
+        open={Boolean(anchors.points)}
+        anchorEl={anchors.points}
+        onClose={() => closeMenu("points")}
+        {...menuProps}
       >
-        <Box className={styles["popover-content"]}>
+        <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
             Points of Interest
           </Typography>
-          {primaryMapId && (
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={pointsMapId}
+            onChange={setPointsMapId}
+          />
+          {pointsMapId && (
             <Stack spacing={1}>
               {pointLayerConfigs.map((layer) => {
                 const IconComponent =
                   FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[primaryMapId]?.has(layer.id) ?? false;
+                const isVisible = visiblePointLayerIdsByMap[pointsMapId]?.has(layer.id) ?? false;
                 return (
                   <FormControlLabel
                     key={layer.id}
                     control={
                       <Checkbox
                         checked={isVisible}
-                        onChange={() => togglePointLayerVisibility(primaryMapId, layer.id)}
+                        onChange={() => togglePointLayerVisibility(pointsMapId, layer.id)}
                         size="small"
                       />
                     }
@@ -314,26 +346,31 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
             </Stack>
           )}
         </Box>
-      </Popover>
+      </Menu>
 
-      {/* ── Hazards Popover ── */}
-      <Popover
-        open={activePopover === "hazards"}
-        anchorEl={anchorEl}
-        onClose={closePopover}
-        {...popoverAnchorProps}
+      {/* ── Hazards Menu ── */}
+      <Menu
+        open={Boolean(anchors.hazards)}
+        anchorEl={anchors.hazards}
+        onClose={() => closeMenu("hazards")}
+        {...menuProps}
       >
-        <Box className={styles["popover-content"]}>
+        <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
             Hazard Layers
           </Typography>
-          {primaryMapId && (
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={hazardsMapId}
+            onChange={setHazardsMapId}
+          />
+          {hazardsMapId && (
             <Stack spacing={1}>
               {hazardLayerConfigs.map((parent) => {
                 const ParentIcon =
                   FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
                 const isParentVisible =
-                  visibleHazardLayerIdsByMap[primaryMapId]?.has(parent.id) ?? false;
+                  visibleHazardLayerIdsByMap[hazardsMapId]?.has(parent.id) ?? false;
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
                     <Box display="flex" alignItems="center">
@@ -341,7 +378,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                         control={
                           <Checkbox
                             checked={isParentVisible}
-                            onChange={() => toggleHazardLayerVisibility(primaryMapId, parent.id)}
+                            onChange={() => toggleHazardLayerVisibility(hazardsMapId, parent.id)}
                             size="small"
                           />
                         }
@@ -366,7 +403,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                           {parent.subLayers.map((sub) => {
                             const compositeId = `${parent.id}.${sub.id}`;
                             const isSubVisible =
-                              visibleHazardLayerIdsByMap[primaryMapId]?.has(compositeId) ?? false;
+                              visibleHazardLayerIdsByMap[hazardsMapId]?.has(compositeId) ?? false;
                             return (
                               <FormControlLabel
                                 key={sub.id}
@@ -375,7 +412,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                                   <Checkbox
                                     checked={isSubVisible}
                                     onChange={() =>
-                                      toggleSubLayerVisibility(primaryMapId, parent.id, sub.id)
+                                      toggleSubLayerVisibility(hazardsMapId, parent.id, sub.id)
                                     }
                                     size="small"
                                   />
@@ -393,26 +430,31 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
             </Stack>
           )}
         </Box>
-      </Popover>
+      </Menu>
 
-      {/* ── Terrain / Rasters Popover ── */}
-      <Popover
-        open={activePopover === "rasters"}
-        anchorEl={anchorEl}
-        onClose={closePopover}
-        {...popoverAnchorProps}
+      {/* ── Terrain Menu ── */}
+      <Menu
+        open={Boolean(anchors.rasters)}
+        anchorEl={anchors.rasters}
+        onClose={() => closeMenu("rasters")}
+        {...menuProps}
       >
-        <Box className={styles["popover-content"]}>
+        <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
             Terrain / Rasters
           </Typography>
-          {primaryMapId && (
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={rastersMapId}
+            onChange={setRastersMapId}
+          />
+          {rastersMapId && (
             <Stack spacing={1}>
               {rasterLayerConfigs.map((parent) => {
                 const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
                 const hasChildren = !!parent.subLayers?.length;
                 const visibleRasterIdsForMap =
-                  visibleRasterLayerIdsByMap[primaryMapId] ?? new Set<string>();
+                  visibleRasterLayerIdsByMap[rastersMapId] ?? new Set<string>();
                 const isParentVisible = visibleRasterIdsForMap.has(parent.id);
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
@@ -420,7 +462,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                       {!hasChildren && (
                         <Checkbox
                           checked={isParentVisible}
-                          onChange={() => toggleRasterLayerVisibility(primaryMapId, parent.id)}
+                          onChange={() => toggleRasterLayerVisibility(rastersMapId, parent.id)}
                           size="small"
                         />
                       )}
@@ -459,7 +501,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                                     checked={isSubVisible}
                                     onChange={() =>
                                       toggleSubRasterLayerVisibility(
-                                        primaryMapId,
+                                        rastersMapId,
                                         parent.id,
                                         sub.id,
                                       )
@@ -480,7 +522,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
             </Stack>
           )}
         </Box>
-      </Popover>
+      </Menu>
     </Paper>
   );
 };
