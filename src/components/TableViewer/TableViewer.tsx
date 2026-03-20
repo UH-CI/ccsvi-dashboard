@@ -194,11 +194,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   }, [activeDataset, datasetInfo]);
 
   // Calculate content height for proper scrolling
-  const contentHeight = isCollapsed
-    ? 0
-    : isFullHeight
-      ? "calc(100% - 3.125rem)"
-      : "calc(40vh - 3.125rem)";
+  const contentHeight = isCollapsed ? 0 : "calc(100% - 3.125rem)";
 
   if (!activeDataset) {
     return null;

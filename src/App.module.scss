@@ -2,16 +2,29 @@
   height: 100vh;
   width: 100%;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .map-section {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  padding-top: 52px;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.table-section {
+  width: 420px;
+  flex-shrink: 0;
   height: 100%;
-  position: relative;
+  overflow: hidden;
+  border-left: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
+  padding: 16px;
 }
 
 .error-container {
