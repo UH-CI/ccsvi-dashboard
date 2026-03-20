@@ -407,7 +407,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
                             return (
                               <FormControlLabel
                                 key={sub.id}
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: -4.2 } }}
+                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0 } }}
                                 control={
                                   <Checkbox
                                     checked={isSubVisible}
