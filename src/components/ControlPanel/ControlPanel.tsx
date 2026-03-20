@@ -178,7 +178,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
     { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
     { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
-    { key: "rasters", label: "Terrain", icon: <Terrain fontSize="small" /> },
+    { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" /> },
   ];
 
   const menuProps = {

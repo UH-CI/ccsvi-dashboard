@@ -1,9 +1,12 @@
 .table-viewer {
-  border-top: none;
-  height: 100%;
-  flex: 1;
-  border-radius: 8px;
-  overflow: hidden;
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(0.3125rem);
+  display: flex;
+  flex-direction: column;
+  border-top: 0.0625rem solid #e0e0e0;
+  flex-shrink: 0;
 
   &--collapsed {
     flex: 0 0 3.125rem;
@@ -11,7 +14,8 @@
   }
 
   &--expanded {
-    flex: 1;
+    flex: 0 0 40vh;
+    min-height: 12.5rem;
     height: 40vh;
   }
 

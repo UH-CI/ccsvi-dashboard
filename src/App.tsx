@@ -19,11 +19,13 @@ import { initializeStoresFromUrl } from "./utils/storeInitializer";
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
+  // Get the active/primary map's dataset for the table viewer
   const primaryDataset = useMapStore((state) => {
     const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
     return primary?.dataset || "";
   });
 
+  // Get data from stores
   const errors = useAppStore((state) => state.errors);
   const fetchAllData = useAppStore((state) => state.fetchAllData);
   const fetchPointLayerConfigs = usePointLayerStore((state) => state.fetchPointLayerConfigs);
@@ -38,6 +40,7 @@ const App: React.FC = () => {
 
   const isReady = useIsReady();
 
+  // Initialize stores from URL on mount (runs once)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlState = deserializeMapConfigs(params);
@@ -47,8 +50,10 @@ const App: React.FC = () => {
     setIsUrlInitialized(true);
   }, []);
 
+  // Enable bidirectional URL sync after initialization
   useUrlSync(isUrlInitialized);
 
+  // Fetch all data on mount
   useEffect(() => {
     fetchAllData();
     fetchPointLayerConfigs();
@@ -56,6 +61,7 @@ const App: React.FC = () => {
     fetchRasterLayerConfigs();
   }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
 
+  // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
   if (hasErrors || hazardError || rasterError) {
     return (
@@ -69,6 +75,7 @@ const App: React.FC = () => {
     );
   }
 
+  // === Loading ===
   if (!isReady || hazardLoading || rasterLoading) {
     return (
       <div className={styles["loading-container"]}>
@@ -77,6 +84,7 @@ const App: React.FC = () => {
     );
   }
 
+  // === Main UI ===
   const activeDatasetObject =
     blockGroupData && primaryDataset ? blockGroupData[primaryDataset] : null;
 
@@ -85,11 +93,7 @@ const App: React.FC = () => {
       <ControlPanel maxMaps={4} />
       <div className={styles["map-section"]}>
         <MultiMapContainer maxMaps={4} />
-        {activeDatasetObject !== null || primaryDataset ? (
-          <div className={styles["table-section"]}>
-            <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
-          </div>
-        ) : null}
+        <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
       </div>
     </div>
   );

@@ -194,7 +194,11 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   }, [activeDataset, datasetInfo]);
 
   // Calculate content height for proper scrolling
-  const contentHeight = isCollapsed ? 0 : "calc(100% - 3.125rem)";
+  const contentHeight = isCollapsed
+    ? 0
+    : isFullHeight
+      ? "calc(100% - 3.125rem)"
+      : "calc(40vh - 3.125rem)";
 
   if (!activeDataset) {
     return null;
@@ -387,9 +391,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
                     outline: "none",
                   },
-                  ...(geoidColIndex >= 0 && !!primaryMapMetric && {
-                    "& .MuiDataGrid-row": { cursor: "pointer" },
-                  }),
+                  ...(geoidColIndex >= 0 &&
+                    !!primaryMapMetric && {
+                      "& .MuiDataGrid-row": { cursor: "pointer" },
+                    }),
 
                   "& .MuiDataGrid-row:nth-of-type(odd)": {
                     backgroundColor: "#fafafa",
