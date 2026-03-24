@@ -21,13 +21,6 @@ interface MapState {
   >;
 
   // UI state
-  expandedSections: {
-    maps: boolean;
-    utils: boolean;
-    points: boolean;
-    hazards: boolean;
-    rasters: boolean;
-  };
   expandedSectionsByMap: Record<
     string,
     {
@@ -54,7 +47,6 @@ interface MapState {
   ) => void;
 
   // UI actions
-  toggleSection: (section: keyof MapState["expandedSections"]) => void;
   toggleSectionByMap: (
     mapId: string,
     section: "maps" | "utils" | "points" | "hazards" | "rasters" | "opacity",
@@ -79,14 +71,6 @@ const initialMapConfig: MapConfig = {
   colorScheme: "Viridis",
 };
 
-const initialExpandedSections: MapState["expandedSections"] = {
-  maps: true,
-  utils: true,
-  points: true,
-  hazards: true,
-  rasters: true,
-};
-
 export const defaultExpandedSections = {
   maps: true,
   utils: true,
@@ -104,7 +88,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   layerOpacities: {
     [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
   },
-  expandedSections: initialExpandedSections,
   expandedSectionsByMap: { [initialMapConfig.id]: { ...defaultExpandedSections } },
 
   // Map config actions
@@ -198,14 +181,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   // UI actions
-  toggleSection: (section) => {
-    set((state) => ({
-      expandedSections: {
-        ...state.expandedSections,
-        [section]: !state.expandedSections[section],
-      },
-    }));
-  },
   toggleSectionByMap: (mapId, section) => {
     set((state) => ({
       expandedSectionsByMap: {
@@ -226,7 +201,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       layerOpacities: {
         [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
       },
-      expandedSections: initialExpandedSections,
       expandedSectionsByMap: {
         [initialMapConfig.id]: { ...defaultExpandedSections },
       },

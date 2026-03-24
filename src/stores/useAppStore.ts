@@ -36,7 +36,6 @@ interface AppState {
 
   loading: LoadingState;
   errors: ErrorState;
-  isReady: boolean;
 
   // Setters
   setMetricsData: (data: MetricsData) => void;
@@ -108,7 +107,6 @@ export const useAppStore = create<AppState>((set, get) => {
     hazardLayers: [],
     loading: initialLoadingState,
     errors: initialErrorState,
-    isReady: false,
 
     // Setters
     setMetricsData: (data) => set({ metricsData: data }),

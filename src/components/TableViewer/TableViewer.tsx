@@ -391,9 +391,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
                     outline: "none",
                   },
-                  ...(geoidColIndex >= 0 && !!primaryMapMetric && {
-                    "& .MuiDataGrid-row": { cursor: "pointer" },
-                  }),
+                  ...(geoidColIndex >= 0 &&
+                    !!primaryMapMetric && {
+                      "& .MuiDataGrid-row": { cursor: "pointer" },
+                    }),
 
                   "& .MuiDataGrid-row:nth-of-type(odd)": {
                     backgroundColor: "#fafafa",

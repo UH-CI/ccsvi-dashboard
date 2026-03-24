@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
@@ -123,14 +124,25 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const config = useMapConfig(mapId);
 
     const { blockGroupData, metricsData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
-      useAppStore();
+      useAppStore(
+        useShallow((state) => ({
+          blockGroupData: state.blockGroupData,
+          metricsData: state.metricsData,
+          censusBlockGroups: state.censusBlockGroups,
+          hawaiianHomelands: state.hawaiianHomelands,
+          countyBoundaries: state.countyBoundaries,
+        })),
+      );
 
-    const { updateMapActiveFeature, setPrimaryMap, layerOpacities } = useMapStore();
+    const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
+    const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
+    const mapOpacities = useMapStore(
+      (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
+    );
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
     const effectiveMetric2 = config?.metric2;
-    const mapOpacities = layerOpacities[mapId] || DEFAULT_LAYER_OPACITIES;
 
     // Register this map's snapshot function
     useEffect(() => {
