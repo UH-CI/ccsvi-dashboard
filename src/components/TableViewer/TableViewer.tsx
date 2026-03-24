@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Paper,
   Typography,
@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser";
 import { useTableResize } from "../../hooks/useTableResize";
+import { useMapStore } from "../../stores";
 import styles from "./TableViewer.module.scss";
 
 interface DatasetInfo {
@@ -61,6 +62,13 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   onSizeChange,
   initialCollapsed = false,
 }) => {
+  const primaryMapId = useMapStore((state) => state.primaryMapId);
+  const primaryMapMetric = useMapStore((state) => {
+    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
+    return primary?.metric ?? "";
+  });
+  const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
+
   const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +103,8 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   }, [activeDataset]);
 
   // Convert CSV data to DataGrid format
-  const { columns, rows } = useMemo(() => {
-    if (!tableData) return { columns: [], rows: [] };
+  const { columns, rows, geoidColIndex } = useMemo(() => {
+    if (!tableData) return { columns: [], rows: [], geoidColIndex: -1 };
 
     const columnTypes = tableData.headers.map((_: string, index: number) => {
       const columnData = tableData.rows.map((row: string[]) => row[index] || "");
@@ -111,9 +119,8 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         field: `col_${index}`,
         headerName: displayHeader,
         type: columnTypes[index],
-        width: columnWidth,
-        minWidth: 150,
-        maxWidth: 400,
+        flex: 1,
+        minWidth: columnWidth,
         resizable: true,
         sortable: true,
         filterable: true,
@@ -162,8 +169,24 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       return rowObj;
     });
 
-    return { columns: cols, rows: rowData };
+    const geoidColIndex = tableData.headers.findIndex(
+      (h: string) => h.trim().toLowerCase() === "geography",
+    );
+
+    return { columns: cols, rows: rowData, geoidColIndex };
   }, [tableData]);
+
+  const handleRowClick = useCallback(
+    (params: { row: Record<string, unknown> }) => {
+      if (geoidColIndex < 0) return;
+      const rawGeoid = String(params.row[`col_${geoidColIndex}`] ?? "");
+      // Census full GEOIDs look like "1500000US150010201001" or "2500000US5003".
+      // Strip the numeric prefix + "US" to get the bare geoid used by the map layers.
+      const geoid = rawGeoid.replace(/^\d+US/i, "");
+      if (geoid) updateMapActiveFeature(primaryMapId, { geoid, lat: 0, lng: 0, zoom: 0 });
+    },
+    [geoidColIndex, primaryMapId, updateMapActiveFeature],
+  );
 
   const datasetLabel = useMemo(() => {
     if (!datasetInfo || !activeDataset) return activeDataset;
@@ -277,7 +300,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   },
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
-                disableRowSelectionOnClick
+                onRowClick={geoidColIndex >= 0 && !!primaryMapMetric ? handleRowClick : undefined}
                 density="compact"
                 hideFooter={false}
                 // Enable column management
@@ -365,6 +388,13 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-row:hover": {
                     backgroundColor: "rgba(0, 0, 0, 0.04)",
                   },
+                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+                    outline: "none",
+                  },
+                  ...(geoidColIndex >= 0 &&
+                    !!primaryMapMetric && {
+                      "& .MuiDataGrid-row": { cursor: "pointer" },
+                    }),
 
                   "& .MuiDataGrid-row:nth-of-type(odd)": {
                     backgroundColor: "#fafafa",

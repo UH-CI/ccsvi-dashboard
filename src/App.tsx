@@ -90,13 +90,11 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
+      <ControlPanel maxMaps={4} />
       <div className={styles["map-section"]}>
         <MultiMapContainer maxMaps={4} />
-
         <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
       </div>
-
-      <ControlPanel maxMaps={4} />
     </div>
   );
 };

@@ -48,7 +48,6 @@ export const GenericPolygonLayer = memo(
     ...geoJsonProps
   }: GenericPolygonLayerProps<T>) => {
     const map = useMap();
-    const lastFitBoundsGeoid = useRef<string | null>(null);
 
     // Create unique storage key combining mapId and layerType
     const storageKey = `${mapId}-${layerType}`;
@@ -58,6 +57,12 @@ export const GenericPolygonLayer = memo(
       globalLayersRef.set(storageKey, new Map());
     }
     const layersRef = globalLayersRef.get(storageKey)!;
+
+    // Latest renderPopup
+    const renderPopupRef = useRef(renderPopup);
+    useEffect(() => {
+      renderPopupRef.current = renderPopup;
+    }, [renderPopup]);
 
     const styleCallback = useCallback(
       (feature?: Feature<Geometry, T>): PathOptions => {
@@ -99,22 +104,17 @@ export const GenericPolygonLayer = memo(
           });
         }
 
-        if ("bindPopup" in layer && renderPopup) {
-          const popupContent = renderPopup(feature);
-
-          if (popupContent) {
-            layer.bindPopup(popupContent, {
-              minWidth: 250,
-              maxWidth: 300,
-            });
-          }
+        if ("bindPopup" in layer && renderPopupRef.current) {
+          layer.bindPopup(() => renderPopupRef.current?.(feature) ?? "", {
+            minWidth: 250,
+            maxWidth: 300,
+          });
         }
       },
-      [geoidProperty, onFeatureClick, renderPopup, layersRef],
+      [geoidProperty, onFeatureClick, layersRef],
     );
 
-    // Handle dynamic highlighting when activeFeatureGeoid OR style functions change
-    // This is the key fix - include getStyle in dependencies so it re-runs when styles change
+    // Apply highlight/normal styles
     useEffect(() => {
       layersRef.forEach((layer, geoid) => {
         if (!("setStyle" in layer)) return;
@@ -123,65 +123,56 @@ export const GenericPolygonLayer = memo(
 
         const layerWithFeature = layer as Layer & { feature?: Feature<Geometry, T> };
         const feature = layerWithFeature.feature;
-
         if (!feature) return;
 
-        // Use the current getStyle function directly (not a ref)
         const baseStyle = getStyle(feature);
-
-        let highlightStyle =
+        let style =
           isActive && getHighlightStyle ? getHighlightStyle(feature, baseStyle) : baseStyle;
 
         if (layerOpacity !== undefined && !isActive) {
-          highlightStyle = {
-            ...highlightStyle,
-            opacity: layerOpacity,
-            fillOpacity: layerOpacity,
-          };
+          style = { ...style, opacity: layerOpacity, fillOpacity: layerOpacity };
         }
 
-        (layer as { setStyle: (style: PathOptions) => void }).setStyle(highlightStyle);
-
-        // Fit map to active feature bounds (e.g. when restoring from URL)
-        if (isActive && geoid !== lastFitBoundsGeoid.current && "getBounds" in layer) {
-          lastFitBoundsGeoid.current = geoid;
-          const bounds = (layer as Layer & { getBounds: () => LatLngBounds }).getBounds();
-          if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [20, 20] });
-            // Open popup after fitBounds animation completes
-            if ("openPopup" in layer) {
-              map.once("moveend", () => {
-                (layer as Layer & { openPopup: () => void }).openPopup();
-              });
-            }
-          }
-        }
+        (layer as { setStyle: (style: PathOptions) => void }).setStyle(style);
       });
+    }, [activeFeatureGeoid, layersRef, getStyle, getHighlightStyle, layerOpacity]);
 
-      if (!activeFeatureGeoid) {
-        lastFitBoundsGeoid.current = null;
+    // Center map and open popup when active feature changes
+    useEffect(() => {
+      if (!activeFeatureGeoid) return;
+
+      const layer = layersRef.get(activeFeatureGeoid);
+      if (!layer || !("getBounds" in layer)) return;
+
+      const bounds = (layer as Layer & { getBounds: () => LatLngBounds }).getBounds();
+      if (!bounds.isValid()) return;
+
+      if ("openPopup" in layer) {
+        map.once("moveend", () => {
+          (layer as Layer & { openPopup: () => void }).openPopup();
+        });
       }
-    }, [activeFeatureGeoid, layersRef, storageKey, getStyle, getHighlightStyle, layerOpacity, map]);
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }, [activeFeatureGeoid, layersRef, map]);
 
     // Update popup content when renderPopup changes (e.g. metric change)
     useEffect(() => {
-      if (!renderPopup) return;
+      if (!activeFeatureGeoid || !renderPopup) return;
 
-      layersRef.forEach((layer) => {
-        if (!("setPopupContent" in layer)) return;
+      const layer = layersRef.get(activeFeatureGeoid);
+      if (!layer) return;
 
-        const layerWithFeature = layer as Layer & { feature?: Feature<Geometry, T> };
-        const feature = layerWithFeature.feature;
-        if (!feature) return;
+      const layerTyped = layer as Layer & {
+        isPopupOpen?: () => boolean;
+        setPopupContent?: (content: string) => void;
+        feature?: Feature<Geometry, T>;
+      };
 
-        const popupContent = renderPopup(feature);
-        if (popupContent) {
-          (layer as Layer & { setPopupContent: (content: string) => void }).setPopupContent(
-            popupContent,
-          );
-        }
-      });
-    }, [renderPopup, layersRef]);
+      if (!layerTyped.isPopupOpen?.() || !layerTyped.setPopupContent || !layerTyped.feature) return;
+
+      const content = renderPopup(layerTyped.feature);
+      if (content) layerTyped.setPopupContent(content);
+    }, [renderPopup, activeFeatureGeoid, layersRef]);
 
     if (!data) {
       return null;
@@ -220,8 +211,7 @@ export const GenericPolygonLayer = memo(
       prevProps.layerOpacity === nextProps.layerOpacity &&
       prevProps.getStyle === nextProps.getStyle &&
       prevProps.getHighlightStyle === nextProps.getHighlightStyle &&
-      prevProps.onFeatureClick === nextProps.onFeatureClick &&
-      prevProps.renderPopup === nextProps.renderPopup
+      prevProps.onFeatureClick === nextProps.onFeatureClick
     );
   },
 ) as <T extends GeoJsonProperties = GeoJsonProperties>(

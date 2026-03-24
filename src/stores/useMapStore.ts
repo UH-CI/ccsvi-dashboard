@@ -10,10 +10,6 @@ interface MapState {
   // Which map drives the TableViewer
   primaryMapId: string;
 
-  // Map state
-  primaryMapDataset: string;
-  primaryMapMetric: string;
-
   // Layer opacity per map
   layerOpacities: Record<
     string,
@@ -25,13 +21,6 @@ interface MapState {
   >;
 
   // UI state
-  expandedSections: {
-    maps: boolean;
-    utils: boolean;
-    points: boolean;
-    hazards: boolean;
-    rasters: boolean;
-  };
   expandedSectionsByMap: Record<
     string,
     {
@@ -51,8 +40,6 @@ interface MapState {
   toggleMapVisibility: (mapId: string) => void;
   updateMapActiveFeature: (mapId: string, activeFeature: MapConfig["activeFeature"]) => void;
   setPrimaryMap: (mapId: string) => void;
-  setPrimaryMapDataset: (dataset: string) => void;
-  setPrimaryMapMetric: (metric: string) => void;
   setLayerOpacity: (
     mapId: string,
     layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
@@ -60,7 +47,6 @@ interface MapState {
   ) => void;
 
   // UI actions
-  toggleSection: (section: keyof MapState["expandedSections"]) => void;
   toggleSectionByMap: (
     mapId: string,
     section: "maps" | "utils" | "points" | "hazards" | "rasters" | "opacity",
@@ -71,9 +57,9 @@ interface MapState {
 }
 
 export const DEFAULT_LAYER_OPACITIES = {
-  census: 0.5,
-  hawaiianHomelands: 0.5,
-  countyBoundaries: 0.8,
+  census: 0.3,
+  hawaiianHomelands: 0.3,
+  countyBoundaries: 0.7,
 } as const;
 
 const initialMapConfig: MapConfig = {
@@ -83,14 +69,6 @@ const initialMapConfig: MapConfig = {
   metric: "",
   visible: true,
   colorScheme: "viridis",
-};
-
-const initialExpandedSections: MapState["expandedSections"] = {
-  maps: true,
-  utils: true,
-  points: true,
-  hazards: true,
-  rasters: true,
 };
 
 export const defaultExpandedSections = {
@@ -107,12 +85,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   mapConfigs: [initialMapConfig],
   nextMapId: 2,
   primaryMapId: initialMapConfig.id,
-  primaryMapDataset: "",
-  primaryMapMetric: "",
   layerOpacities: {
     [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
   },
-  expandedSections: initialExpandedSections,
   expandedSectionsByMap: { [initialMapConfig.id]: { ...defaultExpandedSections } },
 
   // Map config actions
@@ -193,14 +168,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ primaryMapId: mapId });
   },
 
-  setPrimaryMapDataset: (dataset) => {
-    set({ primaryMapDataset: dataset, primaryMapMetric: "" });
-  },
-
-  setPrimaryMapMetric: (metric) => {
-    set({ primaryMapMetric: metric });
-  },
-
   setLayerOpacity: (mapId, layerType, opacity) => {
     set((state) => ({
       layerOpacities: {
@@ -214,14 +181,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   // UI actions
-  toggleSection: (section) => {
-    set((state) => ({
-      expandedSections: {
-        ...state.expandedSections,
-        [section]: !state.expandedSections[section],
-      },
-    }));
-  },
   toggleSectionByMap: (mapId, section) => {
     set((state) => ({
       expandedSectionsByMap: {
@@ -239,12 +198,9 @@ export const useMapStore = create<MapState>((set, get) => ({
       mapConfigs: [initialMapConfig],
       nextMapId: 2,
       primaryMapId: initialMapConfig.id,
-      primaryMapDataset: "",
-      primaryMapMetric: "",
       layerOpacities: {
         [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
       },
-      expandedSections: initialExpandedSections,
       expandedSectionsByMap: {
         [initialMapConfig.id]: { ...defaultExpandedSections },
       },
@@ -263,11 +219,12 @@ export const useMapConfig = (mapId: string) => {
 
 export const usePrimaryMapState = () => {
   return useMapStore(
-    useShallow((state) => ({
-      dataset: state.primaryMapDataset,
-      metric: state.primaryMapMetric,
-      setDataset: state.setPrimaryMapDataset,
-      setMetric: state.setPrimaryMapMetric,
-    })),
+    useShallow((state) => {
+      const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
+      return {
+        dataset: primary?.dataset ?? "",
+        metric: primary?.metric ?? "",
+      };
+    }),
   );
 };
