@@ -41,6 +41,13 @@
       "visible": false,
       "icon": "FaTint",
       "color": "#37bbf0"
+    },
+    {
+      "id": "solar_insolation",
+      "name": "Solar Insolation",
+      "visible": false,
+      "icon": "FaSun",
+      "color": "#FFD700"
     }
     
     

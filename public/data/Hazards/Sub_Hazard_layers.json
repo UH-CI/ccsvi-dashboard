@@ -356,6 +356,129 @@
                 }
               }
             ]
+          },
+          {
+            "id": "solar_insolation",
+            "name": "Solar Insolation",
+            "subLayers": [
+              {
+                "id": "SI_200_250", 
+                "name": "200-250",
+                "color": "#ff8000",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_200-250.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_250_300", 
+                "name": "250-300",
+                "color": "#ff9d00",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_250-300.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_300_350", 
+                "name": "300-350",
+                "color": "#ffb300",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_300-350.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_350_400", 
+                "name": "350-400",
+                "color": "#ffc400",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_350-400.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_400_450", 
+                "name": "400-450",
+                "color": "#FFD700",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_400-450.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_450_500", 
+                "name": "450-500",
+                "color": "#fff200",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_450-500.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_500_550", 
+                "name": "500-550",
+                "color": "#f6ff00",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_500-550.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_550_600", 
+                "name": "550-600",
+                "color": "#e1ff00",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_550-600.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              },
+              {
+                "id": "SI_600_650", 
+                "name": "600-650",
+                "color": "#bfff00",
+                "visible": false, 
+                "filePath": "data/Hazards/Solar_Insolation_600-650.geojson",
+                "popupConfig": {
+                  "titleField": "",
+                  "fields": [
+                  ]
+                  
+                }
+              }
+            ]
           }
     ]
   }
