@@ -32,6 +32,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   DEFAULT_LAYER_OPACITIES,
+  defaultExpandedSections,
 } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 
@@ -51,24 +52,28 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
   const updateMapConfig = useMapStore((state) => state.updateMapConfig);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
-  const expandedSectionsByMap = useMapStore((state) => state.expandedSectionsByMap);
+  const expandedSections = useMapStore(
+    (state) => state.expandedSectionsByMap[mapId] ?? defaultExpandedSections,
+  );
   const toggleSectionByMap = useMapStore((state) => state.toggleSectionByMap);
-  const layerOpacities = useMapStore((state) => state.layerOpacities);
+  const mapOpacities = useMapStore(
+    (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
+  );
   const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
   const pointLayerConfigs = usePointLayerStore((state) => state.pointLayerConfigs);
-  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
+  const visiblePointLayerIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
   const togglePointLayerVisibility = usePointLayerStore((state) => state.toggleLayerVisibility);
 
   const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
-  const visibleHazardLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+  const visibleHazardLayerIds = useHazardLayersStore((state) => state.visibleLayerIdsByMap[mapId]);
   const toggleHazardLayerVisibility = useHazardLayersStore(
     (state) => state.toggleHazardLayerVisibility,
   );
   const toggleSubLayerVisibility = useHazardLayersStore((state) => state.toggleSubLayerVisibility);
 
   const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-  const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
+  const visibleRasterIds = useRasterLayersStore((state) => state.visibleLayerIdsByMap[mapId]);
   const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
   const toggleSubRasterLayerVisibility = useRasterLayersStore(
     (s) => s.toggleSubRasterLayerVisibility,
@@ -150,9 +155,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           Census Blocks
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.census ?? DEFAULT_LAYER_OPACITIES.census
-                          }
+                          value={mapOpacities.census}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "census", value as number)
                           }
@@ -173,10 +176,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           Hawaiian Homelands
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.hawaiianHomelands ??
-                            DEFAULT_LAYER_OPACITIES.hawaiianHomelands
-                          }
+                          value={mapOpacities.hawaiianHomelands}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "hawaiianHomelands", value as number)
                           }
@@ -193,10 +193,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           County Boundaries
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.countyBoundaries ??
-                            DEFAULT_LAYER_OPACITIES.countyBoundaries
-                          }
+                          value={mapOpacities.countyBoundaries}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "countyBoundaries", value as number)
                           }
@@ -284,15 +281,15 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               Points of Interest
             </Typography>
             <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.points ? <ExpandLess /> : <ExpandMore />}
+              {expandedSections?.points ? <ExpandLess /> : <ExpandMore />}
             </IconButton>
           </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.points ?? false}>
+          <Collapse in={expandedSections?.points ?? false}>
             <Stack spacing={1}>
               {pointLayerConfigs.map((layer) => {
                 const IconComponent =
                   FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[config.id]?.has(layer.id) ?? false;
+                const isVisible = visiblePointLayerIds?.has(layer.id) ?? false;
                 return (
                   <FormControlLabel
                     key={layer.id}
@@ -328,16 +325,15 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               Hazards (Shapes)
             </Typography>
             <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.hazards ? <ExpandLess /> : <ExpandMore />}
+              {expandedSections?.hazards ? <ExpandLess /> : <ExpandMore />}
             </IconButton>
           </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.hazards ?? false}>
+          <Collapse in={expandedSections?.hazards ?? false}>
             <Stack spacing={1} className={styles["section-content"]}>
               {hazardLayerConfigs.map((parent) => {
                 const ParentIcon =
                   FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
-                const isParentVisible =
-                  visibleHazardLayerIdsByMap[config.id]?.has(parent.id) ?? false;
+                const isParentVisible = visibleHazardLayerIds?.has(parent.id) ?? false;
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
                     <Box display="flex" alignItems="center">
@@ -373,8 +369,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                         <Stack spacing={1} sx={{ pl: 3 }}>
                           {parent.subLayers.map((sub) => {
                             const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible =
-                              visibleHazardLayerIdsByMap[config.id]?.has(compositeId) ?? false;
+                            const isSubVisible = visibleHazardLayerIds?.has(compositeId) ?? false;
                             return (
                               <FormControlLabel
                                 sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: -4.2 } }}
@@ -420,18 +415,16 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               Hazards (Rasters)
             </Typography>
             <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.rasters ? <ExpandLess /> : <ExpandMore />}
+              {expandedSections?.rasters ? <ExpandLess /> : <ExpandMore />}
             </IconButton>
           </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.rasters ?? false}>
+          <Collapse in={expandedSections?.rasters ?? false}>
             <Stack spacing={1} className={styles["section-content"]}>
               {rasterLayerConfigs.map((parent) => {
                 const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
                 const hasChildren = !!parent.subLayers?.length;
                 const CHECKBOX_WIDTH = 15;
-                const visibleRasterIdsForMap =
-                  visibleRasterLayerIdsByMap[config.id] ?? new Set<string>();
-                const isParentVisible = visibleRasterIdsForMap.has(parent.id);
+                const isParentVisible = visibleRasterIds?.has(parent.id) ?? false;
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
                     <Box display="flex" alignItems="center">
@@ -470,7 +463,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                         <Stack spacing={1} sx={{ pl: 3 }}>
                           {parent.subLayers!.map((sub) => {
                             const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible = visibleRasterIdsForMap.has(compositeId);
+                            const isSubVisible = visibleRasterIds?.has(compositeId) ?? false;
                             return (
                               <FormControlLabel
                                 sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
