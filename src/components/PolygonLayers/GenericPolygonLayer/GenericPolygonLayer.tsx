@@ -1,7 +1,7 @@
 import { GeoJSON, GeoJSONProps, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import { Layer, LatLngBounds, LeafletMouseEvent, PathOptions } from "leaflet";
-import React, { useEffect, useCallback, memo } from "react";
+import React, { useEffect, useCallback, memo, useRef } from "react";
 
 // Global ref to store layers per map across component remounts
 const globalLayersRef = new Map<string, Map<string, Layer>>();
@@ -58,6 +58,12 @@ export const GenericPolygonLayer = memo(
     }
     const layersRef = globalLayersRef.get(storageKey)!;
 
+    // Latest renderPopup
+    const renderPopupRef = useRef(renderPopup);
+    useEffect(() => {
+      renderPopupRef.current = renderPopup;
+    }, [renderPopup]);
+
     const styleCallback = useCallback(
       (feature?: Feature<Geometry, T>): PathOptions => {
         const baseStyle = feature
@@ -98,18 +104,14 @@ export const GenericPolygonLayer = memo(
           });
         }
 
-        if ("bindPopup" in layer && renderPopup) {
-          const popupContent = renderPopup(feature);
-
-          if (popupContent) {
-            layer.bindPopup(popupContent, {
-              minWidth: 250,
-              maxWidth: 300,
-            });
-          }
+        if ("bindPopup" in layer && renderPopupRef.current) {
+          layer.bindPopup(() => renderPopupRef.current?.(feature) ?? "", {
+            minWidth: 250,
+            maxWidth: 300,
+          });
         }
       },
-      [geoidProperty, onFeatureClick, renderPopup, layersRef],
+      [geoidProperty, onFeatureClick, layersRef],
     );
 
     // Apply highlight/normal styles
@@ -155,23 +157,22 @@ export const GenericPolygonLayer = memo(
 
     // Update popup content when renderPopup changes (e.g. metric change)
     useEffect(() => {
-      if (!renderPopup) return;
+      if (!activeFeatureGeoid || !renderPopup) return;
 
-      layersRef.forEach((layer) => {
-        if (!("setPopupContent" in layer)) return;
+      const layer = layersRef.get(activeFeatureGeoid);
+      if (!layer) return;
 
-        const layerWithFeature = layer as Layer & { feature?: Feature<Geometry, T> };
-        const feature = layerWithFeature.feature;
-        if (!feature) return;
+      const layerTyped = layer as Layer & {
+        isPopupOpen?: () => boolean;
+        setPopupContent?: (content: string) => void;
+        feature?: Feature<Geometry, T>;
+      };
 
-        const popupContent = renderPopup(feature);
-        if (popupContent) {
-          (layer as Layer & { setPopupContent: (content: string) => void }).setPopupContent(
-            popupContent,
-          );
-        }
-      });
-    }, [renderPopup, layersRef]);
+      if (!layerTyped.isPopupOpen?.() || !layerTyped.setPopupContent || !layerTyped.feature) return;
+
+      const content = renderPopup(layerTyped.feature);
+      if (content) layerTyped.setPopupContent(content);
+    }, [renderPopup, activeFeatureGeoid, layersRef]);
 
     if (!data) {
       return null;
@@ -210,8 +211,7 @@ export const GenericPolygonLayer = memo(
       prevProps.layerOpacity === nextProps.layerOpacity &&
       prevProps.getStyle === nextProps.getStyle &&
       prevProps.getHighlightStyle === nextProps.getHighlightStyle &&
-      prevProps.onFeatureClick === nextProps.onFeatureClick &&
-      prevProps.renderPopup === nextProps.renderPopup
+      prevProps.onFeatureClick === nextProps.onFeatureClick
     );
   },
 ) as <T extends GeoJsonProperties = GeoJsonProperties>(
