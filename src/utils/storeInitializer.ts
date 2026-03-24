@@ -45,6 +45,8 @@ function initializeMapStore(
     title: `Map ${config.id!.replace("map", "")}`,
     dataset: config.dataset || "",
     metric: config.metric || "",
+    ...(config.metric2 ? { metric2: config.metric2 } : {}),
+    ...(config.bivariateColorScheme ? { bivariateColorScheme: config.bivariateColorScheme } : {}),
     visible: config.visible ?? true,
     colorScheme: "Viridis",
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),

@@ -36,7 +36,7 @@ export function useUrlSync(isInitialized: boolean) {
   // --- STORE > URL SYNC ---
 
   const mapConfigKey = mapConfigs
-    .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
+    .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
     .join("|");
   const pointLayerKey = Object.entries(visiblePointLayersByMap)
     .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
@@ -66,7 +66,13 @@ export function useUrlSync(isInitialized: boolean) {
 
         // --- Map configs ---
         Array.from(prev.keys()).forEach((key) => {
-          if (key.startsWith("d_") || key.startsWith("m_") || key.startsWith("af_"))
+          if (
+            key.startsWith("d_") ||
+            key.startsWith("m_") ||
+            key.startsWith("m2_") ||
+            key.startsWith("bcs_") ||
+            key.startsWith("af_")
+          )
             newParams.delete(key);
         });
 
@@ -79,6 +85,12 @@ export function useUrlSync(isInitialized: boolean) {
             newParams.set(key, val);
           });
           Object.entries(serialized.metrics).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
+          Object.entries(serialized.metrics2).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
+          Object.entries(serialized.bivariateColorSchemes).forEach(([key, val]) => {
             newParams.set(key, val);
           });
           Object.entries(serialized.activeFeatures).forEach(([key, val]) => {
