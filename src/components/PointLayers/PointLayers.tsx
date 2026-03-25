@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Marker, Popup, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { renderToString } from "react-dom/server";
@@ -54,24 +54,29 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
 
   const iconSize = getIconSize(zoom);
   const iconElementSize = Math.round(iconSize * 0.67);
-
-  const customIcon = L.divIcon({
-    html: renderToString(
-      <div
-        className={styles.iconContainer}
-        style={{
-          width: `${iconSize}px`,
-          height: `${iconSize}px`,
-          color: config.color,
-        }}
-      >
-        <IconComponent size={iconElementSize} />
-      </div>,
-    ),
-    className: styles.genericPointMarker,
-    iconSize: [iconSize, iconSize],
-    iconAnchor: [iconSize / 2, iconSize / 2],
-  });
+  
+  const customIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: renderToString(
+          <div
+            className={styles.iconContainer}
+            style={{
+              width: `${iconSize}px`,
+              height: `${iconSize}px`,
+              color: config.color,
+            }}
+          >
+            <IconComponent size={iconElementSize} />
+          </div>,
+        ),
+        className: styles.genericPointMarker,
+        iconSize: [iconSize, iconSize],
+        iconAnchor: [iconSize / 2, iconSize / 2],
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [iconSize, config.color, config.icon],
+  );
 
   const renderPopupContent = (feature: Feature<Point>) => {
     const title = feature.properties?.[config.popupConfig.titleField] || "";
