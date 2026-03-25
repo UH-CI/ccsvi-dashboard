@@ -210,67 +210,54 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       if (!activeDatasetObject || !effectiveMetric) return null;
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
+    
+    const metricsDerived = useMemo(() => {
+      const noData = {
+        allMetricValues: [] as number[],
+        getMetricValue: (): number | null => null,
+        allMetricValues2: [] as number[],
+        getMetricValue2: null as ((geoid: string) => number | null) | null,
+      };
 
-    const allMetricValues = useMemo(() => {
-      if (!metricsData || !effectiveDataset || !effectiveMetric) return [];
-      const values: number[] = [];
-      Object.values(metricsData).forEach((data) => {
-        const val = data.metrics?.[effectiveDataset]?.[effectiveMetric]?.proportion;
-        if (val !== undefined && val !== null) values.push(val);
-      });
-      return values;
-    }, [metricsData, effectiveDataset, effectiveMetric]);
+      if (!metricsData || !effectiveDataset || !effectiveMetric) return noData;
 
-    const getMetricValue = useMemo(() => {
-      if (!metricsData || !effectiveDataset || !effectiveMetric) {
-        return () => null;
+      const lookup1 = new Map<string, number>();
+      const lookup2 = effectiveMetric2 ? new Map<string, number>() : null;
+      const values1: number[] = [];
+      const values2: number[] = [];
+
+      for (const [geoid, data] of Object.entries(metricsData)) {
+        const datasetMetrics = data.metrics?.[effectiveDataset];
+
+        const v1 = datasetMetrics?.[effectiveMetric]?.proportion;
+        if (v1 !== undefined && v1 !== null) {
+          lookup1.set(geoid, v1);
+          values1.push(v1);
+        }
+
+        if (lookup2 && effectiveMetric2) {
+          const v2 = datasetMetrics?.[effectiveMetric2]?.proportion;
+          if (v2 !== undefined && v2 !== null) {
+            lookup2.set(geoid, v2);
+            values2.push(v2);
+          }
+        }
       }
 
-      const lookup = new Map<string, number>();
-      Object.entries(metricsData).forEach(([geoid, data]) => {
-        const metricObj = data.metrics?.[effectiveDataset]?.[effectiveMetric];
-        const value = metricObj?.proportion;
-        if (value !== undefined && value !== null) {
-          lookup.set(geoid, value);
-        }
-      });
-
-      return (geoid: string): number | null => {
-        if (!geoid) return null;
-        return lookup.get(geoid) ?? null;
+      return {
+        allMetricValues: values1,
+        getMetricValue: (geoid: string): number | null => lookup1.get(geoid) ?? null,
+        allMetricValues2: values2,
+        getMetricValue2: lookup2
+          ? (geoid: string): number | null => lookup2.get(geoid) ?? null
+          : null,
       };
-    }, [metricsData, effectiveDataset, effectiveMetric]);
+    }, [metricsData, effectiveDataset, effectiveMetric, effectiveMetric2]);
+
+    const { allMetricValues, getMetricValue, allMetricValues2, getMetricValue2 } = metricsDerived;
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
-
-    const allMetricValues2 = useMemo(() => {
-      if (!metricsData || !effectiveDataset || !effectiveMetric2) return [];
-      const values: number[] = [];
-      Object.values(metricsData).forEach((data) => {
-        const val = data.metrics?.[effectiveDataset]?.[effectiveMetric2]?.proportion;
-        if (val !== undefined && val !== null) values.push(val);
-      });
-      return values;
-    }, [metricsData, effectiveDataset, effectiveMetric2]);
-
-    const getMetricValue2 = useMemo(() => {
-      if (!metricsData || !effectiveDataset || !effectiveMetric2) return null;
-
-      const lookup = new Map<string, number>();
-      Object.entries(metricsData).forEach(([geoid, data]) => {
-        const metricObj = data.metrics?.[effectiveDataset]?.[effectiveMetric2];
-        const value = metricObj?.proportion;
-        if (value !== undefined && value !== null) {
-          lookup.set(geoid, value);
-        }
-      });
-
-      return (geoid: string): number | null => {
-        if (!geoid) return null;
-        return lookup.get(geoid) ?? null;
-      };
-    }, [metricsData, effectiveDataset, effectiveMetric2]);
 
     const colorScale = useMemo(() => {
       if (!activeDatasetMetricObject) return null;

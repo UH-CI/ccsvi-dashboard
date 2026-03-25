@@ -58,6 +58,17 @@ export const GenericPolygonLayer = memo(
     }
     const layersRef = globalLayersRef.get(storageKey)!;
 
+    // Clean up layer storage when this component unmounts to prevent memory leaks.
+    useEffect(() => {
+      return () => {
+        globalLayersRef.delete(storageKey);
+      };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Track previous active geoid to avoid iterating all features on change
+    const prevActiveGeoidRef = useRef<string | null | undefined>(undefined);
+
     // Latest renderPopup
     const renderPopupRef = useRef(renderPopup);
     useEffect(() => {
@@ -114,13 +125,10 @@ export const GenericPolygonLayer = memo(
       [geoidProperty, onFeatureClick, layersRef],
     );
 
-    // Apply highlight/normal styles
+    // Apply highlight/normal styles.
     useEffect(() => {
-      layersRef.forEach((layer, geoid) => {
+      const applyStyle = (layer: Layer, geoid: string, isActive: boolean) => {
         if (!("setStyle" in layer)) return;
-
-        const isActive = activeFeatureGeoid === geoid;
-
         const layerWithFeature = layer as Layer & { feature?: Feature<Geometry, T> };
         const feature = layerWithFeature.feature;
         if (!feature) return;
@@ -132,9 +140,32 @@ export const GenericPolygonLayer = memo(
         if (layerOpacity !== undefined && !isActive) {
           style = { ...style, opacity: layerOpacity, fillOpacity: layerOpacity };
         }
-
         (layer as { setStyle: (style: PathOptions) => void }).setStyle(style);
-      });
+      };
+
+      const prevGeoid = prevActiveGeoidRef.current;
+      const geoidChanged = prevGeoid !== activeFeatureGeoid;
+
+      if (geoidChanged) {
+        // Restore previously active layer to normal style
+        if (prevGeoid) {
+          const prevLayer = layersRef.get(prevGeoid);
+          if (prevLayer) applyStyle(prevLayer, prevGeoid, false);
+        }
+
+        // Apply highlight to newly active layer
+        if (activeFeatureGeoid) {
+          const nextLayer = layersRef.get(activeFeatureGeoid);
+          if (nextLayer) applyStyle(nextLayer, activeFeatureGeoid, true);
+        }
+
+        prevActiveGeoidRef.current = activeFeatureGeoid;
+      } else {
+        // getStyle or layerOpacity changed — restyle all layers
+        layersRef.forEach((layer, geoid) => {
+          applyStyle(layer, geoid, geoid === activeFeatureGeoid);
+        });
+      }
     }, [activeFeatureGeoid, layersRef, getStyle, getHighlightStyle, layerOpacity]);
 
     // Center map and open popup when active feature changes
