@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -35,22 +35,37 @@ export function useUrlSync(isInitialized: boolean) {
 
   // --- STORE > URL SYNC ---
 
-  const mapConfigKey = mapConfigs
-    .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
-    .join("|");
-  const pointLayerKey = Object.entries(visiblePointLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
-  const hazardLayerKey = Object.entries(visibleHazardLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
-  //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
-  const rasterLayerKey = Object.entries(VisibleRasterLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
+  const mapConfigKey = useMemo(
+    () =>
+      mapConfigs
+        .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
+        .join("|"),
+    [mapConfigs],
+  );
+  const pointLayerKey = useMemo(
+    () =>
+      Object.entries(visiblePointLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [visiblePointLayersByMap],
+  );
+  const hazardLayerKey = useMemo(
+    () =>
+      Object.entries(visibleHazardLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [visibleHazardLayersByMap],
+  );
+  const rasterLayerKey = useMemo(
+    () =>
+      Object.entries(VisibleRasterLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [VisibleRasterLayersByMap],
+  );
 
   useEffect(() => {
     if (!isInitialized || isUpdatingFromUrl.current) return;

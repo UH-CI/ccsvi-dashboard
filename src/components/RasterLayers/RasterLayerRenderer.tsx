@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { useRasterLayersStore, useRasterLayerData } from "../../stores";
@@ -49,14 +49,16 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
   // Get config from store
   const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-  const parentLayer = rasterLayerConfigs.find((r) => r.id === parentId);
-  const subLayer =
-    layerId && parentLayer?.subLayers
-      ? parentLayer.subLayers.find((s) => s.id === layerId)
-      : undefined;
 
-  const layerConfig = subLayer ?? parentLayer;
-  const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
+  const { layerConfig, activeLayerId } = useMemo(() => {
+    const parent = rasterLayerConfigs.find((r) => r.id === parentId);
+    const sub =
+      layerId && parent?.subLayers ? parent.subLayers.find((s) => s.id === layerId) : undefined;
+    return {
+      layerConfig: sub ?? parent,
+      activeLayerId: layerId ? `${parentId}.${layerId}` : parentId,
+    };
+  }, [rasterLayerConfigs, parentId, layerId]);
 
   // Get visibility and data from store
   //const isVisible = useIsRasterLayerVisible(activeLayerId);
