@@ -29,20 +29,6 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
     return mapLayers ? mapLayers.has(layerId) : false;
   });
 
-  // Track zoom level
-  useEffect(() => {
-    const handleZoom = () => setZoom(map.getZoom());
-    map.on("zoomend", handleZoom);
-    return () => {
-      map.off("zoomend", handleZoom);
-    };
-  }, [map]);
-
-  // Don't render if not visible, no config, or no data
-  if (!isVisible || !config || !data) return null;
-
-  const IconComponent = FaIcons[config.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-
   // Calculate icon size based on zoom
   const getIconSize = (currentZoom: number): number => {
     const baseZoom = 8;
@@ -54,7 +40,8 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
 
   const iconSize = getIconSize(zoom);
   const iconElementSize = Math.round(iconSize * 0.67);
-  
+  const IconComponent = FaIcons[(config?.icon ?? "") as keyof typeof FaIcons] || FaIcons.FaCircle;
+
   const customIcon = useMemo(
     () =>
       L.divIcon({
@@ -64,7 +51,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
             style={{
               width: `${iconSize}px`,
               height: `${iconSize}px`,
-              color: config.color,
+              color: config?.color,
             }}
           >
             <IconComponent size={iconElementSize} />
@@ -75,8 +62,20 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
         iconAnchor: [iconSize / 2, iconSize / 2],
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [iconSize, config.color, config.icon],
+    [iconSize, config?.color, config?.icon],
   );
+
+  // Track zoom level
+  useEffect(() => {
+    const handleZoom = () => setZoom(map.getZoom());
+    map.on("zoomend", handleZoom);
+    return () => {
+      map.off("zoomend", handleZoom);
+    };
+  }, [map]);
+
+  // Don't render if not visible, no config, or no data
+  if (!isVisible || !config || !data) return null;
 
   const renderPopupContent = (feature: Feature<Point>) => {
     const title = feature.properties?.[config.popupConfig.titleField] || "";

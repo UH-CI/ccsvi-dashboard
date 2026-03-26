@@ -10,7 +10,7 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
-  useMapStore,
+  usePrimaryMapState,
 } from "./stores";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
@@ -20,10 +20,7 @@ const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
   // Get the active/primary map's dataset for the table viewer
-  const primaryDataset = useMapStore((state) => {
-    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
-    return primary?.dataset || "";
-  });
+  const { dataset: primaryDataset } = usePrimaryMapState();
 
   // Get data from stores
   const errors = useAppStore((state) => state.errors);

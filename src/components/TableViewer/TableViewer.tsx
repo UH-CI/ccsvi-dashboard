@@ -18,7 +18,7 @@ import {
 } from "@mui/icons-material";
 import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser";
 import { useTableResize } from "../../hooks/useTableResize";
-import { useMapStore } from "../../stores";
+import { useMapStore, usePrimaryMapState } from "../../stores";
 import styles from "./TableViewer.module.scss";
 
 interface DatasetInfo {
@@ -63,10 +63,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   initialCollapsed = false,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const primaryMapMetric = useMapStore((state) => {
-    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
-    return primary?.metric ?? "";
-  });
+  const { metric: primaryMapMetric } = usePrimaryMapState();
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
 
   const [tableData, setTableData] = useState<ParsedCSVData | null>(null);

@@ -76,17 +76,6 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomCha
   }, [map]);
 
   useEffect(() => {
-    const handleResize = () => {
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [map]);
-
-  useEffect(() => {
     if (!onZoomChange) return;
 
     const handleZoomEnd = () => {

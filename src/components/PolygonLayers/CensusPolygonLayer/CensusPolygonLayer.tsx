@@ -75,15 +75,6 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     [],
   );
 
-  const handleFeatureClick = useCallback(
-    (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => {
-      if (onFeatureClick) {
-        onFeatureClick(feature, e);
-      }
-    },
-    [onFeatureClick],
-  );
-
   const renderPopup = useMemo(
     () =>
       renderPolygonPopup(
@@ -110,7 +101,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
-      onFeatureClick={handleFeatureClick}
+      onFeatureClick={onFeatureClick}
       renderPopup={renderPopup}
     />
   );
