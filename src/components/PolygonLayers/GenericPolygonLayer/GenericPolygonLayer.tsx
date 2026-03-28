@@ -3,9 +3,6 @@ import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson
 import { Layer, LatLngBounds, LeafletMouseEvent, PathOptions } from "leaflet";
 import React, { useEffect, useCallback, memo, useRef } from "react";
 
-// Global ref to store layers per map across component remounts
-const globalLayersRef = new Map<string, Map<string, Layer>>();
-
 export interface StyleConfig {
   fillColor: string;
   weight: number;
@@ -52,19 +49,9 @@ export const GenericPolygonLayer = memo(
     // Create unique storage key combining mapId and layerType
     const storageKey = `${mapId}-${layerType}`;
 
-    // Initialize layer storage for this map-layer combination
-    if (!globalLayersRef.has(storageKey)) {
-      globalLayersRef.set(storageKey, new Map());
-    }
-    const layersRef = globalLayersRef.get(storageKey)!;
-
-    // Clean up layer storage when this component unmounts to prevent memory leaks.
-    useEffect(() => {
-      return () => {
-        globalLayersRef.delete(storageKey);
-      };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Store layers per map-layer combination
+    const layersRefInternal = useRef(new Map<string, Layer>());
+    const layersRef = layersRefInternal.current;
 
     // Track previous active geoid to avoid iterating all features on change
     const prevActiveGeoidRef = useRef<string | null | undefined>(undefined);
