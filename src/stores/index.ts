@@ -18,5 +18,6 @@ export {
   useRasterLayerConfigs,
   useIsRasterLayerVisible,
   useRasterLayerData,
+  type RasterLegendInfo,
 } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";

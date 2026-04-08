@@ -293,7 +293,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
         </Box>
       </Menu>
 
-      {/* ── Points Menu ── */}
+      {/*── Points Menu ── */}
       <Menu
         open={Boolean(anchors.points)}
         anchorEl={anchors.points}

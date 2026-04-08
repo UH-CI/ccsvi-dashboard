@@ -141,6 +141,12 @@ export interface SubRasterLayerConfig {
   name: string;
   color?: string;
   filePath?: string;
+  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  units?: string;
+  /** Fixed legend panel width in px (same for all layers if unset; sublayer overrides parent). */
+  legendWidthPx?: number;
+  /** Fixed color ramp height in px. */
+  legendGradientHeightPx?: number;
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];
@@ -160,6 +166,12 @@ export interface RasterLayerConfig {
   icon?: string;
   color?: string;
   filePath?: string;
+  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  units?: string;
+  /** Fixed legend panel width in px (applies to this layer; sublayers may override). */
+  legendWidthPx?: number;
+  /** Fixed color ramp height in px. */
+  legendGradientHeightPx?: number;
   opacity?: number;
   type?: "raster";
   popupConfig?: {
