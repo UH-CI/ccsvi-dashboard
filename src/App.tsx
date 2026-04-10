@@ -19,7 +19,7 @@ import { initializeStoresFromUrl } from "./utils/storeInitializer";
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
-  const [isTableOpen, setIsTableOpen] = useState(false);
+  const [isTableOpen, setIsTableOpen] = useState(true);
 
   const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
     setIsTableOpen(!isCollapsed);

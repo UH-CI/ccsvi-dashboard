@@ -10,7 +10,8 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend } from "../MapLegend";
+import { MapLegend, RasterMapLegend } from "../MapLegend";
+import mapLegendStyles from "../MapLegend/MapLegend.module.scss";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
@@ -524,13 +525,16 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             ))}
           </MapContainer>
 
-          <MapLegend
-            limits={colorScale?.limits ?? null}
-            colors={colorScale?.getLegendColors() ?? null}
-            bivariate={bivariateColorScale ?? undefined}
-            metric1Label={effectiveMetric ?? undefined}
-            metric2Label={effectiveMetric2 ?? undefined}
-          />
+          <div className={mapLegendStyles.legendStack}>
+            <RasterMapLegend mapId={mapId} />
+            <MapLegend
+              limits={colorScale?.limits ?? null}
+              colors={colorScale?.getLegendColors() ?? null}
+              bivariate={bivariateColorScale ?? undefined}
+              metric1Label={effectiveMetric ?? undefined}
+              metric2Label={effectiveMetric2 ?? undefined}
+            />
+          </div>
         </div>
 
         <Snackbar

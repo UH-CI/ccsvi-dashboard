@@ -370,6 +370,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -383,6 +384,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -396,6 +398,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -408,7 +411,8 @@
                 "filePath": "data/Hazards/Solar_Insolation_350-400.geojson",
                 "popupConfig": {
                   "titleField": "",
-                  "fields": [
+                  "fields": [ 
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -422,6 +426,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -435,6 +440,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -448,6 +454,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -461,6 +468,7 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
@@ -474,10 +482,77 @@
                 "popupConfig": {
                   "titleField": "",
                   "fields": [
+                    { "key": "solar_cal", "label": "Solar cal/sq.cm/day" }
                   ]
                   
                 }
               }
+            ]
+          },
+          {
+            "id": "state_roads",
+            "name": "sidewalks_and_paths",
+            "subLayers": [
+              {
+                "id": "Hawaii_island",
+                "name": "Hawaii Island",
+                "color": "#000000",
+                "visible": false, 
+                "filePath": "data/Hazards/filtered_road_Hawaii_island.geojson",
+                "popupConfig": {
+                  "titleField": "Hawaii State Roads",
+                  "fields": [
+                    { "key": "OFFCLNAME", "label": "Road" },
+                    { "key": "ZIPL", "label": "ZIP" },
+                    { "key": "DISTRICT", "label": "District"}
+                  ]
+                }
+              },
+              {
+                "id": "Oahu",
+                "name": "Oahu",
+                "color": "#000000",
+                "visible": false, 
+                "filePath": "data/Hazards/filtered_road_Oahu.geojson",
+                "popupConfig": {
+                  "titleField": "Oahu State Roads",
+                  "fields": [
+                    { "key": "fullname", "label": "Road" },
+                    { "key": "zipcodel", "label": "ZIP" },
+                    { "key": "neighborl", "label": "Neighborhood"}
+                  ]
+                }
+              },
+              {
+                "id": "Maui",
+                "name": "Maui",
+                "color": "#000000",
+                "visible": false, 
+                "filePath": "data/Hazards/filtered_road_Maui.geojson",
+                "popupConfig": {
+                  "titleField": "Maui State Roads",
+                  "fields": [ 
+                    { "key": "FULLNAME", "label": "Road"},
+                    { "key": "ROADCLASS", "label": "Road Class"}
+                  ]
+                }
+              },
+              {
+                "id": "Kauai",
+                "name": "Kauai",
+                "color": "#000000",
+                "visible": false, 
+                "filePath": "data/Hazards/filtered_road_Kauai.geojson",
+                "popupConfig": {
+                  "titleField": "Kauai State Roads",
+                  "fields": [
+                    { "key": "fullname", "label": "Road" },
+                    { "key": "zipleft", "label": "ZIP" },
+                    { "key": "roadclass", "label": "Road Class"}
+                  ]
+                }
+              }
+
             ]
           }
     ]

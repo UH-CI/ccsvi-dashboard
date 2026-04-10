@@ -37,6 +37,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   const pendingLayerRef = useRef<L.Layer | null>(null);
   const currentOverviewRef = useRef<number | null>(null);
   const loadIdRef = useRef(0);
+  const lastBandMinMaxRef = useRef<{ min: number; max: number } | null>(null);
 
   // Services
   const dataProcessorRef = useRef<DataProcessorService | null>(null);
@@ -59,6 +60,10 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       activeLayerId: layerId ? `${parentId}.${layerId}` : parentId,
     };
   }, [rasterLayerConfigs, parentId, layerId]);
+
+  const legendUnits = layerConfig?.units;
+  const legendWidthPx = layerConfig?.legendWidthPx;
+  const legendGradientHeightPx = layerConfig?.legendGradientHeightPx;
 
   // Get visibility and data from store
   //const isVisible = useIsRasterLayerVisible(activeLayerId);
@@ -95,8 +100,11 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       activeLayerRef.current = null;
       pendingLayerRef.current = null;
       currentOverviewRef.current = null;
+      lastBandMinMaxRef.current = null;
+
+      useRasterLayersStore.getState().setRasterLegend(mapId, null);
     };
-  }, [map]);
+  }, [map, mapId]);
 
   // Remove layers when visibility is toggled off
   useEffect(() => {
@@ -112,10 +120,12 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     activeLayerRef.current = null;
     pendingLayerRef.current = null;
     currentOverviewRef.current = null;
+    lastBandMinMaxRef.current = null;
 
     setLeafletLayer(null);
     setRasterData(null);
-  }, [isVisible, map]);
+    useRasterLayersStore.getState().setRasterLegend(mapId, null);
+  }, [isVisible, map, mapId]);
 
   // Process and render raster when data is available or zoom changes
   useEffect(() => {
@@ -132,8 +142,20 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
           getOverviewForZoom(mapZoom, layerConfig?.overviewZoom) ??
           (mapZoom <= 7 ? 4 : mapZoom <= 8 ? 3 : mapZoom <= 9 ? 2 : mapZoom <= 10 ? 1 : 0);
 
-        // Skip if same overview is already rendered
+        // Skip full rebuild if same overview is already rendered; still sync legend metadata.
         if (currentOverviewRef.current === overviewIndex && activeLayerRef.current) {
+          const r = lastBandMinMaxRef.current;
+          if (r) {
+            useRasterLayersStore.getState().setRasterLegend(mapId, {
+              layerId: activeLayerId,
+              title: layerConfig?.name ?? "Raster",
+              min: r.min,
+              max: r.max,
+              units: legendUnits,
+              legendWidthPx,
+              legendGradientHeightPx,
+            });
+          }
           return;
         }
 
@@ -169,6 +191,8 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
           }
         });
 
+        lastBandMinMaxRef.current = { min, max };
+
         if (!colorGeneratorRef.current) return;
         const scale = colorGeneratorRef.current.getDefaultMonochromaticRainfallColorScale(
           [min, max],
@@ -176,6 +200,16 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
         );
 
         setColorScale(scale);
+
+        useRasterLayersStore.getState().setRasterLegend(mapId, {
+          layerId: activeLayerId,
+          title: layerConfig?.name ?? "Raster",
+          min,
+          max,
+          units: legendUnits,
+          legendWidthPx,
+          legendGradientHeightPx,
+        });
 
         // Create and add the Leaflet layer
         initializeRasterLayer();
@@ -216,7 +250,18 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [map, mapZoom, arrayBuffer, isVisible, opacity, layerConfig?.overviewZoom]);
+  }, [
+    map,
+    mapZoom,
+    arrayBuffer,
+    isVisible,
+    opacity,
+    layerConfig?.overviewZoom,
+    legendUnits,
+    legendWidthPx,
+    legendGradientHeightPx,
+    layerConfig?.name,
+  ]);
 
   // Update opacity when it changes
   useEffect(() => {

@@ -48,8 +48,30 @@
       "visible": false,
       "icon": "FaSun",
       "color": "#FFD700"
+    },
+    {
+      "id": "state_roads",
+      "name": "State Roads",
+      "visible": false,
+      "icon": "FaRoad",
+      "color": "#000000"
+    },
+    {
+      "id": "sidewalks_and_paths",
+      "name": "Sidewalks and Paths",
+      "visible": false,
+      "icon": "FaWalking",
+      "color": "#000000",
+      "filePath": "data/Hazards/filtered_sidewalks_and_paths.geojson",
+      "popupConfig": {
+        "titleField": "",
+        "fields": [
+          { "key": "ISLAND", "label": "Island" },
+          { "key": "TYPE", "label": "Type"},
+          { "key": "MATERIAL", "label": "Material"}
+        ]
+      }
     }
-    
     
   ]
 }
