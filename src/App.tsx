@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
@@ -19,8 +19,16 @@ import { initializeStoresFromUrl } from "./utils/storeInitializer";
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
+  const [isTableOpen, setIsTableOpen] = useState(false);
+
+  const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
+    setIsTableOpen(!isCollapsed);
+  }, []);
+
   // Get the active/primary map's dataset for the table viewer
   const { dataset: primaryDataset } = usePrimaryMapState();
+
+  const tableVisible = !!primaryDataset && isTableOpen;
 
   // Get data from stores
   const errors = useAppStore((state) => state.errors);
@@ -89,8 +97,12 @@ const App: React.FC = () => {
     <div className={styles["app-container"]}>
       <ControlPanel maxMaps={4} />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} />
-        <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
+        <MultiMapContainer maxMaps={4} isTableOpen={tableVisible} />
+        <TableViewer
+          activeDataset={primaryDataset}
+          datasetInfo={activeDatasetObject}
+          onSizeChange={handleTableSizeChange}
+        />
       </div>
     </div>
   );
