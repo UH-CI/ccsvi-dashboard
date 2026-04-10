@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
   const [isTableOpen, setIsTableOpen] = useState(true);
+  const [isGridView, setIsGridView] = useState(true);
 
   const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
     setIsTableOpen(!isCollapsed);
@@ -95,9 +96,9 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
-      <ControlPanel maxMaps={4} />
+      <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} isTableOpen={tableVisible} />
+        <MultiMapContainer maxMaps={4} isTableOpen={tableVisible} isGridView={isGridView} />
         <TableViewer
           activeDataset={primaryDataset}
           datasetInfo={activeDatasetObject}

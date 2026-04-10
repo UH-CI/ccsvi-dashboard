@@ -23,6 +23,8 @@ import {
   Terrain,
   ExpandMore,
   ExpandLess,
+  GridView,
+  CalendarViewWeek,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -36,6 +38,8 @@ import styles from "./ControlPanel.module.scss";
 
 interface IntegratedControlPanelProps {
   maxMaps: number;
+  isGridView?: boolean;
+  onToggleGridView?: () => void;
 }
 
 type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
@@ -61,7 +65,11 @@ const MapTabSelector: React.FC<{
   );
 };
 
-export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps }) => {
+export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
+  maxMaps,
+  isGridView = true,
+  onToggleGridView,
+}) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
@@ -94,6 +102,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
   const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
   const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
+  const [mapsMapId, setMapsMapId] = useState<string>("");
   const [pointsMapId, setPointsMapId] = useState<string>("");
   const [hazardsMapId, setHazardsMapId] = useState<string>("");
   const [rastersMapId, setRastersMapId] = useState<string>("");
@@ -106,6 +115,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     (key: NonNullable<PopoverKey>, el: HTMLElement) => {
       // Close all others, open this one
       setAnchors({ [key]: el });
+      if (key === "maps")
+        setMapsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
       if (key === "points")
         setPointsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
       if (key === "hazards")
@@ -239,6 +250,11 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
 
       {/* Utility Actions */}
       <Box className={styles["top-bar-actions"]}>
+        <Tooltip title={isGridView ? "Switch to row view" : "Switch to grid view"}>
+          <IconButton onClick={onToggleGridView} size="small" className={styles["reset-btn"]}>
+            {isGridView ? <CalendarViewWeek fontSize="small" /> : <GridView fontSize="small" />}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Take Snapshot">
           <Button
             onClick={handleSnapshot}
@@ -280,16 +296,19 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
               Add Map
             </Button>
           )}
-          <Stack spacing={1} className={styles["map-list"]}>
-            {mapConfigs.map((config) => (
-              <SingleMapControls
-                key={config.id}
-                mapId={config.id}
-                canRemoveMap={canRemoveMap}
-                onRemove={handleRemoveMap}
-              />
-            ))}
-          </Stack>
+          <MapTabSelector
+            mapConfigs={mapConfigs}
+            selectedMapId={mapsMapId}
+            onChange={setMapsMapId}
+          />
+          {mapsMapId && (
+            <SingleMapControls
+              key={mapsMapId}
+              mapId={mapsMapId}
+              canRemoveMap={canRemoveMap}
+              onRemove={handleRemoveMap}
+            />
+          )}
         </Box>
       </Menu>
 
