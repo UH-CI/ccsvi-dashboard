@@ -45,7 +45,7 @@ interface IntegratedControlPanelProps {
 type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
 
 const MapTabSelector: React.FC<{
-  mapConfigs: { id: string }[];
+  mapConfigs: { id: string; title?: string }[];
   selectedMapId: string;
   onChange: (id: string) => void;
 }> = ({ mapConfigs, selectedMapId, onChange }) => {
@@ -58,7 +58,7 @@ const MapTabSelector: React.FC<{
           className={`${styles["map-tab-btn"]} ${selectedMapId === c.id ? styles["map-tab-btn--active"] : ""}`}
           onClick={() => onChange(c.id)}
         >
-          Map {c.id}
+          {c.title ?? `Map ${c.id}`}
         </button>
       ))}
     </Box>
@@ -73,7 +73,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
-  const resetMapStore = useMapStore((state) => state.reset);
+const resetMapStore = useMapStore((state) => state.reset);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
 
   const setVisiblePointLayerIds = usePointLayerStore((state) => state.setVisibleLayerIds);
@@ -111,21 +111,28 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
 
-  const openMenu = useCallback(
-    (key: NonNullable<PopoverKey>, el: HTMLElement) => {
-      // Close all others, open this one
-      setAnchors({ [key]: el });
-      if (key === "maps")
-        setMapsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "points")
-        setPointsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "hazards")
-        setHazardsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "rasters")
-        setRastersMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-    },
-    [primaryMapId, mapConfigs],
-  );
+  // Resolve each panel's selected map against the live map list.
+  // If the stored preference no longer exists, fall back to primaryMapId then first map.
+  const resolvedMapsMapId =
+    mapConfigs.find((c) => c.id === mapsMapId)?.id ??
+    mapConfigs.find((c) => c.id === primaryMapId)?.id ??
+    mapConfigs[0]?.id ?? "";
+  const resolvedPointsMapId =
+    visibleMaps.find((c) => c.id === pointsMapId)?.id ??
+    visibleMaps.find((c) => c.id === primaryMapId)?.id ??
+    visibleMaps[0]?.id ?? "";
+  const resolvedHazardsMapId =
+    visibleMaps.find((c) => c.id === hazardsMapId)?.id ??
+    visibleMaps.find((c) => c.id === primaryMapId)?.id ??
+    visibleMaps[0]?.id ?? "";
+  const resolvedRastersMapId =
+    visibleMaps.find((c) => c.id === rastersMapId)?.id ??
+    visibleMaps.find((c) => c.id === primaryMapId)?.id ??
+    visibleMaps[0]?.id ?? "";
+
+  const openMenu = useCallback((key: NonNullable<PopoverKey>, el: HTMLElement) => {
+    setAnchors({ [key]: el });
+  }, []);
 
   const closeMenu = useCallback((key: NonNullable<PopoverKey>) => {
     setAnchors((prev) => {
@@ -298,13 +305,13 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
           )}
           <MapTabSelector
             mapConfigs={mapConfigs}
-            selectedMapId={mapsMapId}
+            selectedMapId={resolvedMapsMapId}
             onChange={setMapsMapId}
           />
-          {mapsMapId && (
+          {resolvedMapsMapId && (
             <SingleMapControls
-              key={mapsMapId}
-              mapId={mapsMapId}
+              key={resolvedMapsMapId}
+              mapId={resolvedMapsMapId}
               canRemoveMap={canRemoveMap}
               onRemove={handleRemoveMap}
             />
@@ -325,22 +332,22 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
           </Typography>
           <MapTabSelector
             mapConfigs={visibleMaps}
-            selectedMapId={pointsMapId}
+            selectedMapId={resolvedPointsMapId}
             onChange={setPointsMapId}
           />
-          {pointsMapId && (
+          {resolvedPointsMapId && (
             <Stack spacing={1}>
               {pointLayerConfigs.map((layer) => {
                 const IconComponent =
                   FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[pointsMapId]?.has(layer.id) ?? false;
+                const isVisible = visiblePointLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
                 return (
                   <FormControlLabel
                     key={layer.id}
                     control={
                       <Checkbox
                         checked={isVisible}
-                        onChange={() => togglePointLayerVisibility(pointsMapId, layer.id)}
+                        onChange={() => togglePointLayerVisibility(resolvedPointsMapId, layer.id)}
                         size="small"
                       />
                     }
@@ -373,16 +380,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
           </Typography>
           <MapTabSelector
             mapConfigs={visibleMaps}
-            selectedMapId={hazardsMapId}
+            selectedMapId={resolvedHazardsMapId}
             onChange={setHazardsMapId}
           />
-          {hazardsMapId && (
+          {resolvedHazardsMapId && (
             <Stack spacing={1}>
               {hazardLayerConfigs.map((parent) => {
                 const ParentIcon =
                   FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
                 const isParentVisible =
-                  visibleHazardLayerIdsByMap[hazardsMapId]?.has(parent.id) ?? false;
+                  visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(parent.id) ?? false;
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
                     <Box display="flex" alignItems="center">
@@ -390,7 +397,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                         control={
                           <Checkbox
                             checked={isParentVisible}
-                            onChange={() => toggleHazardLayerVisibility(hazardsMapId, parent.id)}
+                            onChange={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
                             size="small"
                           />
                         }
@@ -415,7 +422,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                           {parent.subLayers.map((sub) => {
                             const compositeId = `${parent.id}.${sub.id}`;
                             const isSubVisible =
-                              visibleHazardLayerIdsByMap[hazardsMapId]?.has(compositeId) ?? false;
+                              visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(compositeId) ?? false;
                             return (
                               <FormControlLabel
                                 key={sub.id}
@@ -424,7 +431,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                   <Checkbox
                                     checked={isSubVisible}
                                     onChange={() =>
-                                      toggleSubLayerVisibility(hazardsMapId, parent.id, sub.id)
+                                      toggleSubLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
                                     }
                                     size="small"
                                   />
@@ -457,16 +464,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
           </Typography>
           <MapTabSelector
             mapConfigs={visibleMaps}
-            selectedMapId={rastersMapId}
+            selectedMapId={resolvedRastersMapId}
             onChange={setRastersMapId}
           />
-          {rastersMapId && (
+          {resolvedRastersMapId && (
             <Stack spacing={1}>
               {rasterLayerConfigs.map((parent) => {
                 const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
                 const hasChildren = !!parent.subLayers?.length;
                 const visibleRasterIdsForMap =
-                  visibleRasterLayerIdsByMap[rastersMapId] ?? new Set<string>();
+                  visibleRasterLayerIdsByMap[resolvedRastersMapId] ?? new Set<string>();
                 const isParentVisible = visibleRasterIdsForMap.has(parent.id);
                 return (
                   <Box key={parent.id} className={styles["layer-toggle"]}>
@@ -474,7 +481,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                       {!hasChildren && (
                         <Checkbox
                           checked={isParentVisible}
-                          onChange={() => toggleRasterLayerVisibility(rastersMapId, parent.id)}
+                          onChange={() => toggleRasterLayerVisibility(resolvedRastersMapId, parent.id)}
                           size="small"
                         />
                       )}
@@ -513,7 +520,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
                                     checked={isSubVisible}
                                     onChange={() =>
                                       toggleSubRasterLayerVisibility(
-                                        rastersMapId,
+                                        resolvedRastersMapId,
                                         parent.id,
                                         sub.id,
                                       )

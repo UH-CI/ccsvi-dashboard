@@ -23,6 +23,7 @@ import {
   VisibilityOff,
   Close,
   Palette,
+  Edit,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -60,6 +61,8 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleEditValue, setTitleEditValue] = useState("");
 
   const datasetList = useMemo(() => {
     if (!dataset) return [];
@@ -75,6 +78,29 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   return (
     <Box className={styles["map-item"]}>
       <Box className={styles["map-item-header"]}>
+        {isEditingTitle ? (
+          <input
+            className={styles["map-tab-input"]}
+            value={titleEditValue}
+            autoFocus
+            onChange={(e) => setTitleEditValue(e.target.value)}
+            onBlur={() => {
+              updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+              setIsEditingTitle(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                setIsEditingTitle(false);
+              }
+              if (e.key === "Escape") setIsEditingTitle(false);
+            }}
+          />
+        ) : (
+          <Typography variant="body2" className={styles["map-item-title"]}>
+            {config.title}
+          </Typography>
+        )}
         <Box className={styles["map-item-actions"]}>
           {config.visible && config.dataset && config.metric && (
             <>
@@ -223,6 +249,13 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               </Menu>
             </>
           )}
+          <IconButton
+            size="small"
+            onClick={() => { setIsEditingTitle(true); setTitleEditValue(config.title); }}
+            title="Rename map"
+          >
+            <Edit fontSize="small" />
+          </IconButton>
           <IconButton
             size="small"
             onClick={() => toggleMapVisibility(config.id)}

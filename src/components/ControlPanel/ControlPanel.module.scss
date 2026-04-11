@@ -327,3 +327,17 @@
     }
   }
 }
+
+.map-tab-input {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  outline: none;
+  padding: 0;
+  width: 80px;
+  min-width: 40px;
+}
