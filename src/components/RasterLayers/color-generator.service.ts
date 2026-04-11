@@ -14,7 +14,7 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       const color = colorScale(value);
@@ -45,7 +45,7 @@ export class ColorGeneratorService {
     }
     //let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
 
-    const colorScale = chroma.scale(colors).domain(range).correctLightness();
+    const colorScale = chroma.scale(colors as any).domain(range).correctLightness();
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
@@ -406,7 +406,7 @@ export class ColorGeneratorService {
         color[i] *= 255;
       }
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
@@ -474,7 +474,7 @@ export class ColorGeneratorService {
       }
     }
 
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
@@ -505,7 +505,7 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range).correctLightness();
+    const colorScale = chroma.scale(colors as any).domain(range).correctLightness();
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
@@ -533,7 +533,7 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
@@ -560,7 +560,7 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
