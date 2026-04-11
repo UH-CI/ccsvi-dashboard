@@ -1,12 +1,25 @@
 import { create } from "zustand";
 import type { RasterLayerConfig, SubRasterLayerConfig } from "../types";
 
+/** Min/max + title for the on-map raster legend (mirrors active GeoTIFF color scale). */
+export interface RasterLegendInfo {
+  layerId: string;
+  title: string;
+  min: number;
+  max: number;
+  units?: string;
+  legendWidthPx?: number;
+  legendGradientHeightPx?: number;
+}
+
 interface RasterLayersState {
   // Core data
   rasterLayerConfigs: RasterLayerConfig[];
   rasterLayerData: Map<string, ArrayBuffer>;
   //visibleLayerIds: Set<string>;
   visibleLayerIdsByMap: Record<string, Set<string>>;
+  /** Per-map legend payload when a raster is visible; cleared when layer hides. */
+  rasterLegendByMap: Record<string, RasterLegendInfo | null>;
   isLoaded: boolean;
 
   // Loading and error states
@@ -20,6 +33,7 @@ interface RasterLayersState {
   setRasterLayerData: (layerId: string, data: ArrayBuffer) => void;
   //setVisibleLayerIds: (ids: string[]) => void;
   setVisibleLayerIds: (mapId: string, ids: string[]) => void;
+  setRasterLegend: (mapId: string, info: RasterLegendInfo | null) => void;
   setIsLoaded: (loaded: boolean) => void;
 
   // Actions (mutual exclusivity: only one raster visible at a time)
@@ -39,6 +53,7 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   rasterLayerData: new Map(),
   //visibleLayerIds: new Set(),
   visibleLayerIdsByMap: {},
+  rasterLegendByMap: {},
   isLoaded: false,
   loading: false,
   error: null,
@@ -66,6 +81,15 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
       visibleLayerIdsByMap: {
         ...state.visibleLayerIdsByMap,
         [mapId]: new Set(ids),
+      },
+    }));
+  },
+
+  setRasterLegend: (mapId, info) => {
+    set((state) => ({
+      rasterLegendByMap: {
+        ...state.rasterLegendByMap,
+        [mapId]: info,
       },
     }));
   },

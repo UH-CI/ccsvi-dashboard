@@ -14,6 +14,7 @@ import {
   Box,
   Menu,
   Slider,
+  ListSubheader,
 } from "@mui/material";
 import {
   ExpandMore,
@@ -22,6 +23,7 @@ import {
   VisibilityOff,
   Close,
   Palette,
+  Edit,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -32,6 +34,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   DEFAULT_LAYER_OPACITIES,
+  defaultExpandedSections,
 } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 
@@ -51,47 +54,21 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
   const updateMapConfig = useMapStore((state) => state.updateMapConfig);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
-  const expandedSectionsByMap = useMapStore((state) => state.expandedSectionsByMap);
-  const toggleSectionByMap = useMapStore((state) => state.toggleSectionByMap);
-  const layerOpacities = useMapStore((state) => state.layerOpacities);
+
+  const mapOpacities = useMapStore(
+    (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
+  );
   const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
-  const pointLayerConfigs = usePointLayerStore((state) => state.pointLayerConfigs);
-  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const togglePointLayerVisibility = usePointLayerStore((state) => state.toggleLayerVisibility);
-
-  const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
-  const visibleHazardLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-  const toggleHazardLayerVisibility = useHazardLayersStore(
-    (state) => state.toggleHazardLayerVisibility,
-  );
-  const toggleSubLayerVisibility = useHazardLayersStore((state) => state.toggleSubLayerVisibility);
-
-  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-  const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
-  const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
-  const toggleSubRasterLayerVisibility = useRasterLayersStore(
-    (s) => s.toggleSubRasterLayerVisibility,
-  );
-
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
-  const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
-  const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
-
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
-  const toggleExpandRaster = useCallback((id: string) => {
-    setExpandedRasters((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleEditValue, setTitleEditValue] = useState("");
 
   const datasetList = useMemo(() => {
     if (!dataset) return [];
     return Object.entries(dataset).map(([key, cfg]) => ({
       id: key,
-      label:
-        cfg.metricLabel || key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      label: cfg.metricLabel || key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
       hawaiianHomelands: cfg.hawaiianHomelands || false,
     }));
   }, [dataset]);
@@ -101,9 +78,29 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   return (
     <Box className={styles["map-item"]}>
       <Box className={styles["map-item-header"]}>
-        <Typography variant="body2" className={styles["map-item-title"]}>
-          Map {config.id}
-        </Typography>
+        {isEditingTitle ? (
+          <input
+            className={styles["map-tab-input"]}
+            value={titleEditValue}
+            autoFocus
+            onChange={(e) => setTitleEditValue(e.target.value)}
+            onBlur={() => {
+              updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+              setIsEditingTitle(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                setIsEditingTitle(false);
+              }
+              if (e.key === "Escape") setIsEditingTitle(false);
+            }}
+          />
+        ) : (
+          <Typography variant="body2" className={styles["map-item-title"]}>
+            {config.title}
+          </Typography>
+        )}
         <Box className={styles["map-item-actions"]}>
           {config.visible && config.dataset && config.metric && (
             <>
@@ -119,27 +116,70 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 open={Boolean(colorSchemeAnchor)}
                 onClose={() => setColorSchemeAnchor(null)}
               >
-                {["viridis", "reds", "blues"].map((scheme) => (
+                <ListSubheader>Sequential</ListSubheader>
+                {[
+                  "Viridis",
+                  "YlOrRd",
+                  "YlGnBu",
+                  "Blues",
+                  "Reds",
+                  "Greens",
+                  "Purples",
+                  "Oranges",
+                  "GnBu",
+                  "BuPu",
+                ].map((scheme) => (
                   <MenuItem
                     key={scheme}
                     selected={
-                      config.colorScheme === scheme ||
-                      (!config.colorScheme && scheme === "viridis")
+                      config.colorScheme === scheme || (!config.colorScheme && scheme === "Viridis")
                     }
                     onClick={() => {
-                      updateMapConfig(config.id, {
-                        colorScheme: scheme as "viridis" | "reds" | "blues",
-                      });
+                      updateMapConfig(config.id, { colorScheme: scheme });
                       setColorSchemeAnchor(null);
                     }}
                   >
-                    {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+                    {scheme}
+                  </MenuItem>
+                ))}
+                <ListSubheader>Diverging</ListSubheader>
+                {["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"].map((scheme) => (
+                  <MenuItem
+                    key={scheme}
+                    selected={config.colorScheme === scheme}
+                    onClick={() => {
+                      updateMapConfig(config.id, { colorScheme: scheme });
+                      setColorSchemeAnchor(null);
+                    }}
+                  >
+                    {scheme}
                   </MenuItem>
                 ))}
 
+                {config.metric2 && (
+                  <>
+                    <Divider />
+                    <ListSubheader>Bivariate Palette</ListSubheader>
+                    {["PurpleBlue", "OrangePurple", "GreenBlue"].map((scheme) => (
+                      <MenuItem
+                        key={scheme}
+                        selected={
+                          config.bivariateColorScheme === scheme ||
+                          (!config.bivariateColorScheme && scheme === "PurpleBlue")
+                        }
+                        onClick={() => {
+                          updateMapConfig(config.id, { bivariateColorScheme: scheme });
+                          setColorSchemeAnchor(null);
+                        }}
+                      >
+                        {scheme}
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+
                 <Divider />
 
-                {/* Opacity Controls */}
                 <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
                     Layer Opacity
@@ -153,10 +193,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           Census Blocks
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.census ??
-                            DEFAULT_LAYER_OPACITIES.census
-                          }
+                          value={mapOpacities.census}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "census", value as number)
                           }
@@ -177,10 +214,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           Hawaiian Homelands
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.hawaiianHomelands ??
-                            DEFAULT_LAYER_OPACITIES.hawaiianHomelands
-                          }
+                          value={mapOpacities.hawaiianHomelands}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "hawaiianHomelands", value as number)
                           }
@@ -197,10 +231,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                           County Boundaries
                         </Typography>
                         <Slider
-                          value={
-                            layerOpacities[config.id]?.countyBoundaries ??
-                            DEFAULT_LAYER_OPACITIES.countyBoundaries
-                          }
+                          value={mapOpacities.countyBoundaries}
                           onChange={(_, value) =>
                             setLayerOpacity(config.id, "countyBoundaries", value as number)
                           }
@@ -220,14 +251,17 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           )}
           <IconButton
             size="small"
+            onClick={() => { setIsEditingTitle(true); setTitleEditValue(config.title); }}
+            title="Rename map"
+          >
+            <Edit fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
             onClick={() => toggleMapVisibility(config.id)}
             title={config.visible ? "Hide map" : "Show map"}
           >
-            {config.visible ? (
-              <Visibility fontSize="small" />
-            ) : (
-              <VisibilityOff fontSize="small" />
-            )}
+            {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
           </IconButton>
           {canRemoveMap && (
             <IconButton
@@ -248,7 +282,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             <InputLabel>Dataset</InputLabel>
             <Select
               value={config.dataset || ""}
-              onChange={(e) => updateMapConfig(config.id, { dataset: e.target.value })}
+              onChange={(e) =>
+                updateMapConfig(config.id, { dataset: e.target.value, metric: "", metric2: "" })
+              }
               label="Dataset"
             >
               {datasetList.map((ds) => (
@@ -281,230 +317,33 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </FormControl>
           )}
 
-          <Divider className={styles["section-divider"]} />
-
-          {/* Points of Interest */}
-          <Box
-            className={styles["section-header"]}
-            onClick={() => toggleSectionByMap(config.id, "points")}
-          >
-            <Typography variant="subtitle1" className={styles["section-title"]}>
-              Points of Interest
-            </Typography>
-            <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.points ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.points ?? false}>
-            <Stack spacing={1}>
-              {pointLayerConfigs.map((layer) => {
-                const IconComponent =
-                  FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[config.id]?.has(layer.id) ?? false;
-                return (
-                  <FormControlLabel
-                    key={layer.id}
-                    control={
-                      <Checkbox
-                        checked={isVisible}
-                        onChange={() => togglePointLayerVisibility(config.id, layer.id)}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <div className={styles["layer-label"]}>
-                        <span className={styles["layer-icon"]} style={{ color: layer.color }}>
-                          <IconComponent size="1rem" />
-                        </span>
-                        {layer.name}
-                      </div>
-                    }
-                  />
-                );
-              })}
-            </Stack>
-          </Collapse>
+          {config.dataset && config.metric && (
+            <FormControl size="small" fullWidth>
+              <InputLabel>Comparison Metric</InputLabel>
+              <Select
+                value={config.metric2 || ""}
+                onChange={(e) =>
+                  updateMapConfig(config.id, { metric2: e.target.value || undefined })
+                }
+                label="Comparison Metric"
+              >
+                <MenuItem value="">
+                  <em>None (univariate)</em>
+                </MenuItem>
+                {dataset &&
+                  dataset[config.dataset] &&
+                  Object.keys(dataset[config.dataset].columnThresholds || {})
+                    .filter((m) => m !== config.metric)
+                    .map((metricName) => (
+                      <MenuItem key={metricName} value={metricName}>
+                        {metricName}
+                      </MenuItem>
+                    ))}
+              </Select>
+            </FormControl>
+          )}
 
           <Divider className={styles["section-divider"]} />
-
-          {/* Hazards (Shapes) */}
-          <Box
-            className={styles["section-header"]}
-            onClick={() => toggleSectionByMap(config.id, "hazards")}
-          >
-            <Typography variant="subtitle1" className={styles["section-title"]}>
-              Hazards (Shapes)
-            </Typography>
-            <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.hazards ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.hazards ?? false}>
-            <Stack spacing={1} className={styles["section-content"]}>
-              {hazardLayerConfigs.map((parent) => {
-                const ParentIcon =
-                  FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
-                const isParentVisible =
-                  visibleHazardLayerIdsByMap[config.id]?.has(parent.id) ?? false;
-                return (
-                  <Box key={parent.id} className={styles["layer-toggle"]}>
-                    <Box display="flex" alignItems="center">
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={isParentVisible}
-                            onChange={() => toggleHazardLayerVisibility(config.id, parent.id)}
-                            size="small"
-                          />
-                        }
-                        label={
-                          <div className={styles["layer-label"]}>
-                            <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-                              <ParentIcon size="1rem" />
-                            </span>
-                            {parent.name}
-                          </div>
-                        }
-                      />
-                      {(parent.subLayers ?? []).length > 0 && (
-                        <IconButton
-                          size="small"
-                          className={styles["expand-icon"]}
-                          onClick={() => toggleExpand(parent.id)}
-                        >
-                          {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      )}
-                    </Box>
-                    {parent.subLayers && parent.subLayers.length > 0 && (
-                      <Collapse in={expandedHazards[parent.id]}>
-                        <Stack spacing={1} sx={{ pl: 3 }}>
-                          {parent.subLayers.map((sub) => {
-                            const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible =
-                              visibleHazardLayerIdsByMap[config.id]?.has(compositeId) ?? false;
-                            return (
-                              <FormControlLabel
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: -4.2 } }}
-                                key={sub.id}
-                                control={
-                                  <Checkbox
-                                    checked={isSubVisible}
-                                    onChange={() =>
-                                      toggleSubLayerVisibility(config.id, parent.id, sub.id)
-                                    }
-                                    size="small"
-                                  />
-                                }
-                                label={
-                                  <div className={styles["layer-label"]}>
-                                    <span
-                                      className={styles["layer-icon"]}
-                                      style={{ color: sub.color ?? parent.color ?? "#666" }}
-                                    ></span>
-                                    {sub.name}
-                                  </div>
-                                }
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Collapse>
-                    )}
-                  </Box>
-                );
-              })}
-            </Stack>
-          </Collapse>
-
-          <Divider className={styles["section-divider"]} />
-
-          {/* Hazards (Rasters) */}
-          <Box
-            className={styles["section-header"]}
-            onClick={() => toggleSectionByMap(config.id, "rasters")}
-          >
-            <Typography variant="subtitle1" className={styles["section-title"]}>
-              Hazards (Rasters)
-            </Typography>
-            <IconButton size="small">
-              {expandedSectionsByMap[config.id]?.rasters ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
-          <Collapse in={expandedSectionsByMap[config.id]?.rasters ?? false}>
-            <Stack spacing={1} className={styles["section-content"]}>
-              {rasterLayerConfigs.map((parent) => {
-                const ParentIcon =
-                  FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
-                const hasChildren = !!parent.subLayers?.length;
-                const CHECKBOX_WIDTH = 15;
-                const visibleRasterIdsForMap =
-                  visibleRasterLayerIdsByMap[config.id] ?? new Set<string>();
-                const isParentVisible = visibleRasterIdsForMap.has(parent.id);
-                return (
-                  <Box key={parent.id} className={styles["layer-toggle"]}>
-                    <Box display="flex" alignItems="center">
-                      <Box
-                        sx={{ width: CHECKBOX_WIDTH, display: "flex", justifyContent: "center" }}
-                      >
-                        {!hasChildren && (
-                          <Checkbox
-                            checked={isParentVisible}
-                            onChange={() => toggleRasterLayerVisibility(config.id, parent.id)}
-                            size="small"
-                          />
-                        )}
-                      </Box>
-                      <Typography
-                        className={styles["layer-label"]}
-                        sx={{ display: "flex", alignItems: "center", flexGrow: 1, ml: "21px" }}
-                      >
-                        <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-                          <ParentIcon size="1rem" />
-                        </span>
-                        {parent.name}
-                      </Typography>
-                      {hasChildren && (
-                        <IconButton
-                          size="small"
-                          className={styles["expand-icon"]}
-                          onClick={() => toggleExpandRaster(parent.id)}
-                        >
-                          {expandedRasters[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      )}
-                    </Box>
-                    {hasChildren && (
-                      <Collapse in={expandedRasters[parent.id]}>
-                        <Stack spacing={1} sx={{ pl: 3 }}>
-                          {parent.subLayers!.map((sub) => {
-                            const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible = visibleRasterIdsForMap.has(compositeId);
-                            return (
-                              <FormControlLabel
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
-                                key={sub.id}
-                                control={
-                                  <Checkbox
-                                    checked={isSubVisible}
-                                    onChange={() =>
-                                      toggleSubRasterLayerVisibility(config.id, parent.id, sub.id)
-                                    }
-                                    size="small"
-                                  />
-                                }
-                                label={sub.name}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Collapse>
-                    )}
-                  </Box>
-                );
-              })}
-            </Stack>
-          </Collapse>
         </Box>
       )}
     </Box>

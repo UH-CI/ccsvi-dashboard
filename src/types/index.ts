@@ -1,15 +1,15 @@
 import { Feature, Geometry } from "geojson";
 import { PathOptions } from "leaflet";
 
-export type ColorSchemeName = "viridis" | "reds" | "blues";
-
 export interface MapConfig {
   id: string;
   title: string;
   dataset: string;
   metric: string;
+  metric2?: string;
+  bivariateColorScheme?: string;
   visible: boolean;
-  colorScheme: ColorSchemeName;
+  colorScheme: string;
   activeFeature?: {
     geoid: string;
     lat: number;
@@ -40,10 +40,8 @@ export interface MetricsData {
   };
 }
 
-export interface ColorSchemes {
-  viridis: string[];
-  reds: string[];
-  blues: string[];
+export interface MetricConfig {
+  classificationMode?: string;
 }
 
 export interface Dataset {
@@ -52,10 +50,7 @@ export interface Dataset {
     metricLabel: string;
     hawaiianHomelands?: boolean;
     columnThresholds: {
-      [columnName: string]: {
-        thresholds: number[];
-        colorSchemes: ColorSchemes;
-      };
+      [columnName: string]: MetricConfig;
     };
   };
 }
@@ -141,6 +136,12 @@ export interface SubRasterLayerConfig {
   name: string;
   color?: string;
   filePath?: string;
+  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  units?: string;
+  /** Fixed legend panel width in px (same for all layers if unset; sublayer overrides parent). */
+  legendWidthPx?: number;
+  /** Fixed color ramp height in px. */
+  legendGradientHeightPx?: number;
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];
@@ -160,6 +161,12 @@ export interface RasterLayerConfig {
   icon?: string;
   color?: string;
   filePath?: string;
+  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  units?: string;
+  /** Fixed legend panel width in px (applies to this layer; sublayers may override). */
+  legendWidthPx?: number;
+  /** Fixed color ramp height in px. */
+  legendGradientHeightPx?: number;
   opacity?: number;
   type?: "raster";
   popupConfig?: {

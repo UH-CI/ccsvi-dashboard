@@ -1,127 +1,180 @@
-// Panel wrapper with collapse chip
-.panel-wrapper {
-  position: relative;
-  display: flex;
-  height: 100%;
-}
+// Top Bar ────────────────────────────────────────────────────────────────
 
-// Collapse toggle button - subtle icon button on the left side
-.collapse-toggle {
-  position: absolute !important;
-  left: -16px;
-  top: 16px;
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1200;
-  background-color: white !important;
-  border: 1px solid #e0e0e0 !important;
-  width: 32px !important;
-  height: 32px !important;
-  padding: 4px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.2s ease;
 
-  &:hover {
-    background-color: #f5f5f5 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16) !important;
-  }
-
-  .MuiSvgIcon-root {
-    font-size: 20px;
-    color: #666;
-  }
-}
-
-// Integrated Control Panel
-.integrated-control-panel {
-  width: 320px;
-  min-width: 320px;
-  max-width: 400px;
-  height: 100%;
-  overflow-y: auto;
-  background: white;
-  border-left: 1px solid #e0e0e0;
   display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
-
-  // Collapsed state - shows slim sidebar
-  &.collapsed {
-    width: 60px;
-    min-width: 60px;
-    overflow: hidden;
-  }
-}
-
-.control-header {
-  display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
-  padding: 16px;
+  gap: 8px;
+  padding: 6px 16px;
+  height: 52px;
+  box-sizing: border-box;
+
+  background: #ffffff;
   border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+// Brand ──────────────────────────────────────────────────────────────────
+
+.top-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.control-title {
-  font-weight: 600;
-  color: #333;
-  margin: 0;
+.top-bar-title {
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  white-space: nowrap;
+  color: #1a1a2e;
 }
 
-.control-section {
-  border-bottom: 1px solid #f0f0f0;
-
-  &:last-child {
-    border-bottom: none;
-  }
+.map-count-chip {
+  font-size: 0.7rem;
 }
 
-.section-header {
+.bar-divider {
+  margin: 4px 8px !important;
+  height: 28px;
+  align-self: center;
+}
+
+// Nav Buttons ────────────────────────────────────────────────────────────
+
+.top-bar-nav {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-  background: #fafafa;
-  transition: background-color 0.2s;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav-btn {
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 0.82rem !important;
+  border-radius: 8px !important;
+  color: #444 !important;
+  padding: 4px 10px !important;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease !important;
+  white-space: nowrap;
 
   &:hover {
-    background: #f0f0f0;
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #111 !important;
+  }
+
+  &--active {
+    background: rgba(25, 118, 210, 0.08) !important;
+    color: #1976d2 !important;
+
+    &:hover {
+      background: rgba(25, 118, 210, 0.12) !important;
+    }
   }
 }
 
-.section-title {
+.chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+}
+
+.chevron-open {
+  transform: rotate(180deg);
+  opacity: 1;
+  transition: transform 0.2s ease;
+}
+
+// Utility Actions ────────────────────────────────────────────────────────
+
+.top-bar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
-.section-icon {
-  font-size: 18px;
-  color: #666;
+.action-btn {
+  text-transform: none !important;
+  font-size: 0.82rem !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
 }
 
-.section-content {
+.reset-btn {
+  color: #666 !important;
+
+  &:hover {
+    color: #333 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+// MUI Menu overrides ──────────────────────────────────────────────────────
+
+.menu-paper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14) !important;
+  min-width: 260px !important;
+  max-width: 340px !important;
+  border: 1px solid #e0e0e0 !important;
+  margin-top: 4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+}
+
+.menu-list {
+  padding: 0 !important;
+}
+
+.menu-content {
   padding: 16px;
-  overflow-x: hidden;
-}
-
-.section-divider {
-  margin: 0;
-}
-
-.map-actions {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 12px;
+  outline: none;
 }
+
+// Shared dropdown content styles ─────────────────────────────────────────
+
+.popover-title {
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  color: #888 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.popover-add-btn {
+  text-transform: none !important;
+  border-radius: 8px !important;
+}
+
+// Map List ────────────────────────────────────────────────────────────────
 
 .map-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .map-item {
@@ -159,6 +212,42 @@
   gap: 8px;
 }
 
+// Section headers ─────────────────────────────────────────────────────────
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #fafafa;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+  font-size: 0.85rem !important;
+}
+
+.section-content {
+  padding: 8px 12px;
+}
+
+.section-divider {
+  margin: 0;
+}
+
+// Layer Toggles ───────────────────────────────────────────────────────────
+
 .layer-toggle {
   display: flex;
   flex-direction: column;
@@ -193,56 +282,62 @@
   align-items: center;
 }
 
-// Custom scrollbar for integrated panel
-.integrated-control-panel {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
+// Map Tab Selector ────────────────────────────────────────────────────────
 
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-  }
+.map-tab-selector {
+  display: flex;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
-// Collapsed sidebar styles
-.collapsed-sidebar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 0;
-  gap: 12px;
-  height: 100%;
-}
-
-.collapsed-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  cursor: pointer;
+.map-tab-btn {
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.82rem;
   border-radius: 8px;
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  transition: all 0.2s ease;
+  color: #444;
+  padding: 4px 10px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 
   &:hover {
-    background: #f0f0f0;
-    border-color: #d0d0d0;
-    transform: translateX(-2px);
+    background: rgba(0, 0, 0, 0.05);
+    color: #111;
   }
 
-  svg {
-    font-size: 20px;
-    color: #666;
+  &--active {
+    background: rgba(25, 118, 210, 0.08);
+    color: #1976d2;
+    font-weight: 600;
+
+    &:hover {
+      background: rgba(25, 118, 210, 0.12);
+    }
   }
+}
+
+.map-tab-input {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  outline: none;
+  padding: 0;
+  width: 80px;
+  min-width: 40px;
 }

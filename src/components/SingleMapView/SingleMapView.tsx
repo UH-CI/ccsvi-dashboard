@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
@@ -9,7 +10,8 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend } from "../MapLegend";
+import { MapLegend, RasterMapLegend } from "../MapLegend";
+import mapLegendStyles from "../MapLegend/MapLegend.module.scss";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
@@ -30,6 +32,7 @@ import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
+import { computeColorScale, computeBivariateColorScale } from "../../utils/colorThresholds";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -74,17 +77,6 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomCha
   }, [map]);
 
   useEffect(() => {
-    const handleResize = () => {
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [map]);
-
-  useEffect(() => {
     if (!onZoomChange) return;
 
     const handleZoomEnd = () => {
@@ -122,13 +114,25 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const config = useMapConfig(mapId);
 
     const { blockGroupData, metricsData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
-      useAppStore();
+      useAppStore(
+        useShallow((state) => ({
+          blockGroupData: state.blockGroupData,
+          metricsData: state.metricsData,
+          censusBlockGroups: state.censusBlockGroups,
+          hawaiianHomelands: state.hawaiianHomelands,
+          countyBoundaries: state.countyBoundaries,
+        })),
+      );
 
-    const { updateMapActiveFeature, setPrimaryMap, layerOpacities } = useMapStore();
+    const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
+    const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
+    const mapOpacities = useMapStore(
+      (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
+    );
 
     const effectiveDataset = config?.dataset;
     const effectiveMetric = config?.metric;
-    const mapOpacities = layerOpacities[mapId] || DEFAULT_LAYER_OPACITIES;
+    const effectiveMetric2 = config?.metric2;
 
     // Register this map's snapshot function
     useEffect(() => {
@@ -196,44 +200,84 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       if (!activeDatasetObject || !effectiveMetric) return null;
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
-
-    const getMetricValue = useMemo(() => {
-      if (!metricsData || !effectiveDataset || !effectiveMetric) {
-        return () => null;
-      }
-
-      const lookup = new Map<string, number>();
-      Object.entries(metricsData).forEach(([geoid, data]) => {
-        const metricObj = data.metrics?.[effectiveDataset]?.[effectiveMetric];
-        const value = metricObj?.proportion;
-        if (value !== undefined && value !== null) {
-          lookup.set(geoid, value);
-        }
-      });
-
-      return (geoid: string): number | null => {
-        if (!geoid) return null;
-        return lookup.get(geoid) ?? null;
+    
+    const metricsDerived = useMemo(() => {
+      const noData = {
+        allMetricValues: [] as number[],
+        getMetricValue: (): number | null => null,
+        allMetricValues2: [] as number[],
+        getMetricValue2: null as ((geoid: string) => number | null) | null,
       };
-    }, [metricsData, effectiveDataset, effectiveMetric]);
 
-    const activeColorScheme = config?.colorScheme || "viridis";
+      if (!metricsData || !effectiveDataset || !effectiveMetric) return noData;
 
-    const getColor = useMemo(() => {
-      return (value: number | null): string => {
-        if (value === null || !activeDatasetMetricObject) {
-          return "#cccccc";
+      const lookup1 = new Map<string, number>();
+      const lookup2 = effectiveMetric2 ? new Map<string, number>() : null;
+      const values1: number[] = [];
+      const values2: number[] = [];
+
+      for (const [geoid, data] of Object.entries(metricsData)) {
+        const datasetMetrics = data.metrics?.[effectiveDataset];
+
+        const v1 = datasetMetrics?.[effectiveMetric]?.proportion;
+        if (v1 !== undefined && v1 !== null) {
+          lookup1.set(geoid, v1);
+          values1.push(v1);
         }
-        const { thresholds, colorSchemes } = activeDatasetMetricObject;
-        const colors = colorSchemes[activeColorScheme];
-        for (let i = 0; i < thresholds.length; i++) {
-          if (value <= thresholds[i]) {
-            return colors[i];
+
+        if (lookup2 && effectiveMetric2) {
+          const v2 = datasetMetrics?.[effectiveMetric2]?.proportion;
+          if (v2 !== undefined && v2 !== null) {
+            lookup2.set(geoid, v2);
+            values2.push(v2);
           }
         }
-        return "#333";
+      }
+
+      return {
+        allMetricValues: values1,
+        getMetricValue: (geoid: string): number | null => lookup1.get(geoid) ?? null,
+        allMetricValues2: values2,
+        getMetricValue2: lookup2
+          ? (geoid: string): number | null => lookup2.get(geoid) ?? null
+          : null,
       };
-    }, [activeDatasetMetricObject, activeColorScheme]);
+    }, [metricsData, effectiveDataset, effectiveMetric, effectiveMetric2]);
+
+    const { allMetricValues, getMetricValue, allMetricValues2, getMetricValue2 } = metricsDerived;
+
+    const activeColorScheme = config?.colorScheme || "Viridis";
+    const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
+
+    const colorScale = useMemo(() => {
+      if (!activeDatasetMetricObject) return null;
+      return computeColorScale(
+        allMetricValues,
+        activeColorScheme,
+        activeDatasetMetricObject.classificationMode ?? "q",
+      );
+    }, [allMetricValues, activeColorScheme, activeDatasetMetricObject]);
+
+    const bivariateColorScale = useMemo(() => {
+      if (!effectiveMetric2 || allMetricValues2.length === 0) return null;
+      return computeBivariateColorScale(
+        allMetricValues,
+        allMetricValues2,
+        activeBivariateColorScheme,
+        activeDatasetMetricObject?.classificationMode ?? "q",
+      );
+    }, [allMetricValues, allMetricValues2, activeBivariateColorScheme, activeDatasetMetricObject, effectiveMetric2]);
+
+    const getColor = useMemo(() => {
+      if (bivariateColorScale) {
+        return (value1: number | null, value2?: number | null): string =>
+          bivariateColorScale.getColor(value1, value2 ?? null);
+      }
+      return (value: number | null): string => {
+        if (value === null || !colorScale) return "#cccccc";
+        return colorScale.getColor(value);
+      };
+    }, [colorScale, bivariateColorScale]);
 
     const handleFeatureClick = useCallback(
       (
@@ -401,8 +445,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
+                getMetricValue2={getMetricValue2 ?? undefined}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
+                activeMetric2={effectiveMetric2 ?? undefined}
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.census}
                 getColor={getColor}
@@ -415,8 +461,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
+                getMetricValue2={getMetricValue2 ?? undefined}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
+                activeMetric2={effectiveMetric2 ?? undefined}
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.hawaiianHomelands}
                 getColor={getColor}
@@ -477,12 +525,16 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             ))}
           </MapContainer>
 
-          <MapLegend
-            dataset={blockGroupData}
-            activeDataset={effectiveDataset}
-            activeDatasetMetric={effectiveMetric}
-            colorScheme={activeColorScheme}
-          />
+          <div className={mapLegendStyles.legendStack}>
+            <RasterMapLegend mapId={mapId} />
+            <MapLegend
+              limits={colorScale?.limits ?? null}
+              colors={colorScale?.getLegendColors() ?? null}
+              bivariate={bivariateColorScale ?? undefined}
+              metric1Label={effectiveMetric ?? undefined}
+              metric2Label={effectiveMetric2 ?? undefined}
+            />
+          </div>
         </div>
 
         <Snackbar

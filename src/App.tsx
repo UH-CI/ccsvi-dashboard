@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
@@ -10,7 +10,7 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
-  useMapStore,
+  usePrimaryMapState,
 } from "./stores";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
@@ -19,11 +19,17 @@ import { initializeStoresFromUrl } from "./utils/storeInitializer";
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
+  const [isTableOpen, setIsTableOpen] = useState(true);
+  const [isGridView, setIsGridView] = useState(true);
+
+  const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
+    setIsTableOpen(!isCollapsed);
+  }, []);
+
   // Get the active/primary map's dataset for the table viewer
-  const primaryDataset = useMapStore((state) => {
-    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
-    return primary?.dataset || "";
-  });
+  const { dataset: primaryDataset } = usePrimaryMapState();
+
+  const tableVisible = !!primaryDataset && isTableOpen;
 
   // Get data from stores
   const errors = useAppStore((state) => state.errors);
@@ -90,13 +96,15 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
+      <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} />
-
-        <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
+        <MultiMapContainer maxMaps={4} isTableOpen={tableVisible} isGridView={isGridView} />
+        <TableViewer
+          activeDataset={primaryDataset}
+          datasetInfo={activeDatasetObject}
+          onSizeChange={handleTableSizeChange}
+        />
       </div>
-
-      <ControlPanel maxMaps={4} />
     </div>
   );
 };

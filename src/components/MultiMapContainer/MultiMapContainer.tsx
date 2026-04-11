@@ -5,9 +5,15 @@ import styles from "./MultiMapContainer.module.scss";
 
 interface MultiMapContainerProps {
   maxMaps?: number;
+  isTableOpen?: boolean;
+  isGridView?: boolean;
 }
 
-export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ maxMaps = 4 }) => {
+export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
+  maxMaps = 4,
+  isTableOpen = false,
+  isGridView = true,
+}) => {
   // Use visible maps from mapStore
   const visibleMaps = useVisibleMaps();
   const primaryMapId = useMapStore((state) => state.primaryMapId);
@@ -15,19 +21,29 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({ maxMaps = 
   const gridLayout = useMemo(() => {
     const count = visibleMaps.length;
 
+    if (!isGridView || (isTableOpen && count >= 3)) {
+      return { rows: 1, cols: count };
+    }
+
     if (count === 1) return { rows: 1, cols: 1 };
     if (count === 2) return { rows: 1, cols: 2 };
     if (count === 3) return { rows: 2, cols: 2 };
     if (count === 4) return { rows: 2, cols: 2 };
 
     return { rows: 1, cols: 1 };
-  }, [visibleMaps]);
+  }, [visibleMaps, isTableOpen, isGridView]);
+
+  const gridModifier = useMemo(() => {
+    const count = visibleMaps.length;
+    if (!isGridView || (isTableOpen && count >= 3)) return styles["maps-grid--table-open"];
+    return "";
+  }, [visibleMaps.length, isTableOpen, isGridView]);
 
   return (
     <div className={styles["multi-map-container"]}>
       <div className={styles["maps-layout"]}>
         <div
-          className={styles["maps-grid"]}
+          className={`${styles["maps-grid"]} ${gridModifier}`}
           style={{
             gridTemplateRows: `repeat(${gridLayout.rows}, 1fr)`,
             gridTemplateColumns: `repeat(${gridLayout.cols}, 1fr)`,
