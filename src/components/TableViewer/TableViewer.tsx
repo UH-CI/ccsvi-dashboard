@@ -4,20 +4,32 @@ import {
   Typography,
   Box,
   Collapse,
-  CircularProgress,
   Alert,
   IconButton,
   Chip,
+  Divider,
+  Button,
 } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  GridToolbarExport,
+  useGridApiContext,
+} from "@mui/x-data-grid";
 import {
   KeyboardArrowUp,
   KeyboardArrowDown,
   Fullscreen,
   FullscreenExit,
+  Search,
 } from "@mui/icons-material";
 import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser";
 import { useTableResize } from "../../hooks/useTableResize";
+import { useTheme } from "@mui/material";
 import { useMapStore, usePrimaryMapState } from "../../stores";
 import styles from "./TableViewer.module.scss";
 
@@ -54,6 +66,103 @@ const calculateColumnWidth = (header: string): number => {
   const minWidth = 150;
   const maxWidth = 400;
   return Math.min(Math.max(baseWidth, minWidth), maxWidth);
+};
+
+interface CustomToolbarProps {
+  datasetLabel: string;
+  rowCount: number;
+  isFullHeight: boolean;
+  activeDataset: string;
+  toggleCollapse: () => void;
+  toggleFullHeight: () => void;
+}
+
+const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
+  datasetLabel,
+  rowCount,
+  isFullHeight,
+  activeDataset,
+  toggleCollapse,
+  toggleFullHeight,
+}) => {
+  const theme = useTheme();
+  const apiRef = useGridApiContext();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (apiRef.current as any).setQuickFilterValues(value ? [value] : []);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchValue("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (apiRef.current as any).setQuickFilterValues([]);
+  };
+
+  return (
+  <GridToolbarContainer
+    sx={{
+      backgroundColor: theme.palette.primary.main,
+      color: "white",
+      px: 1,
+      py: 0.5,
+      gap: "4px",
+      alignItems: "center",
+      flexWrap: "wrap",
+      "& .MuiButton-root": { color: "white", fontSize: "0.75rem", px: 0.75 },
+    }}
+  >
+    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "white", whiteSpace: "nowrap", mr: 0.5 }}>
+      {datasetLabel}
+    </Typography>
+    <Chip label={`${rowCount} rows`} size="small" className={styles.chip} />
+    <Box sx={{ flex: 1 }} />
+    <GridToolbarColumnsButton />
+    <GridToolbarFilterButton />
+    <GridToolbarDensitySelector />
+    <GridToolbarExport
+      csvOptions={{ fileName: `${activeDataset}_export`, delimiter: ",", utf8WithBom: true }}
+      printOptions={{ hideFooter: true, hideToolbar: true }}
+    />
+    {searchOpen ? (
+      <Box sx={{ display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.4)", borderRadius: "4px", px: 0.75 }}>
+        <Search sx={{ color: "white", fontSize: "1rem", mr: 0.5 }} />
+        <input
+          autoFocus
+          value={searchValue}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Escape") closeSearch(); }}
+          placeholder="Search..."
+          style={{ color: "white", background: "transparent", border: "none", outline: "none", fontSize: "0.75rem", width: "120px", caretColor: "white", padding: "3px 0" }}
+        />
+      </Box>
+    ) : (
+      <Button size="small" startIcon={<Search sx={{ fontSize: "1rem !important" }} />} onClick={() => setSearchOpen(true)}>
+        Search
+      </Button>
+    )}
+    <Divider
+      orientation="vertical"
+      flexItem
+      sx={{ borderColor: "rgba(255,255,255,0.3)", mx: 0.5 }}
+    />
+    <IconButton
+      size="small"
+      onClick={toggleFullHeight}
+      sx={{ color: "white" }}
+      title={isFullHeight ? "Restore table" : "Expand to full height"}
+    >
+      {isFullHeight ? <FullscreenExit /> : <Fullscreen />}
+    </IconButton>
+    <IconButton size="small" onClick={toggleCollapse} sx={{ color: "white" }} title="Collapse table">
+      <KeyboardArrowDown />
+    </IconButton>
+  </GridToolbarContainer>
+  );
 };
 
 export const TableViewer: React.FC<TableViewerProps> = ({
@@ -190,12 +299,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return datasetInfo.metricLabel || activeDataset.replace(/_/g, " ").toUpperCase();
   }, [activeDataset, datasetInfo]);
 
-  // Calculate content height for proper scrolling
-  const contentHeight = isCollapsed
-    ? 0
-    : isFullHeight
-      ? "calc(100% - 3.125rem)"
-      : "calc(40vh - 3.125rem)";
+  const contentHeight = isFullHeight ? "100%" : "40vh";
 
   if (!activeDataset) {
     return null;
@@ -206,90 +310,56 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       elevation={3}
       className={`${styles["table-viewer"]} ${isFullHeight ? styles["table-viewer--full"] : isCollapsed ? styles["table-viewer--collapsed"] : styles["table-viewer--expanded"]}`}
     >
-      <Box
-        className={`${styles.header} ${isCollapsed && !isFullHeight ? styles["header--collapsed"] : styles["header--expanded"]}`}
-        sx={{ backgroundColor: "primary.main" }}
-      >
-        <Box className={styles["header-content"]}>
-          <Typography variant="h6" component="div" className={styles.title}>
-            Dataset: {datasetLabel}
+      {isCollapsed && (
+        <Box
+          className={styles.header}
+          sx={{ backgroundColor: "primary.main", cursor: "pointer" }}
+          onClick={toggleCollapse}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "white" }}>
+            {datasetLabel}
           </Typography>
-          {!isCollapsed && rows.length > 0 && (
-            <Chip label={`${rows.length} rows`} size="small" className={styles.chip} />
-          )}
-        </Box>
-
-        <Box className={styles["header-actions"]}>
-          <IconButton
-            size="small"
-            onClick={toggleFullHeight}
-            className={styles["toggle-button"]}
-            sx={{ color: "white" }}
-            title={isFullHeight ? "Restore table" : "Expand to full height"}
-          >
-            {isFullHeight ? <FullscreenExit /> : <Fullscreen />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={toggleCollapse}
-            className={styles["toggle-button"]}
-            sx={{ color: "white" }}
-            title={isCollapsed ? "Expand table" : "Collapse table"}
-          >
-            {isCollapsed ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+          <IconButton size="small" sx={{ color: "white" }} title="Expand table">
+            <KeyboardArrowUp />
           </IconButton>
         </Box>
-      </Box>
+      )}
 
-      {/* Using Collapse with timeout to sync with CSS transition */}
       <Collapse
         in={!isCollapsed}
-        timeout={300} // Match the CSS transition duration
-        unmountOnExit={false} // Keep content mounted to prevent layout shift
+        timeout={300}
+        unmountOnExit={false}
       >
         <Box
           className={styles.content}
           sx={{
-            height: contentHeight, // Explicit height for scrolling
-            overflow: "hidden", // Establish scrolling context
+            height: contentHeight,
+            overflow: "hidden",
           }}
         >
-          {loading && (
-            <Box className={styles["loading-container"]}>
-              <CircularProgress />
-            </Box>
-          )}
-
           {error && (
             <Alert severity="error" className={styles["error-alert"]}>
               {error}
             </Alert>
           )}
 
-          {tableData && !loading && !error && (
+          {!error && (
             <Box className={styles["data-grid-container"]}>
               <DataGrid
                 rows={rows}
                 columns={columns}
-                showToolbar // Modern way to enable toolbar
+                loading={loading}
+                showToolbar
+                slots={{ toolbar: CustomTableToolbar }}
                 slotProps={{
                   toolbar: {
-                    csvOptions: {
-                      fileName: `${activeDataset}_export`,
-                      delimiter: ",",
-                      utf8WithBom: true,
-                    },
-                    printOptions: {
-                      hideFooter: true,
-                      hideToolbar: true,
-                    },
-                    quickFilterProps: {
-                      // Treat the entire search input as one term instead of
-                      // splitting by spaces. Splitting causes short tokens
-                      // like "1" to match every row via numeric columns.
-                      quickFilterParser: (input: string) => [input],
-                    },
-                  },
+                    datasetLabel,
+                    rowCount: rows.length,
+                    isFullHeight,
+                    activeDataset,
+                    toggleCollapse,
+                    toggleFullHeight,
+                  } as CustomToolbarProps,
                 }}
                 initialState={{
                   pagination: {
@@ -310,20 +380,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   height: "100%",
                   width: "100%",
                   border: "none",
-
-                  // Toolbar styling
-                  "& .MuiDataGrid-toolbarContainer": {
-                    padding: "8px 16px",
-                    borderBottom: "1px solid #e0e0e0",
-                    backgroundColor: "#f9f9f9",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                    "& .MuiButton-root": {
-                      fontSize: "0.75rem",
-                      padding: "4px 8px",
-                      minWidth: "auto",
-                    },
-                  },
 
                   // Main container - allow scrolling
                   "& .MuiDataGrid-main": {
