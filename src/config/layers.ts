@@ -40,9 +40,9 @@ export const POLYGON_LAYERS = {
     styles: {
       default: {
         fillColor: "#cccccc",
-        weight: 0.5,
+        weight: 1.5,
         opacity: 1,
-        color: "#333",
+        color: "#000000",
         fillOpacity: 0.3,
       },
       highlight: {

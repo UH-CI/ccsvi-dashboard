@@ -251,7 +251,10 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           )}
           <IconButton
             size="small"
-            onClick={() => { setIsEditingTitle(true); setTitleEditValue(config.title); }}
+            onClick={() => {
+              setIsEditingTitle(true);
+              setTitleEditValue(config.title);
+            }}
             title="Rename map"
           >
             <Edit fontSize="small" />
@@ -297,14 +300,14 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
           {config.dataset && (
             <FormControl size="small" fullWidth>
-              <InputLabel>Metric</InputLabel>
+              <InputLabel>Vulnerability Indicator</InputLabel>
               <Select
                 value={config.metric}
                 onChange={(e) => updateMapConfig(config.id, { metric: e.target.value })}
-                label="Metric"
+                label="Vulnerability Indicator"
               >
                 <MenuItem value="">
-                  <em>Select Metric</em>
+                  <em>Select Vulnerability Indicator</em>
                 </MenuItem>
                 {dataset &&
                   dataset[config.dataset] &&
@@ -319,13 +322,13 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
           {config.dataset && config.metric && (
             <FormControl size="small" fullWidth>
-              <InputLabel>Comparison Metric</InputLabel>
+              <InputLabel>Comparison Vulnerability Indicator</InputLabel>
               <Select
                 value={config.metric2 || ""}
                 onChange={(e) =>
                   updateMapConfig(config.id, { metric2: e.target.value || undefined })
                 }
-                label="Comparison Metric"
+                label="Comparison Vulnerability Indicator"
               >
                 <MenuItem value="">
                   <em>None (univariate)</em>

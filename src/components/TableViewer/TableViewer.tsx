@@ -401,6 +401,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 columns={columns}
                 loading={loading}
                 showToolbar
+                density="compact"
                 slots={{ toolbar: CustomTableToolbar }}
                 slotProps={{
                   toolbar: {
