@@ -66,7 +66,10 @@ const cleanHeaderForDisplay = (header: string): string => {
 
 const calculateColumnWidth = (header: string): number => {
   const cleanedHeader = cleanHeaderForDisplay(header);
-  const baseWidth = cleanedHeader.length * 6;
+  // Longest unbreakable run governs the min width needed to avoid mid-word wraps.
+  const longestToken = cleanedHeader.split(/\s+/).reduce((a, b) => (a.length >= b.length ? a : b), "");
+  const tokenWidth = longestToken.length * 7.5 + 40; // 0.75rem bold glyph avg + sort icon/padding
+  const baseWidth = Math.max(cleanedHeader.length * 6, tokenWidth);
   const minWidth = 150;
   const maxWidth = 400;
   return Math.min(Math.max(baseWidth, minWidth), maxWidth);
@@ -445,33 +448,55 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-columnHeaders": {
                     backgroundColor: "#f5f5f5",
                     borderBottom: "1px solid #e0e0e0",
-                    minHeight: "100px !important",
-                    maxHeight: "120px !important",
+                    minHeight: "60px !important",
+                    maxHeight: "80px !important",
+                  },
+
+                  "& .MuiDataGrid-columnHeaderDraggableContainer": {
+                    flexDirection: "row !important",
                   },
 
                   "& .MuiDataGrid-columnHeader": {
                     backgroundColor: "#f5f5f5",
-                    padding: "4px 4px !important",
+                    padding: "2px 4px !important",
                     height: "auto !important",
-                    minHeight: "100px !important",
+                    minHeight: "60px !important",
+                    maxHeight: "80px !important",
 
                     "& .MuiDataGrid-columnHeaderTitle": {
                       whiteSpace: "normal !important",
-                      lineHeight: "1.3 !important",
+                      lineHeight: "1.2 !important",
                       fontWeight: "bold !important",
                       fontSize: "0.75rem !important",
-                      overflow: "visible !important",
-                      textOverflow: "unset !important",
-                      wordBreak: "break-word !important",
+                      overflow: "hidden !important",
+                      textOverflow: "ellipsis",
+                      wordBreak: "normal !important",
+                      overflowWrap: "break-word",
                       hyphens: "auto",
-                      height: "auto !important",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: "vertical",
                     },
 
                     "& .MuiDataGrid-columnHeaderTitleContainer": {
                       height: "100% !important",
-                      flexDirection: "column !important",
-                      justifyContent: "center !important",
+                      flexDirection: "row !important",
+                      justifyContent: "space-between !important",
                       alignItems: "center !important",
+                      gap: "2px",
+                    },
+
+                    "& .MuiDataGrid-columnHeaderTitleContainerContent": {
+                      flex: "1 1 auto",
+                      minWidth: 0,
+                      overflow: "hidden",
+                    },
+
+                    "& .MuiDataGrid-iconButtonContainer": {
+                      flex: "0 0 auto",
+                      width: "auto !important",
+                      visibility: "visible",
+                      marginLeft: "2px",
                     },
                   },
 
