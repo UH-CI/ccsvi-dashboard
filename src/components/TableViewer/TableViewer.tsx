@@ -4,20 +4,36 @@ import {
   Typography,
   Box,
   Collapse,
-  CircularProgress,
   Alert,
   IconButton,
   Chip,
+  Divider,
+  Button,
 } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  Toolbar,
+  ColumnsPanelTrigger,
+  FilterPanelTrigger,
+  ExportCsv,
+  QuickFilter,
+  QuickFilterTrigger,
+  QuickFilterControl,
+} from "@mui/x-data-grid";
 import {
   KeyboardArrowUp,
   KeyboardArrowDown,
   Fullscreen,
   FullscreenExit,
+  Search,
+  ViewColumn,
+  FilterList,
+  SaveAlt,
 } from "@mui/icons-material";
 import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser";
 import { useTableResize } from "../../hooks/useTableResize";
+import { useTheme } from "@mui/material";
 import { useMapStore, usePrimaryMapState } from "../../stores";
 import styles from "./TableViewer.module.scss";
 
@@ -50,10 +66,161 @@ const cleanHeaderForDisplay = (header: string): string => {
 
 const calculateColumnWidth = (header: string): number => {
   const cleanedHeader = cleanHeaderForDisplay(header);
-  const baseWidth = cleanedHeader.length * 6;
+  // Longest unbreakable run governs the min width needed to avoid mid-word wraps.
+  const longestToken = cleanedHeader.split(/\s+/).reduce((a, b) => (a.length >= b.length ? a : b), "");
+  const tokenWidth = longestToken.length * 7.5 + 40; // 0.75rem bold glyph avg + sort icon/padding
+  const baseWidth = Math.max(cleanedHeader.length * 6, tokenWidth);
   const minWidth = 150;
   const maxWidth = 400;
   return Math.min(Math.max(baseWidth, minWidth), maxWidth);
+};
+
+interface CustomToolbarProps {
+  datasetLabel: string;
+  rowCount: number;
+  isFullHeight: boolean;
+  activeDataset: string;
+  toggleCollapse: () => void;
+  toggleFullHeight: () => void;
+}
+
+declare module "@mui/x-data-grid" {
+  interface ToolbarPropsOverrides {
+    datasetLabel: string;
+    rowCount: number;
+    isFullHeight: boolean;
+    activeDataset: string;
+    toggleCollapse: () => void;
+    toggleFullHeight: () => void;
+  }
+}
+
+const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
+  datasetLabel,
+  rowCount,
+  isFullHeight,
+  activeDataset,
+  toggleCollapse,
+  toggleFullHeight,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Toolbar
+      render={(props) => (
+        <Box
+          {...props}
+          sx={{
+            display: "flex",
+            backgroundColor: theme.palette.primary.main,
+            color: "white",
+            px: 1,
+            py: 0.5,
+            gap: "4px",
+            alignItems: "center",
+            flexWrap: "wrap",
+            "& .MuiButton-root": { color: "white", fontSize: "0.75rem", px: 0.75 },
+          }}
+        />
+      )}
+    >
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: 600, color: "white", whiteSpace: "nowrap", mr: 0.5 }}
+      >
+        {datasetLabel}
+      </Typography>
+      <Chip label={`${rowCount} rows`} size="small" className={styles.chip} />
+      <Box sx={{ flex: 1 }} />
+      <ColumnsPanelTrigger
+        size="small"
+        startIcon={<ViewColumn sx={{ fontSize: "1rem !important" }} />}
+      >
+        Columns
+      </ColumnsPanelTrigger>
+      <FilterPanelTrigger
+        size="small"
+        startIcon={<FilterList sx={{ fontSize: "1rem !important" }} />}
+      >
+        Filters
+      </FilterPanelTrigger>
+      <ExportCsv
+        size="small"
+        startIcon={<SaveAlt sx={{ fontSize: "1rem !important" }} />}
+        options={{ fileName: `${activeDataset}_export`, delimiter: ",", utf8WithBom: true }}
+      >
+        Export CSV
+      </ExportCsv>
+      <QuickFilter parser={(v) => (v.trim() ? [v] : [])}>
+        <QuickFilterTrigger
+          render={(props, state) => (
+            <Button
+              size="small"
+              startIcon={<Search sx={{ fontSize: "1rem !important" }} />}
+              {...props}
+              sx={{ display: state.expanded ? "none" : undefined }}
+            >
+              Search
+            </Button>
+          )}
+        />
+        <QuickFilterControl
+          render={(props, state) => (
+            <Box
+              sx={{
+                display: state.expanded ? "flex" : "none",
+                alignItems: "center",
+                border: "1px solid rgba(255,255,255,0.4)",
+                borderRadius: "4px",
+                px: 0.75,
+              }}
+            >
+              <Search sx={{ color: "white", fontSize: "1rem", mr: 0.5 }} />
+              <input
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ref={props.ref as any}
+                value={(props.value as string) ?? ""}
+                onChange={props.onChange as React.ChangeEventHandler<HTMLInputElement>}
+                onKeyDown={props.onKeyDown as React.KeyboardEventHandler<HTMLInputElement>}
+                placeholder="Search..."
+                style={{
+                  color: "white",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  fontSize: "0.75rem",
+                  width: "120px",
+                  caretColor: "white",
+                  padding: "3px 0",
+                }}
+              />
+            </Box>
+          )}
+        />
+      </QuickFilter>
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{ borderColor: "rgba(255,255,255,0.3)", mx: 0.5 }}
+      />
+      <IconButton
+        size="small"
+        onClick={toggleFullHeight}
+        sx={{ color: "white" }}
+        title={isFullHeight ? "Restore table" : "Expand to full height"}
+      >
+        {isFullHeight ? <FullscreenExit /> : <Fullscreen />}
+      </IconButton>
+      <IconButton
+        size="small"
+        onClick={toggleCollapse}
+        sx={{ color: "white" }}
+        title="Collapse table"
+      >
+        <KeyboardArrowDown />
+      </IconButton>
+    </Toolbar>
+  );
 };
 
 export const TableViewer: React.FC<TableViewerProps> = ({
@@ -190,12 +357,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return datasetInfo.metricLabel || activeDataset.replace(/_/g, " ").toUpperCase();
   }, [activeDataset, datasetInfo]);
 
-  // Calculate content height for proper scrolling
-  const contentHeight = isCollapsed
-    ? 0
-    : isFullHeight
-      ? "calc(100% - 3.125rem)"
-      : "calc(40vh - 3.125rem)";
+  const contentHeight = isFullHeight ? "100%" : "40vh";
 
   if (!activeDataset) {
     return null;
@@ -206,89 +368,52 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       elevation={3}
       className={`${styles["table-viewer"]} ${isFullHeight ? styles["table-viewer--full"] : isCollapsed ? styles["table-viewer--collapsed"] : styles["table-viewer--expanded"]}`}
     >
-      <Box
-        className={`${styles.header} ${isCollapsed && !isFullHeight ? styles["header--collapsed"] : styles["header--expanded"]}`}
-        sx={{ backgroundColor: "primary.main" }}
-      >
-        <Box className={styles["header-content"]}>
-          <Typography variant="h6" component="div" className={styles.title}>
-            Dataset: {datasetLabel}
+      {isCollapsed && (
+        <Box
+          className={styles.header}
+          sx={{ backgroundColor: "primary.main", cursor: "pointer" }}
+          onClick={toggleCollapse}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "white" }}>
+            {datasetLabel}
           </Typography>
-          {!isCollapsed && rows.length > 0 && (
-            <Chip label={`${rows.length} rows`} size="small" className={styles.chip} />
-          )}
-        </Box>
-
-        <Box className={styles["header-actions"]}>
-          <IconButton
-            size="small"
-            onClick={toggleFullHeight}
-            className={styles["toggle-button"]}
-            sx={{ color: "white" }}
-            title={isFullHeight ? "Restore table" : "Expand to full height"}
-          >
-            {isFullHeight ? <FullscreenExit /> : <Fullscreen />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={toggleCollapse}
-            className={styles["toggle-button"]}
-            sx={{ color: "white" }}
-            title={isCollapsed ? "Expand table" : "Collapse table"}
-          >
-            {isCollapsed ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+          <IconButton size="small" sx={{ color: "white" }} title="Expand table">
+            <KeyboardArrowUp />
           </IconButton>
         </Box>
-      </Box>
+      )}
 
-      {/* Using Collapse with timeout to sync with CSS transition */}
-      <Collapse
-        in={!isCollapsed}
-        timeout={300} // Match the CSS transition duration
-        unmountOnExit={false} // Keep content mounted to prevent layout shift
-      >
+      <Collapse in={!isCollapsed} timeout={300} unmountOnExit={false}>
         <Box
           className={styles.content}
           sx={{
-            height: contentHeight, // Explicit height for scrolling
-            overflow: "hidden", // Establish scrolling context
+            height: contentHeight,
+            overflow: "hidden",
           }}
         >
-          {loading && (
-            <Box className={styles["loading-container"]}>
-              <CircularProgress />
-            </Box>
-          )}
-
           {error && (
             <Alert severity="error" className={styles["error-alert"]}>
               {error}
             </Alert>
           )}
 
-          {tableData && !loading && !error && (
+          {!error && (
             <Box className={styles["data-grid-container"]}>
               <DataGrid
                 rows={rows}
                 columns={columns}
-                showToolbar // Modern way to enable toolbar
+                loading={loading}
+                showToolbar
+                density="compact"
+                slots={{ toolbar: CustomTableToolbar }}
                 slotProps={{
                   toolbar: {
-                    csvOptions: {
-                      fileName: `${activeDataset}_export`,
-                      delimiter: ",",
-                      utf8WithBom: true,
-                    },
-                    printOptions: {
-                      hideFooter: true,
-                      hideToolbar: true,
-                    },
-                    quickFilterProps: {
-                      // Treat the entire search input as one term instead of
-                      // splitting by spaces. Splitting causes short tokens
-                      // like "1" to match every row via numeric columns.
-                      quickFilterParser: (input: string) => [input],
-                    },
+                    datasetLabel,
+                    rowCount: rows.length,
+                    isFullHeight,
+                    activeDataset,
+                    toggleCollapse,
+                    toggleFullHeight,
                   },
                 }}
                 initialState={{
@@ -298,32 +423,16 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
                 onRowClick={geoidColIndex >= 0 && !!primaryMapMetric ? handleRowClick : undefined}
-                density="compact"
                 hideFooter={false}
                 // Enable column management
                 disableColumnMenu={false}
                 disableColumnFilter={false}
                 disableColumnSelector={false}
-                disableDensitySelector={false}
                 // CRITICAL: All DataGrid styling moved to sx prop to avoid conflicts
                 sx={{
                   height: "100%",
                   width: "100%",
                   border: "none",
-
-                  // Toolbar styling
-                  "& .MuiDataGrid-toolbarContainer": {
-                    padding: "8px 16px",
-                    borderBottom: "1px solid #e0e0e0",
-                    backgroundColor: "#f9f9f9",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                    "& .MuiButton-root": {
-                      fontSize: "0.75rem",
-                      padding: "4px 8px",
-                      minWidth: "auto",
-                    },
-                  },
 
                   // Main container - allow scrolling
                   "& .MuiDataGrid-main": {
@@ -339,33 +448,55 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                   "& .MuiDataGrid-columnHeaders": {
                     backgroundColor: "#f5f5f5",
                     borderBottom: "1px solid #e0e0e0",
-                    minHeight: "100px !important",
-                    maxHeight: "120px !important",
+                    minHeight: "60px !important",
+                    maxHeight: "80px !important",
+                  },
+
+                  "& .MuiDataGrid-columnHeaderDraggableContainer": {
+                    flexDirection: "row !important",
                   },
 
                   "& .MuiDataGrid-columnHeader": {
                     backgroundColor: "#f5f5f5",
-                    padding: "4px 4px !important",
+                    padding: "2px 4px !important",
                     height: "auto !important",
-                    minHeight: "100px !important",
+                    minHeight: "60px !important",
+                    maxHeight: "80px !important",
 
                     "& .MuiDataGrid-columnHeaderTitle": {
                       whiteSpace: "normal !important",
-                      lineHeight: "1.3 !important",
+                      lineHeight: "1.2 !important",
                       fontWeight: "bold !important",
                       fontSize: "0.75rem !important",
-                      overflow: "visible !important",
-                      textOverflow: "unset !important",
-                      wordBreak: "break-word !important",
+                      overflow: "hidden !important",
+                      textOverflow: "ellipsis",
+                      wordBreak: "normal !important",
+                      overflowWrap: "break-word",
                       hyphens: "auto",
-                      height: "auto !important",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: "vertical",
                     },
 
                     "& .MuiDataGrid-columnHeaderTitleContainer": {
                       height: "100% !important",
-                      flexDirection: "column !important",
-                      justifyContent: "center !important",
+                      flexDirection: "row !important",
+                      justifyContent: "space-between !important",
                       alignItems: "center !important",
+                      gap: "2px",
+                    },
+
+                    "& .MuiDataGrid-columnHeaderTitleContainerContent": {
+                      flex: "1 1 auto",
+                      minWidth: 0,
+                      overflow: "hidden",
+                    },
+
+                    "& .MuiDataGrid-iconButtonContainer": {
+                      flex: "0 0 auto",
+                      width: "auto !important",
+                      visibility: "visible",
+                      marginLeft: "2px",
                     },
                   },
 

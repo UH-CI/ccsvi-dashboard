@@ -46,7 +46,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
   return (
     <div className={styles.legend}>
-      {/*<div className={styles.legend__title}>Legend</div>*/}
+      <div className={styles.legend__title}>Vulnerability Indicator</div>
       {bivariate ? (
         <div className={styles["legend__bivariate"]}>
           <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
