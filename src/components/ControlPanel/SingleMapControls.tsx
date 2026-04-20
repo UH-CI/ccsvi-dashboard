@@ -1,15 +1,11 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
   Divider,
-  Stack,
-  Collapse,
   IconButton,
   Box,
   Menu,
@@ -17,25 +13,13 @@ import {
   ListSubheader,
 } from "@mui/material";
 import {
-  ExpandMore,
-  ExpandLess,
   Visibility,
   VisibilityOff,
   Close,
   Palette,
   Edit,
 } from "@mui/icons-material";
-import * as FaIcons from "react-icons/fa";
-import {
-  useAppStore,
-  useMapStore,
-  useMapConfig,
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
-  DEFAULT_LAYER_OPACITIES,
-  defaultExpandedSections,
-} from "../../stores";
+import { useAppStore, useMapStore, useMapConfig, DEFAULT_LAYER_OPACITIES } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 
 interface SingleMapControlsProps {
@@ -76,8 +60,8 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   if (!config) return null;
 
   return (
-    <Box className={styles["map-item"]}>
-      <Box className={styles["map-item-header"]}>
+    <Box className={styles["single-map-controls"]}>
+      <Box className={styles["single-map-actions"]}>
         {isEditingTitle ? (
           <input
             className={styles["map-tab-input"]}
@@ -97,11 +81,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             }}
           />
         ) : (
-          <Typography variant="body2" className={styles["map-item-title"]}>
+          <Typography variant="body2" className={styles["single-map-title"]}>
             {config.title}
           </Typography>
         )}
-        <Box className={styles["map-item-actions"]}>
+        <Box className={styles["single-map-action-btns"]}>
           {config.visible && config.dataset && config.metric && (
             <>
               <IconButton
@@ -280,7 +264,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
       </Box>
 
       {config.visible && (
-        <Box className={styles["map-item-config"]}>
+        <Box className={styles["single-map-fields"]}>
           <FormControl size="small" fullWidth>
             <InputLabel>Dataset</InputLabel>
             <Select
@@ -345,8 +329,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               </Select>
             </FormControl>
           )}
-
-          <Divider className={styles["section-divider"]} />
         </Box>
       )}
     </Box>

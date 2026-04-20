@@ -177,36 +177,39 @@
   gap: 8px;
 }
 
-.map-item {
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background: #fafafa;
-  overflow: hidden;
+// Single Map Controls (tab view) ──────────────────────────────────────────
+
+.single-map-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.map-item-header {
+.single-map-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: #f0f0f0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.map-item-title {
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-}
-
-.map-item-actions {
-  display: flex;
+  justify-content: space-between;
   gap: 4px;
 }
 
-.map-item-config {
-  padding: 12px;
-  background: white;
+.single-map-title {
+  color: #666;
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.single-map-action-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.single-map-fields {
   display: flex;
   flex-direction: column;
   gap: 8px;
