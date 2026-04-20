@@ -40,6 +40,7 @@ interface IntegratedControlPanelProps {
   maxMaps: number;
   isGridView?: boolean;
   onToggleGridView?: () => void;
+  onSnapshot?: () => void | Promise<void>;
 }
 
 type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
@@ -69,6 +70,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   maxMaps,
   isGridView = true,
   onToggleGridView,
+  onSnapshot,
 }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
@@ -180,9 +182,9 @@ const resetMapStore = useMapStore((state) => state.reset);
   ]);
 
   const handleSnapshot = useCallback(() => {
-    console.log("Snapshot");
     setAnchors({});
-  }, []);
+    void onSnapshot?.();
+  }, [onSnapshot]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));

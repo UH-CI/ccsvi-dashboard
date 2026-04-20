@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
@@ -15,12 +15,20 @@ import {
 import { useUrlSync } from "./hooks/useUrlSync";
 import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
 import { initializeStoresFromUrl } from "./utils/storeInitializer";
+import { takeMapSnapshot } from "./utils/snapshotUtils";
 
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
   const [isTableOpen, setIsTableOpen] = useState(true);
   const [isGridView, setIsGridView] = useState(true);
+  const multiMapContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSnapshot = useCallback(async () => {
+    const el = multiMapContainerRef.current;
+    if (!el) return;
+    await takeMapSnapshot(el, { customPrefix: "ccsvi-multi-map" });
+  }, []);
 
   const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
     setIsTableOpen(!isCollapsed);
@@ -94,9 +102,9 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
-      <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} />
+      <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} onSnapshot={handleSnapshot} />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} isGridView={isGridView} />
+        <MultiMapContainer ref={multiMapContainerRef} maxMaps={4} isGridView={isGridView} />
         <TableViewer
           activeDataset={primaryDataset}
           datasetInfo={activeDatasetObject}

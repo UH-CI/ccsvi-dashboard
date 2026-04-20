@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, forwardRef } from "react";
 import { SingleMapView } from "../SingleMapView";
 import { useVisibleMaps, useMapStore } from "../../stores";
 import styles from "./MultiMapContainer.module.scss";
@@ -8,10 +8,10 @@ interface MultiMapContainerProps {
   isGridView?: boolean;
 }
 
-export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
+export const MultiMapContainer = forwardRef<HTMLDivElement, MultiMapContainerProps>(({
   maxMaps = 4,
   isGridView = true,
-}) => {
+}, ref) => {
   // Use visible maps from mapStore
   const visibleMaps = useVisibleMaps();
   const primaryMapId = useMapStore((state) => state.primaryMapId);
@@ -37,7 +37,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
   }, [isGridView]);
 
   return (
-    <div className={styles["multi-map-container"]}>
+    <div ref={ref} className={styles["multi-map-container"]}>
       <div className={styles["maps-layout"]}>
         <div
           className={`${styles["maps-grid"]} ${gridModifier}`}
@@ -59,4 +59,4 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
       </div>
     </div>
   );
-};
+});
