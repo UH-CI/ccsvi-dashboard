@@ -29,8 +29,6 @@ const App: React.FC = () => {
   // Get the active/primary map's dataset for the table viewer
   const { dataset: primaryDataset } = usePrimaryMapState();
 
-  const tableVisible = !!primaryDataset && isTableOpen;
-
   // Get data from stores
   const errors = useAppStore((state) => state.errors);
   const fetchAllData = useAppStore((state) => state.fetchAllData);
@@ -98,7 +96,7 @@ const App: React.FC = () => {
     <div className={styles["app-container"]}>
       <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} isTableOpen={tableVisible} isGridView={isGridView} />
+        <MultiMapContainer maxMaps={4} isGridView={isGridView} />
         <TableViewer
           activeDataset={primaryDataset}
           datasetInfo={activeDatasetObject}

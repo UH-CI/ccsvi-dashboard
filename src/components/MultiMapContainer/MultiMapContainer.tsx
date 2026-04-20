@@ -5,13 +5,11 @@ import styles from "./MultiMapContainer.module.scss";
 
 interface MultiMapContainerProps {
   maxMaps?: number;
-  isTableOpen?: boolean;
   isGridView?: boolean;
 }
 
 export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
   maxMaps = 4,
-  isTableOpen = false,
   isGridView = true,
 }) => {
   // Use visible maps from mapStore
@@ -21,7 +19,7 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
   const gridLayout = useMemo(() => {
     const count = visibleMaps.length;
 
-    if (!isGridView || (isTableOpen && count >= 3)) {
+    if (!isGridView) {
       return { rows: 1, cols: count };
     }
 
@@ -31,13 +29,12 @@ export const MultiMapContainer: React.FC<MultiMapContainerProps> = ({
     if (count === 4) return { rows: 2, cols: 2 };
 
     return { rows: 1, cols: 1 };
-  }, [visibleMaps, isTableOpen, isGridView]);
+  }, [visibleMaps, isGridView]);
 
   const gridModifier = useMemo(() => {
-    const count = visibleMaps.length;
-    if (!isGridView || (isTableOpen && count >= 3)) return styles["maps-grid--table-open"];
+    if (!isGridView) return styles["maps-grid--table-open"];
     return "";
-  }, [visibleMaps.length, isTableOpen, isGridView]);
+  }, [isGridView]);
 
   return (
     <div className={styles["multi-map-container"]}>
