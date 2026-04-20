@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Paper,
   Typography,
@@ -20,6 +20,7 @@ import {
   QuickFilter,
   QuickFilterTrigger,
   QuickFilterControl,
+  useGridApiRef,
 } from "@mui/x-data-grid";
 import {
   KeyboardArrowUp,
@@ -66,8 +67,10 @@ const cleanHeaderForDisplay = (header: string): string => {
 
 const calculateColumnWidth = (header: string): number => {
   const cleanedHeader = cleanHeaderForDisplay(header);
-  // Longest unbreakable run governs the min width needed to avoid mid-word wraps.
-  const longestToken = cleanedHeader.split(/\s+/).reduce((a, b) => (a.length >= b.length ? a : b), "");
+  // Longest unbreakable run sets min width needed to avoid mid-word wraps.
+  const longestToken = cleanedHeader
+    .split(/\s+/)
+    .reduce((a, b) => (a.length >= b.length ? a : b), "");
   const tokenWidth = longestToken.length * 7.5 + 40; // 0.75rem bold glyph avg + sort icon/padding
   const baseWidth = Math.max(cleanedHeader.length * 6, tokenWidth);
   const minWidth = 150;
@@ -230,17 +233,23 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   initialCollapsed = false,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const { metric: primaryMapMetric } = usePrimaryMapState();
+  const { metric: primaryMapMetric, activeFeature } = usePrimaryMapState();
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
 
   const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeRowId, setActiveRowId] = useState<number | null>(null);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
-  const { isCollapsed, isFullHeight, toggleCollapse, toggleFullHeight } = useTableResize({
-    onSizeChange,
-    initialCollapsed,
-  });
+  const apiRef = useGridApiRef();
+  const pendingScrollRowRef = useRef<number | null>(null);
+
+  const { isCollapsed, isFullHeight, toggleCollapse, toggleFullHeight, setCollapsed } =
+    useTableResize({
+      onSizeChange,
+      initialCollapsed,
+    });
 
   useEffect(() => {
     const loadCsvData = async () => {
@@ -302,7 +311,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 if (isNaN(num)) return String(value);
                 // Locale formatting rounds decimals inconsistently with stored precision.
                 // Use toLocaleString for integers (comma formatting), fixed decimals otherwise.
-                // return num.toLocaleString();
                 return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(4);
               }
             : undefined,
@@ -339,6 +347,52 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
     return { columns: cols, rows: rowData, geoidColIndex };
   }, [tableData]);
+
+  // Sync map active feature → table row highlight + scroll
+  useEffect(() => {
+    const activeGeoid = activeFeature?.geoid;
+    if (!activeGeoid || geoidColIndex < 0 || rows.length === 0) {
+      setActiveRowId(null);
+      return;
+    }
+
+    const rowIndex = rows.findIndex((row) => {
+      const rawGeoid = String(row[`col_${geoidColIndex}`] ?? "");
+      return rawGeoid.replace(/^\d+US/i, "") === activeGeoid;
+    });
+
+    if (rowIndex < 0) {
+      setActiveRowId(null);
+      return;
+    }
+
+    setActiveRowId(rowIndex);
+    setCollapsed(false);
+
+    const targetPage = Math.floor(rowIndex / paginationModel.pageSize);
+    const rowIndexInPage = rowIndex % paginationModel.pageSize;
+
+    if (targetPage !== paginationModel.page) {
+      pendingScrollRowRef.current = rowIndexInPage;
+      setPaginationModel((prev) => ({ ...prev, page: targetPage }));
+    } else {
+      requestAnimationFrame(() => {
+        apiRef.current?.scrollToIndexes({ rowIndex: rowIndexInPage });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFeature?.geoid, geoidColIndex, rows, setCollapsed]);
+
+  // After a page change triggered by the above effect, execute the pending scroll
+  useEffect(() => {
+    if (pendingScrollRowRef.current === null) return;
+    const idx = pendingScrollRowRef.current;
+    pendingScrollRowRef.current = null;
+    requestAnimationFrame(() => {
+      apiRef.current?.scrollToIndexes({ rowIndex: idx });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paginationModel.page]);
 
   const handleRowClick = useCallback(
     (params: { row: Record<string, unknown> }) => {
@@ -400,6 +454,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
           {!error && (
             <Box className={styles["data-grid-container"]}>
               <DataGrid
+                apiRef={apiRef}
                 rows={rows}
                 columns={columns}
                 loading={loading}
@@ -416,19 +471,17 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                     toggleFullHeight,
                   },
                 }}
-                initialState={{
-                  pagination: {
-                    paginationModel: { pageSize: 25 },
-                  },
-                }}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
                 pageSizeOptions={[10, 25, 50, 100]}
+                getRowClassName={(params) =>
+                  params.row.id === activeRowId ? styles["active-row"] : ""
+                }
                 onRowClick={geoidColIndex >= 0 && !!primaryMapMetric ? handleRowClick : undefined}
                 hideFooter={false}
-                // Enable column management
                 disableColumnMenu={false}
                 disableColumnFilter={false}
                 disableColumnSelector={false}
-                // CRITICAL: All DataGrid styling moved to sx prop to avoid conflicts
                 sx={{
                   height: "100%",
                   width: "100%",
@@ -526,6 +579,12 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
                   "& .MuiDataGrid-row:nth-of-type(odd)": {
                     backgroundColor: "#fafafa",
+                  },
+                  [`& .MuiDataGrid-row.${styles["active-row"]}`]: {
+                    backgroundColor: "rgba(25, 118, 210, 0.15)",
+                  },
+                  [`& .MuiDataGrid-row.${styles["active-row"]}:hover`]: {
+                    backgroundColor: "rgba(25, 118, 210, 0.22)",
                   },
                 }}
               />

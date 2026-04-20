@@ -118,6 +118,11 @@
   box-sizing: border-box;
 }
 
+.active-row {
+  // Background color applied via DataGrid sx prop to beat alternating-row specificity
+  outline: none;
+}
+
 .loading-container {
   display: flex;
   justify-content: center;

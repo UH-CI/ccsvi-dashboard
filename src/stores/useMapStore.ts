@@ -224,6 +224,7 @@ export const usePrimaryMapState = () => {
       return {
         dataset: primary?.dataset ?? "",
         metric: primary?.metric ?? "",
+        activeFeature: primary?.activeFeature,
       };
     }),
   );
