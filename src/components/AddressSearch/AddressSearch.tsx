@@ -1,148 +1,138 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useMap } from "react-leaflet";
-import { GeoSearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
-import { FeatureCollection, Geometry, Position, GeoJsonProperties } from "geojson";
-import "leaflet-geosearch/dist/geosearch.css";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import L from "leaflet";
+import { OpenStreetMapProvider } from "leaflet-geosearch";
+import styles from "./AddressSearch.module.scss";
 
-interface SearchResultEvent {
-  location: {
-    x: number; // longitude
-    y: number; // latitude
-    label: string;
-  };
+interface SearchResult {
+  x: number;
+  y: number;
+  label: string;
 }
 
 interface AddressSearchProps {
-  features: FeatureCollection<Geometry, GeoJsonProperties> | null;
-  geoidProperty: string;
-  onBlockGroupFound: (geoid: string, lat: number, lng: number) => void;
-  onSearchError?: (message: string) => void;
+  mapRef: React.RefObject<L.Map | null>;
 }
 
-// Ray-casting point-in-polygon test for a single ring.
-function pointInRing(point: [number, number], ring: Position[]): boolean {
-  const [px, py] = point;
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i];
-    const [xj, yj] = ring[j];
-    const intersect = yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
-    if (intersect) inside = !inside;
-  }
-  return inside;
-}
+export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
 
-// Check if a point is inside a Polygon or MultiPolygon, handling holes.
-function pointInGeometry(lng: number, lat: number, geometry: Geometry): boolean {
-  const point: [number, number] = [lng, lat];
+  const providerRef = useRef(
+    new OpenStreetMapProvider({
+      params: { countrycodes: "us", viewbox: "-162,18,-154,23", bounded: 1 },
+    }),
+  );
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<L.Marker | null>(null);
 
-  if (geometry.type === "Polygon") {
-    const [outer, ...holes] = geometry.coordinates;
-    if (!pointInRing(point, outer)) return false;
-    return !holes.some((hole) => pointInRing(point, hole));
-  }
+  useEffect(() => () => { markerRef.current?.remove(); }, []);
 
-  if (geometry.type === "MultiPolygon") {
-    return geometry.coordinates.some((polygon) => {
-      const [outer, ...holes] = polygon;
-      if (!pointInRing(point, outer)) return false;
-      return !holes.some((hole) => pointInRing(point, hole));
+  const close = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+    setResults([]);
+  }, []);
+
+  const handleToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen((prev) => {
+      if (prev) { setQuery(""); setResults([]); }
+      return !prev;
     });
-  }
-
-  return false;
-}
-
-// Find the feature containing a given point and return its GEOID.
-function findFeatureAtPoint(
-  lng: number,
-  lat: number,
-  features: FeatureCollection<Geometry, GeoJsonProperties>,
-  geoidProperty: string,
-): string | null {
-  for (const feature of features.features) {
-    if (pointInGeometry(lng, lat, feature.geometry)) {
-      const geoid = feature.properties?.[geoidProperty];
-      if (geoid) return String(geoid);
-    }
-  }
-  return null;
-}
-
-export const AddressSearch: React.FC<AddressSearchProps> = ({
-  features,
-  geoidProperty,
-  onBlockGroupFound,
-  onSearchError,
-}) => {
-  const map = useMap();
-
-  const stableOnResult = useRef(onBlockGroupFound);
-  stableOnResult.current = onBlockGroupFound;
-
-  const stableOnError = useRef(onSearchError);
-  stableOnError.current = onSearchError;
-
-  const stableFeatures = useRef(features);
-  stableFeatures.current = features;
-
-  const stableGeoidProp = useRef(geoidProperty);
-  stableGeoidProp.current = geoidProperty;
-
-  const handleShowLocation = useCallback((e: SearchResultEvent) => {
-    console.log("[AddressSearch] geosearch/showlocation fired", e);
-    const { x: lng, y: lat } = e.location;
-    console.log("[AddressSearch] coordinates:", { lat, lng });
-
-    const fc = stableFeatures.current;
-    console.log("[AddressSearch] features loaded:", !!fc, "count:", fc?.features?.length);
-    if (!fc) {
-      stableOnError.current?.("Map data not loaded yet.");
-      return;
-    }
-
-    console.log("[AddressSearch] geoidProperty:", stableGeoidProp.current);
-    const geoid = findFeatureAtPoint(lng, lat, fc, stableGeoidProp.current);
-    console.log("[AddressSearch] found geoid:", geoid);
-    if (geoid) {
-      stableOnResult.current(geoid, lat, lng);
-    } else {
-      stableOnError.current?.("No census block group found at this location.");
-    }
   }, []);
 
   useEffect(() => {
-    const provider = new OpenStreetMapProvider({
-      params: {
-        countrycodes: "us",
-        viewbox: "-162,18,-154,23",
-        bounded: 1,
-      },
-    });
+    if (open) inputRef.current?.focus();
+  }, [open]);
 
-    // @ts-expect-error GeoSearchControl returns a class constructor, not a plain Leaflet control
-    const searchControl = new GeoSearchControl({
-      provider,
-      position: "topright",
-      style: "button",
-      showMarker: true,
-      showPopup: true,
-      autoClose: true,
-      keepResult: true,
-      searchLabel: "Search address in Hawaii...",
-    });
-
-    map.addControl(searchControl);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    map.on("geosearch/showlocation" as any, handleShowLocation as any);
-
-    return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      map.off("geosearch/showlocation" as any, handleShowLocation as any);
-      map.removeControl(searchControl);
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) close();
     };
-  }, [map, handleShowLocation]);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open, close]);
 
-  return null;
+  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val.trim()) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = await (providerRef.current.search({ query: val }) as Promise<any[]>);
+        setResults((res ?? []).slice(0, 6));
+      } catch {
+        // ignore transient network errors
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+  }, []);
+
+  const handleSelect = useCallback(
+    (result: SearchResult) => {
+      const { x: lng, y: lat } = result;
+      const map = mapRef.current;
+      if (map) {
+        markerRef.current?.remove();
+        markerRef.current = L.marker([lat, lng]).addTo(map).bindPopup(result.label).openPopup();
+        map.flyTo([lat, lng], 14);
+      }
+      close();
+    },
+    [mapRef, close],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => { if (e.key === "Escape") close(); },
+    [close],
+  );
+
+  return (
+    <div ref={wrapperRef} className={styles.wrapper}>
+      <button
+        type="button"
+        className={`${styles.btn} ${open ? styles["btn--active"] : ""}`}
+        onClick={handleToggle}
+        title="Search address"
+        aria-label="Search address"
+      >
+        <SearchIcon fontSize="small" />
+      </button>
+      {open && (
+        <div className={styles.dropdown} onClick={(e) => e.stopPropagation()}>
+          <input
+            ref={inputRef}
+            className={styles.input}
+            value={query}
+            onChange={handleQueryChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Search address in Hawaii…"
+          />
+          {loading && <div className={styles.status}>Searching…</div>}
+          {!loading && results.length > 0 && (
+            <ul className={styles.results}>
+              {results.map((r, i) => (
+                <li key={i} className={styles.result} onMouseDown={() => handleSelect(r)}>
+                  {r.label}
+                </li>
+              ))}
+            </ul>
+          )}
+          {!loading && query.trim() && results.length === 0 && (
+            <div className={styles.status}>No results found</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
