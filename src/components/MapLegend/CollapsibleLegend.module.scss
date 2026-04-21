@@ -1,0 +1,46 @@
+.iconButton {
+  all: unset;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #ffffffd9;
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 1px 4px #00000033;
+
+  &--active {
+    background: #fffffff2;
+    box-shadow: 0 1px 4px #0000004d;
+  }
+
+  &__icon {
+    font-size: 18px !important;
+    color: #444;
+  }
+}
+
+.panel {
+  pointer-events: auto;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #ffffffaa;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 4px #00000033;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.header__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}

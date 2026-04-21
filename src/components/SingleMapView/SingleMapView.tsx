@@ -10,14 +10,13 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend, RasterMapLegend } from "../MapLegend";
-import mapLegendStyles from "../MapLegend/MapLegend.module.scss";
+import { MapLegend, RasterMapLegend, LegendContainer } from "../MapLegend";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
-import { Chip, Snackbar, Alert } from "@mui/material";
+import { Chip } from "@mui/material";
 import {
   useAppStore,
   useMapStore,
@@ -104,7 +103,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
     const [mapZoom, setMapZoom] = useState<number>(MAP_CONFIG.zoom);
-    const [searchError, setSearchError] = useState<string | null>(null);
 
     // Snapshot registry store
     const registerSnapshot = useSnapshotStore((s) => s.register);
@@ -316,21 +314,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [mapId, updateMapActiveFeature, mapRef],
     );
 
-    const handleAddressSearchResult = useCallback(
-      (geoid: string, lat: number, lng: number) => {
-        const map = mapRef.current;
-        const zoom = map?.getZoom() ?? MAP_CONFIG.zoom;
-
-        updateMapActiveFeature(mapId, {
-          geoid,
-          lat,
-          lng,
-          zoom,
-        });
-      },
-      [mapId, updateMapActiveFeature],
-    );
-
     const shouldRenderCensus =
       effectiveDataset &&
       effectiveMetric &&
@@ -378,6 +361,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               )}
             </div>
 
+            <AddressSearch mapRef={mapRef} />
+
             <button
               type="button"
               className={styles["snapshot-btn"]}
@@ -414,17 +399,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               onZoomChange={(z) => {
                 setMapZoom(z);
               }}
-            />
-
-            <AddressSearch
-              features={
-                shouldShowHawaiianHomelands
-                  ? ((hawaiianHomelands as FeatureCollection<Geometry, GeoJsonProperties>) ?? null)
-                  : ((censusBlockGroups as FeatureCollection<Geometry, GeoJsonProperties>) ?? null)
-              }
-              geoidProperty={shouldShowHawaiianHomelands ? "GEOID10" : "geoid20"}
-              onBlockGroupFound={handleAddressSearchResult}
-              onSearchError={setSearchError}
             />
 
             <TileLayer
@@ -525,7 +499,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             ))}
           </MapContainer>
 
-          <div className={mapLegendStyles.legendStack}>
+          <LegendContainer>
             <RasterMapLegend mapId={mapId} />
             <MapLegend
               limits={colorScale?.limits ?? null}
@@ -534,19 +508,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               metric1Label={effectiveMetric ?? undefined}
               metric2Label={effectiveMetric2 ?? undefined}
             />
-          </div>
+          </LegendContainer>
         </div>
 
-        <Snackbar
-          open={!!searchError}
-          autoHideDuration={4000}
-          onClose={() => setSearchError(null)}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert severity="warning" onClose={() => setSearchError(null)} variant="filled">
-            {searchError}
-          </Alert>
-        </Snackbar>
       </div>
     );
   },

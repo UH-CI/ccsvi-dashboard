@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import TerrainIcon from "@mui/icons-material/Terrain";
 import { useRasterLayersStore, type RasterLegendInfo } from "../../stores";
 import { ColorGeneratorService } from "../RasterLayers/color-generator.service";
 import {
@@ -6,6 +7,7 @@ import {
   RASTER_LEGEND_DEFAULT_WIDTH_PX,
 } from "./rasterLegendDefaults";
 import styles from "./MapLegend.module.scss";
+import { CollapsibleLegend } from "./CollapsibleLegend";
 
 function formatValue(v: number): string {
   if (!Number.isFinite(v)) return "";
@@ -43,14 +45,8 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
     info.legendGradientHeightPx ?? RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
   return (
-    <div
-      className={`${styles.legend} ${styles["raster-legend"]}`}
-      style={{ width: widthPx }}
-    >
-      <div className={styles["raster-legend__title"]} title={info.title}>
-        {info.title}
-      </div>
-      <div className={styles["raster-legend__row"]}>
+    <CollapsibleLegend title={info.title} icon={<TerrainIcon sx={{ fontSize: 18, color: "#444" }} />} order={0}>
+      <div className={styles["raster-legend__row"]} style={{ width: widthPx }}>
         <div
           className={styles["raster-legend__gradient"]}
           style={{ background: gradient, height: gradientHeightPx }}
@@ -90,6 +86,6 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
           </span>
         </div>
       </div>
-    </div>
+    </CollapsibleLegend>
   );
 };
