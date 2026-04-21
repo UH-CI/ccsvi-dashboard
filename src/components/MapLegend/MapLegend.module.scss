@@ -1,127 +1,96 @@
-.legendStack {
+.legendContainer {
   position: absolute;
-  top: 55px;
+  top: 10px;
   right: 10px;
   z-index: 1000;
-  // background-color: #f5f5f5;
-  // border-radius: 4px;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: flex-start;
-  gap: 8px;
-  max-width: calc(100% - 20px);
-  pointer-events: none;
-
-  > * {
-    pointer-events: auto;
-  }
-}
-
-.legend {
-  flex-shrink: 0;
-  //background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
 
-  &__title {
-    font-weight: bold;
-    margin-bottom: 1rem;
-    font-size: 12px;
+.legendIcons {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.legendPanels {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.legend__items {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3px;
+  font-size: 12px;
+
+  &-color {
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+  }
+}
+
+.legend__bivariate {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+
+  &-label-y,
+  &-label-x {
+    font-size: 10px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  &__items {
+  &-label-y {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    max-height: 80px;
+  }
+
+  &-right {
     display: flex;
     flex-direction: column;
-  }
-
-  &__item {
-    display: flex;
     align-items: center;
-    margin-bottom: 3px;
-    font-size: 12px;
-
-    &-color {
-      width: 15px;
-      height: 15px;
-      margin-right: 5px;
-    }
+    gap: 4px;
   }
 
-  &__bivariate {
+  &-label-x {
+    max-width: 80px;
+  }
+
+  &-grid {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
+    flex-direction: column;
+    gap: 2px;
+  }
 
-    &-label-y,
-    &-label-x {
-      font-size: 10px;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+  &-row {
+    display: flex;
+    gap: 2px;
+  }
 
-    &-label-y {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      max-height: 80px;
-    }
-
-    &-right {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    &-label-x {
-      max-width: 80px;
-    }
-
-    &-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    &-row {
-      display: flex;
-      gap: 2px;
-    }
-
-    &-cell {
-      width: 20px;
-      height: 20px;
-    }
+  &-cell {
+    width: 20px;
+    height: 20px;
   }
 }
 
-/* Fixed footprint for every raster layer; override via JSON `legendWidthPx` / `legendGradientHeightPx`. */
-.raster-legend {
-  box-sizing: border-box;
-  max-width: 100%;
-}
-
-.raster-legend__title {
-  font-weight: bold;
-  font-size: 12px;
-  line-height: 1.25;
-  margin-bottom: 6px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  word-break: break-word;
-  min-height: 0;
-}
-
-/* Color ramp (left) → optional units → numbers */
 .raster-legend__row {
   display: flex;
   flex-direction: row;
@@ -175,5 +144,5 @@
   flex-shrink: 0;
   width: 14px;
   border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid #0000001f;
 }

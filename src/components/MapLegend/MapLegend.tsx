@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
+import LayersIcon from "@mui/icons-material/Layers";
 import { Tooltip } from "@mui/material";
 import styles from "./MapLegend.module.scss";
 import { ComputedBivariateColorScale } from "../../utils/colorThresholds";
+import { CollapsibleLegend } from "./CollapsibleLegend";
 
 interface MapLegendProps {
   limits: number[] | null;
@@ -45,8 +47,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   if (!bivariate && (!limits || !colors)) return null;
 
   return (
-    <div className={styles.legend}>
-      <div className={styles.legend__title}>Vulnerability Indicator</div>
+    <CollapsibleLegend title="Vulnerability Indicator" icon={<LayersIcon sx={{ fontSize: 18, color: "#444" }} />} order={1}>
       {bivariate ? (
         <div className={styles["legend__bivariate"]}>
           <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
@@ -86,6 +87,6 @@ export const MapLegend: React.FC<MapLegendProps> = ({
       ) : (
         <div className={styles.legend__items}>{legendLevels}</div>
       )}
-    </div>
+    </CollapsibleLegend>
   );
 };
