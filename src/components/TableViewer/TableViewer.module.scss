@@ -1,12 +1,11 @@
 .table-viewer {
   z-index: 1000;
   transition: all 0.3s ease-in-out;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: #fffffff2;
   backdrop-filter: blur(0.3125rem);
   display: flex;
   flex-direction: column;
   border-top: 0.0625rem solid #e0e0e0;
-  flex-shrink: 0;
 
   &--collapsed {
     flex: 0 0 3.125rem;
@@ -14,9 +13,9 @@
   }
 
   &--expanded {
-    flex: 0 0 40vh;
-    min-height: 12.5rem;
-    height: 40vh;
+    flex: 1 1 30vh;
+    max-height: 40vh;
+    min-height: max(6rem, 10vh);
   }
 
   &--full {
@@ -25,6 +24,14 @@
     z-index: 1100;
     height: 100%;
     flex: none;
+  }
+}
+
+@media (max-height: 700px) {
+  .table-viewer--expanded {
+    flex: 1 1 20vh;
+    max-height: 28vh;
+    min-height: max(5rem, 8vh);
   }
 }
 
@@ -93,10 +100,12 @@
 }
 
 .data-grid-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   height: 100%;
-  width: 100%;
-  position: relative; // Creates containing block for DataGrid
-  overflow: hidden; // Establishes scrolling context
+  overflow: hidden;
 }
 
 .custom-header {
