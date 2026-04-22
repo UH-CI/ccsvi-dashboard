@@ -411,8 +411,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return datasetInfo.metricLabel || activeDataset.replace(/_/g, " ").toUpperCase();
   }, [activeDataset, datasetInfo]);
 
-  const contentHeight = isFullHeight ? "100%" : "40vh";
-
   if (!activeDataset) {
     return null;
   }
@@ -437,11 +435,21 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         </Box>
       )}
 
-      <Collapse in={!isCollapsed} timeout={300} unmountOnExit={false}>
+      <Collapse
+        in={!isCollapsed}
+        timeout={300}
+        unmountOnExit={false}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          "& .MuiCollapse-wrapper": { height: "100%" },
+          "& .MuiCollapse-wrapperInner": { height: "100%" },
+        }}
+      >
         <Box
           className={styles.content}
           sx={{
-            height: contentHeight,
+            height: "100%",
             overflow: "hidden",
           }}
         >
