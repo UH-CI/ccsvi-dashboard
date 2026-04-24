@@ -29,3 +29,6 @@ config.json
 node_modules/
 # Build output
 dist/
+
+# Scratch notes
+docs/
