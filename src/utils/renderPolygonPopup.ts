@@ -14,6 +14,8 @@ export function renderPolygonPopup(
   metricsData: MetricsData | null,
   activeMetric2?: string | null,
   getMetricValue2?: ((geoid: string) => number | null) | null,
+  getMetricMoE?: ((geoid: string) => number | null) | null,
+  getMetricMoE2?: ((geoid: string) => number | null) | null,
 ) {
   return (feature: Feature): string | null => {
     const geoid = feature.properties?.[config.geoidProperty];
@@ -22,6 +24,8 @@ export function renderPolygonPopup(
     const geoidStr = String(geoid);
     const metricValue = getMetricValue(geoidStr);
     const metricValue2 = getMetricValue2?.(geoidStr) ?? null;
+    const metricMoE = getMetricMoE?.(geoidStr) ?? null;
+    const metricMoE2 = getMetricMoE2?.(geoidStr) ?? null;
     const metadataEntry = metricsData?.[geoidStr];
 
     const metadata = [];
@@ -40,8 +44,10 @@ export function renderPolygonPopup(
       fields: config.fields,
       metricName: activeMetric,
       metricValue,
+      metricMoE,
       metricName2: activeMetric2 ?? undefined,
       metricValue2: metricValue2 ?? undefined,
+      metricMoE2,
     });
   };
 }

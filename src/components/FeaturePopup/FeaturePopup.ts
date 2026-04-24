@@ -13,8 +13,10 @@ interface FeaturePopupProps {
   fields: PopupField[];
   metricName?: string;
   metricValue?: number | null;
+  metricMoE?: number | null;
   metricName2?: string;
   metricValue2?: number | null;
+  metricMoE2?: number | null;
 }
 
 export function FeaturePopup({
@@ -24,8 +26,10 @@ export function FeaturePopup({
   fields,
   metricName,
   metricValue,
+  metricMoE,
   metricName2,
   metricValue2,
+  metricMoE2,
 }: FeaturePopupProps): string {
   const properties = feature.properties || {};
 
@@ -59,8 +63,7 @@ export function FeaturePopup({
           <div class="${styles["popup-field"]}">
             <span class="${styles["popup-field-label"]}">${escapeHtml(metricName)}:</span>
             <span class="${styles["popup-field-value-group"]}">
-              <span class="${styles["popup-field-value"]}">${metricValue.toFixed(4)}</span>
-              <span class="${styles["popup-metric-subheader"]}">(Per Capita)</span>
+              <span class="${styles["popup-field-value"]}">${metricValue.toFixed(2)}%${metricMoE !== null && metricMoE !== undefined ? ` ± ${metricMoE} (MoE)` : ""}</span>
             </span>
           </div>
         `
@@ -72,8 +75,7 @@ export function FeaturePopup({
           <div class="${styles["popup-field"]}">
             <span class="${styles["popup-field-label"]}">${escapeHtml(metricName2)}:</span>
             <span class="${styles["popup-field-value-group"]}">
-              <span class="${styles["popup-field-value"]}">${metricValue2.toFixed(4)}</span>
-              <span class="${styles["popup-metric-subheader"]}">(Per Capita)</span>
+              <span class="${styles["popup-field-value"]}">${metricValue2.toFixed(2)}%${metricMoE2 !== null && metricMoE2 !== undefined ? ` ± ${metricMoE2} (MoE)` : ""}</span>
             </span>
           </div>
         `

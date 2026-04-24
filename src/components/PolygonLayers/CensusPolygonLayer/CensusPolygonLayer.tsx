@@ -10,7 +10,9 @@ interface CensusPolygonLayerProps {
   data: FeatureCollection<Geometry, BlockGroupProperties> | null;
   metricsData: MetricsData | null;
   getMetricValue: (geoid: string) => number | null;
+  getMetricMoE?: (geoid: string) => number | null;
   getMetricValue2?: (geoid: string) => number | null;
+  getMetricMoE2?: (geoid: string) => number | null;
   mapId: string;
   // activeDataset: string;
   activeMetric: string;
@@ -27,7 +29,9 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   data,
   metricsData,
   getMetricValue,
+  getMetricMoE,
   getMetricValue2,
+  getMetricMoE2,
   mapId,
   // activeDataset,
   activeMetric,
@@ -87,8 +91,10 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         metricsData,
         activeMetric2,
         getMetricValue2,
+        getMetricMoE,
+        getMetricMoE2,
       ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricValue2, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, metricsData],
   );
 
   return (

@@ -203,46 +203,60 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       const noData = {
         allMetricValues: [] as number[],
         getMetricValue: (): number | null => null,
+        getMetricMoE: null as ((geoid: string) => number | null) | null,
         allMetricValues2: [] as number[],
         getMetricValue2: null as ((geoid: string) => number | null) | null,
+        getMetricMoE2: null as ((geoid: string) => number | null) | null,
       };
 
       if (!metricsData || !effectiveDataset || !effectiveMetric) return noData;
 
       const lookup1 = new Map<string, number>();
+      const lookupMoE1 = new Map<string, number>();
       const lookup2 = effectiveMetric2 ? new Map<string, number>() : null;
+      const lookupMoE2 = effectiveMetric2 ? new Map<string, number>() : null;
       const values1: number[] = [];
       const values2: number[] = [];
 
       for (const [geoid, data] of Object.entries(metricsData)) {
         const datasetMetrics = data.metrics?.[effectiveDataset];
 
-        const v1 = datasetMetrics?.[effectiveMetric]?.proportion;
+        const v1 = datasetMetrics?.[effectiveMetric]?.percentage;
         if (v1 !== undefined && v1 !== null) {
           lookup1.set(geoid, v1);
           values1.push(v1);
         }
 
-        if (lookup2 && effectiveMetric2) {
-          const v2 = datasetMetrics?.[effectiveMetric2]?.proportion;
+        const moe1 = datasetMetrics?.[effectiveMetric]?.margin_of_error ?? null;
+        if (moe1 !== null) lookupMoE1.set(geoid, moe1);
+
+        if (lookup2 && lookupMoE2 && effectiveMetric2) {
+          const v2 = datasetMetrics?.[effectiveMetric2]?.percentage;
           if (v2 !== undefined && v2 !== null) {
             lookup2.set(geoid, v2);
             values2.push(v2);
           }
+
+          const moe2 = datasetMetrics?.[effectiveMetric2]?.margin_of_error ?? null;
+          if (moe2 !== null) lookupMoE2.set(geoid, moe2);
         }
       }
 
       return {
         allMetricValues: values1,
         getMetricValue: (geoid: string): number | null => lookup1.get(geoid) ?? null,
+        getMetricMoE: (geoid: string): number | null => lookupMoE1.get(geoid) ?? null,
         allMetricValues2: values2,
         getMetricValue2: lookup2
           ? (geoid: string): number | null => lookup2.get(geoid) ?? null
           : null,
+        getMetricMoE2: lookupMoE2
+          ? (geoid: string): number | null => lookupMoE2.get(geoid) ?? null
+          : null,
       };
     }, [metricsData, effectiveDataset, effectiveMetric, effectiveMetric2]);
 
-    const { allMetricValues, getMetricValue, allMetricValues2, getMetricValue2 } = metricsDerived;
+    const { allMetricValues, getMetricValue, getMetricMoE, allMetricValues2, getMetricValue2, getMetricMoE2 } = metricsDerived;
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
@@ -419,7 +433,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
+                getMetricMoE={getMetricMoE ?? undefined}
                 getMetricValue2={getMetricValue2 ?? undefined}
+                getMetricMoE2={getMetricMoE2 ?? undefined}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeMetric2={effectiveMetric2 ?? undefined}
@@ -435,7 +451,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
                 metricsData={metricsData}
                 getMetricValue={getMetricValue}
+                getMetricMoE={getMetricMoE ?? undefined}
                 getMetricValue2={getMetricValue2 ?? undefined}
+                getMetricMoE2={getMetricMoE2 ?? undefined}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeMetric2={effectiveMetric2 ?? undefined}

@@ -10,7 +10,9 @@ interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
   metricsData: MetricsData | null;
   getMetricValue: (geoid: string) => number | null;
+  getMetricMoE?: (geoid: string) => number | null;
   getMetricValue2?: (geoid: string) => number | null;
+  getMetricMoE2?: (geoid: string) => number | null;
   mapId: string;
   // activeDataset: string;
   activeMetric: string;
@@ -30,7 +32,9 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   data,
   metricsData,
   getMetricValue,
+  getMetricMoE,
   getMetricValue2,
+  getMetricMoE2,
   mapId,
   // activeDataset,
   activeMetric,
@@ -100,8 +104,10 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         metricsData,
         activeMetric2,
         getMetricValue2,
+        getMetricMoE,
+        getMetricMoE2,
       ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricValue2, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, metricsData],
   );
 
   return (

@@ -19,8 +19,9 @@ export interface MapConfig {
 }
 
 export interface MetricValue {
-  absolute: number;
-  proportion: number;
+  absolute: number | null;
+  margin_of_error: number | null;
+  percentage: number | null;
 }
 
 export interface MetricsData {
