@@ -4,13 +4,13 @@
     "metricLabel": "",
     "hawaiianHomelands": true,
     "columnThresholds": {
-      "Total Population Under 5": {
+      "Total Population Under 5 (calc.)": {
         "classificationMode": "q"
       },
-      "Total Population Under 18": {
+      "Total Population Under 18 (calc.)": {
         "classificationMode": "q"
       },
-      "Total Population Over 65": {
+      "Total Population Over 65 (calc.)": {
         "classificationMode": "q"
       },
       "Total population SEX Male": {
@@ -69,7 +69,7 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "Total Living alone": {
+      "Total Living alone (calc.)": {
         "classificationMode": "q"
       },
       "In households: Householder: Male: Living alone": {
@@ -85,7 +85,7 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "Total Limited English Speaking Households": {
+      "Total Limited English Speaking Households (calc.)": {
         "classificationMode": "q"
       },
       "Spanish: Limited English speaking household": {
@@ -120,13 +120,13 @@
       "Estimate Total": {
         "classificationMode": "q"
       },
-      "Total Under 100% FPL": {
+      "Total Under 100% FPL (calc.)": {
         "classificationMode": "q"
       },
-      "Total Under 150% FPL": {
+      "Total Under 150% FPL (calc.)": {
         "classificationMode": "q"
       },
-      "Total Under 200% FPL": {
+      "Total Under 200% FPL (calc.)": {
         "classificationMode": "q"
       },
       "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level": {
@@ -142,7 +142,7 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "Total Housing Built Before 1990": {
+      "Total Housing Built Before 1990 (calc.)": {
         "classificationMode": "q"
       }
     }
@@ -200,13 +200,13 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "Males Under 5": {
+      "Males Under 5 (calc.)": {
         "classificationMode": "q"
       },
-      "Males Under 18": {
+      "Males Under 18 (calc.)": {
         "classificationMode": "q"
       },
-      "Males Over 65": {
+      "Males Over 65 (calc.)": {
         "classificationMode": "q"
       }
     }
@@ -216,13 +216,13 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "Females Under 5": {
+      "Females Under 5 (calc.)": {
         "classificationMode": "q"
       },
-      "Females Under 18": {
+      "Females Under 18 (calc.)": {
         "classificationMode": "q"
       },
-      "Females Over 65": {
+      "Females Over 65 (calc.)": {
         "classificationMode": "q"
       }
     }
@@ -254,7 +254,7 @@
     "metricLabel": "",
     "hawaiianHomelands": false,
     "columnThresholds": {
-      "No Health Insurance Coverage": {
+      "No Health Insurance Coverage (calc.)": {
         "classificationMode": "q"
       }
     }
