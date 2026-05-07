@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import {
   Camera,
+  CloudQueue,
   Layers,
   LocationOn,
   Warning,
@@ -31,6 +32,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
 } from "../../stores";
+import { HCDPLoad } from "../HCDP";
 import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
 
@@ -38,7 +40,7 @@ interface IntegratedControlPanelProps {
   maxMaps: number;
 }
 
-type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
+type PopoverKey = "maps" | "points" | "hazards" | "rasters" | "HCDP" | null;
 
 const MapTabSelector: React.FC<{
   mapConfigs: { id: string }[];
@@ -97,6 +99,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   const [pointsMapId, setPointsMapId] = useState<string>("");
   const [hazardsMapId, setHazardsMapId] = useState<string>("");
   const [rastersMapId, setRastersMapId] = useState<string>("");
+  const [HCDPMapId, setHCDPMapId] = useState<string>("");
 
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
   const canAddMap = mapConfigs.length < maxMaps;
@@ -112,6 +115,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
         setHazardsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
       if (key === "rasters")
         setRastersMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
+      if (key === "HCDP")
+        setHCDPMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
     },
     [primaryMapId, mapConfigs],
   );
@@ -179,6 +184,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
     { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
     { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" /> },
+    { key: "HCDP", label: "HCDP", icon: <CloudQueue fontSize="small" /> },
   ];
 
   const menuProps = {
@@ -516,6 +522,27 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
           )}
         </Box>
       </Menu>
+
+      {/* ── HCDP Menu ── */}
+      <Menu
+        open={Boolean(anchors.HCDP)}
+        anchorEl={anchors.HCDP}
+        onClose={() => closeMenu("HCDP")}
+        {...menuProps}
+      >
+        <Box className={styles["menu-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            HCDP
+          </Typography>
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={HCDPMapId}
+            onChange={setHCDPMapId}
+          />
+          {HCDPMapId && <HCDPLoad mapId={HCDPMapId} />}
+        </Box>
+      </Menu>
+      
     </Paper>
   );
 };
