@@ -25,6 +25,8 @@ import {
   ExpandLess,
   GridView,
   CalendarViewWeek,
+  Assessment,
+  Factory,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -33,6 +35,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
 } from "../../stores";
+import { SVI_CATEGORIES } from "../../config";
 import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
 
@@ -43,7 +46,9 @@ interface IntegratedControlPanelProps {
   onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey = "maps" | "points" | "hazards" | "rasters" | null;
+type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "rasters" | null;
+
+const SCHOOL_IDS = ["preschools", "public_schools", "private_schools"];
 
 const MapTabSelector: React.FC<{
   mapConfigs: { id: string; title?: string }[];
@@ -75,6 +80,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
+  const updateMapConfig = useMapStore((state) => state.updateMapConfig);
 const resetMapStore = useMapStore((state) => state.reset);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
 
@@ -102,10 +108,14 @@ const resetMapStore = useMapStore((state) => state.reset);
 
   // One anchor per nav button
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
+  const [expandedSvi, setExpandedSvi] = useState<Record<string, boolean>>({});
+  const [expandedPoints, setExpandedPoints] = useState<Record<string, boolean>>({});
   const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
   const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
   const [mapsMapId, setMapsMapId] = useState<string>("");
+  const [sviMapId, setSviMapId] = useState<string>("");
   const [pointsMapId, setPointsMapId] = useState<string>("");
+  const [locationsMapId, setLocationsMapId] = useState<string>("");
   const [hazardsMapId, setHazardsMapId] = useState<string>("");
   const [rastersMapId, setRastersMapId] = useState<string>("");
 
@@ -119,8 +129,16 @@ const resetMapStore = useMapStore((state) => state.reset);
     mapConfigs.find((c) => c.id === mapsMapId)?.id ??
     mapConfigs.find((c) => c.id === primaryMapId)?.id ??
     mapConfigs[0]?.id ?? "";
+  const resolvedSviMapId =
+    visibleMaps.find((c) => c.id === sviMapId)?.id ??
+    visibleMaps.find((c) => c.id === primaryMapId)?.id ??
+    visibleMaps[0]?.id ?? "";
   const resolvedPointsMapId =
     visibleMaps.find((c) => c.id === pointsMapId)?.id ??
+    visibleMaps.find((c) => c.id === primaryMapId)?.id ??
+    visibleMaps[0]?.id ?? "";
+  const resolvedLocationsMapId =
+    visibleMaps.find((c) => c.id === locationsMapId)?.id ??
     visibleMaps.find((c) => c.id === primaryMapId)?.id ??
     visibleMaps[0]?.id ?? "";
   const resolvedHazardsMapId =
@@ -186,6 +204,10 @@ const resetMapStore = useMapStore((state) => state.reset);
     void onSnapshot?.();
   }, [onSnapshot]);
 
+  const toggleExpandSvi = useCallback((id: string) => {
+    setExpandedSvi((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
   const toggleExpand = useCallback((id: string) => {
     setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
@@ -196,7 +218,9 @@ const resetMapStore = useMapStore((state) => state.reset);
 
   const navItems: { key: NonNullable<PopoverKey>; label: string; icon: React.ReactNode }[] = [
     { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
-    { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
+    { key: "svi", label: "Social Vulnerability Indicators", icon: <Assessment fontSize="small" /> },
+    { key: "points", label: "Critical Infrastructure", icon: <LocationOn fontSize="small" /> },
+    { key: "locations", label: "Locations of Enhanced Exposure", icon: <Factory fontSize="small" /> },
     { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
     { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" /> },
   ];
@@ -316,8 +340,87 @@ const resetMapStore = useMapStore((state) => state.reset);
               mapId={resolvedMapsMapId}
               canRemoveMap={canRemoveMap}
               onRemove={handleRemoveMap}
+              section="management"
             />
           )}
+        </Box>
+      </Menu>
+
+      {/* ── Social Vulnerability Indicators Menu ── */}
+      <Menu
+        open={Boolean(anchors.svi)}
+        anchorEl={anchors.svi}
+        onClose={() => closeMenu("svi")}
+        {...menuProps}
+      >
+        <Box className={styles["menu-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Social Vulnerability Indicators
+          </Typography>
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={resolvedSviMapId}
+            onChange={setSviMapId}
+          />
+          {resolvedSviMapId && (() => {
+            const sviConfig = mapConfigs.find((c) => c.id === resolvedSviMapId);
+            const activeSviCategoryId = SVI_CATEGORIES.find((cat) =>
+              cat.indicators.some(
+                (ind) => ind.dataset === sviConfig?.dataset && ind.metric === sviConfig?.metric,
+              ),
+            )?.id;
+            return (
+              <Stack spacing={1}>
+                {SVI_CATEGORIES.map((category) => {
+                  const isExpanded = expandedSvi[category.id] ?? category.id === activeSviCategoryId;
+                  return (
+                  <Box key={category.id} className={styles["layer-toggle"]}>
+                    <Box display="flex" alignItems="center">
+                      <Typography
+                        className={styles["layer-label"]}
+                        sx={{ display: "flex", alignItems: "center", flexGrow: 1, ml: "21px" }}
+                      >
+                        {category.label}
+                      </Typography>
+                      <IconButton size="small" onClick={() => toggleExpandSvi(category.id)}>
+                        {isExpanded ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    </Box>
+                    <Collapse in={isExpanded}>
+                      <Stack spacing={1} sx={{ pl: 3 }}>
+                        {category.indicators.map((indicator) => {
+                          const isSelected =
+                            sviConfig?.dataset === indicator.dataset &&
+                            sviConfig?.metric === indicator.metric;
+                          return (
+                            <FormControlLabel
+                              key={`${indicator.dataset}:${indicator.metric}`}
+                              sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
+                              control={
+                                <Checkbox
+                                  checked={isSelected}
+                                  onChange={() =>
+                                    updateMapConfig(resolvedSviMapId, {
+                                      dataset: isSelected ? "" : indicator.dataset,
+                                      metric: isSelected ? "" : indicator.metric,
+                                      metric2: undefined,
+                                    })
+                                  }
+                                  size="small"
+                                />
+                              }
+                              label={indicator.label}
+                            />
+                          );
+                        })}
+                      </Stack>
+                    </Collapse>
+                  </Box>
+                  );
+                })}
+              </Stack>
+            );
+          })()}
         </Box>
       </Menu>
 
@@ -330,40 +433,211 @@ const resetMapStore = useMapStore((state) => state.reset);
       >
         <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Points of Interest
+            Critical Infrastructure
           </Typography>
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedPointsMapId}
             onChange={setPointsMapId}
           />
-          {resolvedPointsMapId && (
-            <Stack spacing={1}>
-              {pointLayerConfigs.map((layer) => {
-                const IconComponent =
-                  FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
-                return (
-                  <FormControlLabel
-                    key={layer.id}
-                    control={
-                      <Checkbox
-                        checked={isVisible}
-                        onChange={() => togglePointLayerVisibility(resolvedPointsMapId, layer.id)}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Box className={styles["layer-label"]}>
-                        <span className={styles["layer-icon"]} style={{ color: layer.color }}>
-                          <IconComponent size="1rem" />
-                        </span>
-                        {layer.name}
-                      </Box>
-                    }
-                  />
+          {resolvedPointsMapId && (() => {
+            const visibleIds = visiblePointLayerIdsByMap[resolvedPointsMapId];
+            const visibleSchoolCount = SCHOOL_IDS.filter((id) => visibleIds?.has(id)).length;
+            const allSchoolsVisible = visibleSchoolCount === SCHOOL_IDS.length;
+            const someSchoolsVisible = visibleSchoolCount > 0 && !allSchoolsVisible;
+
+            const handleToggleAllSchools = () => {
+              if (allSchoolsVisible) {
+                SCHOOL_IDS.filter((id) => visibleIds?.has(id)).forEach((id) =>
+                  togglePointLayerVisibility(resolvedPointsMapId, id),
                 );
-              })}
+              } else {
+                SCHOOL_IDS.filter((id) => !visibleIds?.has(id)).forEach((id) =>
+                  togglePointLayerVisibility(resolvedPointsMapId, id),
+                );
+              }
+            };
+
+            return (
+              <Stack spacing={1}>
+                {pointLayerConfigs
+                  .filter((l) => !SCHOOL_IDS.includes(l.id) && l.id !== "sewage")
+                  .map((layer) => {
+                    const IconComponent =
+                      FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                    const isVisible = visibleIds?.has(layer.id) ?? false;
+                    return (
+                      <FormControlLabel
+                        key={layer.id}
+                        control={
+                          <Checkbox
+                            checked={isVisible}
+                            onChange={() =>
+                              togglePointLayerVisibility(resolvedPointsMapId, layer.id)
+                            }
+                            size="small"
+                          />
+                        }
+                        label={
+                          <Box className={styles["layer-label"]}>
+                            <span className={styles["layer-icon"]} style={{ color: layer.color }}>
+                              <IconComponent size="1rem" />
+                            </span>
+                            {layer.name}
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
+
+                {/* State Roads and Sidewalks (from hazard layers) */}
+                {hazardLayerConfigs
+                  .filter((l) => ["state_roads", "sidewalks_and_paths"].includes(l.id))
+                  .map((layer) => {
+                    const ParentIcon =
+                      FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                    const isVisible =
+                      visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
+                    return (
+                      <FormControlLabel
+                        key={layer.id}
+                        control={
+                          <Checkbox
+                            checked={isVisible}
+                            onChange={() =>
+                              toggleHazardLayerVisibility(resolvedPointsMapId, layer.id)
+                            }
+                            size="small"
+                          />
+                        }
+                        label={
+                          <Box className={styles["layer-label"]}>
+                            <span className={styles["layer-icon"]} style={{ color: layer.color }}>
+                              <ParentIcon size="1rem" />
+                            </span>
+                            {layer.name}
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
+
+                {/* Schools group */}
+                <Box className={styles["layer-toggle"]}>
+                  <Box display="flex" alignItems="center">
+                    <Checkbox
+                      checked={allSchoolsVisible}
+                      indeterminate={someSchoolsVisible}
+                      onChange={handleToggleAllSchools}
+                      size="small"
+                    />
+                    <Typography
+                      className={styles["layer-label"]}
+                      sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}
+                    >
+                      Schools
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setExpandedPoints((prev) => ({ ...prev, schools: !prev.schools }))
+                      }
+                    >
+                      {expandedPoints.schools ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expandedPoints.schools}>
+                    <Stack spacing={1} sx={{ pl: 3 }}>
+                      {pointLayerConfigs
+                        .filter((l) => SCHOOL_IDS.includes(l.id))
+                        .map((layer) => {
+                          const IconComponent =
+                            FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                          const isVisible = visibleIds?.has(layer.id) ?? false;
+                          return (
+                            <FormControlLabel
+                              key={layer.id}
+                              sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
+                              control={
+                                <Checkbox
+                                  checked={isVisible}
+                                  onChange={() =>
+                                    togglePointLayerVisibility(resolvedPointsMapId, layer.id)
+                                  }
+                                  size="small"
+                                />
+                              }
+                              label={
+                                <Box className={styles["layer-label"]}>
+                                  <span
+                                    className={styles["layer-icon"]}
+                                    style={{ color: layer.color }}
+                                  >
+                                    <IconComponent size="1rem" />
+                                  </span>
+                                  {layer.name}
+                                </Box>
+                              }
+                            />
+                          );
+                        })}
+                    </Stack>
+                  </Collapse>
+                </Box>
+              </Stack>
+            );
+          })()}
+        </Box>
+      </Menu>
+
+      {/* ── Locations of Enhanced Exposure Menu ── */}
+      <Menu
+        open={Boolean(anchors.locations)}
+        anchorEl={anchors.locations}
+        onClose={() => closeMenu("locations")}
+        {...menuProps}
+      >
+        <Box className={styles["menu-content"]}>
+          <Typography variant="subtitle2" className={styles["popover-title"]}>
+            Locations of Enhanced Exposure
+          </Typography>
+          <MapTabSelector
+            mapConfigs={visibleMaps}
+            selectedMapId={resolvedLocationsMapId}
+            onChange={setLocationsMapId}
+          />
+          {resolvedLocationsMapId && (
+            <Stack spacing={1}>
+              {pointLayerConfigs
+                .filter((l) => l.id === "sewage")
+                .map((layer) => {
+                  const IconComponent =
+                    FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                  const isVisible =
+                    visiblePointLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false;
+                  return (
+                    <FormControlLabel
+                      key={layer.id}
+                      control={
+                        <Checkbox
+                          checked={isVisible}
+                          onChange={() =>
+                            togglePointLayerVisibility(resolvedLocationsMapId, layer.id)
+                          }
+                          size="small"
+                        />
+                      }
+                      label={
+                        <Box className={styles["layer-label"]}>
+                          <span className={styles["layer-icon"]} style={{ color: layer.color }}>
+                            <IconComponent size="1rem" />
+                          </span>
+                          {layer.name}
+                        </Box>
+                      }
+                    />
+                  );
+                })}
             </Stack>
           )}
         </Box>
@@ -385,71 +659,99 @@ const resetMapStore = useMapStore((state) => state.reset);
             selectedMapId={resolvedHazardsMapId}
             onChange={setHazardsMapId}
           />
-          {resolvedHazardsMapId && (
-            <Stack spacing={1}>
-              {hazardLayerConfigs.map((parent) => {
-                const ParentIcon =
-                  FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
-                const isParentVisible =
-                  visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(parent.id) ?? false;
-                return (
-                  <Box key={parent.id} className={styles["layer-toggle"]}>
-                    <Box display="flex" alignItems="center">
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={isParentVisible}
-                            onChange={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
-                            size="small"
-                          />
-                        }
-                        label={
-                          <Box className={styles["layer-label"]}>
-                            <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-                              <ParentIcon size="1rem" />
-                            </span>
-                            {parent.name}
-                          </Box>
-                        }
-                      />
-                      {(parent.subLayers ?? []).length > 0 && (
-                        <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
-                          {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      )}
-                    </Box>
-                    {parent.subLayers && parent.subLayers.length > 0 && (
-                      <Collapse in={expandedHazards[parent.id]}>
-                        <Stack spacing={1} sx={{ pl: 3 }}>
-                          {parent.subLayers.map((sub) => {
-                            const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible =
-                              visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(compositeId) ?? false;
-                            return (
-                              <FormControlLabel
-                                key={sub.id}
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0 } }}
-                                control={
-                                  <Checkbox
-                                    checked={isSubVisible}
-                                    onChange={() =>
-                                      toggleSubLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
-                                    }
-                                    size="small"
-                                  />
-                                }
-                                label={sub.name}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Collapse>
+          {resolvedHazardsMapId && (() => {
+            const renderHazardParent = (parent: (typeof hazardLayerConfigs)[0]) => {
+              const ParentIcon =
+                FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
+              const isParentVisible =
+                visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(parent.id) ?? false;
+              return (
+                <Box key={parent.id} className={styles["layer-toggle"]}>
+                  <Box display="flex" alignItems="center">
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={isParentVisible}
+                          onChange={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
+                          size="small"
+                        />
+                      }
+                      label={
+                        <Box className={styles["layer-label"]}>
+                          <span className={styles["layer-icon"]} style={{ color: parent.color }}>
+                            <ParentIcon size="1rem" />
+                          </span>
+                          {parent.name}
+                        </Box>
+                      }
+                    />
+                    {(parent.subLayers ?? []).length > 0 && (
+                      <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
+                        {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
                     )}
                   </Box>
-                );
-              })}
-            </Stack>
-          )}
+                  {parent.subLayers && parent.subLayers.length > 0 && (
+                    <Collapse in={expandedHazards[parent.id]}>
+                      <Stack spacing={1} sx={{ pl: 3 }}>
+                        {parent.subLayers.map((sub) => {
+                          const compositeId = `${parent.id}.${sub.id}`;
+                          const isSubVisible =
+                            visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(compositeId) ?? false;
+                          return (
+                            <FormControlLabel
+                              key={sub.id}
+                              sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0 } }}
+                              control={
+                                <Checkbox
+                                  checked={isSubVisible}
+                                  onChange={() =>
+                                    toggleSubLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
+                                  }
+                                  size="small"
+                                />
+                              }
+                              label={sub.name}
+                            />
+                          );
+                        })}
+                      </Stack>
+                    </Collapse>
+                  )}
+                </Box>
+              );
+            };
+
+            const floodingLayer = hazardLayerConfigs.find((l) => l.id === "flood_hazard");
+            const slrLayers = hazardLayerConfigs.filter((l) =>
+              ["passive_flood", "potential_flood_highways", "erosion", "exposure_area"].includes(l.id),
+            );
+
+            return (
+              <Stack spacing={1}>
+                {floodingLayer && renderHazardParent(floodingLayer)}
+
+                <Box className={styles["layer-toggle"]}>
+                  <Box display="flex" alignItems="center">
+                    <Typography
+                      className={styles["layer-label"]}
+                      sx={{ display: "flex", alignItems: "center", flexGrow: 1, ml: "21px" }}
+                    >
+                      Sea Level Rise
+                    </Typography>
+                    <IconButton size="small" onClick={() => toggleExpand("__slr__")}>
+                      {expandedHazards["__slr__"] ? <ExpandLess /> : <ExpandMore />}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expandedHazards["__slr__"]}>
+                    <Stack spacing={1} sx={{ pl: 2 }}>
+                      {slrLayers.map(renderHazardParent)}
+                    </Stack>
+                  </Collapse>
+                </Box>
+              </Stack>
+            );
+          })()}
         </Box>
       </Menu>
 
