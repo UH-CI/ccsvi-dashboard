@@ -421,6 +421,15 @@ const resetMapStore = useMapStore((state) => state.reset);
               </Stack>
             );
           })()}
+          {resolvedSviMapId && (
+            <SingleMapControls
+              key={resolvedSviMapId}
+              mapId={resolvedSviMapId}
+              canRemoveMap={canRemoveMap}
+              onRemove={handleRemoveMap}
+              section="dataset"
+            />
+          )}
         </Box>
       </Menu>
 
