@@ -7,13 +7,15 @@ import type {
 } from "../types";
 import type { FeatureCollection, Geometry } from "geojson";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export const DATASETS_CONFIG = {
   metricsData: {
     path: "./data/metrics/census_metrics_by_block_group.json",
     errorPrefix: "Failed to fetch census metrics dataset",
   },
   blockGroupData: {
-    path: "./data/metrics/census_datasets_config.json",
+    path: `${API_BASE}/api/v1/datasets`,
     errorPrefix: "Failed to fetch dataset metadata",
   },
   censusBlockGroups: {

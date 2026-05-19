@@ -32,7 +32,8 @@ import {
   FilterList,
   SaveAlt,
 } from "@mui/icons-material";
-import { loadAndParseCSV, ParsedCSVData } from "../../utils/csvParser";
+import { ParsedCSVData } from "../../utils/csvParser";
+import { getMetrics } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { useTheme } from "@mui/material";
 import { useMapStore, usePrimaryMapState } from "../../stores";
@@ -262,8 +263,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       setError(null);
 
       try {
-        const csvData = await loadAndParseCSV(`./data/vulnerability_datasets/${activeDataset}.csv`);
-        setTableData(csvData);
+        const data = await getMetrics(activeDataset);
+        const headers = data.length > 0 ? Object.keys(data[0]) : [];
+        const rows = data.map((row) => headers.map((h) => row[h] ?? ""));
+        setTableData({ headers, rows });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load data";
         setError(errorMessage);
