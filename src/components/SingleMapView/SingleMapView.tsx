@@ -26,10 +26,12 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   useSnapshotStore,
+  useHCDPStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
+import { HCDPRasterLayer } from "../HCDP";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 
@@ -181,6 +183,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       () => visibleRasterLayerIdsByMap[mapId] ?? new Set<string>(),
       [visibleRasterLayerIdsByMap, mapId],
     );
+
+    const hcdpOverlayLoadId = useHCDPStore((s) => s.overlaysByMap[mapId]?.loadId);
 
     useEffect(() => {
       if (mapRef.current) {
@@ -488,6 +492,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             {Array.from(visiblePointLayerIds).map((layerId) => (
               <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
             ))}
+
+            {hcdpOverlayLoadId != null && <HCDPRasterLayer mapId={mapId} />}
           </MapContainer>
 
           <div className={mapLegendStyles.legendStack}>

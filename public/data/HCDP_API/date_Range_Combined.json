@@ -22,12 +22,48 @@
         "period": "day",
         "date_range": [
             "1990-01-01T10:00:00.000Z",
+            "2026-05-12T10:00:00.000Z"
+        ],
+        "aggregation": "min"
+    },
+    {
+        "data_type": "temperature",
+        "period": "month",
+        "date_range": [
+            "1990-01-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "aggregation": "min"
+    },
+    {
+        "data_type": "temperature",
+        "period": "day",
+        "date_range": [
+            "1990-01-01T10:00:00.000Z",
+            "2026-05-12T10:00:00.000Z"
+        ],
+        "aggregation": "max"
+    },
+    {
+        "data_type": "temperature",
+        "period": "month",
+        "date_range": [
+            "1990-01-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "aggregation": "max"
+    },
+    {
+        "data_type": "rainfall",
+        "period": "day",
+        "date_range": [
+            "1990-01-01T10:00:00.000Z",
             "2026-04-21T10:00:00.000Z"
         ],
         "production": "new"
     },
     {
-        "data_type": "temperature",
+        "data_type": "rainfall",
         "period": "month",
         "date_range": [
             "1920-01-01T10:30:00.000Z",
@@ -36,7 +72,7 @@
         "production": "legacy"
     },
     {
-        "data_type": "temperature",
+        "data_type": "rainfall",
         "period": "month",
         "date_range": [
             "1990-01-01T10:00:00.000Z",
@@ -45,11 +81,92 @@
         "production": "new"
     },
     {
-        "data_type": "temperature",
+        "data_type": "relative_humidity",
         "period": "day",
         "date_range": [
             "2002-01-01T10:00:00.000Z",
             "2026-04-21T10:00:00.000Z"
         ]
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1990-01-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale001"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1990-03-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale003"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1990-06-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale006"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1990-09-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale009"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1991-01-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale012"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1991-12-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale024"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1992-12-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale036"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1993-12-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale048"
+    },
+    {
+        "data_type": "spi",
+        "period": "month",
+        "date_range": [
+            "1994-12-01T10:00:00.000Z",
+            "2026-04-01T10:00:00.000Z"
+        ],
+        "timescale": "timescale060"
     }
 ]

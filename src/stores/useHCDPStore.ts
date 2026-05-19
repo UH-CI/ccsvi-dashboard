@@ -1,38 +1,43 @@
 import { create } from "zustand";
+import type { HcdpRangeRow } from "../utils/hcdpRaster";
+import { formatHcdpDataTypeLabel } from "../utils/hcdpRaster";
 
-type DataType = "temperature";
-type Period = "day";
-type Extent = "statewide";
-type DateValue = string | null;
-
-interface HCDPState {
-  datatype: DataType;
-  period: Period;
-  date: DateValue;
-  extent: Extent;
-  minDate: DateValue;
-  maxDate: DateValue;
-  setDate: (date: DateValue) => void;
-  setDateRange: (min: DateValue, max: DateValue) => void;
-  getRasterUrl: () => string | null;
+export interface HcdpRasterOverlay {
+  arrayBuffer: ArrayBuffer;
+  row: HcdpRangeRow;
+  date: string;
+  title: string;
+  /** Bumps when a new raster is loaded so map layers re-mount. */
+  loadId: number;
 }
 
-export const useStore = create<HCDPState>((set, get) => ({
-  datatype: "temperature",
-  period: "day",
-  date: null,
-  extent: "statewide",
+interface HCDPState {
+  overlaysByMap: Record<string, HcdpRasterOverlay | undefined>;
+  setRasterOverlay: (mapId: string, overlay: HcdpRasterOverlay | null) => void;
+  clearRasterOverlay: (mapId: string) => void;
+}
 
-  minDate: null,
-  maxDate: null,
+export function buildHcdpOverlayTitle(row: HcdpRangeRow, date: string): string {
+  const extras = [row.aggregation, row.production, row.timescale?.replace(/^timescale/i, "TS ")].filter(
+    Boolean,
+  );
+  return [formatHcdpDataTypeLabel(row.data_type), ...extras, row.period, date].join(" · ");
+}
 
-  setDate: (date) => set({ date }),
-  setDateRange: (min, max) => set({ minDate: min, maxDate: max }),
+export const useHCDPStore = create<HCDPState>((set) => ({
+  overlaysByMap: {},
 
-  getRasterUrl: () => {
-    const { datatype, period, date, extent } = get();
-    if (!date) return null;
+  setRasterOverlay: (mapId, overlay) =>
+    set((state) => ({
+      overlaysByMap: {
+        ...state.overlaysByMap,
+        [mapId]: overlay ?? undefined,
+      },
+    })),
 
-    return `/api/raster?datatype=${datatype}&period=${period}&date=${date}&extent=${extent}`;
-  }
+  clearRasterOverlay: (mapId) =>
+    set((state) => {
+      const { [mapId]: _removed, ...rest } = state.overlaysByMap;
+      return { overlaysByMap: rest };
+    }),
 }));

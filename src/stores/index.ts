@@ -21,3 +21,9 @@ export {
   type RasterLegendInfo,
 } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";
+export {
+  useHCDPStore,
+  buildHcdpOverlayTitle,
+  type HcdpRasterOverlay,
+} from "./useHCDPStore";
+
