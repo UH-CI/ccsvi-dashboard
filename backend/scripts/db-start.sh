@@ -5,7 +5,7 @@ set -euo pipefail
 CONTAINER=ccsvi-pg
 DB_NAME=ccsvi
 DB_USER=ccsvi
-DB_PASS=${POSTGRES_PASSWORD:-changeme}
+DB_PASS=${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD set}
 
 if docker ps -q -f "name=^${CONTAINER}$" | grep -q .; then
     echo "Postgres already running."
