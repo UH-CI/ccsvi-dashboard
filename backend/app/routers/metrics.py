@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -33,4 +34,4 @@ async def get_metrics(dataset: str, conn: ConnDep) -> list[dict[str, Any]]:
     if dataset not in _TABLE:
         raise HTTPException(status_code=404, detail=f"Dataset '{dataset}' not found")
     rows = await conn.fetch(f"SELECT row_data FROM {_TABLE[dataset]}")
-    return [dict(r["row_data"]) for r in rows]
+    return [json.loads(r["row_data"]) for r in rows]

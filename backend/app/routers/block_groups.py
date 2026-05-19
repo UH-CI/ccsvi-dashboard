@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -15,4 +16,6 @@ async def get_block_group(geoid: str, conn: ConnDep) -> dict[str, Any]:
     )
     if row is None:
         raise HTTPException(status_code=404, detail=f"Block group '{geoid}' not found")
-    return dict(row)
+    result = dict(row)
+    result["metrics"] = json.loads(result["metrics"])
+    return result
