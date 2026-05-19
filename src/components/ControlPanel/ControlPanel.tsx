@@ -13,6 +13,10 @@ import {
   FormControlLabel,
   Checkbox,
   Menu,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   Camera,
@@ -34,6 +38,7 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
+  useAppStore,
 } from "../../stores";
 import { SVI_CATEGORIES } from "../../config";
 import { SingleMapControls } from "./SingleMapControls";
@@ -78,6 +83,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   onSnapshot,
 }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
+  const blockGroupData = useAppStore((state) => state.blockGroupData);
   const addMap = useMapStore((state) => state.addMap);
   const removeMap = useMapStore((state) => state.removeMap);
   const updateMapConfig = useMapStore((state) => state.updateMapConfig);
@@ -418,18 +424,31 @@ const resetMapStore = useMapStore((state) => state.reset);
                   </Box>
                   );
                 })}
+                {sviConfig?.dataset && sviConfig?.metric && (
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>Compare with</InputLabel>
+                    <Select
+                      value={sviConfig.metric2 || ""}
+                      onChange={(e) =>
+                        updateMapConfig(resolvedSviMapId, { metric2: e.target.value || undefined })
+                      }
+                      label="Compare with"
+                    >
+                      <MenuItem value=""><em>None (univariate)</em></MenuItem>
+                      {blockGroupData?.[sviConfig.dataset] &&
+                        Object.keys(blockGroupData[sviConfig.dataset].columnThresholds || {})
+                          .filter((m) => m !== sviConfig.metric)
+                          .map((metricName) => (
+                            <MenuItem key={metricName} value={metricName}>
+                              {metricName}
+                            </MenuItem>
+                          ))}
+                    </Select>
+                  </FormControl>
+                )}
               </Stack>
             );
           })()}
-          {resolvedSviMapId && (
-            <SingleMapControls
-              key={resolvedSviMapId}
-              mapId={resolvedSviMapId}
-              canRemoveMap={canRemoveMap}
-              onRemove={handleRemoveMap}
-              section="dataset"
-            />
-          )}
         </Box>
       </Menu>
 
