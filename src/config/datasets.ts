@@ -11,7 +11,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export const DATASETS_CONFIG = {
   metricsData: {
-    path: "./data/metrics/census_metrics_by_block_group.json",
+    path: `${API_BASE}/api/v1/census-metrics`,
     errorPrefix: "Failed to fetch census metrics dataset",
   },
   blockGroupData: {
