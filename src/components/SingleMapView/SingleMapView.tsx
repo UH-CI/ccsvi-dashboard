@@ -236,22 +236,22 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       const values2: number[] = [];
 
       for (const [geoid, values] of Object.entries(cachedMetric1)) {
-        const v1 = values.percentage;
-        if (v1 !== undefined && v1 !== null) {
+        const v1 = values.percentage != null ? Number(values.percentage) : null;
+        if (v1 !== null && !isNaN(v1)) {
           lookup1.set(geoid, v1);
           values1.push(v1);
         }
-        const moe1 = values.margin_of_error ?? null;
-        if (moe1 !== null) lookupMoE1.set(geoid, moe1);
+        const moe1 = values.margin_of_error != null ? Number(values.margin_of_error) : null;
+        if (moe1 !== null && !isNaN(moe1)) lookupMoE1.set(geoid, moe1);
 
         if (lookup2 && lookupMoE2 && cachedMetric2) {
-          const v2 = cachedMetric2[geoid]?.percentage;
-          if (v2 !== undefined && v2 !== null) {
+          const v2 = cachedMetric2[geoid]?.percentage != null ? Number(cachedMetric2[geoid].percentage) : null;
+          if (v2 !== null && !isNaN(v2)) {
             lookup2.set(geoid, v2);
             values2.push(v2);
           }
-          const moe2 = cachedMetric2[geoid]?.margin_of_error ?? null;
-          if (moe2 !== null) lookupMoE2.set(geoid, moe2);
+          const moe2 = cachedMetric2[geoid]?.margin_of_error != null ? Number(cachedMetric2[geoid].margin_of_error) : null;
+          if (moe2 !== null && !isNaN(moe2)) lookupMoE2.set(geoid, moe2);
         }
       }
 

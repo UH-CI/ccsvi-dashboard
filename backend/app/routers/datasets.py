@@ -50,7 +50,11 @@ async def get_dataset_table(
 
     value_rows = await conn.fetch(
         """
-        SELECT g.geoid, mv.metric_id, mv.absolute::float, mv.percentage::float
+        SELECT g.geoid, g.name, g.population,
+               mv.metric_id,
+               mv.absolute::float,
+               mv.margin_of_error::float,
+               mv.percentage::float
         FROM geographies g
         JOIN metric_values mv ON mv.geoid = g.geoid
         WHERE mv.metric_id = ANY($1::int[])
@@ -63,10 +67,19 @@ async def get_dataset_table(
     for row in value_rows:
         geoid = row["geoid"]
         if geoid not in geoid_data:
-            geoid_data[geoid] = {"Geography": geoid}
-        name = metric_id_to_name[row["metric_id"]]
-        geoid_data[geoid][name] = row["absolute"]
+            # Prefix matches Census block-group GEOID format (summary level 150).
+            # The TableViewer strips this prefix for map-sync; it also prevents
+            # the all-digit geoid from being misclassified as a numeric column.
+            geoid_data[geoid] = {
+                "Geography": f"1500000US{geoid}",
+                "Geographic Area Name": row["name"],
+                "Census Population": row["population"],
+            }
+        metric_name = metric_id_to_name[row["metric_id"]]
+        geoid_data[geoid][f"Estimate!!{metric_name}"] = row["absolute"]
+        if row["margin_of_error"] is not None:
+            geoid_data[geoid][f"Margin of Error!!{metric_name}"] = row["margin_of_error"]
         if row["percentage"] is not None:
-            geoid_data[geoid][f"{name} (%)"] = row["percentage"]
+            geoid_data[geoid][f"{metric_name} (%)"] = row["percentage"]
 
     return list(geoid_data.values())
