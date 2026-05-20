@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from ..db import ConnDep
 
@@ -9,7 +9,8 @@ router = APIRouter()
 
 
 @router.get("/api/v1/census-metrics")
-async def get_census_metrics(conn: ConnDep) -> dict[str, Any]:
+async def get_census_metrics(conn: ConnDep, response: Response) -> dict[str, Any]:
+    response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
         "SELECT id, type, name, block_group, census_tract, county, state, population, metrics "
         "FROM census_metrics"

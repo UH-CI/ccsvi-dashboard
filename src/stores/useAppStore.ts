@@ -77,7 +77,9 @@ export const useAppStore = create<AppState>((set, get) => {
     setter: (data: DataSourceTypeMap[K]) => void,
   ): Promise<void> => {
     const config = DATASETS_CONFIG[key];
-    const { setLoading, setError } = get();
+    const { loading, setLoading, setError } = get();
+
+    if (loading[key as keyof LoadingState]) return;
 
     setLoading(key as keyof LoadingState, true);
     setError(key, null);
