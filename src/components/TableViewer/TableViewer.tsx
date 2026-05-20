@@ -265,7 +265,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       try {
         const data = await getDatasetTable(activeDataset);
         const headers = data.length > 0 ? Object.keys(data[0]) : [];
-        const rows = data.map((row) => headers.map((h) => row[h] ?? ""));
+        const rows = data.map((row) => headers.map((h) => String(row[h] ?? "")));
         setTableData({ headers, rows });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load data";
