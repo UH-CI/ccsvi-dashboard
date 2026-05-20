@@ -26,12 +26,14 @@ interface SingleMapControlsProps {
   mapId: string;
   canRemoveMap: boolean;
   onRemove: (mapId: string) => void;
+  section?: "management" | "dataset" | "all";
 }
 
 export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   mapId,
   canRemoveMap,
   onRemove,
+  section = "all",
 }) => {
   const config = useMapConfig(mapId);
   const dataset = useAppStore((state) => state.blockGroupData);
@@ -61,7 +63,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
   return (
     <Box className={styles["single-map-controls"]}>
-      <Box className={styles["single-map-actions"]}>
+      {section !== "dataset" && <Box className={styles["single-map-actions"]}>
         {isEditingTitle ? (
           <input
             className={styles["map-tab-input"]}
@@ -261,9 +263,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </IconButton>
           )}
         </Box>
-      </Box>
+      </Box>}
 
-      {config.visible && (
+      {section !== "management" && config.visible && (
         <Box className={styles["single-map-fields"]}>
           <FormControl size="small" fullWidth>
             <InputLabel>Dataset</InputLabel>
