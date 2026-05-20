@@ -33,7 +33,7 @@ import {
   SaveAlt,
 } from "@mui/icons-material";
 import { ParsedCSVData } from "../../utils/csvParser";
-import { getMetrics } from "../../api/client";
+import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { useTheme } from "@mui/material";
 import { useMapStore, usePrimaryMapState } from "../../stores";
@@ -263,7 +263,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       setError(null);
 
       try {
-        const data = await getMetrics(activeDataset);
+        const data = await getDatasetTable(activeDataset);
         const headers = data.length > 0 ? Object.keys(data[0]) : [];
         const rows = data.map((row) => headers.map((h) => row[h] ?? ""));
         setTableData({ headers, rows });

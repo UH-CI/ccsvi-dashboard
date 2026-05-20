@@ -11,5 +11,13 @@ export const getDatasets = () => get<Record<string, unknown>>("/api/v1/datasets"
 export const getMetrics = (dataset: string) =>
   get<Record<string, string>[]>(`/api/v1/metrics/${dataset}`);
 
+export const getDatasetTable = (dataset: string) =>
+  get<Record<string, string | number | null>[]>(`/api/v1/datasets/${dataset}/table`);
+
+export const getMetricValues = (dataset: string, metric: string) =>
+  get<Record<string, { absolute: number | null; margin_of_error: number | null; percentage: number | null }>>(
+    `/api/v1/metric-values?dataset=${encodeURIComponent(dataset)}&metric=${encodeURIComponent(metric)}`,
+  );
+
 export const getBlockGroup = (geoid: string) =>
   get<Record<string, unknown>>(`/api/v1/block-groups/${geoid}`);
