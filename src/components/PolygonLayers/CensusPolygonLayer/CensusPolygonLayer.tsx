@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
-import { BlockGroupProperties, MetricsData } from "../../../types";
+import { BlockGroupProperties, GeographiesData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
 import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
@@ -8,7 +8,7 @@ import { POLYGON_LAYERS } from "../../../config";
 
 interface CensusPolygonLayerProps {
   data: FeatureCollection<Geometry, BlockGroupProperties> | null;
-  metricsData: MetricsData | null;
+  geographiesData: GeographiesData | null;
   getMetricValue: (geoid: string) => number | null;
   getMetricMoE?: (geoid: string) => number | null;
   getMetricValue2?: (geoid: string) => number | null;
@@ -27,7 +27,7 @@ const LAYER_CONFIG = POLYGON_LAYERS.censusBlockGroups;
 
 export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   data,
-  metricsData,
+  geographiesData,
   getMetricValue,
   getMetricMoE,
   getMetricValue2,
@@ -88,13 +88,13 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         },
         activeMetric,
         getMetricValue,
-        metricsData,
+        geographiesData,
         activeMetric2,
         getMetricValue2,
         getMetricMoE,
         getMetricMoE2,
       ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, geographiesData],
   );
 
   return (

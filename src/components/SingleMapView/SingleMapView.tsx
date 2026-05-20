@@ -111,16 +111,18 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const { blockGroupData, metricsData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
+    const { blockGroupData, metricValuesCache, geographiesData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
       useAppStore(
         useShallow((state) => ({
           blockGroupData: state.blockGroupData,
-          metricsData: state.metricsData,
+          metricValuesCache: state.metricValuesCache,
+          geographiesData: state.geographiesData,
           censusBlockGroups: state.censusBlockGroups,
           hawaiianHomelands: state.hawaiianHomelands,
           countyBoundaries: state.countyBoundaries,
         })),
       );
+    const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
 
     const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
     const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
@@ -199,6 +201,21 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
     
+    const cacheKey1 = effectiveDataset && effectiveMetric
+      ? `${effectiveDataset}::${effectiveMetric}`
+      : null;
+    const cacheKey2 = effectiveDataset && effectiveMetric2
+      ? `${effectiveDataset}::${effectiveMetric2}`
+      : null;
+    const cachedMetric1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
+    const cachedMetric2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
+
+    useEffect(() => {
+      if (!effectiveDataset) return;
+      if (effectiveMetric) void fetchMetricValues(effectiveDataset, effectiveMetric);
+      if (effectiveMetric2) void fetchMetricValues(effectiveDataset, effectiveMetric2);
+    }, [effectiveDataset, effectiveMetric, effectiveMetric2, fetchMetricValues]);
+
     const metricsDerived = useMemo(() => {
       const noData = {
         allMetricValues: [] as number[],
@@ -209,35 +226,31 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         getMetricMoE2: null as ((geoid: string) => number | null) | null,
       };
 
-      if (!metricsData || !effectiveDataset || !effectiveMetric) return noData;
+      if (!cachedMetric1 || !effectiveMetric) return noData;
 
       const lookup1 = new Map<string, number>();
       const lookupMoE1 = new Map<string, number>();
-      const lookup2 = effectiveMetric2 ? new Map<string, number>() : null;
-      const lookupMoE2 = effectiveMetric2 ? new Map<string, number>() : null;
+      const lookup2 = effectiveMetric2 && cachedMetric2 ? new Map<string, number>() : null;
+      const lookupMoE2 = effectiveMetric2 && cachedMetric2 ? new Map<string, number>() : null;
       const values1: number[] = [];
       const values2: number[] = [];
 
-      for (const [geoid, data] of Object.entries(metricsData)) {
-        const datasetMetrics = data.metrics?.[effectiveDataset];
-
-        const v1 = datasetMetrics?.[effectiveMetric]?.percentage;
+      for (const [geoid, values] of Object.entries(cachedMetric1)) {
+        const v1 = values.percentage;
         if (v1 !== undefined && v1 !== null) {
           lookup1.set(geoid, v1);
           values1.push(v1);
         }
-
-        const moe1 = datasetMetrics?.[effectiveMetric]?.margin_of_error ?? null;
+        const moe1 = values.margin_of_error ?? null;
         if (moe1 !== null) lookupMoE1.set(geoid, moe1);
 
-        if (lookup2 && lookupMoE2 && effectiveMetric2) {
-          const v2 = datasetMetrics?.[effectiveMetric2]?.percentage;
+        if (lookup2 && lookupMoE2 && cachedMetric2) {
+          const v2 = cachedMetric2[geoid]?.percentage;
           if (v2 !== undefined && v2 !== null) {
             lookup2.set(geoid, v2);
             values2.push(v2);
           }
-
-          const moe2 = datasetMetrics?.[effectiveMetric2]?.margin_of_error ?? null;
+          const moe2 = cachedMetric2[geoid]?.margin_of_error ?? null;
           if (moe2 !== null) lookupMoE2.set(geoid, moe2);
         }
       }
@@ -254,7 +267,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           ? (geoid: string): number | null => lookupMoE2.get(geoid) ?? null
           : null,
       };
-    }, [metricsData, effectiveDataset, effectiveMetric, effectiveMetric2]);
+    }, [cachedMetric1, cachedMetric2, effectiveMetric, effectiveMetric2]);
 
     const { allMetricValues, getMetricValue, getMetricMoE, allMetricValues2, getMetricValue2, getMetricMoE2 } = metricsDerived;
 
@@ -332,7 +345,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       effectiveDataset &&
       effectiveMetric &&
       censusBlockGroups &&
-      metricsData &&
+      cachedMetric1 &&
       blockGroupData &&
       !shouldShowHawaiianHomelands;
 
@@ -341,7 +354,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       effectiveMetric &&
       shouldShowHawaiianHomelands &&
       hawaiianHomelands &&
-      metricsData;
+      cachedMetric1;
 
     const shouldRenderCountyBoundariesBackground =
       effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && countyBoundaries;
@@ -431,7 +444,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             {shouldRenderCensus && (
               <CensusPolygonLayer
                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
-                metricsData={metricsData}
+                geographiesData={geographiesData}
                 getMetricValue={getMetricValue}
                 getMetricMoE={getMetricMoE ?? undefined}
                 getMetricValue2={getMetricValue2 ?? undefined}
@@ -449,7 +462,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             {shouldRenderHawaiianHomelands && (
               <HawaiianHomelandsPolygonLayer
                 data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
-                metricsData={metricsData}
+                geographiesData={geographiesData}
                 getMetricValue={getMetricValue}
                 getMetricMoE={getMetricMoE ?? undefined}
                 getMetricValue2={getMetricValue2 ?? undefined}

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
-import { HawaiianHomelandProperties, MetricsData } from "../../../types";
+import { HawaiianHomelandProperties, GeographiesData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
 import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
@@ -8,7 +8,7 @@ import { POLYGON_LAYERS } from "../../../config";
 
 interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
-  metricsData: MetricsData | null;
+  geographiesData: GeographiesData | null;
   getMetricValue: (geoid: string) => number | null;
   getMetricMoE?: (geoid: string) => number | null;
   getMetricValue2?: (geoid: string) => number | null;
@@ -30,7 +30,7 @@ const LAYER_CONFIG = POLYGON_LAYERS.hawaiianHomelands;
 
 export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLayerProps> = ({
   data,
-  metricsData,
+  geographiesData,
   getMetricValue,
   getMetricMoE,
   getMetricValue2,
@@ -101,13 +101,13 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         },
         activeMetric,
         getMetricValue,
-        metricsData,
+        geographiesData,
         activeMetric2,
         getMetricValue2,
         getMetricMoE,
         getMetricMoE2,
       ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, metricsData],
+    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, geographiesData],
   );
 
   return (

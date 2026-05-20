@@ -24,22 +24,14 @@ export interface MetricValue {
   percentage: number | null;
 }
 
-export interface MetricsData {
-  [geoid: string]: {
-    type?: string;
-    name?: string;
-    block_group: string | null;
-    census_tract: string | null;
-    county: string | null;
-    state?: string | null;
-    population?: number;
-    metrics: {
-      [datasetName: string]: {
-        [metricName: string]: MetricValue;
-      };
-    };
-  };
+export interface GeographyMetadata {
+  name: string | null;
+  block_group: string | null;
+  census_tract: string | null;
+  county: string | null;
 }
+
+export type GeographiesData = Record<string, GeographyMetadata>;
 
 export interface MetricConfig {
   classificationMode?: string;

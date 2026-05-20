@@ -1,6 +1,6 @@
 import { Feature } from "geojson";
 import { FeaturePopup } from "../components/FeaturePopup";
-import { MetricsData } from "../types";
+import { GeographiesData } from "../types";
 
 interface PopupConfig {
   fields: Array<{ key: string; label: string }>;
@@ -11,7 +11,7 @@ export function renderPolygonPopup(
   config: PopupConfig,
   activeMetric: string,
   getMetricValue: (geoid: string) => number | null,
-  metricsData: MetricsData | null,
+  geographiesData: GeographiesData | null,
   activeMetric2?: string | null,
   getMetricValue2?: ((geoid: string) => number | null) | null,
   getMetricMoE?: ((geoid: string) => number | null) | null,
@@ -26,7 +26,7 @@ export function renderPolygonPopup(
     const metricValue2 = getMetricValue2?.(geoidStr) ?? null;
     const metricMoE = getMetricMoE?.(geoidStr) ?? null;
     const metricMoE2 = getMetricMoE2?.(geoidStr) ?? null;
-    const metadataEntry = metricsData?.[geoidStr];
+    const metadataEntry = geographiesData?.[geoidStr];
 
     const metadata = [];
     if (metadataEntry?.county) metadata.push(metadataEntry.county);
