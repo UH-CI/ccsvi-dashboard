@@ -59,7 +59,10 @@ async def get_metric_values(
     response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
         """
-        SELECT mv.geoid, mv.absolute, mv.margin_of_error, mv.percentage
+        SELECT mv.geoid,
+               mv.absolute::float,
+               mv.margin_of_error::float,
+               mv.percentage::float
         FROM metric_values mv
         JOIN metrics m ON m.id = mv.metric_id
         WHERE m.dataset_id = $1 AND m.name = $2

@@ -50,7 +50,7 @@ async def get_dataset_table(
 
     value_rows = await conn.fetch(
         """
-        SELECT g.geoid, mv.metric_id, mv.absolute, mv.percentage
+        SELECT g.geoid, mv.metric_id, mv.absolute::float, mv.percentage::float
         FROM geographies g
         JOIN metric_values mv ON mv.geoid = g.geoid
         WHERE mv.metric_id = ANY($1::int[])
