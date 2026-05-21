@@ -330,19 +330,25 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 <MenuItem value="">
                   <em>None (univariate)</em>
                 </MenuItem>
-                {dataset &&
-                  Object.entries(dataset).map(([dsId, dsObj]) => [
-                    <ListSubheader key={`hdr-${dsId}`}>
-                      {dsObj.metricLabel || dsId.replace(/_/g, " ")}
-                    </ListSubheader>,
-                    ...Object.keys(dsObj.columnThresholds || {})
-                      .filter((m) => !(dsId === config.dataset && m === config.metric))
-                      .map((metricName) => (
-                        <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
-                          {metricName}
-                        </MenuItem>
-                      )),
-                  ])}
+                {dataset && (() => {
+                  const primaryIsHawaiian = config.dataset
+                    ? (dataset[config.dataset]?.hawaiianHomelands ?? false)
+                    : false;
+                  return Object.entries(dataset)
+                    .filter(([, dsObj]) => (dsObj.hawaiianHomelands ?? false) === primaryIsHawaiian)
+                    .map(([dsId, dsObj]) => [
+                      <ListSubheader key={`hdr-${dsId}`}>
+                        {dsObj.metricLabel || dsId.replace(/_/g, " ")}
+                      </ListSubheader>,
+                      ...Object.keys(dsObj.columnThresholds || {})
+                        .filter((m) => !(dsId === config.dataset && m === config.metric))
+                        .map((metricName) => (
+                          <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
+                            {metricName}
+                          </MenuItem>
+                        )),
+                    ]);
+                })()}
               </Select>
             </FormControl>
           )}

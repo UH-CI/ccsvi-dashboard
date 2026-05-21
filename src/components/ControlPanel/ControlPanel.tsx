@@ -448,18 +448,25 @@ const resetMapStore = useMapStore((state) => state.reset);
                       label="Compare with"
                     >
                       <MenuItem value=""><em>None (univariate)</em></MenuItem>
-                      {blockGroupData && Object.entries(blockGroupData).map(([dsId, dsObj]) => [
-                        <ListSubheader key={`hdr-${dsId}`}>
-                          {dsObj.metricLabel || dsId.replace(/_/g, " ")}
-                        </ListSubheader>,
-                        ...Object.keys(dsObj.columnThresholds || {})
-                          .filter((m) => !(dsId === sviConfig.dataset && m === sviConfig.metric))
-                          .map((metricName) => (
-                            <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
-                              {metricName}
-                            </MenuItem>
-                          )),
-                      ])}
+                      {blockGroupData && (() => {
+                        const primaryIsHawaiian = sviConfig?.dataset
+                          ? (blockGroupData[sviConfig.dataset]?.hawaiianHomelands ?? false)
+                          : false;
+                        return Object.entries(blockGroupData)
+                          .filter(([, dsObj]) => (dsObj.hawaiianHomelands ?? false) === primaryIsHawaiian)
+                          .map(([dsId, dsObj]) => [
+                            <ListSubheader key={`hdr-${dsId}`}>
+                              {dsObj.metricLabel || dsId.replace(/_/g, " ")}
+                            </ListSubheader>,
+                            ...Object.keys(dsObj.columnThresholds || {})
+                              .filter((m) => !(dsId === sviConfig.dataset && m === sviConfig.metric))
+                              .map((metricName) => (
+                                <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
+                                  {metricName}
+                                </MenuItem>
+                              )),
+                          ]);
+                      })()}
                     </Select>
                   </FormControl>
                 )}

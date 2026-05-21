@@ -229,6 +229,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
       if (!cachedMetric1 || !effectiveMetric) return noData;
 
+      // Use percentage when available; fall back to absolute for metrics that
+      // lack a meaningful percentage (e.g. median income, raw population counts).
+      const pickValue = (entry: { absolute: number | null; margin_of_error: number | null; percentage: number | null } | undefined): number | null => {
+        if (!entry) return null;
+        if (entry.percentage != null) { const n = Number(entry.percentage); if (!isNaN(n)) return n; }
+        if (entry.absolute != null) { const n = Number(entry.absolute); if (!isNaN(n)) return n; }
+        return null;
+      };
+
       const lookup1 = new Map<string, number>();
       const lookupMoE1 = new Map<string, number>();
       const lookup2 = effectiveMetric2 && cachedMetric2 ? new Map<string, number>() : null;
@@ -237,8 +246,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       const values2: number[] = [];
 
       for (const [geoid, values] of Object.entries(cachedMetric1)) {
-        const v1 = values.percentage != null ? Number(values.percentage) : null;
-        if (v1 !== null && !isNaN(v1)) {
+        const v1 = pickValue(values);
+        if (v1 !== null) {
           lookup1.set(geoid, v1);
           values1.push(v1);
         }
@@ -246,8 +255,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         if (moe1 !== null && !isNaN(moe1)) lookupMoE1.set(geoid, moe1);
 
         if (lookup2 && lookupMoE2 && cachedMetric2) {
-          const v2 = cachedMetric2[geoid]?.percentage != null ? Number(cachedMetric2[geoid].percentage) : null;
-          if (v2 !== null && !isNaN(v2)) {
+          const v2 = pickValue(cachedMetric2[geoid]);
+          if (v2 !== null) {
             lookup2.set(geoid, v2);
             values2.push(v2);
           }
