@@ -19,7 +19,7 @@ app = FastAPI(title="CCSVI API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://uh-ci.github.io"],
+    allow_origins=["https://uh-ci.github.io", "http://128.171.215.85"],
     allow_methods=["GET"],
     allow_headers=["*"],
 )
