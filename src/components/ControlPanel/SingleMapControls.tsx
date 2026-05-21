@@ -272,7 +272,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             <Select
               value={config.dataset || ""}
               onChange={(e) =>
-                updateMapConfig(config.id, { dataset: e.target.value, metric: "", metric2: "" })
+                updateMapConfig(config.id, { dataset: e.target.value, metric: "", dataset2: undefined , metric2: undefined})
               }
               label="Dataset"
             >
@@ -289,7 +289,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               <InputLabel>Vulnerability Indicator</InputLabel>
               <Select
                 value={config.metric}
-                onChange={(e) => updateMapConfig(config.id, { metric: e.target.value })}
+                onChange={(e) => updateMapConfig(config.id, { metric: e.target.value, dataset2: undefined, metric2: undefined})}
                 label="Vulnerability Indicator"
               >
                 <MenuItem value="">
@@ -310,24 +310,39 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             <FormControl size="small" fullWidth>
               <InputLabel>Comparison Vulnerability Indicator</InputLabel>
               <Select
-                value={config.metric2 || ""}
-                onChange={(e) =>
-                  updateMapConfig(config.id, { metric2: e.target.value || undefined })
-                }
+                value={config.metric2 ? `${config.dataset2 ?? config.dataset}::${config.metric2}` : ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) {
+                    updateMapConfig(config.id, { metric2: undefined, dataset2: undefined });
+                  } else {
+                    const sepIdx = val.indexOf("::");
+                    const ds = val.slice(0, sepIdx);
+                    const metric = val.slice(sepIdx + 2);
+                    updateMapConfig(config.id, {
+                      metric2: metric,
+                      dataset2: ds !== config.dataset ? ds : undefined,
+                    });
+                  }
+                }}
                 label="Comparison Vulnerability Indicator"
               >
                 <MenuItem value="">
                   <em>None (univariate)</em>
                 </MenuItem>
                 {dataset &&
-                  dataset[config.dataset] &&
-                  Object.keys(dataset[config.dataset].columnThresholds || {})
-                    .filter((m) => m !== config.metric)
-                    .map((metricName) => (
-                      <MenuItem key={metricName} value={metricName}>
-                        {metricName}
-                      </MenuItem>
-                    ))}
+                  Object.entries(dataset).map(([dsId, dsObj]) => [
+                    <ListSubheader key={`hdr-${dsId}`}>
+                      {dsObj.metricLabel || dsId.replace(/_/g, " ")}
+                    </ListSubheader>,
+                    ...Object.keys(dsObj.columnThresholds || {})
+                      .filter((m) => !(dsId === config.dataset && m === config.metric))
+                      .map((metricName) => (
+                        <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
+                          {metricName}
+                        </MenuItem>
+                      )),
+                  ])}
               </Select>
             </FormControl>
           )}

@@ -3,6 +3,7 @@ import { MapConfig } from "../types";
 export interface SerializedMapState {
   maps: string;
   datasets: Record<string, string>;
+  datasets2: Record<string, string>;
   metrics: Record<string, string>;
   metrics2: Record<string, string>;
   bivariateColorSchemes: Record<string, string>;
@@ -49,6 +50,16 @@ export function serializeMapConfigs(configs: MapConfig[]): SerializedMapState {
     {} as Record<string, string>,
   );
 
+  const datasets2 = configs.reduce(
+    (acc, config) => {
+      if (config.dataset2) {
+        acc[`d2_${config.id}`] = config.dataset2;
+      }
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
   const metrics2 = configs.reduce(
     (acc, config) => {
       if (config.metric2) {
@@ -79,7 +90,7 @@ export function serializeMapConfigs(configs: MapConfig[]): SerializedMapState {
     {} as Record<string, string>,
   );
 
-  return { maps, datasets, metrics, metrics2, bivariateColorSchemes, activeFeatures };
+  return { maps, datasets, datasets2, metrics, metrics2, bivariateColorSchemes, activeFeatures };
 }
 
 export function deserializeMapConfigs(params: URLSearchParams): DeserializedState {
@@ -108,7 +119,8 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
 
   const mapConfigs: Partial<MapConfig>[] = mapsParam.split(",").map((mapStr) => {
     const [id, vis] = mapStr.split(":");
-
+    
+    const dataset2 = params.get(`d2_${id}`);
     const metric2 = params.get(`m2_${id}`);
     const bivariateColorScheme = params.get(`bcs_${id}`);
     const config: Partial<MapConfig> = {
@@ -116,7 +128,8 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
       visible: vis === "vis",
       dataset: params.get(`d_${id}`) || "",
       metric: params.get(`m_${id}`) || "",
-      ...(metric2 ? { metric2 } : {}),
+        ...(dataset2 ? { dataset2 } : {}),
+        ...(metric2 ? { metric2 } : {}),
       ...(bivariateColorScheme ? { bivariateColorScheme } : {}),
     };
 

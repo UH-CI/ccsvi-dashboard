@@ -38,7 +38,7 @@ export function useUrlSync(isInitialized: boolean) {
   const mapConfigKey = useMemo(
     () =>
       mapConfigs
-        .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
+        .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.dataset2 ?? ""}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
         .join("|"),
     [mapConfigs],
   );
@@ -83,6 +83,7 @@ export function useUrlSync(isInitialized: boolean) {
         Array.from(prev.keys()).forEach((key) => {
           if (
             key.startsWith("d_") ||
+            key.startsWith("d2_") ||
             key.startsWith("m_") ||
             key.startsWith("m2_") ||
             key.startsWith("bcs_") ||
@@ -97,6 +98,9 @@ export function useUrlSync(isInitialized: boolean) {
           newParams.set("maps", serialized.maps);
 
           Object.entries(serialized.datasets).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
+          Object.entries(serialized.datasets2).forEach(([key, val]) => {
             newParams.set(key, val);
           });
           Object.entries(serialized.metrics).forEach(([key, val]) => {

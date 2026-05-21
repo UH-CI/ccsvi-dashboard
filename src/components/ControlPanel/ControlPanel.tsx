@@ -17,6 +17,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  ListSubheader,
 } from "@mui/material";
 import {
   Camera,
@@ -409,6 +410,7 @@ const resetMapStore = useMapStore((state) => state.reset);
                                     updateMapConfig(resolvedSviMapId, {
                                       dataset: isSelected ? "" : indicator.dataset,
                                       metric: isSelected ? "" : indicator.metric,
+                                      dataset2: undefined,
                                       metric2: undefined,
                                     })
                                   }
@@ -428,21 +430,36 @@ const resetMapStore = useMapStore((state) => state.reset);
                   <FormControl size="small" fullWidth>
                     <InputLabel>Compare with</InputLabel>
                     <Select
-                      value={sviConfig.metric2 || ""}
-                      onChange={(e) =>
-                        updateMapConfig(resolvedSviMapId, { metric2: e.target.value || undefined })
-                      }
+                      value={sviConfig.metric2 ? `${sviConfig.dataset2 ?? sviConfig.dataset}::${sviConfig.metric2}` : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          updateMapConfig(resolvedSviMapId, { metric2: undefined, dataset2: undefined });
+                        } else {
+                          const sepIdx = val.indexOf("::");
+                          const ds = val.slice(0, sepIdx);
+                          const metric = val.slice(sepIdx + 2);
+                          updateMapConfig(resolvedSviMapId, {
+                            metric2: metric,
+                            dataset2: ds !== sviConfig.dataset ? ds : undefined,
+                          });
+                        }
+                      }}
                       label="Compare with"
                     >
                       <MenuItem value=""><em>None (univariate)</em></MenuItem>
-                      {blockGroupData?.[sviConfig.dataset] &&
-                        Object.keys(blockGroupData[sviConfig.dataset].columnThresholds || {})
-                          .filter((m) => m !== sviConfig.metric)
+                      {blockGroupData && Object.entries(blockGroupData).map(([dsId, dsObj]) => [
+                        <ListSubheader key={`hdr-${dsId}`}>
+                          {dsObj.metricLabel || dsId.replace(/_/g, " ")}
+                        </ListSubheader>,
+                        ...Object.keys(dsObj.columnThresholds || {})
+                          .filter((m) => !(dsId === sviConfig.dataset && m === sviConfig.metric))
                           .map((metricName) => (
-                            <MenuItem key={metricName} value={metricName}>
+                            <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
                               {metricName}
                             </MenuItem>
-                          ))}
+                          )),
+                      ])}
                     </Select>
                   </FormControl>
                 )}

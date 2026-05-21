@@ -131,6 +131,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     );
 
     const effectiveDataset = config?.dataset;
+    const effectiveDataset2 = config?.dataset2 ?? effectiveDataset;
     const effectiveMetric = config?.metric;
     const effectiveMetric2 = config?.metric2;
 
@@ -204,8 +205,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const cacheKey1 = effectiveDataset && effectiveMetric
       ? `${effectiveDataset}::${effectiveMetric}`
       : null;
-    const cacheKey2 = effectiveDataset && effectiveMetric2
-      ? `${effectiveDataset}::${effectiveMetric2}`
+    const cacheKey2 = effectiveDataset2 && effectiveMetric2
+      ? `${effectiveDataset2}::${effectiveMetric2}`
       : null;
     const cachedMetric1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
     const cachedMetric2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
@@ -213,8 +214,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     useEffect(() => {
       if (!effectiveDataset) return;
       if (effectiveMetric) void fetchMetricValues(effectiveDataset, effectiveMetric);
-      if (effectiveMetric2) void fetchMetricValues(effectiveDataset, effectiveMetric2);
-    }, [effectiveDataset, effectiveMetric, effectiveMetric2, fetchMetricValues]);
+      if (effectiveMetric2 && effectiveDataset2) void fetchMetricValues(effectiveDataset2, effectiveMetric2);
+    }, [effectiveDataset, effectiveDataset2, effectiveMetric, effectiveMetric2, fetchMetricValues]);
 
     const metricsDerived = useMemo(() => {
       const noData = {
