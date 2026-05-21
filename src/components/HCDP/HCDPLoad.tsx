@@ -35,6 +35,8 @@ export interface HCDPLoadProps {
 
 export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const setRasterOverlay = useHCDPStore((s) => s.setRasterOverlay);
+  const clearRasterOverlay = useHCDPStore((s) => s.clearRasterOverlay);
+  const hasRasterOverlay = useHCDPStore((s) => s.overlaysByMap[mapId] != null);
   const [catalog, setCatalog] = useState<HcdpRangeRow[] | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [dataType, setDataType] = useState("");
@@ -145,6 +147,11 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
     });
   }, [activeRow, minDate, maxDate]);
 
+  const handleClearRaster = () => {
+    clearRasterOverlay(mapId);
+    setFetchMessage({ type: "success", text: "HCDP raster removed from map." });
+  };
+
   const handleLoadRaster = async () => {
     setFetchMessage(null);
     if (!activeRow || !selectedDate) {
@@ -154,6 +161,7 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
     setFetching(true);
     try {
       const arrayBuffer = await fetchHcdpRaster(activeRow, selectedDate);
+      
       const dateStr = selectedDate.format("YYYY-MM-DD");
       setRasterOverlay(mapId, {
         arrayBuffer: cloneArrayBuffer(arrayBuffer),
@@ -284,20 +292,40 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         <DatePicker
           label="Date"
           value={selectedDate}
-          onChange={(v) => setSelectedDate(v)}
+          onChange={(v) => {
+            if (v && period === "month") {
+              setSelectedDate(v.startOf("month"));
+            }
+            else
+            {
+              setSelectedDate(v)
+            }
+          }}
           minDate={minDate}
           maxDate={maxDate}
           disabled={!activeRow}
+          views={period === "month" ? ["year", "month"] : ["year", "month", "day"]}
+          format={period === "month" ? "YYYY-MM" : "YYYY-MM-DD"}
         />
       </LocalizationProvider>
 
-      <Button
-        variant="contained"
-        disabled={!activeRow || !selectedDate || fetching}
-        onClick={handleLoadRaster}
-      >
-        {fetching ? <CircularProgress size={22} color="inherit" /> : "Load raster"}
-      </Button>
+      <Stack direction="row" spacing={1}>
+        <Button
+          variant="contained"
+          fullWidth
+          disabled={!activeRow || !selectedDate || fetching}
+          onClick={handleLoadRaster}
+        >
+          {fetching ? <CircularProgress size={22} color="inherit" /> : "Load raster"}
+        </Button>
+        <Button
+          variant="outlined"
+          disabled={!hasRasterOverlay || fetching}
+          onClick={handleClearRaster}
+        >
+          Clear
+        </Button>
+      </Stack>
 
       {fetchMessage && <Alert severity={fetchMessage.type}>{fetchMessage.text}</Alert>}
     </Stack>
