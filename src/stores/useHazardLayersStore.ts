@@ -1,56 +1,32 @@
 import { create } from "zustand";
-import { FeatureCollection, Geometry } from "geojson";
-import type { HazardLayerConfig, SubHazardLayerConfig } from "../types";
+import type { HazardLayerConfig } from "../types";
+import { HAZARD_LAYERS } from "../config/hazardLayers";
 
 interface HazardLayersState {
   // Core data
   hazardLayerConfigs: HazardLayerConfig[];
-  hazardLayerData: Map<string, FeatureCollection<Geometry> | ArrayBuffer>;
   visibleLayerIdsByMap: Record<string, Set<string>>;
   isLoaded: boolean;
 
   // Setters
-  setHazardLayerConfigs: (layers: HazardLayerConfig[]) => void;
-  setHazardLayerData: (layerId: string, data: FeatureCollection<Geometry> | ArrayBuffer) => void;
   setVisibleLayerIds: (mapId: string, ids: string[]) => void;
   setVisibleLayerIdsByMap: (byMap: Record<string, string[]>) => void;
-
-  setIsLoaded: (loaded: boolean) => void;
 
   // Actions
   toggleHazardLayerVisibility: (mapId: string, id: string) => void;
   toggleSubLayerVisibility: (mapId: string, parentId: string, subId: string) => void;
 
-  // Data fetching
+  // Initialization — configs come from TS import; this handles URL-initialized visible layers
   fetchHazardLayerConfigs: () => Promise<void>;
-  fetchHazardLayerData: (layerId: string) => Promise<void>;
-
-  loading: boolean;
-  error: string | null;
 }
 
 export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
   // Initial state
-  hazardLayerConfigs: [],
-  hazardLayerData: new Map(),
+  hazardLayerConfigs: HAZARD_LAYERS,
   visibleLayerIdsByMap: {},
   isLoaded: false,
-  loading: false,
-  error: null,
 
   // Setters
-  setHazardLayerConfigs: (configs) => {
-    set({ hazardLayerConfigs: configs });
-  },
-
-  setHazardLayerData: (layerId, data) => {
-    set((state) => {
-      const newData = new Map(state.hazardLayerData);
-      newData.set(layerId, data);
-      return { hazardLayerData: newData };
-    });
-  },
-
   setVisibleLayerIds: (mapId, ids) => {
     set((state) => ({
       visibleLayerIdsByMap: {
@@ -58,10 +34,6 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         [mapId]: new Set(ids),
       },
     }));
-  },
-
-  setIsLoaded: (loaded) => {
-    set({ isLoaded: loaded });
   },
 
   setVisibleLayerIdsByMap: (byMap) => {
@@ -74,8 +46,7 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
 
   // Actions
   toggleHazardLayerVisibility: (mapId, id) => {
-    const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } =
-      get();
+    const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs } = get();
     const newVisibleIds = new Set(visibleLayerIdsByMap[mapId] ?? new Set<string>());
 
     const layer = hazardLayerConfigs.find((l) => l.id === id);
@@ -86,17 +57,10 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
       newVisibleIds.delete(id);
       layer.subLayers?.forEach((sub) => newVisibleIds.delete(`${id}.${sub.id}`));
     } else {
-      // Show parent and all sublayers
+      // Show parent and all sublayers — PMTiles fetching handled by the renderer
       newVisibleIds.add(id);
-
-      if (layer.filePath) {
-        fetchHazardLayerData(id);
-      }
-
       layer.subLayers?.forEach((sub) => {
-        const fullSubId = `${id}.${sub.id}`;
-        newVisibleIds.add(fullSubId);
-        fetchHazardLayerData(fullSubId);
+        newVisibleIds.add(`${id}.${sub.id}`);
       });
     }
 
@@ -104,8 +68,7 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
   },
 
   toggleSubLayerVisibility: (mapId, parentId, subId) => {
-    const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs, fetchHazardLayerData } =
-      get();
+    const { visibleLayerIdsByMap, setVisibleLayerIds, hazardLayerConfigs } = get();
     const newVisibleIds = new Set(visibleLayerIdsByMap[mapId] ?? new Set<string>());
 
     const parentLayer = hazardLayerConfigs.find((l) => l.id === parentId);
@@ -117,10 +80,8 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
     const fullSubId = `${parentId}.${subId}`;
 
     if (newVisibleIds.has(fullSubId)) {
-      // Hide this sublayer
       newVisibleIds.delete(fullSubId);
 
-      // If no sublayers are visible, hide parent too
       const anySubVisible = parentLayer.subLayers.some(
         (s) => s.id !== subId && newVisibleIds.has(`${parentId}.${s.id}`),
       );
@@ -128,127 +89,21 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         newVisibleIds.delete(parentId);
       }
     } else {
-      // Show this sublayer and ensure parent is visible
+      // Show sublayer and ensure parent is visible — PMTiles fetching handled by the renderer
       newVisibleIds.add(fullSubId);
       newVisibleIds.add(parentId);
-
-      // Fetch data if needed
-      fetchHazardLayerData(fullSubId);
     }
 
     setVisibleLayerIds(mapId, Array.from(newVisibleIds));
   },
 
   fetchHazardLayerConfigs: async () => {
-    const { isLoaded, setIsLoaded } = get();
-
-    // Prevent duplicate loads
-    if (isLoaded) {
-      return;
-    }
-
-    set({ loading: true, error: null });
-    try {
-      const base = import.meta.env.BASE_URL || "";
-      const [hazardRes, subHazardRes] = await Promise.all([
-        fetch(`${base}data/Hazards/Hazard_layers.json`),
-        fetch(`${base}data/Hazards/Sub_Hazard_layers.json`),
-      ]);
-
-      if (!hazardRes.ok || !subHazardRes.ok) {
-        throw new Error("Failed to fetch hazard layer configs");
-      }
-
-      const hazardJson = await hazardRes.json();
-      const subHazardJson = await subHazardRes.json();
-
-      const hazardLayersRaw: HazardLayerConfig[] = Array.isArray(hazardJson)
-        ? hazardJson
-        : hazardJson.hazardLayers || [];
-
-      const subHazardLayersRaw: { id: string; subLayers: SubHazardLayerConfig[] }[] = Array.isArray(
-        subHazardJson,
-      )
-        ? subHazardJson
-        : subHazardJson.subHazardLayers || [];
-
-      const linkedHazards = hazardLayersRaw.map((hazard) => {
-        const match = subHazardLayersRaw.find((sub) => sub.id === hazard.id);
-        const subLayersWithColor = (match?.subLayers || []).map((sub) => ({
-          ...sub,
-          color: sub.color ?? hazard.color ?? "#cc0000",
-        }));
-        return {
-          ...hazard,
-          subLayers: subLayersWithColor,
-        };
-      });
-
-      set({ hazardLayerConfigs: linkedHazards, loading: false });
-      setIsLoaded(true);
-
-      // Fetch data for any layers already marked visible (e.g., from URL initialization)
-      const { visibleLayerIdsByMap } = get();
-      Object.values(visibleLayerIdsByMap).forEach((layerSet) => {
-        layerSet.forEach((layerId) => get().fetchHazardLayerData(layerId));
-      });
-    } catch (err) {
-      console.error("Error loading hazard layers:", err);
-      set({
-        error: err instanceof Error ? err.message : "Unknown error loading hazard layers",
-        loading: false,
-      });
-    }
-  },
-
-  fetchHazardLayerData: async (layerId) => {
-    const { hazardLayerData, hazardLayerConfigs, setHazardLayerData } = get();
-
-    // Skip if already loaded
-    if (hazardLayerData.has(layerId)) return;
-
-    // Look up filePath from configs
-    // Sublayer IDs use "parentId.subId" format for uniqueness
-    let filePath: string | undefined;
-
-    if (layerId.includes(".")) {
-      // Sublayer: parse parent.child format
-      const [parentId, ...subParts] = layerId.split(".");
-      const subId = subParts.join(".");
-      const parentLayer = hazardLayerConfigs.find((l) => l.id === parentId);
-      const subLayer = parentLayer?.subLayers?.find((s) => s.id === subId);
-      filePath = subLayer?.filePath;
-    } else {
-      // Parent layer
-      const parentLayer = hazardLayerConfigs.find((l) => l.id === layerId);
-      if (parentLayer?.subLayers?.length) return;
-      filePath = parentLayer?.filePath;
-    }
-
-    if (!filePath) {
-      console.warn(`Hazard layer config not found: ${layerId}`);
-      return;
-    }
-
-    const ext = filePath.split(".").pop()?.toLowerCase();
-
-    try {
-      const response = await fetch(filePath);
-
-      if (!response.ok) {
-        throw new Error(`Failed to load ${filePath}: ${response.statusText}`);
-      }
-
-      if (["json", "geojson"].includes(ext!)) {
-        const data = await response.json();
-        setHazardLayerData(layerId, data);
-      } else if (["tif", "tiff", "geotiff"].includes(ext!)) {
-        const arrayBuffer = await response.arrayBuffer();
-        setHazardLayerData(layerId, arrayBuffer);
-      }
-    } catch (err) {
-      console.error(`Error loading hazard layer data for ${layerId}:`, err);
-    }
+    const { isLoaded } = get();
+    if (isLoaded) return;
+    set({ isLoaded: true });
+    // Configs come from the TS import — no async work needed.
+    // URL-initialized visible layers are rendered immediately by HazardLayerRenderer
+    // once it sees isVisible = true and constructs the PMTiles URL from config.
   },
 }));
 
@@ -258,6 +113,3 @@ export const useHazardLayerConfigs = () =>
 
 export const useIsHazardLayerVisible = (mapId: string, layerId: string) =>
   useHazardLayersStore((state) => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);
-
-export const useHazardLayerData = (layerId: string) =>
-  useHazardLayersStore((state) => state.hazardLayerData.get(layerId));

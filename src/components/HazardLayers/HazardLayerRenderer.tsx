@@ -1,14 +1,14 @@
 import React, { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import { FeatureCollection, Geometry } from "geojson";
-import { useHazardLayersStore, useHazardLayerData, useIsHazardLayerVisible } from "../../stores";
+import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
+import { useHazardLayersStore } from "../../stores";
 import parseGeoraster from "georaster";
 import GeoRasterLayer from "georaster-layer-for-leaflet";
 
 interface HazardLayerRendererProps {
   parentId: string;
-  layerId?: string; // optional: can render parent or sublayer
+  layerId?: string;
   mapId: string;
 }
 
@@ -29,106 +29,136 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
   const activeLayer = subLayer ?? parentLayer;
   const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
 
-  //const isVisible = useIsHazardLayerVisible(activeLayerId);
   const isVisible = useHazardLayersStore((state) => {
     const mapLayers = state.visibleLayerIdsByMap[mapId];
     return mapLayers ? mapLayers.has(activeLayerId) : false;
   });
-  const layerData = useHazardLayerData(activeLayerId);
 
   const filePath = activeLayer?.filePath;
   const popupConfig = activeLayer?.popupConfig;
   const color = activeLayer?.color || "#cc0000";
 
-  // Manage layer rendering when visibility or data changes
   useEffect(() => {
     if (!map) return;
 
-    let currentLayer: L.Layer | null = null;
+    let proLayer: ReturnType<typeof leafletLayer> | null = null;
+    let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
     let isMounted = true;
 
     const clearLayer = () => {
-      if (currentLayer && map.hasLayer(currentLayer)) {
-        map.removeLayer(currentLayer);
-        currentLayer = null;
+      if (clickHandler) {
+        map.off("click", clickHandler);
+        clickHandler = null;
+      }
+      if (proLayer) {
+        proLayer.remove();
+        proLayer = null;
       }
     };
 
-    const renderLayer = async () => {
-      clearLayer();
+    if (!isVisible || !filePath) {
+      return clearLayer;
+    }
 
-      if (!isVisible || !layerData || !filePath) return;
+    const ext = filePath.split(".").pop()?.toLowerCase();
 
-      const ext = filePath.split(".").pop()?.toLowerCase();
+    if (ext === "pmtiles") {
+      const stem = filePath.replace(".pmtiles", "");
+      const DATA_BASE = import.meta.env.VITE_DATA_BASE_URL ?? "";
+      const url = `${DATA_BASE}/hazards/${filePath}`;
 
-      try {
-        if (["json", "geojson"].includes(ext!)) {
-          const geojson = layerData as FeatureCollection<Geometry>;
+      if (!map.getPane("hazardPane")) {
+        const pane = map.createPane("hazardPane");
+        pane.style.zIndex = "450";
+      }
 
+      proLayer = leafletLayer({
+        sources: { [stem]: { url, maxDataZoom: 14 } },
+        pane: "hazardPane",
+        maxZoom: 18,
+        paintRules: [
+          {
+            dataSource: stem,
+            dataLayer: stem,
+            symbolizer: new PolygonSymbolizer({
+              fill: color,
+              opacity: 0.3,
+              stroke: color,
+              width: 2,
+            }),
+          },
+          {
+            dataSource: stem,
+            dataLayer: stem,
+            symbolizer: new LineSymbolizer({ color, width: 2, opacity: 0.9 }),
+          },
+        ],
+        labelRules: [],
+      });
+
+      if (!isMounted) return clearLayer;
+
+      proLayer.addTo(map);
+
+      if (popupConfig) {
+        clickHandler = (e: L.LeafletMouseEvent) => {
+          if (!proLayer) return;
+          const results = proLayer.queryTileFeaturesDebug(e.latlng.lng, e.latlng.lat, 5);
+          const features = results.get(stem) ?? [];
+          if (features.length === 0) return;
+          const content = createPopupContent(features[0].feature.props, popupConfig!);
+          L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+        };
+        map.on("click", clickHandler);
+      }
+    } else if (["tif", "tiff", "geotiff"].includes(ext ?? "")) {
+      // Raster — placeholder for COG/TiTiler integration
+      const renderRaster = async () => {
+        try {
+          const response = await fetch(filePath);
+          if (!response.ok || !isMounted) return;
+          const arrayBuffer = await response.arrayBuffer();
           if (!isMounted) return;
 
-          const geoJsonLayer = L.geoJSON(geojson, {
-            style: { color: color, weight: 2, opacity: 0.9, fillOpacity: 0.3 },
-            onEachFeature: (feature, layer) => {
-              if (popupConfig) {
-                const popupContent = createPopupContent(feature, popupConfig);
-                layer.bindPopup(popupContent);
-              }
-            },
-          });
-          geoJsonLayer.addTo(map);
-          currentLayer = geoJsonLayer;
-        } else if (["tif", "tiff", "geotiff"].includes(ext!)) {
-          const arrayBuffer = layerData as ArrayBuffer;
-
-          console.log("TIFF size:", arrayBuffer.byteLength);
-
           const georaster = await parseGeoraster(arrayBuffer);
-          console.log("Parsed TIFF:", georaster);
-
           if (!isMounted) return;
 
           const rasterLayer = new GeoRasterLayer({
             georaster,
             opacity: 0.7,
             pixelValuesToColorFn: (values: number[] | null) => {
-              // Simple grayscale example — customize this
               if (!values || values.length === 0 || values[0] === null) return "rgba(0,0,0,0)";
-              const v = Math.round(values[0]);
-              const vv = Math.max(0, Math.min(255, v));
+              const vv = Math.max(0, Math.min(255, Math.round(values[0])));
               return `rgb(${vv}, ${vv}, ${vv})`;
             },
           });
-
           rasterLayer.addTo(map);
-          currentLayer = rasterLayer;
+        } catch (err) {
+          console.error("Error loading raster layer:", err);
         }
-      } catch (err) {
-        console.error("Error loading hazard layer:", err);
-      }
-    };
-
-    renderLayer();
+      };
+      renderRaster();
+    }
 
     return () => {
       isMounted = false;
       clearLayer();
     };
-  }, [map, layerData, filePath, isVisible, popupConfig, color]);
+  }, [map, filePath, isVisible, popupConfig, color]);
 
   return null;
 };
 
 const createPopupContent = (
-  feature: GeoJSON.Feature<Geometry>,
+  props: Record<string, unknown>,
   popupConfig: { titleField?: string; fields?: Array<{ key: string; label: string }> },
 ) => {
-  const title = feature.properties?.[popupConfig.titleField || ""] || "Hazard Info";
+  const title = (props?.[popupConfig.titleField ?? ""] as string) || "Hazard Info";
   let html = `<h3>${title}</h3>`;
   if (popupConfig.fields && popupConfig.fields.length > 0) {
     html += "<ul>";
     popupConfig.fields.forEach((f) => {
-      const value = feature.properties?.[f.key];
+      const value = props?.[f.key];
       if (value !== undefined && value !== null) {
         html += `<li><strong>${f.label}:</strong> ${value}</li>`;
       }
