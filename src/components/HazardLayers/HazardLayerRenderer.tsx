@@ -42,13 +42,13 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
     if (!map) return;
 
     let proLayer: ReturnType<typeof leafletLayer> | null = null;
-    let clickHandler: ((e: L.LeafletMouseEvent) => void) | null = null;
+    let domClickHandler: ((e: MouseEvent) => void) | null = null;
     let isMounted = true;
 
     const clearLayer = () => {
-      if (clickHandler) {
-        map.off("click", clickHandler);
-        clickHandler = null;
+      if (domClickHandler) {
+        map.getContainer().removeEventListener("click", domClickHandler, true);
+        domClickHandler = null;
       }
       if (proLayer) {
         proLayer.remove();
@@ -101,15 +101,17 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       proLayer.addTo(map);
 
       if (popupConfig) {
-        clickHandler = (e: L.LeafletMouseEvent) => {
+        domClickHandler = (e: MouseEvent) => {
           if (!proLayer) return;
-          const results = proLayer.queryTileFeaturesDebug(e.latlng.lng, e.latlng.lat, 5);
+          const latlng = map.mouseEventToLatLng(e);
+          const results = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5);
           const features = results.get(stem) ?? [];
           if (features.length === 0) return;
+          e.stopImmediatePropagation();
           const content = createPopupContent(features[0].feature.props, popupConfig!);
-          L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+          L.popup().setLatLng(latlng).setContent(content).openOn(map);
         };
-        map.on("click", clickHandler);
+        map.getContainer().addEventListener("click", domClickHandler, true);
       }
     } else if (["tif", "tiff", "geotiff"].includes(ext ?? "")) {
       // Raster — placeholder for COG/TiTiler integration
