@@ -11,6 +11,7 @@ export default defineConfig({
     server: {
         proxy: {
             "/api": "http://128.171.215.85:8000",
+            "/data": "http://128.171.215.85:8000",
         },
     },
 });

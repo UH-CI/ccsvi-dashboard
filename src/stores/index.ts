@@ -10,7 +10,6 @@ export {
 export { usePointLayerStore, usePointLayerConfigs, useIsLayerVisible } from "./usePointLayersStore";
 export {
   useHazardLayersStore,
-  useHazardLayerData,
   useIsHazardLayerVisible,
 } from "./useHazardLayersStore";
 export {

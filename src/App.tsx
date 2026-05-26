@@ -43,9 +43,6 @@ const App: React.FC = () => {
   const fetchPointLayerConfigs = usePointLayerStore((state) => state.fetchPointLayerConfigs);
   const blockGroupData = useAppStore((state) => state.blockGroupData);
   const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
-  const hazardLoading = useHazardLayersStore((state) => state.loading);
-  const hazardError = useHazardLayersStore((state) => state.error);
-
   const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
   const rasterLoading = useRasterLayersStore((state) => state.loading);
   const rasterError = useRasterLayersStore((state) => state.error);
@@ -75,12 +72,11 @@ const App: React.FC = () => {
 
   // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
-  if (hasErrors || hazardError || rasterError) {
+  if (hasErrors || rasterError) {
     return (
       <div className={styles["error-container"]}>
         <h2>Error loading data</h2>
         {Object.entries(errors).map(([key, error]) => error && <p key={key}>{error}</p>)}
-        {hazardError && <p>{hazardError}</p>}
         {rasterError && <p>{rasterError}</p>}
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
@@ -88,7 +84,7 @@ const App: React.FC = () => {
   }
 
   // === Loading ===
-  if (!isReady || hazardLoading || rasterLoading) {
+  if (!isReady || rasterLoading) {
     return (
       <div className={styles["loading-container"]}>
         <div>Loading data...</div>
@@ -102,7 +98,12 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
-      <ControlPanel maxMaps={4} isGridView={isGridView} onToggleGridView={() => setIsGridView((v) => !v)} onSnapshot={handleSnapshot} />
+      <ControlPanel
+        maxMaps={4}
+        isGridView={isGridView}
+        onToggleGridView={() => setIsGridView((v) => !v)}
+        onSnapshot={handleSnapshot}
+      />
       <div className={styles["map-section"]}>
         <MultiMapContainer ref={multiMapContainerRef} maxMaps={4} isGridView={isGridView} />
         <TableViewer

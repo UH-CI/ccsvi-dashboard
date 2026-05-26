@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .db import close_pool, create_pool
 from .routers import block_groups, datasets, metrics
@@ -27,6 +28,9 @@ app.add_middleware(
 app.include_router(datasets.router)
 app.include_router(metrics.router)
 app.include_router(block_groups.router)
+
+# Stand-in for Caddy static file serving — replace with Caddy reverse proxy in production.
+app.mount("/data", StaticFiles(directory="/home/exouser/ccsvi-data"), name="data")
 
 
 @app.get("/api/v1/health")
