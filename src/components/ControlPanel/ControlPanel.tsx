@@ -542,37 +542,115 @@ const resetMapStore = useMapStore((state) => state.reset);
                     );
                   })}
 
-                {/* State Roads and Sidewalks (from hazard layers) */}
-                {hazardLayerConfigs
-                  .filter((l) => ["state_roads", "sidewalks_and_paths"].includes(l.id))
-                  .map((layer) => {
-                    const ParentIcon =
-                      FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                    const isVisible =
-                      visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
-                    return (
-                      <FormControlLabel
-                        key={layer.id}
-                        control={
-                          <Checkbox
-                            checked={isVisible}
-                            onChange={() =>
-                              toggleHazardLayerVisibility(resolvedPointsMapId, layer.id)
-                            }
-                            size="small"
-                          />
-                        }
-                        label={
-                          <Box className={styles["layer-label"]}>
-                            <span className={styles["layer-icon"]} style={{ color: layer.color }}>
-                              <ParentIcon size="1rem" />
-                            </span>
-                            {layer.name}
-                          </Box>
-                        }
-                      />
-                    );
-                  })}
+                {/* Sidewalks and Paths (from hazard layers) */}
+                {(() => {
+                  const layer = hazardLayerConfigs.find((l) => l.id === "sidewalks_and_paths");
+                  if (!layer) return null;
+                  const Icon = FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                  const isVisible =
+                    visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
+                  return (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={isVisible}
+                          onChange={() =>
+                            toggleHazardLayerVisibility(resolvedPointsMapId, layer.id)
+                          }
+                          size="small"
+                        />
+                      }
+                      label={
+                        <Box className={styles["layer-label"]}>
+                          <span className={styles["layer-icon"]} style={{ color: layer.color }}>
+                            <Icon size="1rem" />
+                          </span>
+                          {layer.name}
+                        </Box>
+                      }
+                    />
+                  );
+                })()}
+
+                {/* State Roads with island sub-layers */}
+                {(() => {
+                  const roadsLayer = hazardLayerConfigs.find((l) => l.id === "state_roads");
+                  if (!roadsLayer?.subLayers) return null;
+                  const RoadsIcon =
+                    FaIcons[roadsLayer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
+                  const visibleSubCount = roadsLayer.subLayers.filter((sub) =>
+                    visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(`state_roads.${sub.id}`)
+                  ).length;
+                  const allSubVisible = visibleSubCount === roadsLayer.subLayers.length;
+                  const someSubVisible = visibleSubCount > 0 && !allSubVisible;
+                  return (
+                    <Box className={styles["layer-toggle"]}>
+                      <Box display="flex" alignItems="center">
+                        <Checkbox
+                          checked={allSubVisible}
+                          indeterminate={someSubVisible}
+                          onChange={() =>
+                            toggleHazardLayerVisibility(resolvedPointsMapId, roadsLayer.id)
+                          }
+                          size="small"
+                        />
+                        <Typography
+                          className={styles["layer-label"]}
+                          sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}
+                        >
+                          <span
+                            className={styles["layer-icon"]}
+                            style={{ color: roadsLayer.color }}
+                          >
+                            <RoadsIcon size="1rem" />
+                          </span>
+                          {roadsLayer.name}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            setExpandedPoints((prev) => ({
+                              ...prev,
+                              state_roads: !prev.state_roads,
+                            }))
+                          }
+                        >
+                          {expandedPoints.state_roads ? <ExpandLess /> : <ExpandMore />}
+                        </IconButton>
+                      </Box>
+                      <Collapse in={expandedPoints.state_roads}>
+                        <Stack spacing={1} sx={{ pl: 3 }}>
+                          {roadsLayer.subLayers.map((sub) => {
+                            const compositeId = `state_roads.${sub.id}`;
+                            const isSubVisible =
+                              visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(compositeId) ??
+                              false;
+                            return (
+                              <FormControlLabel
+                                key={sub.id}
+                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
+                                control={
+                                  <Checkbox
+                                    checked={isSubVisible}
+                                    onChange={() =>
+                                      toggleSubLayerVisibility(
+                                        resolvedPointsMapId,
+                                        roadsLayer.id,
+                                        sub.id,
+                                      )
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label={sub.name}
+                              />
+                            );
+                          })}
+                        </Stack>
+                      </Collapse>
+                    </Box>
+                  );
+                })()}
 
                 {/* Schools group */}
                 <Box className={styles["layer-toggle"]}>
@@ -778,6 +856,7 @@ const resetMapStore = useMapStore((state) => state.reset);
             const slrLayers = hazardLayerConfigs.filter((l) =>
               ["passive_flood", "potential_flood_highways", "erosion", "exposure_area"].includes(l.id),
             );
+            const solarInsolationLayer = hazardLayerConfigs.find((l) => l.id === "solar_insolation");
 
             return (
               <Stack spacing={1}>
@@ -801,6 +880,8 @@ const resetMapStore = useMapStore((state) => state.reset);
                     </Stack>
                   </Collapse>
                 </Box>
+
+                {solarInsolationLayer && renderHazardParent(solarInsolationLayer)}
               </Stack>
             );
           })()}
