@@ -12,7 +12,7 @@
                     "color": "#0000FF",
                     "type": "raster",
                     "opacity": 0.7,
-                    "filePath": "data/Rasters/Hawaii_Category1_MOM_Inundation_HighTide - Copy.tif",
+                    "filePath": "data/Rasters/Hawaii_Category1_MOM_Inundation_HighTide.tif",
                     "overviewZoom": [
                         { "minZoom": 7, "maxZoom": 7, "overviewIndex": 8 },
                         { "minZoom": 8, "maxZoom": 8, "overviewIndex": 7 },
