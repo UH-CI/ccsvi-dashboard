@@ -51,6 +51,9 @@ interface TableViewerProps {
   datasetInfo: DatasetInfo | null;
   onSizeChange?: (isCollapsed: boolean) => void;
   initialCollapsed?: boolean;
+  tableHeight?: number | null;
+  collapsed?: boolean;
+  fullscreen?: boolean;
 }
 
 const PLACEHOLDER_VALUES = new Set(["", "—", "-", "**", "N/A", "n/a", "x", "null", "NULL", "na"]);
@@ -232,6 +235,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   datasetInfo,
   onSizeChange,
   initialCollapsed = false,
+  tableHeight,
+  collapsed,
+  fullscreen,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const { metric: primaryMapMetric, activeFeature } = usePrimaryMapState();
@@ -246,11 +252,19 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   const apiRef = useGridApiRef();
   const pendingScrollRowRef = useRef<number | null>(null);
 
-  const { isCollapsed, isFullHeight, toggleCollapse, toggleFullHeight, setCollapsed } =
+  const { isCollapsed, isFullHeight, toggleCollapse, toggleFullHeight, setCollapsed, setFullHeight } =
     useTableResize({
       onSizeChange,
       initialCollapsed,
     });
+
+  useEffect(() => {
+    if (collapsed !== undefined) setCollapsed(collapsed);
+  }, [collapsed, setCollapsed]);
+
+  useEffect(() => {
+    if (fullscreen !== undefined) setFullHeight(fullscreen);
+  }, [fullscreen, setFullHeight]);
 
   useEffect(() => {
     const loadCsvData = async () => {
@@ -422,6 +436,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     <Paper
       elevation={3}
       className={`${styles["table-viewer"]} ${isFullHeight ? styles["table-viewer--full"] : isCollapsed ? styles["table-viewer--collapsed"] : styles["table-viewer--expanded"]}`}
+      style={!isCollapsed && !isFullHeight && tableHeight ? { height: tableHeight, maxHeight: "none", flex: "none" } : undefined}
     >
       {isCollapsed && (
         <Box
