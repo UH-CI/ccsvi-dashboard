@@ -114,7 +114,9 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
         map.getContainer().addEventListener("click", domClickHandler, true);
       }
     } else if (["tif", "tiff", "geotiff"].includes(ext ?? "")) {
-      // Raster — placeholder for COG/TiTiler integration
+      // DEPRECATED — placeholder TIF branch predating the PMTiles migration. Hazard layers now
+      // use PMTiles via protomaps-leaflet (see the pmtiles branch above). COG/TiTiler raster
+      // rendering is handled by RasterLayerRenderer, not here. Pending deletion.
       const renderRaster = async () => {
         try {
           const response = await fetch(filePath);

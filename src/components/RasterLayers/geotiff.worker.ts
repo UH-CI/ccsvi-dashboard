@@ -1,3 +1,8 @@
+// DEPRECATED — Web Worker that decoded GeoTIFF ArrayBuffers into indexed band data (supporting
+// overviews, windowed reading, and sampling for large files). Used by DataProcessorService in
+// the client-side decode → L.GridLayer render pipeline. Replaced by TiTiler's server-side COG
+// reading — no client-side decode is needed. Pending deletion.
+
 /// <reference lib="webworker" />
 
 import * as geotiff from "geotiff";

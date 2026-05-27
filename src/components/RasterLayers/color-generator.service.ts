@@ -1,3 +1,8 @@
+// DEPRECATED — ColorGeneratorService generated chroma-js color scales for client-side GeoTIFF ArrayBuffer → L.GridLayer render
+// pipeline. Used by RasterLayerRenderer and RasterMapLegend. Replaced by TiTiler PNG tile
+// rendering (RasterLayerRenderer) and the /api/v1/rasters/colormap endpoint (RasterMapLegend).
+// May still be referenced for HCDP integration? Pending deletion.
+
 import chroma from "chroma-js";
 import { Color, ColorScale } from "./colorScale";
 import { Parser } from "xml2js";
