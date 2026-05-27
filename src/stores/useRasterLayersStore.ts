@@ -5,6 +5,8 @@ import type { RasterLayerConfig } from "../types";
 export interface COGInfo {
   min: number;
   max: number;
+  // Passed to L.tileLayer to prevent Leaflet requesting tiles outside the COG extent.
+  bounds?: [[number, number], [number, number]]; // [[south, west], [north, east]]
 }
 
 export interface RasterLegendInfo {
@@ -127,15 +129,26 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     if (cogInfoCache.has(layerId)) return;
 
     try {
-      const res = await fetch(
-        `/api/tiles/cog/statistics?raster_id=${encodeURIComponent(layerId)}`,
-      );
-      if (!res.ok) return;
-      const data = await res.json();
+      // Fetch statistics (min/max for rescale) and bounds (to constrain tile requests) in parallel.
+      const [statsRes, boundsRes] = await Promise.all([
+        fetch(`/api/tiles/cog/statistics?raster_id=${encodeURIComponent(layerId)}`),
+        fetch(`/api/tiles/cog/info?raster_id=${encodeURIComponent(layerId)}`),
+      ]);
+      if (!statsRes.ok) return;
+      const data = await statsRes.json();
       // TiTiler returns bands keyed by "b1", "b2", etc. Fall back to first key for robustness.
       const band = data.b1 ?? Object.values(data)[0];
       if (band?.min == null || band?.max == null) return;
-      setCOGInfo(layerId, { min: band.min as number, max: band.max as number });
+
+      // TiTiler bounds are [west, south, east, north]; convert to Leaflet [[south, west], [north, east]].
+      let bounds: [[number, number], [number, number]] | undefined;
+      if (boundsRes.ok) {
+        const boundsData = await boundsRes.json();
+        const [west, south, east, north] = boundsData.bounds;
+        bounds = [[south, west], [north, east]];
+      }
+
+      setCOGInfo(layerId, { min: band.min as number, max: band.max as number, bounds });
     } catch (err) {
       console.error(`[useRasterLayersStore] fetchCOGInfo failed for ${layerId}:`, err);
     }

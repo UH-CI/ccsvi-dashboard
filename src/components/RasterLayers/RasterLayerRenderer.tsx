@@ -99,12 +99,17 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     if (!isVisible || !cogInfo) return;
 
     const tileUrl =
-      `${TILES_COG_BASE}/tiles/{z}/{x}/{y}.png` +
+      `${TILES_COG_BASE}/tiles/WebMercatorQuad/{z}/{x}/{y}.png` +
       `?raster_id=${encodeURIComponent(activeLayerId)}` +
       `&colormap_name=${encodeURIComponent(colormapName)}` +
       `&rescale=${cogInfo.min},${cogInfo.max}`;
 
-    const tileLayer = L.tileLayer(tileUrl, { opacity, attribution: "" });
+    // bounds constrains Leaflet to only request tiles within the COG extent,
+    const tileLayer = L.tileLayer(tileUrl, {
+      opacity,
+      attribution: "",
+      ...(cogInfo.bounds ? { bounds: cogInfo.bounds } : {}),
+    });
     tileLayer.addTo(map);
     tileLayerRef.current = tileLayer;
 
