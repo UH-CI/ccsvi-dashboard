@@ -160,5 +160,8 @@ function initializeRasterLayers(rasterIds: string[]): void {
   // Set visibility per map
   for (const [mapId, ids] of Object.entries(layersByMap)) {
     store.setVisibleLayerIds(mapId, ids);
+    for (const id of ids) {
+      store.fetchCOGInfo(id);
+    }
   }
 }
