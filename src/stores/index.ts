@@ -14,9 +14,8 @@ export {
 } from "./useHazardLayersStore";
 export {
   useRasterLayersStore,
-  useRasterLayerConfigs,
   useIsRasterLayerVisible,
-  useRasterLayerData,
   type RasterLegendInfo,
+  type COGInfo,
 } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";

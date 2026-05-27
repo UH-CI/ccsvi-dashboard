@@ -129,24 +129,28 @@ export interface SubRasterLayerConfig {
   id: string;
   name: string;
   color?: string;
-  filePath?: string;
-  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  // Use TiTiler built-in colormap names
+  colormapName?: string;
+  // Shown on the map legend and click-to-query popup
   units?: string;
-  /** Fixed legend panel width in px (same for all layers if unset; sublayer overrides parent). */
-  legendWidthPx?: number;
-  /** Fixed color ramp height in px. */
-  legendGradientHeightPx?: number;
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
+  opacity?: number;
+  type?: "raster";
+  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
+  filePath?: string;
+  /** @deprecated TiTiler selects overview level automatically. REMOVE */
   overviewZoom?: {
     minZoom: number;
     maxZoom: number;
     overviewIndex: number;
   }[];
-  opacity?: number;
-  type?: "raster";
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendWidthPx?: number;
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendGradientHeightPx?: number;
+  popupConfig?: {
+    titleField?: string;
+    fields?: { key: string; label: string }[];
+  };
 }
 
 export interface RasterLayerConfig {
@@ -154,25 +158,29 @@ export interface RasterLayerConfig {
   name: string;
   icon?: string;
   color?: string;
-  filePath?: string;
-  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  // Use TiTiler built-in colormap names
+  colormapName?: string;
+  // Shown on the map legend and click-to-query popup
   units?: string;
-  /** Fixed legend panel width in px (applies to this layer; sublayers may override). */
-  legendWidthPx?: number;
-  /** Fixed color ramp height in px. */
-  legendGradientHeightPx?: number;
   opacity?: number;
   type?: "raster";
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
+  subLayers?: SubRasterLayerConfig[];
+  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
+  filePath?: string;
+  /** @deprecated TiTiler selects overview level automatically. REMOVE */
   overviewZoom?: {
     minZoom: number;
     maxZoom: number;
     overviewIndex: number;
   }[];
-  subLayers?: SubRasterLayerConfig[];
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendWidthPx?: number;
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendGradientHeightPx?: number;
+  popupConfig?: {
+    titleField?: string;
+    fields?: { key: string; label: string }[];
+  };
 }
 
 export type StyleFunction = (
