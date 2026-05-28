@@ -44,8 +44,7 @@ const App: React.FC = () => {
   const blockGroupData = useAppStore((state) => state.blockGroupData);
   const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
   const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
-  const rasterLoading = useRasterLayersStore((state) => state.loading);
-  const rasterError = useRasterLayersStore((state) => state.error);
+  const rasterLoaded = useRasterLayersStore((state) => state.isLoaded);
 
   const isReady = useIsReady();
 
@@ -72,19 +71,18 @@ const App: React.FC = () => {
 
   // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
-  if (hasErrors || rasterError) {
+  if (hasErrors) {
     return (
       <div className={styles["error-container"]}>
         <h2>Error loading data</h2>
         {Object.entries(errors).map(([key, error]) => error && <p key={key}>{error}</p>)}
-        {rasterError && <p>{rasterError}</p>}
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
   // === Loading ===
-  if (!isReady || rasterLoading) {
+  if (!isReady || !rasterLoaded) {
     return (
       <div className={styles["loading-container"]}>
         <div>Loading data...</div>
