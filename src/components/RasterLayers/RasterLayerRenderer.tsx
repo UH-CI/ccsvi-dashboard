@@ -41,6 +41,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   // References for layer management
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const clickHandlerRef = useRef<((e: LeafletMouseEvent) => void) | null>(null);
+  const popupRef = useRef<L.Popup | null>(null);
 
   // DEPRECATED — service refs for client-side ArrayBuffer decode + GridLayer render.
   // Replaced by TiTiler tile URL and /point endpoint. Pending deletion.
@@ -146,7 +147,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
         const value: number | null = data.values?.[0] ?? null;
         if (value === null) return;
         const content = `<b>${layerName}</b><br/>${value.toFixed(2)}${units ? " " + units : ""}`;
-        L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+        popupRef.current = L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
       } catch {
         // Point is outside COG bounds or request failed — silently ignore.
       }
@@ -161,19 +162,27 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     };
   }, [isVisible, map, activeLayerId, layerName, units]);
 
-  // Remove tile layer and legend when visibility is toggled off
+  // Remove tile layer, popup, and legend when visibility is toggled off
   useEffect(() => {
     if (isVisible) return;
     tileLayerRef.current?.remove();
     tileLayerRef.current = null;
+    if (popupRef.current) {
+      popupRef.current.close();
+      popupRef.current = null;
+    }
     useRasterLayersStore.getState().setRasterLegend(mapId, null);
   }, [isVisible, mapId]);
 
-  // Cleanup tile layer and click handler on unmount
+  // Cleanup tile layer, popup, and click handler on unmount
   useEffect(() => {
     return () => {
       tileLayerRef.current?.remove();
       if (clickHandlerRef.current) map.off("click", clickHandlerRef.current);
+      if (popupRef.current) {
+        popupRef.current.close();
+        popupRef.current = null;
+      }
       useRasterLayersStore.getState().setRasterLegend(mapId, null);
     };
   }, [map, mapId]);

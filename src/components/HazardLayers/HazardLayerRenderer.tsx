@@ -43,12 +43,17 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 
     let proLayer: ReturnType<typeof leafletLayer> | null = null;
     let domClickHandler: ((e: MouseEvent) => void) | null = null;
+    let currentPopup: L.Popup | null = null;
     let isMounted = true;
 
     const clearLayer = () => {
       if (domClickHandler) {
         map.getContainer().removeEventListener("click", domClickHandler, true);
         domClickHandler = null;
+      }
+      if (currentPopup) {
+        currentPopup.close();
+        currentPopup = null;
       }
       if (proLayer) {
         proLayer.remove();
@@ -109,7 +114,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
           if (features.length === 0) return;
           e.stopImmediatePropagation();
           const content = createPopupContent(features[0].feature.props, popupConfig!);
-          L.popup().setLatLng(latlng).setContent(content).openOn(map);
+          currentPopup = L.popup().setLatLng(latlng).setContent(content).openOn(map);
         };
         map.getContainer().addEventListener("click", domClickHandler, true);
       }
