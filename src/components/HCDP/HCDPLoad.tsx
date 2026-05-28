@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   Alert,
   Button,
@@ -129,22 +129,50 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
 
   const { minDate, maxDate } = useMemo(() => {
     if (!activeRow?.date_range?.[0] || !activeRow?.date_range?.[1]) {
-      return { minDate: dayjs("1990-01-01"), maxDate: dayjs() };
+      return { minDate: dayjs("1990-01-01"), maxDate: dayjs().subtract(1, "day").startOf("day") };
     }
-    return {
-      minDate: dayjs(activeRow.date_range[0]).startOf("day"),
-      maxDate: dayjs(activeRow.date_range[1]).startOf("day"),
-    };
+
+    let min = dayjs(activeRow.date_range[0]).startOf("day");
+    let max = dayjs(activeRow.date_range[1]).startOf("day");
+
+    if (activeRow.data_type === "spi") {
+      const scale = activeRow.scale ?? (activeRow.timescale ? parseInt(activeRow.timescale.replace("timescale", ""), 10) : 1);
+      const baseDate = dayjs("1990-01-01").startOf("day");
+      
+      if (scale === 12) {
+        min = baseDate.add(12, "month");
+      } else {
+        min = baseDate.add(scale - 1, "month");
+      }
+    }
+
+    if (activeRow.production !== "legacy") {
+      if (activeRow.period === "day") {
+        max = dayjs().subtract(1, "day").startOf("day");
+      } else if (activeRow.period === "month") {
+        max = dayjs().subtract(1, "month").startOf("month");
+      }
+    }
+
+    return { minDate: min, maxDate: max };
   }, [activeRow]);
 
+  const prevActiveRowRef = useRef<HcdpRangeRow | null>(null);
+
   useEffect(() => {
-    setSelectedDate((prev) => {
-      if (!activeRow) return prev;
-      const next = prev && prev.isValid() ? prev : maxDate;
-      if (next.isBefore(minDate, "day")) return minDate;
-      if (next.isAfter(maxDate, "day")) return maxDate;
-      return next;
-    });
+    if (!activeRow) return;
+
+    if (activeRow !== prevActiveRowRef.current) {
+      setSelectedDate(maxDate);
+      prevActiveRowRef.current = activeRow;
+    } else {
+      setSelectedDate((prev) => {
+        if (!prev || !prev.isValid()) return maxDate;
+        if (prev.isBefore(minDate, "day")) return minDate;
+        if (prev.isAfter(maxDate, "day")) return maxDate;
+        return prev;
+      });
+    }
   }, [activeRow, minDate, maxDate]);
 
   const handleClearRaster = () => {
@@ -153,12 +181,14 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   };
 
   const handleLoadRaster = async () => {
+
     setFetchMessage(null);
     if (!activeRow || !selectedDate) {
       setFetchMessage({ type: "error", text: "Select a valid date for this product." });
       return;
     }
     setFetching(true);
+
     try {
       const arrayBuffer = await fetchHcdpRaster(activeRow, selectedDate);
       
@@ -175,6 +205,7 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         text: `Raster added to map (${(arrayBuffer.byteLength / 1024).toFixed(0)} KB).`,
       });
     } catch (e) {
+
       setFetchMessage({
         type: "error",
         text: e instanceof Error ? e.message : "Raster request failed.",

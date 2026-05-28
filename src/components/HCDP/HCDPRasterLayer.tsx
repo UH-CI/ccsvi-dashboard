@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import chroma from "chroma-js";
@@ -134,104 +134,130 @@ const VIRIDIS_2 = [
   [253, 231, 36]  // Bright Yellow (High)
 ];
 
-interface HCDPRasterLayerProps {
-  mapId: string;
-}
 
-export const HCDPRasterLayer: React.FC<HCDPRasterLayerProps> = ({ mapId }) => {
+export function HCDPRasterLayer({ mapId }: { mapId: string }) {
   const map = useMap();
-  const loadId = useHCDPStore((s) => s.overlaysByMap[mapId]?.loadId);
-  const arrayBuffer = useHCDPStore((s) => s.overlaysByMap[mapId]?.arrayBuffer);
+  const overlay = useHCDPStore((s) => s.overlaysByMap[mapId]);
+  
+  const activeOverlayRef = useRef<L.ImageOverlay | null>(null);
 
   useEffect(() => {
-    if (!map || !arrayBuffer || loadId == null) return;
-
-    let currentLayer: L.Layer | null = null;
     let cancelled = false;
 
     const clearLayer = () => {
-      if (currentLayer && map.hasLayer(currentLayer)) {
-        map.removeLayer(currentLayer);
-        currentLayer = null;
+      if (activeOverlayRef.current) {
+        if (map.hasLayer(activeOverlayRef.current)) {
+          map.removeLayer(activeOverlayRef.current);
+        }
+        activeOverlayRef.current = null;
       }
     };
 
-    (async () => {
+    if (!overlay || !overlay.arrayBuffer) {
       clearLayer();
+      return;
+    }
+
+    (async () => {
       try {
-        const georaster = await parseGeoraster(cloneArrayBuffer(arrayBuffer));
+        const georaster = await parseGeoraster(cloneArrayBuffer(overlay.arrayBuffer));
         if (cancelled) return;
 
-        // 1. Capture the dynamic background value from the first pixel (row 0, col 0)
-        // georaster.values structure is: [band][row][column]
         const firstValue = georaster.values?.[0]?.[0]?.[0];
         const metaNoData = georaster.noDataValue;
 
-        // Unified check function mirroring your original script's logic + safety fallbacks
         const checkIsNoData = (v: number | null | undefined): boolean => {
           if (v == null || Number.isNaN(v)) return true;
-          if (v === firstValue) return true; // Match original script trick
-          if (v === metaNoData) return true;
-          if (v === -9999 || v <= -3.4e38) return true; // Explicit hardcoded protections
+          if (v === firstValue) return true; 
+          if (v === metaNoData) return true; 
+          if (v === -9999 || v <= -3.4e38) return true; 
           return false;
         };
 
-        // 2. Scan the 2D grid to isolate genuine climate values for Min/Max
+        const band = georaster.values[0];
+        const width = georaster.width;
+        const height = georaster.height;
+
         let min = Infinity;
         let max = -Infinity;
-
-        if (georaster.values && georaster.values[0]) {
-          const band = georaster.values[0];
-          for (let r = 0; r < band.length; r++) {
-            const row = band[r];
-            for (let c = 0; c < row.length; c++) {
-              const v = row[c];
-              if (!checkIsNoData(v)) {
-                if (v < min) min = v;
-                if (v > max) max = v;
-              }
+        for (let r = 0; r < height; r++) {
+          const rowData = band[r];
+          if (!rowData) continue;
+          for (let c = 0; c < width; c++) {
+            const v = rowData[c];
+            if (!checkIsNoData(v)) {
+              if (v < min) min = v;
+              if (v > max) max = v;
             }
           }
         }
 
-        // Ultimate fallback safety net
         if (min === Infinity || max === -Infinity) {
           min = georaster.mins?.[0] ?? georaster.min ?? 0;
           max = georaster.maxs?.[0] ?? georaster.max ?? 1;
         }
-
         const span = max - min || 1;
 
-        // 3. Generate the Leaflet Layer
-        const rasterLayer = new GeoRasterLayer({
-          georaster,
-          opacity: 0.75,
-          pixelValuesToColorFn: (values: number[] | null) => {
-            const v = values?.[0];
-            
-            if (checkIsNoData(v)) {
-              return "rgba(0,0,0,0)"; // Render background completely transparent
-            }
-            
-            // Clean value scaling
-            const t = Math.max(0, Math.min(1, (v! - min) / span));
-            return COLOR_SCALE(t).alpha(0.85).css();
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
+        const imageData = ctx.createImageData(width, height);
+        const data = imageData.data;
+
+        for (let r = 0; r < height; r++) {
+          const rowData = band[r];
+          for (let c = 0; c < width; c++) {
+            const v = rowData ? rowData[c] : null;
+            const pixelIndex = (r * width + c) * 4;
+
+            if (v == null || checkIsNoData(v)) {
+              // Transparent background matches
+              data[pixelIndex]     = 0; // R
+              data[pixelIndex + 1] = 0; // G
+              data[pixelIndex + 2] = 0; // B
+              data[pixelIndex + 3] = 0; // Alpha (Transparent)
+            } else {
+              // Scale color spectrum rules
+              const t = Math.max(0, Math.min(1, (v - min) / span));
+              const rgb = COLOR_SCALE(t).rgba();
             // const colorIndex = Math.floor(t * (VIRIDIS_REVERSED.length - 1));
             // const color = VIRIDIS_REVERSED[colorIndex];
             // const colorIndex = Math.floor(t * (VIRIDIS.length - 1));
             // const color = VIRIDIS[colorIndex];
-            const colorIndex = Math.floor(t * (VIRIDIS_2.length - 1));
-            const color = VIRIDIS_2[colorIndex];
+            // const colorIndex = Math.floor(t * (VIRIDIS_2.length - 1));
+            // const color = VIRIDIS_2[colorIndex];
             
-            return `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.85)`;
-          },
+            // return `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.85)`;
+              data[pixelIndex]     = rgb[0];
+              data[pixelIndex + 1] = rgb[1];
+              data[pixelIndex + 2] = rgb[2];
+              data[pixelIndex + 3] = Math.floor(0.85 * 255); 
+            }
+          }
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const bounds = L.latLngBounds([
+          [georaster.ymin, georaster.xmin],
+          [georaster.ymax, georaster.xmax]
+        ]);
+
+        if (cancelled) return;
+        clearLayer();
+
+        const imageOverlay = L.imageOverlay(canvas.toDataURL(), bounds, {
+          opacity: 0.75,
+          interactive: false
         });
 
-        rasterLayer.addTo(map);
-        currentLayer = rasterLayer;
+        activeOverlayRef.current = imageOverlay;
+        imageOverlay.addTo(map);
+
       } catch (err) {
-        console.error("HCDP raster layer failed to render:", err);
+        console.error("Error rendering manual canvas overlay:", err);
       }
     })();
 
@@ -239,7 +265,7 @@ export const HCDPRasterLayer: React.FC<HCDPRasterLayerProps> = ({ mapId }) => {
       cancelled = true;
       clearLayer();
     };
-  }, [map, mapId, loadId, arrayBuffer]);
+  }, [overlay, map]);
 
   return null;
-};
+}

@@ -7,7 +7,6 @@ export interface HcdpRasterOverlay {
   row: HcdpRangeRow;
   date: string;
   title: string;
-  /** Bumps when a new raster is loaded so map layers re-mount. */
   loadId: number;
 }
 

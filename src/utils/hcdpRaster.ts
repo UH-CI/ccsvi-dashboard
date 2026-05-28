@@ -1,6 +1,5 @@
 import type { Dayjs } from "dayjs";
 
-/** Copy bytes so georaster workers can transfer without detaching the stored buffer. */
 export function cloneArrayBuffer(buffer: ArrayBuffer): ArrayBuffer {
   return buffer.slice(0);
 }
@@ -13,6 +12,7 @@ export interface HcdpRangeRow {
   aggregation?: string;
   production?: string;
   timescale?: string;
+  scale?: number;
 }
 
 export function formatHcdpDataTypeLabel(dataType: string): string {
@@ -28,7 +28,7 @@ export function formatTimescaleLabel(timescale: string): string {
   return `${Number(m[1])}-month`;
 }
 
-/** Build query params for HCDP `/raster` (same names as date-range API in the project notebook). */
+
 export function hcdpRasterSearchParams(
   row: HcdpRangeRow,
   date: Dayjs,

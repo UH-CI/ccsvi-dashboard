@@ -95,7 +95,8 @@
             "1990-01-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale001"
+        "timescale": "timescale001",
+        "scale": "1"
     },
     {
         "data_type": "spi",
@@ -104,7 +105,8 @@
             "1990-03-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale003"
+        "timescale": "timescale003",
+        "scale": "3"
     },
     {
         "data_type": "spi",
@@ -113,7 +115,8 @@
             "1990-06-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale006"
+        "timescale": "timescale006",
+        "scale": "6"
     },
     {
         "data_type": "spi",
@@ -122,7 +125,8 @@
             "1990-09-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale009"
+        "timescale": "timescale009",
+        "scale": "9"
     },
     {
         "data_type": "spi",
@@ -131,7 +135,8 @@
             "1991-01-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale012"
+        "timescale": "timescale012",
+        "scale": "12"
     },
     {
         "data_type": "spi",
@@ -140,7 +145,8 @@
             "1991-12-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale024"
+        "timescale": "timescale024",
+        "scale": "24"
     },
     {
         "data_type": "spi",
@@ -149,7 +155,8 @@
             "1992-12-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale036"
+        "timescale": "timescale036",
+        "scale": "36"
     },
     {
         "data_type": "spi",
@@ -158,7 +165,8 @@
             "1993-12-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale048"
+        "timescale": "timescale048",
+        "scale": "48"
     },
     {
         "data_type": "spi",
@@ -167,6 +175,7 @@
             "1994-12-01T10:00:00.000Z",
             "2026-04-01T10:00:00.000Z"
         ],
-        "timescale": "timescale060"
+        "timescale": "timescale060",
+        "scale": "60"
     }
 ]
