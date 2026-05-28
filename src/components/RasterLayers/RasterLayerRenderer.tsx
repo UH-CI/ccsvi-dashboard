@@ -13,7 +13,7 @@
 
 import React, { useEffect, useMemo, useRef } from "react";
 import { useMap } from "react-leaflet";
-import L, { LeafletMouseEvent } from "leaflet";
+import L from "leaflet";
 import { useRasterLayersStore } from "../../stores";
 
 const TILES_COG_BASE = "/api/tiles/cog";
@@ -40,8 +40,9 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
   // References for layer management
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const clickHandlerRef = useRef<((e: LeafletMouseEvent) => void) | null>(null);
+  const clickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
   const popupRef = useRef<L.Popup | null>(null);
+  const tilesLoadedRef = useRef(false);
 
   // DEPRECATED — service refs for client-side ArrayBuffer decode + GridLayer render.
   // Replaced by TiTiler tile URL and /point endpoint. Pending deletion.
@@ -99,6 +100,11 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   useEffect(() => {
     if (!isVisible || !cogInfo) return;
 
+    if (!map.getPane("rasterPane")) {
+      const pane = map.createPane("rasterPane");
+      pane.style.zIndex = "420";
+    }
+
     const tileUrl =
       `${TILES_COG_BASE}/tiles/WebMercatorQuad/{z}/{x}/{y}.png` +
       `?raster_id=${encodeURIComponent(activeLayerId)}` +
@@ -106,10 +112,15 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       `&rescale=${cogInfo.min},${cogInfo.max}`;
 
     // bounds constrains Leaflet to only request tiles within the COG extent,
+    tilesLoadedRef.current = false;
     const tileLayer = L.tileLayer(tileUrl, {
       opacity,
       attribution: "",
+      pane: "rasterPane",
       ...(cogInfo.bounds ? { bounds: cogInfo.bounds } : {}),
+    });
+    tileLayer.on("load", () => {
+      tilesLoadedRef.current = true;
     });
     tileLayer.addTo(map);
     tileLayerRef.current = tileLayer;
@@ -127,16 +138,59 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     return () => {
       tileLayer.remove();
       tileLayerRef.current = null;
+      tilesLoadedRef.current = false;
     };
   }, [isVisible, cogInfo, colormapName, opacity, map, mapId, activeLayerId, layerName, units]);
 
-  // Register click-to-query handler when the layer is visible.
-  // Calls TiTiler /point endpoint; opens popup with formatted value and units.
+  // Capture-phase click handler: samples the rendered tile's alpha channel to check for raster
+  // data before stopping propagation, mirroring the hazard layer's synchronous hit-test pattern.
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !cogInfo) return;
 
-    const handler = async (e: LeafletMouseEvent) => {
-      const { lng, lat } = e.latlng;
+    // Sample the rendered tile's alpha at the click pixel — transparent means no-data.
+    const hasRasterAtPoint = (latlng: L.LatLng): boolean => {
+      if (!tilesLoadedRef.current) return false;
+
+      const tileLayer = tileLayerRef.current;
+      if (!tileLayer) return false;
+
+      const tileZoom: number | undefined = (tileLayer as any)._tileZoom;
+      if (tileZoom == null) return false;
+
+      const tileSize = tileLayer.getTileSize().x;
+      const point = map.project(latlng, tileZoom);
+      const tileX = Math.floor(point.x / tileSize);
+      const tileY = Math.floor(point.y / tileSize);
+      const tileKey = `${tileX}:${tileY}:${tileZoom}`;
+
+      const tiles = (tileLayer as any)._tiles as
+        | Record<string, { el: HTMLImageElement }>
+        | undefined;
+      const tile = tiles?.[tileKey];
+      if (!tile || !tile.el.complete || tile.el.naturalWidth === 0) return false;
+
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = tileSize;
+        canvas.height = tileSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return false;
+        ctx.drawImage(tile.el, 0, 0);
+        const pixelX = Math.max(0, Math.min(tileSize - 1, Math.floor(point.x % tileSize)));
+        const pixelY = Math.max(0, Math.min(tileSize - 1, Math.floor(point.y % tileSize)));
+        return ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 0;
+      } catch {
+        return false;
+      }
+    };
+
+    const handler = async (e: MouseEvent) => {
+      const latlng = map.mouseEventToLatLng(e);
+      if (!hasRasterAtPoint(latlng)) return;
+
+      e.stopImmediatePropagation();
+
+      const { lng, lat } = latlng;
       try {
         const res = await fetch(
           `${TILES_COG_BASE}/point/${lng},${lat}` +
@@ -147,20 +201,20 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
         const value: number | null = data.values?.[0] ?? null;
         if (value === null) return;
         const content = `<b>${layerName}</b><br/>${value.toFixed(2)}${units ? " " + units : ""}`;
-        popupRef.current = L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+        popupRef.current = L.popup().setLatLng(latlng).setContent(content).openOn(map);
       } catch {
-        // Point is outside COG bounds or request failed — silently ignore.
+        // silently ignore out-of-bounds or failed requests
       }
     };
 
     clickHandlerRef.current = handler;
-    map.on("click", handler);
+    map.getContainer().addEventListener("click", handler, true);
 
     return () => {
-      map.off("click", handler);
+      map.getContainer().removeEventListener("click", handler, true);
       clickHandlerRef.current = null;
     };
-  }, [isVisible, map, activeLayerId, layerName, units]);
+  }, [isVisible, cogInfo, map, activeLayerId, layerName, units]);
 
   // Remove tile layer, popup, and legend when visibility is toggled off
   useEffect(() => {
@@ -178,7 +232,8 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   useEffect(() => {
     return () => {
       tileLayerRef.current?.remove();
-      if (clickHandlerRef.current) map.off("click", clickHandlerRef.current);
+      if (clickHandlerRef.current)
+        map.getContainer().removeEventListener("click", clickHandlerRef.current, true);
       if (popupRef.current) {
         popupRef.current.close();
         popupRef.current = null;
