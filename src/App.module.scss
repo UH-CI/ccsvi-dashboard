@@ -13,6 +13,31 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+
+.table-resize-handle {
+  height: 14px;
+  cursor: ns-resize;
+  background: transparent;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+
+  &::after {
+    content: "";
+    width: 48px;
+    height: 4px;
+    border-radius: 4px;
+    background: #bdbdbd;
+    transition: background 0.15s;
+  }
+
+  &:hover::after {
+    background: #757575;
+  }
 }
 
 .error-container {

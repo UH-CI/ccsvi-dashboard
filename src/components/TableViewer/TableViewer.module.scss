@@ -19,10 +19,13 @@
   }
 
   &--full {
-    position: absolute;
-    inset: 0;
+    position: fixed;
+    top: 52px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 1100;
-    height: 100%;
+    height: auto;
     flex: none;
   }
 }
@@ -32,6 +35,30 @@
     flex: 1 1 20vh;
     max-height: 28vh;
     min-height: max(5rem, 8vh);
+  }
+}
+
+.resize-handle {
+  height: 12px;
+  cursor: ns-resize;
+  background: #e0e0e0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+
+  &::after {
+    content: "";
+    width: 32px;
+    height: 3px;
+    border-radius: 2px;
+    background: #9e9e9e;
+    box-shadow: 0 -4px 0 #9e9e9e, 0 4px 0 #9e9e9e;
+  }
+
+  &:hover {
+    background: #bdbdbd;
   }
 }
 
