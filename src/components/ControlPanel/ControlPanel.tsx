@@ -18,6 +18,7 @@ import {
   Select,
   MenuItem,
   ListSubheader,
+  Popover,
 } from "@mui/material";
 import {
   Camera,
@@ -32,6 +33,7 @@ import {
   CalendarViewWeek,
   Assessment,
   Factory,
+  InfoOutlined,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -223,14 +225,41 @@ const resetMapStore = useMapStore((state) => state.reset);
     setExpandedRasters((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const navItems: { key: NonNullable<PopoverKey>; label: string; icon: React.ReactNode }[] = [
-    { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
-    { key: "svi", label: "Social Vulnerability Indicators", icon: <Assessment fontSize="small" /> },
-    { key: "points", label: "Critical Infrastructure", icon: <LocationOn fontSize="small" /> },
-    { key: "locations", label: "Locations of Enhanced Exposure", icon: <Factory fontSize="small" /> },
-    { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
-    { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" /> },
+  const navItems: { key: NonNullable<PopoverKey>; label: string; icon: React.ReactNode; description: string }[] = [
+    { key: "maps", label: "Maps", icon: <Layers fontSize="small" />, description: "Add, remove, and configure map panels. Adjust per-map settings such as title and visibility." },
+    { key: "svi", label: "Social Vulnerability Indicators", icon: <Assessment fontSize="small" />, description: "Select social vulnerability metrics to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariatly using the Compare with selector." },
+    { key: "points", label: "Critical Infrastructure", icon: <LocationOn fontSize="small" />, description: "Overlay point data for critical infrastructure including hospitals, fire stations, police stations, emergency shelters, schools, and road networks." },
+    { key: "locations", label: "Locations of Enhanced Exposure", icon: <Factory fontSize="small" />, description: "Show locations that may be particularly vulnerable to environmental or climate hazards, such as onsite sewage disposal systems." },
+    { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" />, description: "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), and solar insolation." },
+    { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" />, description: "Overlay raster data layers such as terrain and elevation data." },
   ];
+
+  const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
+  const [infoKey, setInfoKey] = useState<NonNullable<PopoverKey> | null>(null);
+
+  const handleInfoClick = useCallback((key: NonNullable<PopoverKey>, e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setInfoAnchor(e.currentTarget);
+    setInfoKey(key);
+  }, []);
+
+  const handleInfoClose = useCallback(() => {
+    setInfoAnchor(null);
+    setInfoKey(null);
+  }, []);
+
+  const renderMenuTitle = (key: NonNullable<PopoverKey>, label: string) => (
+    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+      <Typography variant="subtitle2" className={styles["popover-title"]}>
+        {label}
+      </Typography>
+      <Tooltip title="About this section">
+        <IconButton size="small" onClick={(e) => handleInfoClick(key, e)} sx={{ ml: 1 }}>
+          <InfoOutlined fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
 
   const menuProps = {
     anchorOrigin: { vertical: "bottom" as const, horizontal: "left" as const },
@@ -321,9 +350,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Map Management
-          </Typography>
+          {renderMenuTitle("maps", "Map Management")}
           {canAddMap && (
             <Button
               variant="outlined"
@@ -361,9 +388,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Social Vulnerability Indicators
-          </Typography>
+          {renderMenuTitle("svi", "Social Vulnerability Indicators")}
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedSviMapId}
@@ -484,9 +509,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Critical Infrastructure
-          </Typography>
+          {renderMenuTitle("points", "Critical Infrastructure")}
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedPointsMapId}
@@ -728,9 +751,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Locations of Enhanced Exposure
-          </Typography>
+          {renderMenuTitle("locations", "Locations of Enhanced Exposure")}
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedLocationsMapId}
@@ -781,9 +802,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Hazard Layers
-          </Typography>
+          {renderMenuTitle("hazards", "Hazard Layers")}
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedHazardsMapId}
@@ -896,9 +915,7 @@ const resetMapStore = useMapStore((state) => state.reset);
         {...menuProps}
       >
         <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Terrain / Rasters
-          </Typography>
+          {renderMenuTitle("rasters", "Terrain / Rasters")}
           <MapTabSelector
             mapConfigs={visibleMaps}
             selectedMapId={resolvedRastersMapId}
@@ -979,6 +996,21 @@ const resetMapStore = useMapStore((state) => state.reset);
           )}
         </Box>
       </Menu>
+      {/* ── Info Popover ── */}
+      <Popover
+        open={Boolean(infoAnchor)}
+        anchorEl={infoAnchor}
+        onClose={handleInfoClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        disableRestoreFocus
+      >
+        <Box sx={{ p: 2, maxWidth: 300 }}>
+          <Typography variant="body2">
+            {infoKey ? navItems.find((n) => n.key === infoKey)?.description : ""}
+          </Typography>
+        </Box>
+      </Popover>
     </Paper>
   );
 };
