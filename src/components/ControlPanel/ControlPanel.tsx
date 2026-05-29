@@ -532,7 +532,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
       >
         <Box className={styles["menu-content"]}>
           <Typography variant="subtitle2" className={styles["popover-title"]}>
-            HCDP
+            Hawaii Climate Data Portal
           </Typography>
           <MapTabSelector
             mapConfigs={visibleMaps}

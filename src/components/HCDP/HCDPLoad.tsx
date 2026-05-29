@@ -25,9 +25,39 @@ import styles from "./HCDPLoad.module.scss";
 
 const RANGE_JSON = `${import.meta.env.BASE_URL || ""}data/HCDP_API/date_Range_Combined.json`;
 
+const DATA_TYPE_ORDER = [
+  "rainfall",
+  "temperature",
+  "relative_humidity",
+  "ndvi_modis",
+  "spi",
+  "ignition_probability"
+]
+
 function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
   return [...new Set(values.filter((v): v is T => v != null && v !== ""))].sort() as T[];
 }
+
+function getCustomSortedDataTypes(catalog: HcdpRangeRow[] | null): string[] {
+  if (!catalog) return [];
+  
+  const unique = [...new Set(catalog.map((r) => r.data_type).filter((v): v is string => v != null && v !== ""))];
+  
+  return unique.sort((a, b) => {
+    const idxA = DATA_TYPE_ORDER.indexOf(a);
+    const idxB = DATA_TYPE_ORDER.indexOf(b);
+    
+    // If both are in the custom order list, sort by array index position
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    // If only 'a' is prioritized, move it up
+    if (idxA !== -1) return -1;
+    // If only 'b' is prioritized, move it up
+    if (idxB !== -1) return 1;
+    // Fallback alphabetical comparison if neither are defined in custom order
+    return a.localeCompare(b);
+  });
+}
+
 
 export interface HCDPLoadProps {
   mapId: string;
@@ -60,7 +90,8 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         if (cancelled) return;
         setCatalog(data);
         setCatalogError(null);
-        const types = uniqueSorted(data.map((r) => r.data_type));
+        //const types = uniqueSorted(data.map((r) => r.data_type));
+        const types = getCustomSortedDataTypes(data);
         if (types.length) setDataType((t) => (t && types.includes(t) ? t : types[0]));
       } catch (e) {
         if (!cancelled) {
@@ -75,7 +106,8 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   }, []);
 
   const dataTypes = useMemo(
-    () => uniqueSorted((catalog ?? []).map((r) => r.data_type)),
+    //() => uniqueSorted((catalog ?? []).map((r) => r.data_type)),
+    () => getCustomSortedDataTypes(catalog),
     [catalog],
   );
 
@@ -144,9 +176,13 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
       } else {
         min = baseDate.add(scale - 1, "month");
       }
+      
     }
 
-    if (activeRow.production !== "legacy") {
+    if (activeRow.data_type === "ndvi_modis") {
+      
+      max = dayjs().subtract(3, "day").startOf("day");
+    } else if (activeRow.production !== "legacy") {
       if (activeRow.period === "day") {
         max = dayjs().subtract(1, "day").startOf("day");
       } else if (activeRow.period === "month") {

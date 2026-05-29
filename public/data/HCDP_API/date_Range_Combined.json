@@ -177,5 +177,14 @@
         ],
         "timescale": "timescale060",
         "scale": "60"
+    },
+ 
+    {
+        "data_type": "ignition_probability",
+        "period": "day",
+        "date_range": [
+            "2002-01-01T10:00:00.000Z",
+            "2026-05-28T10:00:00.000Z"
+        ]
     }
 ]
