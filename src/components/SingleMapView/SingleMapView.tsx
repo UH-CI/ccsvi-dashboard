@@ -513,8 +513,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             {/* Render raster layers based on visibility state */}
             {rasterLayerConfigs.map((layer) => (
               <React.Fragment key={layer.id}>
-                {/* Render parent layer if it has a filePath and is visible */}
-                {layer.filePath && visibleRasterIds.has(layer.id) && (
+                {/* Render parent layer if it is COG-backed (colormapName set) and visible */}
+                {layer.colormapName && visibleRasterIds.has(layer.id) && (
                   <RasterLayerRenderer mapId={mapId} parentId={layer.id} mapZoom={mapZoom} />
                 )}
 

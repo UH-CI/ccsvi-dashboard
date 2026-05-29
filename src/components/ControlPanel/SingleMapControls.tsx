@@ -18,9 +18,26 @@ import {
   Close,
   Palette,
   Edit,
+  Gradient,
 } from "@mui/icons-material";
-import { useAppStore, useMapStore, useMapConfig, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useAppStore, useMapStore, useMapConfig, DEFAULT_LAYER_OPACITIES, useRasterLayersStore } from "../../stores";
 import styles from "./ControlPanel.module.scss";
+
+const RASTER_COLORMAPS: { label: string; value: string }[] = [
+  { label: "Blues", value: "blues" },
+  { label: "Reds", value: "reds" },
+  { label: "Greens", value: "greens" },
+  { label: "Oranges", value: "oranges" },
+  { label: "Purples", value: "purples" },
+  { label: "YlOrRd", value: "ylorrd" },
+  { label: "YlGn", value: "ylgn" },
+  { label: "BuPu", value: "bupu" },
+  { label: "GnBu", value: "gnbu" },
+  { label: "Viridis", value: "viridis" },
+  { label: "Plasma", value: "plasma" },
+  { label: "Inferno", value: "inferno" },
+  { label: "Magma", value: "magma" },
+];
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -47,8 +64,37 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
+  const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
+
+  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
+  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
+
+  // The "leaf" raster ID is the one passed to TiTiler as raster_id.
+  const activeRasterLeafId = useMemo(() => {
+    const visible = visibleRasterIdsByMap[mapId];
+    if (!visible || visible.size === 0) return null;
+    for (const id of visible) {
+      if (id.includes(".")) return id;
+    }
+    return [...visible][0] ?? null;
+  }, [visibleRasterIdsByMap, mapId]);
+
+  // Resolve the current colormap: override takes precedence, then the layer config default.
+  const activeRasterColormap = useMemo(() => {
+    if (!activeRasterLeafId) return null;
+    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
+    if (override) return override;
+    const [parentId, subId] = activeRasterLeafId.split(".");
+    if (!subId) {
+      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
+    }
+    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
+    return parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null;
+  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
   const datasetList = useMemo(() => {
     if (!dataset) return [];
@@ -232,6 +278,36 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                     </>
                   )}
                 </Box>
+              </Menu>
+            </>
+          )}
+          {activeRasterLeafId && (
+            <>
+              <IconButton
+                size="small"
+                onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
+                title="Raster colormap"
+              >
+                <Gradient fontSize="small" />
+              </IconButton>
+              <Menu
+                anchorEl={rasterColorSchemeAnchor}
+                open={Boolean(rasterColorSchemeAnchor)}
+                onClose={() => setRasterColorSchemeAnchor(null)}
+              >
+                <ListSubheader>Raster Colormap</ListSubheader>
+                {RASTER_COLORMAPS.map((cm) => (
+                  <MenuItem
+                    key={cm.value}
+                    selected={activeRasterColormap === cm.value}
+                    onClick={() => {
+                      setRasterColormap(mapId, activeRasterLeafId, cm.value);
+                      setRasterColorSchemeAnchor(null);
+                    }}
+                  >
+                    {cm.label}
+                  </MenuItem>
+                ))}
               </Menu>
             </>
           )}

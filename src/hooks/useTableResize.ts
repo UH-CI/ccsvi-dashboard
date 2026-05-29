@@ -60,11 +60,17 @@ export const useTableResize = ({
     }
   }, []);
 
+  const setFullHeight = useCallback((full: boolean) => {
+    setIsFullHeight(full);
+    if (full) setIsCollapsed(false);
+  }, []);
+
   return {
     isCollapsed,
     isFullHeight,
     toggleCollapse,
     toggleFullHeight,
     setCollapsed,
+    setFullHeight,
   };
 };

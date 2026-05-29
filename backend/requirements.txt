@@ -3,6 +3,8 @@ fastapi>=0.115
 uvicorn[standard]>=0.32
 pydantic>=2.9
 asyncpg>=0.30
+titiler.core>=0.18
+titiler.core>=0.18
 
 # Dev — ingest scripts, linting, testing
 psycopg2-binary>=2.9
