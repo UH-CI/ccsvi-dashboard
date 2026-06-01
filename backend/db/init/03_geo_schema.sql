@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS hazards (
     height_ft NUMERIC,
     zone      TEXT,
     props     JSONB,
-    geom      geometry(4326)
+    geom      geometry
 );
 CREATE INDEX IF NOT EXISTS idx_hazards_geom      ON hazards USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_hazards_hazard_id ON hazards (hazard_id);
