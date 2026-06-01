@@ -33,3 +33,10 @@ dist/
 
 # Scratch notes
 docs/
+
+# Deprecated data files
+public/data/Hazards
+public/data/metrics
+public/data/point_data
+public/data/Rasters
+public/data/vulnerability_datasets
