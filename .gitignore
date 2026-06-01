@@ -36,6 +36,7 @@ docs/
 
 # Deprecated data files
 public/data/Hazards
+public/data/HCDP_API
 public/data/metrics
 public/data/point_data
 public/data/Rasters
