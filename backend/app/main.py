@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from .db import close_pool, create_pool
-from .routers import block_groups, datasets, metrics, rasters
+from .routers import block_groups, datasets, metrics, points, rasters, search
 
 
 @asynccontextmanager
@@ -29,6 +29,8 @@ app.add_middleware(
 app.include_router(datasets.router)
 app.include_router(metrics.router)
 app.include_router(block_groups.router)
+app.include_router(points.router)
+app.include_router(search.router)
 app.include_router(rasters.router)
 app.include_router(rasters.cog.router, prefix="/api/tiles/cog", tags=["COG"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
