@@ -235,10 +235,10 @@ WHERE EXISTS (
 )
 GROUP BY g.geoid, g.name, g.county, g.population, g.geom;
 
-CREATE UNIQUE INDEX ON block_group_metrics (geoid);
-CREATE INDEX ON block_group_metrics USING GIST (geom);
-CREATE INDEX ON block_group_metrics USING GIST (centroid);
-CREATE INDEX ON block_group_metrics (county);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bgm_geoid    ON block_group_metrics (geoid);
+CREATE INDEX        IF NOT EXISTS idx_bgm_geom     ON block_group_metrics USING GIST (geom);
+CREATE INDEX        IF NOT EXISTS idx_bgm_centroid ON block_group_metrics USING GIST (centroid);
+CREATE INDEX        IF NOT EXISTS idx_bgm_county   ON block_group_metrics (county);
 
 
 -- ── hawaiian_homeland_metrics ─────────────────────────────────────────────────
@@ -293,6 +293,6 @@ JOIN metric_values mv ON mv.geoid = g.geoid
 JOIN metrics m ON m.id = mv.metric_id AND m.dataset_id = '2022_census_hawaiian_homelands'
 GROUP BY g.geoid, g.name, g.population, g.geom;
 
-CREATE UNIQUE INDEX ON hawaiian_homeland_metrics (geoid);
-CREATE INDEX ON hawaiian_homeland_metrics USING GIST (geom);
-CREATE INDEX ON hawaiian_homeland_metrics USING GIST (centroid);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid    ON hawaiian_homeland_metrics (geoid);
+CREATE INDEX        IF NOT EXISTS idx_hhlm_geom     ON hawaiian_homeland_metrics USING GIST (geom);
+CREATE INDEX        IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics USING GIST (centroid);

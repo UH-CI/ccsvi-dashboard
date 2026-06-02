@@ -1,13 +1,32 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
+from pydantic import BaseModel
 
 from ..db import ConnDep
 
 router = APIRouter()
 
 
-@router.get("/api/v1/datasets")
+# ── Pydantic models ──────────────────────────────────────────────────────────
+
+class MetricConfig(BaseModel):
+    classificationMode: str
+
+
+class DatasetRecord(BaseModel):
+    metricLabel: str
+    hawaiianHomelands: bool
+    columnThresholds: dict[str, MetricConfig]
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/api/v1/datasets",
+    response_model=dict[str, DatasetRecord],
+    summary="Dataset catalog with metric metadata",
+)
 async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
@@ -33,7 +52,10 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     return result
 
 
-@router.get("/api/v1/datasets/{dataset_id}/table")
+@router.get(
+    "/api/v1/datasets/{dataset_id}/table",
+    summary="Full dataset rows for TableViewer",
+)
 async def get_dataset_table(
     dataset_id: str, conn: ConnDep, response: Response
 ) -> list[dict[str, Any]]:
