@@ -58,6 +58,7 @@ export function hcdpRasterSearchParams(
 export function hcdpRasterUrl(row: HcdpRangeRow, date: Dayjs, extent?: string): string {
   const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
   const qs = hcdpRasterSearchParams(row, date, extent).toString();
+  console.log("Raster Url: ", `${appBase}api/raster?${qs}`);
   return `${appBase}api/raster?${qs}`;
 }
 

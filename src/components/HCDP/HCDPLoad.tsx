@@ -53,7 +53,6 @@ function getCustomSortedDataTypes(catalog: HcdpRangeRow[] | null): string[] {
     if (idxA !== -1) return -1;
     // If only 'b' is prioritized, move it up
     if (idxB !== -1) return 1;
-    // Fallback alphabetical comparison if neither are defined in custom order
     return a.localeCompare(b);
   });
 }
@@ -79,6 +78,11 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const [fetchMessage, setFetchMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null,
   );
+
+  // Dynamic Live Bounds State
+  const [apiMinDate, setApiMinDate] = useState<Dayjs>(dayjs("1990-01-01"));
+  const [apiMaxDate, setApiMaxDate] = useState<Dayjs>(dayjs().subtract(1, "day"));
+  const [loadingDates, setLoadingDates] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -159,57 +163,103 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
     return rows[0];
   }, [cand, aggOpts, prodOpts, tsOpts, aggregation, production, timescale]);
 
-  const { minDate, maxDate } = useMemo(() => {
-    if (!activeRow?.date_range?.[0] || !activeRow?.date_range?.[1]) {
-      return { minDate: dayjs("1990-01-01"), maxDate: dayjs().subtract(1, "day").startOf("day") };
-    }
 
-    let min = dayjs(activeRow.date_range[0]).startOf("day");
-    let max = dayjs(activeRow.date_range[1]).startOf("day");
+  //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    if (activeRow.data_type === "spi") {
-      const scale = activeRow.scale ?? (activeRow.timescale ? parseInt(activeRow.timescale.replace("timescale", ""), 10) : 1);
-      const baseDate = dayjs("1990-01-01").startOf("day");
-      
-      if (scale === 12) {
-        min = baseDate.add(12, "month");
-      } else {
-        min = baseDate.add(scale - 1, "month");
-      }
-      
-    }
-
-    if (activeRow.data_type === "ndvi_modis") {
-      
-      max = dayjs().subtract(3, "day").startOf("day");
-    } else if (activeRow.production !== "legacy") {
-      if (activeRow.period === "day") {
-        max = dayjs().subtract(1, "day").startOf("day");
-      } else if (activeRow.period === "month") {
-        max = dayjs().subtract(1, "month").startOf("month");
-      }
-    }
-
-    return { minDate: min, maxDate: max };
-  }, [activeRow]);
-
-  const prevActiveRowRef = useRef<HcdpRangeRow | null>(null);
-
+  // LIVE DATE FETCHING: Triggers whenever a dropdown value changes
   useEffect(() => {
-    if (!activeRow) return;
+    if (!dataType || !period) return;
 
-    if (activeRow !== prevActiveRowRef.current) {
-      setSelectedDate(maxDate);
-      prevActiveRowRef.current = activeRow;
-    } else {
-      setSelectedDate((prev) => {
-        if (!prev || !prev.isValid()) return maxDate;
-        if (prev.isBefore(minDate, "day")) return minDate;
-        if (prev.isAfter(maxDate, "day")) return maxDate;
-        return prev;
-      });
-    }
-  }, [activeRow, minDate, maxDate]);
+    if (aggOpts.length > 0 && !aggOpts.includes(aggregation)) return;
+    if (prodOpts.length > 0 && !prodOpts.includes(production)) return;
+    if (tsOpts.length > 0 && !tsOpts.includes(timescale)) return;
+    
+    let cancelled = false;
+    
+    const fetchLiveDateRange = async () => {
+      setLoadingDates(true);
+      
+      try {
+        const params = new URLSearchParams();
+        params.append("datatype", dataType);
+        params.append("period", period);
+
+        
+        if (aggregation && aggOpts.includes(aggregation)) {
+          params.append("aggregation", aggregation);
+        }
+        
+        // EXCEPTION: Always force 'production=new' for Rainfall Day silently
+        if (dataType === "rainfall" && period === "day") {
+          params.append("production", "new");
+        } else if (production && prodOpts.includes(production)) {
+          params.append("production", production);
+        }
+
+        if (timescale && tsOpts.includes(timescale)) {
+          params.append("timescale", timescale);
+        }
+
+        const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
+        const url = `${appBase}api/datasets/date/range?${params.toString()}`;
+
+        console.log("Url range call: ", url);
+        //const url = `https://api.hcdp.ikewai.org/datasets/date/range?${params.toString()}`;
+        const res = await fetch(url);
+        
+        if (!res.ok) throw new Error("API Date Fetch Failed");
+        
+        const data = await res.json();
+        const dateRange = Array.isArray(data) ? data : Object.values(data);
+        
+        if (!cancelled && dateRange.length >= 2) {
+          let min = dayjs(dateRange[0]).startOf("day");
+          const max = dayjs(dateRange[1]).startOf("day");
+
+          // Keep SPI scale adjusting applied strictly to the 1990 base limit
+          // if (dataType === "spi") {
+          //   const scale = activeRow?.scale ?? (timescale ? parseInt(timescale.replace("timescale", ""), 10) : 1);
+          //   const baseDate = dayjs("1990-01-01").startOf("day");
+          //   min = scale === 12 ? baseDate.add(12, "month") : baseDate.add(scale - 1, "month");
+          // }
+
+          setApiMinDate(min);
+          setApiMaxDate(max);
+          
+          setSelectedDate(max);
+        }
+      } catch (err) {
+        console.warn("Falling back to local catalog dates:", err);
+        // Fallback safely to JSON catalog bounds if internet fails
+        if (!cancelled && activeRow?.date_range) {
+          let fallbackMin = dayjs(activeRow.date_range[0]).startOf("day");
+          let fallbackMax = dayjs(activeRow.date_range[1]).startOf("day");
+          
+          if (dataType === "spi") {
+            const scale = activeRow?.scale ?? (timescale ? parseInt(timescale.replace("timescale", ""), 10) : 1);
+            fallbackMin = scale === 12 ? dayjs("1990-01-01").add(12, "month") : dayjs("1990-01-01").add(scale - 1, "month");
+          }
+
+          setApiMinDate(fallbackMin);
+          setApiMaxDate(fallbackMax);
+          
+          setSelectedDate((prev) => {
+            if (!prev || !prev.isValid() || prev.isAfter(fallbackMax, "day")) return fallbackMax;
+            if (prev.isBefore(fallbackMin, "day")) return fallbackMin;
+            return prev;
+          });
+        }
+      } finally {
+        if (!cancelled) setLoadingDates(false);
+      }
+    };
+
+    fetchLiveDateRange();
+
+    return () => { cancelled = true; };
+  }, [dataType, period, aggregation, production, timescale, activeRow, aggOpts, prodOpts, tsOpts]);
+
+  //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   const handleClearRaster = () => {
     clearRasterOverlay(mapId);
@@ -355,9 +405,9 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         </FormControl>
       )}
 
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
+<LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
-          label="Date"
+          label={loadingDates ? "Fetching Available Dates..." : "Date"}
           value={selectedDate}
           onChange={(v) => {
             if (v && period === "month") {
@@ -368,9 +418,9 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
               setSelectedDate(v)
             }
           }}
-          minDate={minDate}
-          maxDate={maxDate}
-          disabled={!activeRow}
+          minDate={apiMinDate}
+          maxDate={apiMaxDate}
+          disabled={!activeRow || loadingDates}
           views={period === "month" ? ["year", "month"] : ["year", "month", "day"]}
           format={period === "month" ? "YYYY-MM" : "YYYY-MM-DD"}
         />
@@ -380,17 +430,10 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         <Button
           variant="contained"
           fullWidth
-          disabled={!activeRow || !selectedDate || fetching}
+          disabled={!activeRow || !selectedDate || fetching || loadingDates}
           onClick={handleLoadRaster}
         >
           {fetching ? <CircularProgress size={22} color="inherit" /> : "Load raster"}
-        </Button>
-        <Button
-          variant="outlined"
-          disabled={!hasRasterOverlay || fetching}
-          onClick={handleClearRaster}
-        >
-          Clear
         </Button>
       </Stack>
 
