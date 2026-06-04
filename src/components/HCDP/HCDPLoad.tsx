@@ -435,6 +435,13 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         >
           {fetching ? <CircularProgress size={22} color="inherit" /> : "Load raster"}
         </Button>
+        <Button
+          variant="outlined"
+          disabled={!hasRasterOverlay || fetching}
+          onClick={handleClearRaster}
+        >
+          Clear
+        </Button>
       </Stack>
 
       {fetchMessage && <Alert severity={fetchMessage.type}>{fetchMessage.text}</Alert>}
