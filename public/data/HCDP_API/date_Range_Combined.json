@@ -178,7 +178,14 @@
         "timescale": "timescale060",
         "scale": "60"
     },
- 
+    {
+        "data_type": "ndvi_modis",
+        "period": "day",
+        "date_range": [
+            "2000-03-10T10:00:00.000Z",
+            "2026-05-26T10:00:00.000Z"
+        ]
+    },
     {
         "data_type": "ignition_probability",
         "period": "day",
