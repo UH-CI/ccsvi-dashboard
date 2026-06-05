@@ -190,6 +190,22 @@ export type HomelandsStyleFunction = (
   feature: Feature<Geometry, HawaiianHomelandProperties> | undefined,
 ) => PathOptions;
 
+export interface BlockGroupResult {
+  geoid: string;
+  name: string | null;
+  county: string | null;
+  population: number | null;
+  [key: string]: number | string | null;
+}
+
+export interface FilterParams {
+  county?: string;
+  hazardId?: string;
+  subId?: string;
+  heightFt?: number;
+  metricFilters?: Partial<Record<string, number>>;
+}
+
 // Generic polygon layer types
 export interface PolygonLayerConfig {
   name: string;

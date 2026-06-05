@@ -19,3 +19,4 @@ export {
   type COGInfo,
 } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";
+export { useFilterStore, useIsFiltered, useFilteredGeoids } from "./useFilterStore";
