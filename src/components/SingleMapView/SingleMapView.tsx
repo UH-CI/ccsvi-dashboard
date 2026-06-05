@@ -25,6 +25,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   useSnapshotStore,
+  useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import { HazardLayerRenderer } from "../HazardLayers";
@@ -351,6 +352,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [mapId, updateMapActiveFeature, mapRef],
     );
 
+    const filterResults = useFilterStore((s) => s.results);
+    const filteredGeoids = useMemo(
+      () => (filterResults ? new Set(filterResults.map((r) => r.geoid)) : null),
+      [filterResults],
+    );
+
     const shouldRenderCensus =
       effectiveDataset &&
       effectiveMetric &&
@@ -465,6 +472,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.census}
                 getColor={getColor}
+                filteredGeoids={filteredGeoids}
                 onFeatureClick={handleFeatureClick}
               />
             )}

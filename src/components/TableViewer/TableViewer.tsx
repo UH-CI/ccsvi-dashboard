@@ -36,7 +36,7 @@ import { ParsedCSVData } from "../../utils/csvParser";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { useTheme } from "@mui/material";
-import { useMapStore, usePrimaryMapState } from "../../stores";
+import { useMapStore, usePrimaryMapState, useFilterStore } from "../../stores";
 import styles from "./TableViewer.module.scss";
 
 interface DatasetInfo {
@@ -241,6 +241,11 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const { metric: primaryMapMetric, activeFeature } = usePrimaryMapState();
+  const filterResults = useFilterStore((s) => s.results);
+  const filteredGeoidsSet = useMemo(
+    () => (filterResults ? new Set(filterResults.map((r) => r.geoid)) : null),
+    [filterResults],
+  );
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
 
   const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
@@ -365,6 +370,15 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return { columns: cols, rows: rowData, geoidColIndex };
   }, [tableData]);
 
+  const displayRows = useMemo(() => {
+    if (!filteredGeoidsSet || geoidColIndex < 0) return rows;
+    return rows.filter((row) => {
+      const raw = String(row[`col_${geoidColIndex}`] ?? "");
+      const geoid = raw.replace(/^\d+US/i, "");
+      return filteredGeoidsSet.has(geoid);
+    });
+  }, [rows, filteredGeoidsSet, geoidColIndex]);
+
   // Sync map active feature → table row highlight + scroll
   useEffect(() => {
     const activeGeoid = activeFeature?.geoid;
@@ -481,7 +495,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
             <Box className={styles["data-grid-container"]}>
               <DataGrid
                 apiRef={apiRef}
-                rows={rows}
+                rows={displayRows}
                 columns={columns}
                 loading={loading}
                 showToolbar
@@ -490,7 +504,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 slotProps={{
                   toolbar: {
                     datasetLabel,
-                    rowCount: rows.length,
+                    rowCount: displayRows.length,
                     isFullHeight,
                     activeDataset,
                     toggleCollapse,

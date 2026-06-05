@@ -56,11 +56,13 @@ export const GenericPolygonLayer = memo(
     // Track previous active geoid to avoid iterating all features on change
     const prevActiveGeoidRef = useRef<string | null | undefined>(undefined);
 
-    // Latest renderPopup
+    // Always-current refs for callbacks — click handlers and popups reflect latest versions without layer remount.
     const renderPopupRef = useRef(renderPopup);
+    const onFeatureClickRef = useRef(onFeatureClick);
     useEffect(() => {
       renderPopupRef.current = renderPopup;
-    }, [renderPopup]);
+      onFeatureClickRef.current = onFeatureClick;
+    }, [renderPopup, onFeatureClick]);
 
     const styleCallback = useCallback(
       (feature?: Feature<Geometry, T>): PathOptions => {
@@ -98,14 +100,21 @@ export const GenericPolygonLayer = memo(
 
         if (onFeatureClick) {
           layer.on("click", (e: LeafletMouseEvent) => {
-            onFeatureClick(feature, e);
+            onFeatureClickRef.current?.(feature, e);
           });
         }
 
         if ("bindPopup" in layer && renderPopupRef.current) {
-          layer.bindPopup(() => renderPopupRef.current?.(feature) ?? "", {
+          const typedLayer = layer as Layer & {
+            bindPopup: (fn: () => string, opts: object) => void;
+            closePopup: () => void;
+          };
+          typedLayer.bindPopup(() => renderPopupRef.current?.(feature) ?? "", {
             minWidth: 250,
             maxWidth: 300,
+          });
+          layer.on("popupopen", () => {
+            if (!renderPopupRef.current?.(feature)) typedLayer.closePopup();
           });
         }
       },

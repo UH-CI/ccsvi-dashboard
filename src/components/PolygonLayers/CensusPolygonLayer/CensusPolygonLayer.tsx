@@ -20,6 +20,7 @@ interface CensusPolygonLayerProps {
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   getColor: (value: number | null, value2?: number | null) => string;
+  filteredGeoids?: Set<string> | null;
   onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
 }
 
@@ -39,8 +40,18 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   activeFeatureGeoid,
   layerOpacity,
   getColor,
+  filteredGeoids,
   onFeatureClick,
 }) => {
+  const isMatched = useCallback(
+    (feature: Feature<Geometry, BlockGroupProperties>) => {
+      if (filteredGeoids == null) return true;
+      const geoid = String(feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties] ?? "");
+      return filteredGeoids.has(geoid);
+    },
+    [filteredGeoids],
+  );
+
   const getStyle = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
       if (!feature) {
@@ -58,12 +69,19 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       const metricValue2 = getMetricValue2?.(geoidStr) ?? undefined;
       const fillColor = getColor(metricValue, metricValue2);
 
+      if (filteredGeoids != null) {
+        if (filteredGeoids.has(geoidStr)) {
+          return { ...LAYER_CONFIG.styles.default, fillColor, ...LAYER_CONFIG.styles.filterMatch } as StyleConfig;
+        }
+        return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
+      }
+
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
       };
     },
-    [getMetricValue, getMetricValue2, getColor],
+    [getMetricValue, getMetricValue2, getColor, filteredGeoids],
   );
 
   const getHighlightStyle = useCallback(
@@ -71,12 +89,16 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       feature: Feature<Geometry, BlockGroupProperties>,
       baseStyle: StyleConfig | undefined,
     ): StyleConfig => {
-      return {
+      const base = {
         ...LAYER_CONFIG.styles.highlight,
         fillColor: baseStyle?.fillColor || LAYER_CONFIG.styles.default.fillColor,
       };
+      if (filteredGeoids != null && isMatched(feature)) {
+        return { ...base, color: LAYER_CONFIG.styles.filterMatch!.color as string };
+      }
+      return base as StyleConfig;
     },
-    [],
+    [filteredGeoids, isMatched],
   );
 
   const renderPopup = useMemo(
@@ -97,18 +119,33 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, geographiesData],
   );
 
+  const guardedOnFeatureClick = useCallback(
+    (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => {
+      if (!isMatched(feature)) return;
+      onFeatureClick?.(feature, e);
+    },
+    [isMatched, onFeatureClick],
+  );
+
+  const guardedRenderPopup = useMemo(
+    () =>
+      (feature: Feature<Geometry, BlockGroupProperties>) =>
+        isMatched(feature) ? (renderPopup?.(feature) ?? null) : null,
+    [isMatched, renderPopup],
+  );
+
   return (
     <GenericPolygonLayer
       data={data}
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
-      layerOpacity={layerOpacity}
+      layerOpacity={filteredGeoids != null ? undefined : layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
-      onFeatureClick={onFeatureClick}
-      renderPopup={renderPopup}
+      onFeatureClick={guardedOnFeatureClick}
+      renderPopup={guardedRenderPopup}
     />
   );
 };
