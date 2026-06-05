@@ -13,7 +13,8 @@ export interface PopupConfig {
 export interface LayerStyleConfig {
   default: PathOptions;
   highlight?: PathOptions;
-  grayedOut?: PathOptions;
+  disabled?: PathOptions;
+  filterMatch?: PathOptions;
   noData?: PathOptions;
 }
 
@@ -50,6 +51,19 @@ export const POLYGON_LAYERS = {
         color: "#000000",
         opacity: 1,
         fillOpacity: 0.8,
+      },
+      disabled: {
+        fillColor: "#aaaaaa",
+        fillOpacity: 0.4,
+        color: "#888888",
+        weight: 0.5,
+        opacity: 0.5,
+      },
+      filterMatch: {
+        color: "#ff6b00",
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.85,
       },
     },
   } satisfies PolygonLayerConfig,
