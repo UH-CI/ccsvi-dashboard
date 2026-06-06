@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from "
 import { useShallow } from "zustand/react/shallow";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
+import { Feature, FeatureCollection, Geometry } from "geojson";
 import L, { LeafletMouseEvent } from "leaflet";
 import {
   BlockGroupProperties,
@@ -32,7 +32,8 @@ import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
-import { computeColorScale, computeBivariateColorScale } from "../../utils/colorThresholds";
+import { useMetricLookups } from "./hooks/useMetricLookups";
+import { useMapColorScale } from "./hooks/useMapColorScale";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -112,17 +113,23 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const { blockGroupData, metricValuesCache, geographiesData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
-      useAppStore(
-        useShallow((state) => ({
-          blockGroupData: state.blockGroupData,
-          metricValuesCache: state.metricValuesCache,
-          geographiesData: state.geographiesData,
-          censusBlockGroups: state.censusBlockGroups,
-          hawaiianHomelands: state.hawaiianHomelands,
-          countyBoundaries: state.countyBoundaries,
-        })),
-      );
+    const {
+      blockGroupData,
+      metricValuesCache,
+      geographiesData,
+      censusBlockGroups,
+      hawaiianHomelands,
+      countyBoundaries,
+    } = useAppStore(
+      useShallow((state) => ({
+        blockGroupData: state.blockGroupData,
+        metricValuesCache: state.metricValuesCache,
+        geographiesData: state.geographiesData,
+        censusBlockGroups: state.censusBlockGroups,
+        hawaiianHomelands: state.hawaiianHomelands,
+        countyBoundaries: state.countyBoundaries,
+      })),
+    );
     const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
 
     const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
@@ -202,118 +209,41 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       if (!activeDatasetObject || !effectiveMetric) return null;
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
-    
-    const cacheKey1 = effectiveDataset && effectiveMetric
-      ? `${effectiveDataset}::${effectiveMetric}`
-      : null;
-    const cacheKey2 = effectiveDataset2 && effectiveMetric2
-      ? `${effectiveDataset2}::${effectiveMetric2}`
-      : null;
+
+    const cacheKey1 =
+      effectiveDataset && effectiveMetric ? `${effectiveDataset}::${effectiveMetric}` : null;
+    const cacheKey2 =
+      effectiveDataset2 && effectiveMetric2 ? `${effectiveDataset2}::${effectiveMetric2}` : null;
     const cachedMetric1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
     const cachedMetric2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
 
     useEffect(() => {
       if (!effectiveDataset) return;
       if (effectiveMetric) void fetchMetricValues(effectiveDataset, effectiveMetric);
-      if (effectiveMetric2 && effectiveDataset2) void fetchMetricValues(effectiveDataset2, effectiveMetric2);
+      if (effectiveMetric2 && effectiveDataset2)
+        void fetchMetricValues(effectiveDataset2, effectiveMetric2);
     }, [effectiveDataset, effectiveDataset2, effectiveMetric, effectiveMetric2, fetchMetricValues]);
 
-    const metricsDerived = useMemo(() => {
-      const noData = {
-        allMetricValues: [] as number[],
-        getMetricValue: (): number | null => null,
-        getMetricMoE: null as ((geoid: string) => number | null) | null,
-        allMetricValues2: [] as number[],
-        getMetricValue2: null as ((geoid: string) => number | null) | null,
-        getMetricMoE2: null as ((geoid: string) => number | null) | null,
-      };
-
-      if (!cachedMetric1 || !effectiveMetric) return noData;
-
-      // Use percentage when available; fall back to absolute for metrics that
-      // lack a meaningful percentage (e.g. median income, raw population counts).
-      const pickValue = (entry: { absolute: number | null; margin_of_error: number | null; percentage: number | null } | undefined): number | null => {
-        if (!entry) return null;
-        if (entry.percentage != null) { const n = Number(entry.percentage); if (!isNaN(n)) return n; }
-        if (entry.absolute != null) { const n = Number(entry.absolute); if (!isNaN(n)) return n; }
-        return null;
-      };
-
-      const lookup1 = new Map<string, number>();
-      const lookupMoE1 = new Map<string, number>();
-      const lookup2 = effectiveMetric2 && cachedMetric2 ? new Map<string, number>() : null;
-      const lookupMoE2 = effectiveMetric2 && cachedMetric2 ? new Map<string, number>() : null;
-      const values1: number[] = [];
-      const values2: number[] = [];
-
-      for (const [geoid, values] of Object.entries(cachedMetric1)) {
-        const v1 = pickValue(values);
-        if (v1 !== null) {
-          lookup1.set(geoid, v1);
-          values1.push(v1);
-        }
-        const moe1 = values.margin_of_error != null ? Number(values.margin_of_error) : null;
-        if (moe1 !== null && !isNaN(moe1)) lookupMoE1.set(geoid, moe1);
-
-        if (lookup2 && lookupMoE2 && cachedMetric2) {
-          const v2 = pickValue(cachedMetric2[geoid]);
-          if (v2 !== null) {
-            lookup2.set(geoid, v2);
-            values2.push(v2);
-          }
-          const moe2 = cachedMetric2[geoid]?.margin_of_error != null ? Number(cachedMetric2[geoid].margin_of_error) : null;
-          if (moe2 !== null && !isNaN(moe2)) lookupMoE2.set(geoid, moe2);
-        }
-      }
-
-      return {
-        allMetricValues: values1,
-        getMetricValue: (geoid: string): number | null => lookup1.get(geoid) ?? null,
-        getMetricMoE: (geoid: string): number | null => lookupMoE1.get(geoid) ?? null,
-        allMetricValues2: values2,
-        getMetricValue2: lookup2
-          ? (geoid: string): number | null => lookup2.get(geoid) ?? null
-          : null,
-        getMetricMoE2: lookupMoE2
-          ? (geoid: string): number | null => lookupMoE2.get(geoid) ?? null
-          : null,
-      };
-    }, [cachedMetric1, cachedMetric2, effectiveMetric, effectiveMetric2]);
-
-    const { allMetricValues, getMetricValue, getMetricMoE, allMetricValues2, getMetricValue2, getMetricMoE2 } = metricsDerived;
+    const {
+      allMetricValues,
+      getMetricValue,
+      getMetricMoE,
+      allMetricValues2,
+      getMetricValue2,
+      getMetricMoE2,
+    } = useMetricLookups(cachedMetric1, cachedMetric2, effectiveMetric, effectiveMetric2);
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
 
-    const colorScale = useMemo(() => {
-      if (!activeDatasetMetricObject) return null;
-      return computeColorScale(
-        allMetricValues,
-        activeColorScheme,
-        activeDatasetMetricObject.classificationMode ?? "q",
-      );
-    }, [allMetricValues, activeColorScheme, activeDatasetMetricObject]);
-
-    const bivariateColorScale = useMemo(() => {
-      if (!effectiveMetric2 || allMetricValues2.length === 0) return null;
-      return computeBivariateColorScale(
-        allMetricValues,
-        allMetricValues2,
-        activeBivariateColorScheme,
-        activeDatasetMetricObject?.classificationMode ?? "q",
-      );
-    }, [allMetricValues, allMetricValues2, activeBivariateColorScheme, activeDatasetMetricObject, effectiveMetric2]);
-
-    const getColor = useMemo(() => {
-      if (bivariateColorScale) {
-        return (value1: number | null, value2?: number | null): string =>
-          bivariateColorScale.getColor(value1, value2 ?? null);
-      }
-      return (value: number | null): string => {
-        if (value === null || !colorScale) return "#cccccc";
-        return colorScale.getColor(value);
-      };
-    }, [colorScale, bivariateColorScale]);
+    const { colorScale, bivariateColorScale, getColor } = useMapColorScale({
+      allMetricValues,
+      allMetricValues2,
+      colorScheme: activeColorScheme,
+      bivariateColorScheme: activeBivariateColorScheme,
+      hasSecondMetric: Boolean(effectiveMetric2),
+      datasetMetricObject: activeDatasetMetricObject,
+    });
 
     const handleFeatureClick = useCallback(
       (
@@ -559,7 +489,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             />
           </LegendContainer>
         </div>
-
       </div>
     );
   },
