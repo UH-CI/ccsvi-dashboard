@@ -14,107 +14,91 @@ export interface SviCategory {
 export const SVI_CATEGORIES: SviCategory[] = [
   {
     id: "higher_risk_housing",
-    label: "Higher risk housing and jobs",
+    label: "Housing and living arrangements",
     indicators: [
       {
         dataset: "age_of_structure",
         metric: "Total Housing Built Before 1990 (calc.)",
-        label: "% Houses built before 1990",
+        label: "Houses built before 1990",
       },
-      { dataset: "tenure", metric: "Renter occupied", label: "% Renter occupied units" },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
         label: "Population in group quarters",
       },
-      {
-        dataset: "population_group_quarters",
-        metric: "Institutionalized population: Correctional facilities for adults",
-        label: "Group quarters: Correctional facilities",
-      },
-      {
-        dataset: "population_group_quarters",
-        metric: "Institutionalized population: Juvenile facilities",
-        label: "Group quarters: Juvenile facilities",
-      },
-      {
-        dataset: "population_group_quarters",
-        metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities",
-        label: "Group quarters: Nursing/skilled-nursing facilities",
-      },
-      {
-        dataset: "population_group_quarters",
-        metric: "Institutionalized population: Other institutional facilities",
-        label: "Group quarters: Other institutional facilities",
-      },
+      // { dataset: "population_group_quarters", metric: "Institutionalized population: Correctional facilities for adults", label: "Group quarters: Correctional facilities" },
+      // { dataset: "population_group_quarters", metric: "Institutionalized population: Juvenile facilities", label: "Group quarters: Juvenile facilities" },
+      // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
+      // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
+      { dataset: "tenure", metric: "Renter occupied", label: "Renter occupied units" },
     ],
   },
   {
     id: "socioeconomic_disadvantage",
-    label: "Socioeconomic disadvantage",
+    label: "Economic Stability & Resources",
     indicators: [
       {
         dataset: "income_share_of_fpl",
         metric: "Total Under 100% FPL (calc.)",
-        label: "% Under 100% federal poverty line",
+        label: "Below 100% federal poverty line",
         mvColumn: "fpl_under_100_pct_calc",
       },
       {
         dataset: "income_share_of_fpl",
         metric: "Total Under 150% FPL (calc.)",
-        label: "% Under 150% federal poverty line",
+        label: "Below 150% federal poverty line",
       },
       {
         dataset: "income_share_of_fpl",
         metric: "Total Under 200% FPL (calc.)",
-        label: "% Under 200% federal poverty line",
+        label: "Below 200% federal poverty line",
       },
       {
         dataset: "health_insurance",
         metric: "No Health Insurance Coverage (calc.)",
-        label: "% Without health insurance",
+        label: "Without health insurance",
         mvColumn: "no_health_insurance_pct_calc",
       },
     ],
   },
   {
     id: "sensitive_populations",
-    label: "Sensitive populations and households",
+    label: "Population and household structure",
     indicators: [
       {
         dataset: "person_under_5_65_males",
         metric: "Males Under 5 (calc.)",
-        label: "Males under 5",
+        label: "Aged 5 years and under (male)",
       },
       {
         dataset: "person_under_5_65_females",
         metric: "Females Under 5 (calc.)",
-        label: "Females under 5",
+        label: "Aged 5 years and under (female)",
       },
       {
         dataset: "person_under_5_65_males",
         metric: "Males Under 18 (calc.)",
-        label: "Males under 18",
+        label: "Aged 17 years and under (male)",
       },
       {
         dataset: "person_under_5_65_females",
         metric: "Females Under 18 (calc.)",
-        label: "Females under 18",
+        label: "Aged 17 years and under (female)",
       },
       {
         dataset: "person_under_5_65_males",
         metric: "Males Over 65 (calc.)",
-        label: "Males over 65",
+        label: "Aged 65 years and older (male)",
       },
       {
         dataset: "person_under_5_65_females",
         metric: "Females Over 65 (calc.)",
-        label: "Females over 65",
+        label: "Aged 65 years and older (female)",
       },
       {
         dataset: "living_arrangements",
         metric: "Total Living alone (calc.)",
-        label: "% Living alone",
+        label: "Living alone",
       },
       {
         dataset: "living_arrangements",
@@ -129,23 +113,23 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Under 5 (calc.)",
-        label: "Hawaiian Homelands: under 5",
+        label: "Hawaiian homelands - aged 5 years and under",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Under 18 (calc.)",
-        label: "Hawaiian Homelands: under 18",
+        label: "Hawaiian homelands - aged 17 years and under",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Over 65 (calc.)",
-        label: "Hawaiian Homelands: over 65",
+        label: "Hawaiian homelands - aged 65 years and older",
       },
     ],
   },
   {
     id: "underserved_populations",
-    label: "Underserved populations",
+    label: "Social and demographic context",
     indicators: [
       { dataset: "race_origin", metric: "White alone", label: "White alone" },
       {
@@ -169,7 +153,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "limited_english_speaking",
         metric: "Total Limited English Speaking Households (calc.)",
-        label: "% Speaking English less than well",
+        label: "Speaking English less than well",
       },
       {
         dataset: "limited_english_speaking",
@@ -206,14 +190,14 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "internet_subscription",
         metric: "No Internet access",
-        label: "% Without internet access",
+        label: "Households without internet access",
         mvColumn: "no_internet_pct",
       },
-      { dataset: "households_w_computer", metric: "No Computer", label: "% Without a computer" },
+      { dataset: "households_w_computer", metric: "No Computer", label: "Households without a computer or smartphone" },
       {
         dataset: "aggregate_vehicles",
         metric: "Estimate Aggregate number of vehicles available",
-        label: "Aggregate vehicles available",
+        label: "Households without a vehicle",
       },
     ],
   },
