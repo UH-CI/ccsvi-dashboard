@@ -116,7 +116,7 @@ export const POLYGON_LAYERS = {
         fillOpacity: 0.2,
         dashArray: "5, 5",
       },
-      grayedOut: {
+      disabled: {
         fillColor: "#e0e0e0",
         weight: 0.8,
         opacity: 0.5,
