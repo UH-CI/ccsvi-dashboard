@@ -193,7 +193,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Households without internet access",
         mvColumn: "no_internet_pct",
       },
-      { dataset: "households_w_computer", metric: "No Computer", label: "Households without a computer or smartphone" },
+      {
+        dataset: "households_w_computer",
+        metric: "No Computer",
+        label: "Households without a computer or smartphone",
+      },
       {
         dataset: "aggregate_vehicles",
         metric: "Estimate Aggregate number of vehicles available",
