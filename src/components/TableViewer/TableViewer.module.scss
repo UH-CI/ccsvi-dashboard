@@ -159,6 +159,114 @@
   outline: none;
 }
 
+// Staged for the deferred inline-sx → SCSS migration; not yet wired to the DataGrid.
+.data-grid {
+  height: 100%;
+  width: 100%;
+  border: none;
+
+  :global(.MuiDataGrid-main) {
+    overflow: hidden;
+  }
+
+  :global(.MuiDataGrid-virtualScroller) {
+    overflow: auto !important;
+  }
+
+  :global(.MuiDataGrid-columnHeaders) {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 60px !important;
+    max-height: 80px !important;
+  }
+
+  :global(.MuiDataGrid-columnHeaderDraggableContainer) {
+    flex-direction: row !important;
+  }
+
+  :global(.MuiDataGrid-columnHeader) {
+    background-color: #f5f5f5;
+    padding: 2px 4px !important;
+    height: auto !important;
+    min-height: 60px !important;
+    max-height: 80px !important;
+
+    :global(.MuiDataGrid-columnHeaderTitle) {
+      white-space: normal !important;
+      line-height: 1.2 !important;
+      font-weight: bold !important;
+      font-size: 0.75rem !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis;
+      word-break: normal !important;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+    }
+
+    :global(.MuiDataGrid-columnHeaderTitleContainer) {
+      height: 100% !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 2px;
+    }
+
+    :global(.MuiDataGrid-columnHeaderTitleContainerContent) {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    :global(.MuiDataGrid-iconButtonContainer) {
+      flex: 0 0 auto;
+      width: auto !important;
+      visibility: visible;
+      margin-left: 2px;
+    }
+  }
+
+  :global(.MuiDataGrid-columnHeader--withRightBorder) {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  :global(.MuiDataGrid-footerContainer) {
+    border-top: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    flex-shrink: 0;
+  }
+
+  :global(.MuiDataGrid-row):hover {
+    background-color: #0000000a;
+  }
+
+  :global(.MuiDataGrid-cell):focus,
+  :global(.MuiDataGrid-cell):focus-within {
+    outline: none;
+  }
+
+  :global(.MuiDataGrid-row):nth-of-type(odd) {
+    background-color: #fafafa;
+  }
+
+  // Placed after :nth-of-type(odd) so the active row wins by source order.
+  :global(.MuiDataGrid-row).active-row {
+    background-color: #1976d226;
+  }
+
+  :global(.MuiDataGrid-row).active-row:hover {
+    background-color: #1976d238;
+  }
+}
+
+.data-grid--clickable {
+  :global(.MuiDataGrid-row) {
+    cursor: pointer;
+  }
+}
+
 .loading-container {
   display: flex;
   justify-content: center;
