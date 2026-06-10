@@ -171,11 +171,11 @@
 
 // Map List ────────────────────────────────────────────────────────────────
 
-.map-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+// .map-list {
+//   display: flex;
+//   flex-direction: column;
+//   gap: 8px;
+// }
 
 // Single Map Controls (tab view) ──────────────────────────────────────────
 
@@ -217,37 +217,37 @@
 
 // Section headers ─────────────────────────────────────────────────────────
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-  background: #fafafa;
-  transition: background-color 0.2s;
+// .section-header {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   padding: 8px 12px;
+//   cursor: pointer;
+//   background: #fafafa;
+//   transition: background-color 0.2s;
+//
+//   &:hover {
+//     background: #f0f0f0;
+//   }
+// }
 
-  &:hover {
-    background: #f0f0f0;
-  }
-}
+// .section-title {
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+//   font-weight: 500;
+//   color: #333;
+//   margin: 0;
+//   font-size: 0.85rem !important;
+// }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-  font-size: 0.85rem !important;
-}
+// .section-content {
+//   padding: 8px 12px;
+// }
 
-.section-content {
-  padding: 8px 12px;
-}
-
-.section-divider {
-  margin: 0;
-}
+// .section-divider {
+//   margin: 0;
+// }
 
 // Layer Toggles ───────────────────────────────────────────────────────────
 
@@ -265,13 +265,13 @@
   width: 100%;
 }
 
-.expand-icon {
-  margin-left: auto;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+// .expand-icon {
+//   margin-left: auto;
+//   padding: 4px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+// }
 
 .layer-label {
   display: flex;
