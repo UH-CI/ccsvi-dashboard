@@ -10,7 +10,7 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend, RasterMapLegend } from "../MapLegend";
+import { MapLegend, RasterMapLegend, HcdpMapLegend } from "../MapLegend";
 import mapLegendStyles from "../MapLegend/MapLegend.module.scss";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
@@ -498,6 +498,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
           <div className={mapLegendStyles.legendStack}>
             <RasterMapLegend mapId={mapId} />
+
+            <HcdpMapLegend mapId={mapId} />
+
             <MapLegend
               dataset={blockGroupData}
               activeDataset={effectiveDataset}
