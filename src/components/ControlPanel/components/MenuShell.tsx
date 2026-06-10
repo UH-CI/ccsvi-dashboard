@@ -39,7 +39,7 @@ export const MenuShell: React.FC<MenuShellProps> = ({
           {title}
         </Typography>
         <Tooltip title="About this section">
-          <IconButton size="small" onClick={onInfoClick} sx={{ ml: 1 }}>
+          <IconButton size="small" onClick={onInfoClick} className={styles["menu-info-btn"]}>
             <InfoOutlined fontSize="small" />
           </IconButton>
         </Tooltip>

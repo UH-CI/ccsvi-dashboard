@@ -1,6 +1,7 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapConfig, Dataset } from "../../../types";
+import styles from "../ControlPanel.module.scss";
 
 interface LayerOpacities {
   census: number;
@@ -102,15 +103,15 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
 
       <Divider />
 
-      <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
-        <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
+      <Box className={styles["opacity-section"]}>
+        <Typography variant="caption" className={styles["opacity-section-label"]}>
           Layer Opacity
         </Typography>
 
         {config.dataset &&
           dataset?.[config.dataset] &&
           !dataset[config.dataset].hawaiianHomelands && (
-            <Box sx={{ mb: 2 }}>
+            <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">
                 Census Blocks
               </Typography>
@@ -129,7 +130,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
 
         {config.dataset && dataset?.[config.dataset]?.hawaiianHomelands && (
           <>
-            <Box sx={{ mb: 2 }}>
+            <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">
                 Hawaiian Homelands
               </Typography>

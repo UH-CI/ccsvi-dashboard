@@ -63,7 +63,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
         </Box>
         {hasSubs && (
           <Collapse in={expandedHazards[parent.id]}>
-            <Stack spacing={1} sx={{ pl: 3 }}>
+            <Stack spacing={1} className={styles["layer-sub-stack"]}>
               {parent.subLayers!.map((sub) => {
                 const compositeId = `${parent.id}.${sub.id}`;
                 const isSubVisible =

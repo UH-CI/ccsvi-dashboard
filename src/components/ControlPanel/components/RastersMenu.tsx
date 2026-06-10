@@ -100,14 +100,14 @@ export const RastersMenu: React.FC<RastersMenuProps> = ({
                 </Box>
                 {hasChildren && (
                   <Collapse in={expandedRasters[parent.id]}>
-                    <Stack spacing={1} sx={{ pl: 3 }}>
+                    <Stack spacing={1} className={styles["layer-sub-stack"]}>
                       {parent.subLayers!.map((sub) => {
                         const compositeId = `${parent.id}.${sub.id}`;
                         const isSubVisible = visibleRasterIdsForMap.has(compositeId);
                         return (
                           <FormControlLabel
                             key={sub.id}
-                            sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
+                            className={styles["raster-form-label"]}
                             control={
                               <Checkbox
                                 checked={isSubVisible}

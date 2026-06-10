@@ -284,7 +284,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         transformOrigin={{ vertical: "top", horizontal: "left" }}
         disableRestoreFocus
       >
-        <Box sx={{ p: 2, maxWidth: 300 }}>
+        <Box className={styles["info-popover-content"]}>
           <Typography variant="body2">
             {infoKey ? navItems.find((n) => n.key === infoKey)?.description : ""}
           </Typography>

@@ -137,15 +137,11 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       }
     >
       {isCollapsed && (
-        <Box
-          className={styles.header}
-          sx={{ backgroundColor: "primary.main", cursor: "pointer" }}
-          onClick={toggleCollapse}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "white" }}>
+        <Box className={styles.header} onClick={toggleCollapse}>
+          <Typography variant="subtitle2" className={styles["header-title"]}>
             {datasetLabel}
           </Typography>
-          <IconButton size="small" sx={{ color: "white" }} title="Expand table">
+          <IconButton size="small" className={styles["header-icon-btn"]} title="Expand table">
             <KeyboardArrowUp />
           </IconButton>
         </Box>
@@ -155,20 +151,9 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         in={!isCollapsed}
         timeout={300}
         unmountOnExit={false}
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          "& .MuiCollapse-wrapper": { height: "100%" },
-          "& .MuiCollapse-wrapperInner": { height: "100%" },
-        }}
+        className={styles["table-collapse"]}
       >
-        <Box
-          className={styles.content}
-          sx={{
-            height: "100%",
-            overflow: "hidden",
-          }}
-        >
+        <Box className={styles.content}>
           {error && (
             <Alert severity="error" className={styles["error-alert"]}>
               {error}
@@ -206,111 +191,12 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 disableColumnMenu={false}
                 disableColumnFilter={false}
                 disableColumnSelector={false}
-                sx={{
-                  height: "100%",
-                  width: "100%",
-                  border: "none",
-
-                  // Main container - allow scrolling
-                  "& .MuiDataGrid-main": {
-                    overflow: "hidden",
-                  },
-
-                  // Virtual scroller - enable scrollbars
-                  "& .MuiDataGrid-virtualScroller": {
-                    overflow: "auto !important",
-                  },
-
-                  // Column headers styling
-                  "& .MuiDataGrid-columnHeaders": {
-                    backgroundColor: "#f5f5f5",
-                    borderBottom: "1px solid #e0e0e0",
-                    minHeight: "60px !important",
-                    maxHeight: "80px !important",
-                  },
-
-                  "& .MuiDataGrid-columnHeaderDraggableContainer": {
-                    flexDirection: "row !important",
-                  },
-
-                  "& .MuiDataGrid-columnHeader": {
-                    backgroundColor: "#f5f5f5",
-                    padding: "2px 4px !important",
-                    height: "auto !important",
-                    minHeight: "60px !important",
-                    maxHeight: "80px !important",
-
-                    "& .MuiDataGrid-columnHeaderTitle": {
-                      whiteSpace: "normal !important",
-                      lineHeight: "1.2 !important",
-                      fontWeight: "bold !important",
-                      fontSize: "0.75rem !important",
-                      overflow: "hidden !important",
-                      textOverflow: "ellipsis",
-                      wordBreak: "normal !important",
-                      overflowWrap: "break-word",
-                      hyphens: "auto",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 4,
-                      WebkitBoxOrient: "vertical",
-                    },
-
-                    "& .MuiDataGrid-columnHeaderTitleContainer": {
-                      height: "100% !important",
-                      flexDirection: "row !important",
-                      justifyContent: "space-between !important",
-                      alignItems: "center !important",
-                      gap: "2px",
-                    },
-
-                    "& .MuiDataGrid-columnHeaderTitleContainerContent": {
-                      flex: "1 1 auto",
-                      minWidth: 0,
-                      overflow: "hidden",
-                    },
-
-                    "& .MuiDataGrid-iconButtonContainer": {
-                      flex: "0 0 auto",
-                      width: "auto !important",
-                      visibility: "visible",
-                      marginLeft: "2px",
-                    },
-                  },
-
-                  // Header borders
-                  "& .MuiDataGrid-columnHeader--withRightBorder": {
-                    borderRight: "1px solid #e0e0e0",
-                  },
-
-                  // Footer styling
-                  "& .MuiDataGrid-footerContainer": {
-                    borderTop: "1px solid #e0e0e0",
-                    backgroundColor: "#f5f5f5",
-                    flexShrink: 0,
-                  },
-
-                  // Row styling
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "rgba(0, 0, 0, 0.04)",
-                  },
-                  "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                    outline: "none",
-                  },
-                  ...(geoidColIndex >= 0 &&
-                    !!primaryMapMetric && {
-                      "& .MuiDataGrid-row": { cursor: "pointer" },
-                    }),
-
-                  "& .MuiDataGrid-row:nth-of-type(odd)": {
-                    backgroundColor: "#fafafa",
-                  },
-                  [`& .MuiDataGrid-row.${styles["active-row"]}`]: {
-                    backgroundColor: "rgba(25, 118, 210, 0.15)",
-                  },
-                  [`& .MuiDataGrid-row.${styles["active-row"]}:hover`]: {
-                    backgroundColor: "rgba(25, 118, 210, 0.22)",
-                  },
-                }}
+                className={[
+                  styles["data-grid"],
+                  geoidColIndex >= 0 && !!primaryMapMetric ? styles["data-grid--clickable"] : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               />
             </Box>
           )}

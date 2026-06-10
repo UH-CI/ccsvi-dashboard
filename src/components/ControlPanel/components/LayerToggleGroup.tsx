@@ -40,13 +40,7 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
           />
         )}
         <Typography
-          className={styles["layer-label"]}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            flexGrow: 1,
-            ...(selectAll ? {} : { ml: "21px" }),
-          }}
+          className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
         >
           {icon && (
             <span className={styles["layer-icon"]} style={{ color }}>
@@ -60,7 +54,7 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
         </IconButton>
       </Box>
       <Collapse in={expanded}>
-        <Stack spacing={1} sx={{ pl: childrenPl }}>
+        <Stack spacing={1} style={{ paddingLeft: childrenPl * 8 }}>
           {children}
         </Stack>
       </Collapse>
