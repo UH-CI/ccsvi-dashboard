@@ -77,7 +77,7 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
   return (
-    <CollapsibleLegend title={info.title} icon={<TerrainIcon sx={{ fontSize: 18, color: "#444" }} />} order={0}>
+    <CollapsibleLegend title={info.title} icon={<TerrainIcon className={styles["legend-icon"]} />} order={0}>
       <div className={styles["raster-legend__row"]} style={{ width: widthPx }}>
         <div
           className={styles["raster-legend__gradient"]}

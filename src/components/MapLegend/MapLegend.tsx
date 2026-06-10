@@ -47,7 +47,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   if (!bivariate && (!limits || !colors)) return null;
 
   return (
-    <CollapsibleLegend title="Vulnerability Indicator" icon={<LayersIcon sx={{ fontSize: 18, color: "#444" }} />} order={1}>
+    <CollapsibleLegend title="Vulnerability Indicator" icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
       {bivariate ? (
         <div className={styles["legend__bivariate"]}>
           <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>

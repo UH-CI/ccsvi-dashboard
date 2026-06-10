@@ -303,3 +303,58 @@
   border-radius: 0.25rem;
   color: #c62828;
 }
+
+// CustomTableToolbar ──────────────────────────────────────────────────────────
+
+.toolbar-bar {
+  display: flex;
+  background-color: #1976d2;
+  color: white;
+  padding: 4px 8px;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :global(.MuiButton-root) {
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+}
+
+.toolbar-title {
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-icon {
+  font-size: 1rem !important;
+}
+
+.toolbar-search-icon {
+  color: white;
+  font-size: 1rem !important;
+  margin-right: 4px;
+}
+
+.toolbar-search-box {
+  align-items: center;
+  border: 1px solid #ffffff66;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.toolbar-divider {
+  border-color: #ffffff4d !important;
+  margin: 0 4px !important;
+}
+
+.toolbar-icon-btn {
+  color: white !important;
+}
