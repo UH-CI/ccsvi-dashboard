@@ -45,8 +45,11 @@ function initializeMapStore(
     title: `Map ${config.id!.replace("map", "")}`,
     dataset: config.dataset || "",
     metric: config.metric || "",
+      ...(config.dataset2 ? { dataset2: config.dataset2 } : {}),
+      ...(config.metric2 ? { metric2: config.metric2 } : {}),
+    ...(config.bivariateColorScheme ? { bivariateColorScheme: config.bivariateColorScheme } : {}),
     visible: config.visible ?? true,
-    colorScheme: "viridis" as const,
+    colorScheme: "Viridis",
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
   }));
 
@@ -157,5 +160,8 @@ function initializeRasterLayers(rasterIds: string[]): void {
   // Set visibility per map
   for (const [mapId, ids] of Object.entries(layersByMap)) {
     store.setVisibleLayerIds(mapId, ids);
+    for (const id of ids) {
+      store.fetchCOGInfo(id);
+    }
   }
 }

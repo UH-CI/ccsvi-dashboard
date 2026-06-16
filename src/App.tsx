@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
@@ -10,20 +10,70 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
-  useMapStore,
+  usePrimaryMapState,
 } from "./stores";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
 import { initializeStoresFromUrl } from "./utils/storeInitializer";
+import { takeMapSnapshot } from "./utils/snapshotUtils";
+
+const MIN_TABLE_HEIGHT = 96;
 
 const App: React.FC = () => {
   const [isUrlInitialized, setIsUrlInitialized] = useState(false);
 
+  const [isTableOpen, setIsTableOpen] = useState(true);
+  const [isGridView, setIsGridView] = useState(true);
+  const [tableHeight, setTableHeight] = useState<number | null>(null);
+  const [snapCollapsed, setSnapCollapsed] = useState(false);
+  const [snapFullscreen, setSnapFullscreen] = useState(false);
+  const multiMapContainerRef = useRef<HTMLDivElement>(null);
+
+  const COLLAPSE_THRESHOLD = 40;
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const newHeight = window.innerHeight - moveEvent.clientY;
+      const maxHeight = window.innerHeight * 0.85;
+      if (newHeight < COLLAPSE_THRESHOLD) {
+        setSnapCollapsed(true);
+        setSnapFullscreen(false);
+        setTableHeight(null);
+      } else if (newHeight > maxHeight + 40) {
+        setSnapFullscreen(true);
+        setSnapCollapsed(false);
+        setTableHeight(null);
+      } else {
+        setSnapCollapsed(false);
+        setSnapFullscreen(false);
+        setTableHeight(Math.max(MIN_TABLE_HEIGHT, Math.min(maxHeight, newHeight)));
+      }
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, [COLLAPSE_THRESHOLD]);
+
+  const handleSnapshot = useCallback(async () => {
+    const el = multiMapContainerRef.current;
+    if (!el) return;
+    await takeMapSnapshot(el, { customPrefix: "ccsvi-multi-map" });
+  }, []);
+
+  const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
+    setIsTableOpen(!isCollapsed);
+    if (!isCollapsed) { setSnapCollapsed(false); setSnapFullscreen(false); }
+  }, []);
+
   // Get the active/primary map's dataset for the table viewer
-  const primaryDataset = useMapStore((state) => {
-    const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
-    return primary?.dataset || "";
-  });
+  const { dataset: primaryDataset } = usePrimaryMapState();
 
   // Get data from stores
   const errors = useAppStore((state) => state.errors);
@@ -31,12 +81,8 @@ const App: React.FC = () => {
   const fetchPointLayerConfigs = usePointLayerStore((state) => state.fetchPointLayerConfigs);
   const blockGroupData = useAppStore((state) => state.blockGroupData);
   const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
-  const hazardLoading = useHazardLayersStore((state) => state.loading);
-  const hazardError = useHazardLayersStore((state) => state.error);
-
   const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
-  const rasterLoading = useRasterLayersStore((state) => state.loading);
-  const rasterError = useRasterLayersStore((state) => state.error);
+  const rasterLoaded = useRasterLayersStore((state) => state.isLoaded);
 
   const isReady = useIsReady();
 
@@ -63,20 +109,18 @@ const App: React.FC = () => {
 
   // === Error handling ===
   const hasErrors = Object.values(errors).some((error) => error !== null);
-  if (hasErrors || hazardError || rasterError) {
+  if (hasErrors) {
     return (
       <div className={styles["error-container"]}>
         <h2>Error loading data</h2>
         {Object.entries(errors).map(([key, error]) => error && <p key={key}>{error}</p>)}
-        {hazardError && <p>{hazardError}</p>}
-        {rasterError && <p>{rasterError}</p>}
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
   // === Loading ===
-  if (!isReady || hazardLoading || rasterLoading) {
+  if (!isReady || !rasterLoaded) {
     return (
       <div className={styles["loading-container"]}>
         <div>Loading data...</div>
@@ -90,10 +134,25 @@ const App: React.FC = () => {
 
   return (
     <div className={styles["app-container"]}>
-      <ControlPanel maxMaps={4} />
+      <ControlPanel
+        maxMaps={4}
+        isGridView={isGridView}
+        onToggleGridView={() => setIsGridView((v) => !v)}
+        onSnapshot={handleSnapshot}
+      />
       <div className={styles["map-section"]}>
-        <MultiMapContainer maxMaps={4} />
-        <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
+        <MultiMapContainer ref={multiMapContainerRef} maxMaps={4} isGridView={isGridView} />
+        {isTableOpen && primaryDataset && (
+          <div className={styles["table-resize-handle"]} onMouseDown={handleResizeStart} />
+        )}
+        <TableViewer
+          activeDataset={primaryDataset}
+          datasetInfo={activeDatasetObject}
+          onSizeChange={handleTableSizeChange}
+          tableHeight={tableHeight}
+          collapsed={snapCollapsed}
+          fullscreen={snapFullscreen}
+        />
       </div>
     </div>
   );

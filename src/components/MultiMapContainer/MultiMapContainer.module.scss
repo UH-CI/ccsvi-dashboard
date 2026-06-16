@@ -1,7 +1,8 @@
 .multi-map-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   background-color: #f5f5f5;
 }
@@ -44,6 +45,17 @@
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
   }
+
+  // When table is open with 3 or more maps, switch to horizontal layout
+  &--table-open {
+    // Override grid to be a single row with as many columns as maps
+    grid-template-rows: 1fr !important;
+
+    // Shrink minimum height so maps don't crowd the table
+    .map-wrapper {
+      min-height: clamp(7rem, 12vh, 15vh);
+    }
+  }
 }
 
 .map-wrapper {
@@ -53,7 +65,8 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  min-height: 400px;
+  min-height: clamp(8rem, 15vh, 20vh);
+  transition: all 0.3s ease-in-out;
 }
 
 // Responsive Design
@@ -67,6 +80,12 @@
     &.three-maps {
       grid-template-columns: 1fr;
       grid-template-rows: repeat(3, 1fr);
+    }
+
+    // On medium screens with table open, allow wrapping to 2 cols max
+    &--table-open {
+      grid-template-columns: repeat(2, 1fr) !important;
+      grid-template-rows: 1fr !important;
     }
   }
 }
@@ -85,8 +104,13 @@
   .maps-grid {
     padding: 8px;
     gap: 8px;
-  }
 
+    // On small screens revert to single column regardless of table state
+    &--table-open {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: unset !important;
+    }
+  }
   .map-header {
     flex-direction: column;
     align-items: stretch;
@@ -102,11 +126,21 @@
   }
 }
 
+@media (max-height: 700px) {
+  .map-wrapper {
+    min-height: clamp(6rem, 10vh, 14vh);
+  }
+
+  .maps-grid--table-open .map-wrapper {
+    min-height: clamp(5rem, 8vh, 12vh);
+  }
+}
+
 // Animation for smooth transitions
 .map-wrapper {
   transition: all 0.3s ease-in-out;
 }
 
-.config-content {
-  transition: all 0.3s ease-in-out;
-}
+// .config-content {
+//   transition: all 0.3s ease-in-out;
+// }

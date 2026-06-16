@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { DATASETS_CONFIG, DataSourceKey, DataSourceTypeMap } from "../config";
-import { MetricsData, Dataset, PointLayerConfig } from "../types";
+import { GeographiesData, MetricValue, Dataset, PointLayerConfig } from "../types";
+import { getMetricValues } from "../api/client";
 import { FeatureCollection, Geometry } from "geojson";
 import {
   BlockGroupProperties,
@@ -11,7 +12,7 @@ import { HazardLayerConfig } from "../types";
 import { useHazardLayersStore } from "./useHazardLayersStore";
 
 interface LoadingState {
-  metricsData: boolean;
+  geographiesData: boolean;
   blockGroupData: boolean;
   censusBlockGroups: boolean;
   hawaiianHomelands: boolean;
@@ -26,7 +27,8 @@ interface ErrorState {
 
 interface AppState {
   // Data
-  metricsData: MetricsData | null;
+  geographiesData: GeographiesData | null;
+  metricValuesCache: Record<string, Record<string, MetricValue>>;
   blockGroupData: Dataset | null;
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties> | null;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
@@ -38,7 +40,7 @@ interface AppState {
   errors: ErrorState;
 
   // Setters
-  setMetricsData: (data: MetricsData) => void;
+  setGeographiesData: (data: GeographiesData) => void;
   setBlockGroupData: (data: Dataset) => void;
   setCensusBlockGroups: (data: FeatureCollection<Geometry, BlockGroupProperties>) => void;
   setHawaiianHomelands: (data: FeatureCollection<Geometry, HawaiianHomelandProperties>) => void;
@@ -50,7 +52,8 @@ interface AppState {
   setError: (key: string, error: string | null) => void;
 
   // Data fetching
-  fetchMetricsData: () => Promise<void>;
+  fetchGeographiesData: () => Promise<void>;
+  fetchMetricValues: (dataset: string, metric: string) => Promise<void>;
   fetchBlockGroupData: () => Promise<void>;
   fetchCensusBlockGroups: () => Promise<void>;
   fetchHawaiianHomelands: () => Promise<void>;
@@ -60,7 +63,7 @@ interface AppState {
 }
 
 const initialLoadingState: LoadingState = {
-  metricsData: false,
+  geographiesData: false,
   blockGroupData: false,
   censusBlockGroups: false,
   hawaiianHomelands: false,
@@ -71,13 +74,17 @@ const initialLoadingState: LoadingState = {
 
 const initialErrorState: ErrorState = {};
 
+const fetchingMetrics = new Set<string>();
+
 export const useAppStore = create<AppState>((set, get) => {
   const fetchData = async <K extends DataSourceKey>(
     key: K,
     setter: (data: DataSourceTypeMap[K]) => void,
   ): Promise<void> => {
     const config = DATASETS_CONFIG[key];
-    const { setLoading, setError } = get();
+    const { loading, setLoading, setError } = get();
+
+    if (loading[key as keyof LoadingState]) return;
 
     setLoading(key as keyof LoadingState, true);
     setError(key, null);
@@ -98,7 +105,8 @@ export const useAppStore = create<AppState>((set, get) => {
 
   return {
     // Initial state
-    metricsData: null,
+    geographiesData: null,
+    metricValuesCache: {},
     blockGroupData: null,
     censusBlockGroups: null,
     hawaiianHomelands: null,
@@ -109,7 +117,7 @@ export const useAppStore = create<AppState>((set, get) => {
     errors: initialErrorState,
 
     // Setters
-    setMetricsData: (data) => set({ metricsData: data }),
+    setGeographiesData: (data) => set({ geographiesData: data }),
     setBlockGroupData: (data) => set({ blockGroupData: data }),
     setCensusBlockGroups: (data) => set({ censusBlockGroups: data }),
     setHawaiianHomelands: (data) => set({ hawaiianHomelands: data }),
@@ -128,9 +136,25 @@ export const useAppStore = create<AppState>((set, get) => {
       })),
 
     // Data fetching
-    fetchMetricsData: () => {
-      const { setMetricsData } = get();
-      return fetchData("metricsData", setMetricsData);
+    fetchGeographiesData: () => {
+      const { setGeographiesData } = get();
+      return fetchData("geographiesData", setGeographiesData);
+    },
+    fetchMetricValues: async (dataset: string, metric: string) => {
+      const cacheKey = `${dataset}::${metric}`;
+      if (get().metricValuesCache[cacheKey] !== undefined) return;
+      if (fetchingMetrics.has(cacheKey)) return;
+      fetchingMetrics.add(cacheKey);
+      try {
+        const data = await getMetricValues(dataset, metric);
+        set((state) => ({
+          metricValuesCache: { ...state.metricValuesCache, [cacheKey]: data },
+        }));
+      } catch (err) {
+        console.error(`Failed to fetch metric values for ${dataset}::${metric}:`, err);
+      } finally {
+        fetchingMetrics.delete(cacheKey);
+      }
     },
     fetchBlockGroupData: () => {
       const { setBlockGroupData } = get();
@@ -170,7 +194,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     fetchAllData: async () => {
       const {
-        fetchMetricsData,
+        fetchGeographiesData,
         fetchBlockGroupData,
         fetchCensusBlockGroups,
         fetchHawaiianHomelands,
@@ -179,7 +203,7 @@ export const useAppStore = create<AppState>((set, get) => {
       } = get();
 
       await Promise.all([
-        fetchMetricsData(),
+        fetchGeographiesData(),
         fetchBlockGroupData(),
         fetchCensusBlockGroups(),
         fetchHawaiianHomelands(),
@@ -200,7 +224,7 @@ export const useIsReady = () => {
     return (
       !isLoading &&
       !hasErrors &&
-      state.metricsData !== null &&
+      state.geographiesData !== null &&
       state.blockGroupData !== null &&
       state.censusBlockGroups !== null &&
       state.hawaiianHomelands !== null &&

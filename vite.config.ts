@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
     target: "https://api.hcdp.ikewai.org",
     changeOrigin: true,
     rewrite: (reqPath) =>
-      reqPath.replace(/^\/ccsvi-dashboard\/api/, "").replace(/^\/api/, ""),
+      reqPath.replace(/^\/ccsvi-dashboard\/api/, ""),
     configure: (proxy) => {
       proxy.on("proxyReq", (proxyReq) => {
         if (hcdpApiToken) {
@@ -38,17 +38,23 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: "/ccsvi-dashboard/",
+    worker: {
+      format: "es",
+    },
     server: {
       proxy: {
         "/ccsvi-dashboard/api": hcdpProxy,
-        "/api": hcdpProxy,
+        "/api": "http://128.171.215.85:8000",
+        "/data": "http://128.171.215.85:8000",
       },
     },
     preview: {
       proxy: {
         "/ccsvi-dashboard/api": hcdpProxy,
-        "/api": hcdpProxy,
+        "/api": "http://128.171.215.85:8000",
+        "/data": "http://128.171.215.85:8000",
       },
     },
   };
 });
+

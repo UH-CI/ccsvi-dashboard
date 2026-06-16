@@ -1,67 +1,92 @@
-import React, { useMemo } from "react";
-import { Dataset, ColorSchemeName } from "../../types";
+import React, { useMemo, useState } from "react";
+import LayersIcon from "@mui/icons-material/Layers";
+import { Tooltip } from "@mui/material";
 import styles from "./MapLegend.module.scss";
+import { ComputedBivariateColorScale } from "../../utils/colorThresholds";
+import { CollapsibleLegend } from "./CollapsibleLegend";
 
 interface MapLegendProps {
-  dataset: Dataset | null;
-  activeDataset: string | undefined;
-  activeDatasetMetric: string | undefined;
-  colorScheme?: ColorSchemeName;
+  limits: number[] | null;
+  colors: string[] | null;
+  bivariate?: ComputedBivariateColorScale;
+  metric1Label?: string;
+  metric2Label?: string;
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({
-  dataset,
-  activeDataset,
-  activeDatasetMetric,
-  colorScheme = "viridis",
+  limits,
+  colors,
+  bivariate,
+  metric1Label,
+  metric2Label,
 }) => {
-  const activeDatasetMetricObject = useMemo(() => {
-    if (!dataset || !activeDataset || !activeDatasetMetric) return null;
-    return dataset[activeDataset]?.columnThresholds?.[activeDatasetMetric];
-  }, [dataset, activeDataset, activeDatasetMetric]);
+  const [labelsHovered, setLabelsHovered] = useState(false);
 
   const legendLevels = useMemo(() => {
-    if (!activeDatasetMetricObject) return [];
+    if (bivariate || !limits || !colors || limits.length < 2) return [];
 
-    const colors = activeDatasetMetricObject.colorSchemes[colorScheme];
     const items = [];
-    for (let i = activeDatasetMetricObject.thresholds.length - 1; i >= 0; i--) {
-      const low = activeDatasetMetricObject.thresholds[i];
-      const high = activeDatasetMetricObject.thresholds[i + 1];
-
-      let label;
-      if (i === activeDatasetMetricObject.thresholds.length - 1) {
-        label = `> ${low}`;
-      } else if (i === 0) {
-        label = `${low}`;
-      } else {
-        label = `${low}-${high - 1}`;
-      }
-
+    for (let i = limits.length - 2; i >= 0; i--) {
+      const fmt = (n: number) => n.toFixed(3);
+      const label =
+        i === limits.length - 2
+          ? `> ${fmt(limits[i])}`
+          : i === 0
+            ? `≤ ${fmt(limits[i + 1])}`
+            : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
       items.push(
         <div key={i} className={styles.legend__item}>
-          <div
-            className={styles["legend__item-color"]}
-            style={{ backgroundColor: colors[i] }}
-          ></div>
+          <div className={styles["legend__item-color"]} style={{ backgroundColor: colors[i] }} />
           <span>{label}</span>
         </div>,
       );
     }
     return items;
-  }, [activeDatasetMetricObject, colorScheme]);
+  }, [bivariate, limits, colors]);
 
-  if (!dataset || !activeDataset || !activeDatasetMetric) {
-    return null;
-  }
+  if (!bivariate && (!limits || !colors)) return null;
 
   return (
-    <div className={styles.legend}>
-      <div className={styles.legend__title}>
-        Map Legend
-        {/*{activeDatasetMetric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}*/}
-      </div>
-      <div className={styles.legend__items}>{legendLevels}</div>
-    </div>
+    <CollapsibleLegend title="Vulnerability Indicator" icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
+      {bivariate ? (
+        <div className={styles["legend__bivariate"]}>
+          <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
+            <span
+              className={styles["legend__bivariate-label-y"]}
+              onMouseEnter={() => setLabelsHovered(true)}
+              onMouseLeave={() => setLabelsHovered(false)}
+            >
+              {metric2Label ?? "Metric 2"}
+            </span>
+          </Tooltip>
+          <div className={styles["legend__bivariate-right"]}>
+            <div className={styles["legend__bivariate-grid"]}>
+              {[...bivariate.palette].reverse().map((rowColors, rowIdx) => (
+                <div key={rowIdx} className={styles["legend__bivariate-row"]}>
+                  {rowColors.map((color, col) => (
+                    <div
+                      key={`${rowIdx}-${col}`}
+                      className={styles["legend__bivariate-cell"]}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+            <Tooltip title={metric1Label ?? ""} placement="bottom" open={labelsHovered}>
+              <span
+                className={styles["legend__bivariate-label-x"]}
+                onMouseEnter={() => setLabelsHovered(true)}
+                onMouseLeave={() => setLabelsHovered(false)}
+              >
+                {metric1Label ?? "Metric 1"}
+              </span>
+            </Tooltip>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.legend__items}>{legendLevels}</div>
+      )}
+    </CollapsibleLegend>
   );
 };

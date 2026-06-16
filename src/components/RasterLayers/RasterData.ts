@@ -1,3 +1,7 @@
+// DEPRECATED — RasterData held decoded GeoTIFF band data (header + IndexedValues Map) produced
+// by DataProcessorService and consumed by DataRetreiverService for canvas rendering. Replaced by
+// COGInfo (min/max from TiTiler /statistics) stored in useRasterLayersStore. Pending deletion.
+
 export class RasterData {
   private data: {
     header: RasterHeader;

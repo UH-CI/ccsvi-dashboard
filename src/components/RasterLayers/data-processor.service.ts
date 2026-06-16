@@ -1,3 +1,8 @@
+// DEPRECATED — DataProcessorService managed geotiff.worker.ts (a Web Worker) to decode GeoTIFF
+// ArrayBuffers into RasterData. Used by the old RasterLayerRenderer. Replaced by TiTiler's
+// server-side COG reading served as PNG tiles via /api/tiles/cog/tiles/{z}/{x}/{y}.png.
+// Pending deletion.
+
 import { RasterData, IndexedValues, UpdateFlags } from "./RasterData";
 
 // Import worker using Vite's worker syntax

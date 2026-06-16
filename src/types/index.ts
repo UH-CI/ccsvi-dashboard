@@ -1,15 +1,16 @@
 import { Feature, Geometry } from "geojson";
 import { PathOptions } from "leaflet";
 
-export type ColorSchemeName = "viridis" | "reds" | "blues";
-
 export interface MapConfig {
   id: string;
   title: string;
   dataset: string;
   metric: string;
+  dataset2?: string;
+  metric2?: string;
+  bivariateColorScheme?: string;
   visible: boolean;
-  colorScheme: ColorSchemeName;
+  colorScheme: string;
   activeFeature?: {
     geoid: string;
     lat: number;
@@ -19,31 +20,22 @@ export interface MapConfig {
 }
 
 export interface MetricValue {
-  absolute: number;
-  proportion: number;
+  absolute: number | null;
+  margin_of_error: number | null;
+  percentage: number | null;
 }
 
-export interface MetricsData {
-  [geoid: string]: {
-    type?: string;
-    name?: string;
-    block_group: string | null;
-    census_tract: string | null;
-    county: string | null;
-    state?: string | null;
-    population?: number;
-    metrics: {
-      [datasetName: string]: {
-        [metricName: string]: MetricValue;
-      };
-    };
-  };
+export interface GeographyMetadata {
+  name: string | null;
+  block_group: string | null;
+  census_tract: string | null;
+  county: string | null;
 }
 
-export interface ColorSchemes {
-  viridis: string[];
-  reds: string[];
-  blues: string[];
+export type GeographiesData = Record<string, GeographyMetadata>;
+
+export interface MetricConfig {
+  classificationMode?: string;
 }
 
 export interface Dataset {
@@ -52,10 +44,7 @@ export interface Dataset {
     metricLabel: string;
     hawaiianHomelands?: boolean;
     columnThresholds: {
-      [columnName: string]: {
-        thresholds: number[];
-        colorSchemes: ColorSchemes;
-      };
+      [columnName: string]: MetricConfig;
     };
   };
 }
@@ -140,24 +129,30 @@ export interface SubRasterLayerConfig {
   id: string;
   name: string;
   color?: string;
-  filePath?: string;
-  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  // Use TiTiler built-in colormap names
+  colormapName?: string;
+  // Shown on the map legend and click-to-query popup
   units?: string;
-  /** Fixed legend panel width in px (same for all layers if unset; sublayer overrides parent). */
-  legendWidthPx?: number;
-  /** Fixed color ramp height in px. */
-  legendGradientHeightPx?: number;
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
+  opacity?: number;
+  type?: "raster";
+  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
+  filePath?: string;
+
+  
+  /** @deprecated TiTiler selects overview level automatically. REMOVE */
   overviewZoom?: {
     minZoom: number;
     maxZoom: number;
     overviewIndex: number;
   }[];
-  opacity?: number;
-  type?: "raster";
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendWidthPx?: number;
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendGradientHeightPx?: number;
+  popupConfig?: {
+    titleField?: string;
+    fields?: { key: string; label: string }[];
+  };
 }
 
 export interface RasterLayerConfig {
@@ -165,25 +160,29 @@ export interface RasterLayerConfig {
   name: string;
   icon?: string;
   color?: string;
-  filePath?: string;
-  /** Shown on the map legend with min/max values, e.g. "mm", "°C", "m". */
+  // Use TiTiler built-in colormap names
+  colormapName?: string;
+  // Shown on the map legend and click-to-query popup
   units?: string;
-  /** Fixed legend panel width in px (applies to this layer; sublayers may override). */
-  legendWidthPx?: number;
-  /** Fixed color ramp height in px. */
-  legendGradientHeightPx?: number;
   opacity?: number;
   type?: "raster";
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
+  subLayers?: SubRasterLayerConfig[];
+  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
+  filePath?: string;
+  /** @deprecated TiTiler selects overview level automatically. REMOVE */
   overviewZoom?: {
     minZoom: number;
     maxZoom: number;
     overviewIndex: number;
   }[];
-  subLayers?: SubRasterLayerConfig[];
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendWidthPx?: number;
+  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
+  legendGradientHeightPx?: number;
+  popupConfig?: {
+    titleField?: string;
+    fields?: { key: string; label: string }[];
+  };
 }
 
 export type StyleFunction = (
@@ -192,6 +191,22 @@ export type StyleFunction = (
 export type HomelandsStyleFunction = (
   feature: Feature<Geometry, HawaiianHomelandProperties> | undefined,
 ) => PathOptions;
+
+export interface BlockGroupResult {
+  geoid: string;
+  name: string | null;
+  county: string | null;
+  population: number | null;
+  [key: string]: number | string | null;
+}
+
+export interface FilterParams {
+  county?: string;
+  hazardId?: string;
+  subId?: string;
+  heightFt?: number;
+  metricFilters?: Partial<Record<string, number>>;
+}
 
 // Generic polygon layer types
 export interface PolygonLayerConfig {

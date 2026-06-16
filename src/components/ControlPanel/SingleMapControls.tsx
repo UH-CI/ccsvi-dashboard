@@ -1,95 +1,84 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
-  Divider,
-  Stack,
-  Collapse,
   IconButton,
   Box,
-  Menu,
-  Slider,
 } from "@mui/material";
-import {
-  ExpandMore,
-  ExpandLess,
-  Visibility,
-  VisibilityOff,
-  Close,
-  Palette,
-} from "@mui/icons-material";
-import * as FaIcons from "react-icons/fa";
+import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient } from "@mui/icons-material";
 import {
   useAppStore,
   useMapStore,
   useMapConfig,
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
   DEFAULT_LAYER_OPACITIES,
-  defaultExpandedSections,
+  useRasterLayersStore,
 } from "../../stores";
 import styles from "./ControlPanel.module.scss";
+import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
+import { RasterColormapMenu } from "./components/RasterColormapMenu";
+import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
 
 interface SingleMapControlsProps {
   mapId: string;
   canRemoveMap: boolean;
   onRemove: (mapId: string) => void;
+  section?: "management" | "dataset" | "all";
 }
 
 export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   mapId,
   canRemoveMap,
   onRemove,
+  section = "all",
 }) => {
   const config = useMapConfig(mapId);
   const dataset = useAppStore((state) => state.blockGroupData);
 
   const updateMapConfig = useMapStore((state) => state.updateMapConfig);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
-  const expandedSections = useMapStore(
-    (state) => state.expandedSectionsByMap[mapId] ?? defaultExpandedSections,
-  );
-  const toggleSectionByMap = useMapStore((state) => state.toggleSectionByMap);
+
   const mapOpacities = useMapStore(
     (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
   );
   const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
 
-  const pointLayerConfigs = usePointLayerStore((state) => state.pointLayerConfigs);
-  const visiblePointLayerIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
-  const togglePointLayerVisibility = usePointLayerStore((state) => state.toggleLayerVisibility);
-
-  const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
-  const visibleHazardLayerIds = useHazardLayersStore((state) => state.visibleLayerIdsByMap[mapId]);
-  const toggleHazardLayerVisibility = useHazardLayersStore(
-    (state) => state.toggleHazardLayerVisibility,
-  );
-  const toggleSubLayerVisibility = useHazardLayersStore((state) => state.toggleSubLayerVisibility);
-
-  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-  const visibleRasterIds = useRasterLayersStore((state) => state.visibleLayerIdsByMap[mapId]);
-  const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
-  const toggleSubRasterLayerVisibility = useRasterLayersStore(
-    (s) => s.toggleSubRasterLayerVisibility,
-  );
-
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
-  const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
-  const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
+  const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleEditValue, setTitleEditValue] = useState("");
 
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
+  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
+  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
-  const toggleExpandRaster = useCallback((id: string) => {
-    setExpandedRasters((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
+  // The "leaf" raster ID is the one passed to TiTiler as raster_id.
+  const activeRasterLeafId = useMemo(() => {
+    const visible = visibleRasterIdsByMap[mapId];
+    if (!visible || visible.size === 0) return null;
+    for (const id of visible) {
+      if (id.includes(".")) return id;
+    }
+    return [...visible][0] ?? null;
+  }, [visibleRasterIdsByMap, mapId]);
+
+  // Resolve the current colormap: override takes precedence, then the layer config default.
+  const activeRasterColormap = useMemo(() => {
+    if (!activeRasterLeafId) return null;
+    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
+    if (override) return override;
+    const [parentId, subId] = activeRasterLeafId.split(".");
+    if (!subId) {
+      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
+    }
+    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
+    return (
+      parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null
+    );
+  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
   const datasetList = useMemo(() => {
     if (!dataset) return [];
@@ -103,141 +92,123 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   if (!config) return null;
 
   return (
-    <Box className={styles["map-item"]}>
-      <Box className={styles["map-item-header"]}>
-        <Typography variant="body2" className={styles["map-item-title"]}>
-          Map {config.id}
-        </Typography>
-        <Box className={styles["map-item-actions"]}>
-          {config.visible && config.dataset && config.metric && (
-            <>
-              <IconButton
-                size="small"
-                onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
-                title="Color scheme"
-              >
-                <Palette fontSize="small" />
-              </IconButton>
-              <Menu
-                anchorEl={colorSchemeAnchor}
-                open={Boolean(colorSchemeAnchor)}
-                onClose={() => setColorSchemeAnchor(null)}
-              >
-                {["viridis", "reds", "blues"].map((scheme) => (
-                  <MenuItem
-                    key={scheme}
-                    selected={
-                      config.colorScheme === scheme || (!config.colorScheme && scheme === "viridis")
-                    }
-                    onClick={() => {
-                      updateMapConfig(config.id, {
-                        colorScheme: scheme as "viridis" | "reds" | "blues",
-                      });
-                      setColorSchemeAnchor(null);
-                    }}
-                  >
-                    {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                  </MenuItem>
-                ))}
-
-                <Divider />
-
-                <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 1 }}>
-                    Layer Opacity
-                  </Typography>
-
-                  {config.dataset &&
-                    dataset?.[config.dataset] &&
-                    !dataset[config.dataset].hawaiianHomelands && (
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="caption" gutterBottom display="block">
-                          Census Blocks
-                        </Typography>
-                        <Slider
-                          value={mapOpacities.census}
-                          onChange={(_, value) =>
-                            setLayerOpacity(config.id, "census", value as number)
-                          }
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          marks
-                          valueLabelDisplay="auto"
-                          size="small"
-                        />
-                      </Box>
-                    )}
-
-                  {config.dataset && dataset?.[config.dataset]?.hawaiianHomelands && (
-                    <>
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="caption" gutterBottom display="block">
-                          Hawaiian Homelands
-                        </Typography>
-                        <Slider
-                          value={mapOpacities.hawaiianHomelands}
-                          onChange={(_, value) =>
-                            setLayerOpacity(config.id, "hawaiianHomelands", value as number)
-                          }
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          marks
-                          valueLabelDisplay="auto"
-                          size="small"
-                        />
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" gutterBottom display="block">
-                          County Boundaries
-                        </Typography>
-                        <Slider
-                          value={mapOpacities.countyBoundaries}
-                          onChange={(_, value) =>
-                            setLayerOpacity(config.id, "countyBoundaries", value as number)
-                          }
-                          min={0}
-                          max={1}
-                          step={0.1}
-                          marks
-                          valueLabelDisplay="auto"
-                          size="small"
-                        />
-                      </Box>
-                    </>
-                  )}
-                </Box>
-              </Menu>
-            </>
+    <Box className={styles["single-map-controls"]}>
+      {section !== "dataset" && (
+        <Box className={styles["single-map-actions"]}>
+          {isEditingTitle ? (
+            <input
+              className={styles["map-tab-input"]}
+              value={titleEditValue}
+              autoFocus
+              onChange={(e) => setTitleEditValue(e.target.value)}
+              onBlur={() => {
+                updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                setIsEditingTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                  setIsEditingTitle(false);
+                }
+                if (e.key === "Escape") setIsEditingTitle(false);
+              }}
+            />
+          ) : (
+            <Typography variant="body2" className={styles["single-map-title"]}>
+              {config.title}
+            </Typography>
           )}
-          <IconButton
-            size="small"
-            onClick={() => toggleMapVisibility(config.id)}
-            title={config.visible ? "Hide map" : "Show map"}
-          >
-            {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
-          </IconButton>
-          {canRemoveMap && (
+          <Box className={styles["single-map-action-btns"]}>
+            {config.visible && config.dataset && config.metric && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
+                  title="Color scheme"
+                >
+                  <Palette fontSize="small" />
+                </IconButton>
+                <ColorSchemeMenu
+                  anchorEl={colorSchemeAnchor}
+                  open={Boolean(colorSchemeAnchor)}
+                  onClose={() => setColorSchemeAnchor(null)}
+                  config={config}
+                  dataset={dataset}
+                  mapOpacities={mapOpacities}
+                  updateMapConfig={updateMapConfig}
+                  setLayerOpacity={setLayerOpacity}
+                />
+              </>
+            )}
+            {activeRasterLeafId && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
+                  title="Raster colormap"
+                >
+                  <Gradient fontSize="small" />
+                </IconButton>
+                <RasterColormapMenu
+                  anchorEl={rasterColorSchemeAnchor}
+                  open={Boolean(rasterColorSchemeAnchor)}
+                  onClose={() => setRasterColorSchemeAnchor(null)}
+                  mapId={mapId}
+                  activeRasterLeafId={activeRasterLeafId}
+                  activeRasterColormap={activeRasterColormap}
+                  setRasterColormap={setRasterColormap}
+                />
+              </>
+            )}
             <IconButton
               size="small"
-              onClick={() => onRemove(config.id)}
-              title="Remove map"
-              color="error"
+              onClick={() => {
+                setIsEditingTitle(true);
+                setTitleEditValue(config.title);
+              }}
+              title="Rename map"
             >
-              <Close fontSize="small" />
+              <Edit fontSize="small" />
             </IconButton>
-          )}
+            <IconButton
+              size="small"
+              onClick={() => toggleMapVisibility(config.id)}
+              title={config.visible ? "Hide map" : "Show map"}
+            >
+              {config.visible ? (
+                <Visibility fontSize="small" />
+              ) : (
+                <VisibilityOff fontSize="small" />
+              )}
+            </IconButton>
+            {canRemoveMap && (
+              <IconButton
+                size="small"
+                onClick={() => onRemove(config.id)}
+                title="Remove map"
+                color="error"
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
         </Box>
-      </Box>
+      )}
 
-      {config.visible && (
-        <Box className={styles["map-item-config"]}>
+      {section !== "management" && config.visible && (
+        <Box className={styles["single-map-fields"]}>
           <FormControl size="small" fullWidth>
             <InputLabel>Dataset</InputLabel>
             <Select
               value={config.dataset || ""}
-              onChange={(e) => updateMapConfig(config.id, { dataset: e.target.value })}
+              onChange={(e) =>
+                updateMapConfig(config.id, {
+                  dataset: e.target.value,
+                  metric: "",
+                  dataset2: undefined,
+                  metric2: undefined,
+                })
+              }
               label="Dataset"
             >
               {datasetList.map((ds) => (
@@ -250,14 +221,20 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
           {config.dataset && (
             <FormControl size="small" fullWidth>
-              <InputLabel>Metric</InputLabel>
+              <InputLabel>Vulnerability Indicator</InputLabel>
               <Select
                 value={config.metric}
-                onChange={(e) => updateMapConfig(config.id, { metric: e.target.value })}
-                label="Metric"
+                onChange={(e) =>
+                  updateMapConfig(config.id, {
+                    metric: e.target.value,
+                    dataset2: undefined,
+                    metric2: undefined,
+                  })
+                }
+                label="Vulnerability Indicator"
               >
                 <MenuItem value="">
-                  <em>Select Metric</em>
+                  <em>Select Vulnerability Indicator</em>
                 </MenuItem>
                 {dataset &&
                   dataset[config.dataset] &&
@@ -270,7 +247,17 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </FormControl>
           )}
 
-          
+          {config.dataset && config.metric && (
+            <ComparisonMetricSelect
+              blockGroupData={dataset}
+              dataset={config.dataset}
+              metric={config.metric}
+              dataset2={config.dataset2}
+              metric2={config.metric2}
+              onChange={(next) => updateMapConfig(config.id, next)}
+              label="Comparison Vulnerability Indicator"
+            />
+          )}
         </Box>
       )}
     </Box>

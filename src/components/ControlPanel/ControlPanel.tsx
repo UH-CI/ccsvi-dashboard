@@ -1,18 +1,14 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Typography,
   Button,
   Paper,
   Divider,
-  Stack,
-  Collapse,
-  IconButton,
   Box,
   Chip,
   Tooltip,
-  FormControlLabel,
-  Checkbox,
-  Menu,
+  IconButton,
+  Popover,
 } from "@mui/material";
 import {
   Camera,
@@ -23,103 +19,61 @@ import {
   Refresh,
   Terrain,
   ExpandMore,
-  ExpandLess,
+  GridView,
+  CalendarViewWeek,
+  Assessment,
+  Factory,
 } from "@mui/icons-material";
-import * as FaIcons from "react-icons/fa";
 import {
   useMapStore,
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
+  useHCDPStore,
 } from "../../stores";
 import { HCDPLoad } from "../HCDP";
 import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
+import { MapsMenu } from "./components/MapsMenu";
+import { SviMenu } from "./components/SviMenu";
+import { PointsMenu } from "./components/PointsMenu";
+import { LocationsMenu } from "./components/LocationsMenu";
+import { HazardsMenu } from "./components/HazardsMenu";
+import { HcdpMenu } from "./components/HcdpMenu";
+import { RastersMenu } from "./components/RastersMenu";
 
 interface IntegratedControlPanelProps {
   maxMaps: number;
+  isGridView?: boolean;
+  onToggleGridView?: () => void;
+  onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey = "maps" | "points" | "hazards" | "rasters" | "HCDP" | null;
+type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "rasters" | "HCDP" | null;
 
-const MapTabSelector: React.FC<{
-  mapConfigs: { id: string }[];
-  selectedMapId: string;
-  onChange: (id: string) => void;
-}> = ({ mapConfigs, selectedMapId, onChange }) => {
-  if (mapConfigs.length <= 1) return null;
-  return (
-    <Box className={styles["map-tab-selector"]}>
-      {mapConfigs.map((c) => (
-        <button
-          key={c.id}
-          className={`${styles["map-tab-btn"]} ${selectedMapId === c.id ? styles["map-tab-btn--active"] : ""}`}
-          onClick={() => onChange(c.id)}
-        >
-          Map {c.id}
-        </button>
-      ))}
-    </Box>
-  );
-};
-
-export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps }) => {
+export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
+  maxMaps,
+  isGridView = true,
+  onToggleGridView,
+  onSnapshot,
+}) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
-  const addMap = useMapStore((state) => state.addMap);
-  const removeMap = useMapStore((state) => state.removeMap);
   const resetMapStore = useMapStore((state) => state.reset);
-  const primaryMapId = useMapStore((state) => state.primaryMapId);
-
   const setVisiblePointLayerIds = usePointLayerStore((state) => state.setVisibleLayerIds);
   const setVisibleHazardLayerIds = useHazardLayersStore((state) => state.setVisibleLayerIds);
   const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
-
-  const pointLayerConfigs = usePointLayerStore((state) => state.pointLayerConfigs);
-  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const togglePointLayerVisibility = usePointLayerStore((state) => state.toggleLayerVisibility);
-
-  const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
-  const visibleHazardLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-  const toggleHazardLayerVisibility = useHazardLayersStore(
-    (state) => state.toggleHazardLayerVisibility,
-  );
-  const toggleSubLayerVisibility = useHazardLayersStore((state) => state.toggleSubLayerVisibility);
-
-  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-  const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
-  const toggleRasterLayerVisibility = useRasterLayersStore((s) => s.toggleRasterLayerVisibility);
-  const toggleSubRasterLayerVisibility = useRasterLayersStore(
-    (s) => s.toggleSubRasterLayerVisibility,
-  );
+  const clearHCDP = useHCDPStore((s) => s.clearRasterOverlay);
 
   // One anchor per nav button
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
-  const [expandedHazards, setExpandedHazards] = useState<Record<string, boolean>>({});
-  const [expandedRasters, setExpandedRasters] = useState<Record<string, boolean>>({});
-  const [pointsMapId, setPointsMapId] = useState<string>("");
-  const [hazardsMapId, setHazardsMapId] = useState<string>("");
-  const [rastersMapId, setRastersMapId] = useState<string>("");
-  const [HCDPMapId, setHCDPMapId] = useState<string>("");
+  const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
+  const [infoKey, setInfoKey] = useState<NonNullable<PopoverKey> | null>(null);
 
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
-  const canAddMap = mapConfigs.length < maxMaps;
-  const canRemoveMap = mapConfigs.length > 1;
 
-  const openMenu = useCallback(
-    (key: NonNullable<PopoverKey>, el: HTMLElement) => {
-      // Close all others, open this one
-      setAnchors({ [key]: el });
-      if (key === "points")
-        setPointsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "hazards")
-        setHazardsMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "rasters")
-        setRastersMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-      if (key === "HCDP")
-        setHCDPMapId((prev) => prev || primaryMapId || mapConfigs[0]?.id || "");
-    },
-    [primaryMapId, mapConfigs],
-  );
+  const openMenu = useCallback((key: NonNullable<PopoverKey>, el: HTMLElement) => {
+    setAnchors({ [key]: el });
+  }, []);
 
   const closeMenu = useCallback((key: NonNullable<PopoverKey>) => {
     setAnchors((prev) => {
@@ -140,22 +94,14 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
     [anchors, openMenu, closeMenu],
   );
 
-  const handleRemoveMap = useCallback(
-    (mapId: string) => {
-      setVisiblePointLayerIds(mapId, []);
-      setVisibleRasterLayerIds(mapId, []);
-      setVisibleHazardLayerIds(mapId, []);
-      removeMap(mapId);
-    },
-    [removeMap, setVisiblePointLayerIds, setVisibleRasterLayerIds, setVisibleHazardLayerIds],
-  );
-
   const handleResetView = useCallback(() => {
     resetMapStore();
+    
     mapConfigs.forEach((map) => {
       setVisiblePointLayerIds(map.id, []);
       setVisibleHazardLayerIds(map.id, []);
       setVisibleRasterLayerIds(map.id, []);
+      clearHCDP(map.id);
     });
     setAnchors({});
   }, [
@@ -167,41 +113,79 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
   ]);
 
   const handleSnapshot = useCallback(() => {
-    console.log("Snapshot");
     setAnchors({});
+    void onSnapshot?.();
+  }, [onSnapshot]);
+
+  const handleInfoClick = useCallback(
+    (key: NonNullable<PopoverKey>, e: React.MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+      setInfoAnchor(e.currentTarget);
+      setInfoKey(key);
+    },
+    [],
+  );
+
+  const handleInfoClose = useCallback(() => {
+    setInfoAnchor(null);
+    setInfoKey(null);
   }, []);
 
-  const toggleExpand = useCallback((id: string) => {
-    setExpandedHazards((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
-  const toggleExpandRaster = useCallback((id: string) => {
-    setExpandedRasters((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
-
-  const navItems: { key: NonNullable<PopoverKey>; label: string; icon: React.ReactNode }[] = [
-    { key: "maps", label: "Maps", icon: <Layers fontSize="small" /> },
-    { key: "points", label: "Points", icon: <LocationOn fontSize="small" /> },
-    { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" /> },
-    { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" /> },
-    { key: "HCDP", label: "HCDP", icon: <CloudQueue fontSize="small" /> },
+  const navItems: {
+    key: NonNullable<PopoverKey>;
+    label: string;
+    icon: React.ReactNode;
+    description: string;
+  }[] = [
+    {
+      key: "maps",
+      label: "Maps",
+      icon: <Layers fontSize="small" />,
+      description:
+        "Add, remove, and configure map panels. Adjust per-map settings such as title and visibility.",
+    },
+    {
+      key: "svi",
+      label: "Social Vulnerability Indicators",
+      icon: <Assessment fontSize="small" />,
+      description:
+        "Select social vulnerability metrics to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariatly using the Compare with selector.",
+    },
+    {
+      key: "points",
+      label: "Critical Infrastructure",
+      icon: <LocationOn fontSize="small" />,
+      description:
+        "Overlay point data for critical infrastructure including hospitals, fire stations, police stations, emergency shelters, schools, and road networks.",
+    },
+    {
+      key: "locations",
+      label: "Locations of Enhanced Exposure",
+      icon: <Factory fontSize="small" />,
+      description:
+        "Show locations that may be particularly vulnerable to environmental or climate hazards, such as onsite sewage disposal systems.",
+    },
+    {
+      key: "hazards",
+      label: "Hazards",
+      icon: <Warning fontSize="small" />,
+      description:
+        "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), and solar insolation.",
+    },
+    {
+      key: "rasters",
+      label: "Rasters",
+      icon: <Terrain fontSize="small" />,
+      description: "Overlay raster data layers such as terrain and elevation data.",
+    },
+    {
+      key: "HCDP",
+      label: "Hawaii Climate Data Portal",
+      icon: <CloudQueue fontSize="small" />,
+      description:
+        "Load Hawaii Climate Data Portal (HCDP) raster datasets. After selecting a dataset, use the HCDP tab on the map legend to choose a specific raster layer to display.",
+    },
   ];
-
-  const menuProps = {
-    anchorOrigin: { vertical: "bottom" as const, horizontal: "left" as const },
-    transformOrigin: { vertical: "top" as const, horizontal: "left" as const },
-    disableAutoFocus: true,
-    disableEnforceFocus: true,
-    disableRestoreFocus: true,
-    // Keep menu open when interacting with nested MUI components
-    keepMounted: false,
-    PaperProps: {
-      className: styles["menu-paper"],
-    },
-    MenuListProps: {
-      className: styles["menu-list"],
-    },
-  };
 
   return (
     <Paper className={styles["top-bar"]} elevation={3}>
@@ -245,6 +229,11 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
 
       {/* Utility Actions */}
       <Box className={styles["top-bar-actions"]}>
+        <Tooltip title={isGridView ? "Switch to row view" : "Switch to grid view"}>
+          <IconButton onClick={onToggleGridView} size="small" className={styles["reset-btn"]}>
+            {isGridView ? <CalendarViewWeek fontSize="small" /> : <GridView fontSize="small" />}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Take Snapshot">
           <Button
             onClick={handleSnapshot}
@@ -263,286 +252,66 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({ maxMaps })
         </Tooltip>
       </Box>
 
-      {/* ── Maps Menu ── */}
-      <Menu
+      <MapsMenu
         open={Boolean(anchors.maps)}
-        anchorEl={anchors.maps}
+        anchorEl={anchors.maps ?? null}
         onClose={() => closeMenu("maps")}
-        {...menuProps}
-      >
-        <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Map Management
-          </Typography>
-          {canAddMap && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={addMap}
-              startIcon={<Layers />}
-              fullWidth
-              className={styles["popover-add-btn"]}
-            >
-              Add Map
-            </Button>
-          )}
-          <Stack spacing={1} className={styles["map-list"]}>
-            {mapConfigs.map((config) => (
-              <SingleMapControls
-                key={config.id}
-                mapId={config.id}
-                canRemoveMap={canRemoveMap}
-                onRemove={handleRemoveMap}
-              />
-            ))}
-          </Stack>
-        </Box>
-      </Menu>
-
-      {/*── Points Menu ── */}
-      <Menu
+        onInfoClick={(e) => handleInfoClick("maps", e)}
+        maxMaps={maxMaps}
+      />
+      <SviMenu
+        open={Boolean(anchors.svi)}
+        anchorEl={anchors.svi ?? null}
+        onClose={() => closeMenu("svi")}
+        onInfoClick={(e) => handleInfoClick("svi", e)}
+      />
+      <PointsMenu
         open={Boolean(anchors.points)}
-        anchorEl={anchors.points}
+        anchorEl={anchors.points ?? null}
         onClose={() => closeMenu("points")}
-        {...menuProps}
-      >
-        <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Points of Interest
-          </Typography>
-          <MapTabSelector
-            mapConfigs={visibleMaps}
-            selectedMapId={pointsMapId}
-            onChange={setPointsMapId}
-          />
-          {pointsMapId && (
-            <Stack spacing={1}>
-              {pointLayerConfigs.map((layer) => {
-                const IconComponent =
-                  FaIcons[layer.icon as keyof typeof FaIcons] || FaIcons.FaCircle;
-                const isVisible = visiblePointLayerIdsByMap[pointsMapId]?.has(layer.id) ?? false;
-                return (
-                  <FormControlLabel
-                    key={layer.id}
-                    control={
-                      <Checkbox
-                        checked={isVisible}
-                        onChange={() => togglePointLayerVisibility(pointsMapId, layer.id)}
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Box className={styles["layer-label"]}>
-                        <span className={styles["layer-icon"]} style={{ color: layer.color }}>
-                          <IconComponent size="1rem" />
-                        </span>
-                        {layer.name}
-                      </Box>
-                    }
-                  />
-                );
-              })}
-            </Stack>
-          )}
-        </Box>
-      </Menu>
-
-      {/* ── Hazards Menu ── */}
-      <Menu
+        onInfoClick={(e) => handleInfoClick("points", e)}
+      />
+      <LocationsMenu
+        open={Boolean(anchors.locations)}
+        anchorEl={anchors.locations ?? null}
+        onClose={() => closeMenu("locations")}
+        onInfoClick={(e) => handleInfoClick("locations", e)}
+      />
+      <HazardsMenu
         open={Boolean(anchors.hazards)}
-        anchorEl={anchors.hazards}
+        anchorEl={anchors.hazards ?? null}
         onClose={() => closeMenu("hazards")}
-        {...menuProps}
-      >
-        <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Hazard Layers
-          </Typography>
-          <MapTabSelector
-            mapConfigs={visibleMaps}
-            selectedMapId={hazardsMapId}
-            onChange={setHazardsMapId}
-          />
-          {hazardsMapId && (
-            <Stack spacing={1}>
-              {hazardLayerConfigs.map((parent) => {
-                const ParentIcon =
-                  FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaExclamationTriangle;
-                const isParentVisible =
-                  visibleHazardLayerIdsByMap[hazardsMapId]?.has(parent.id) ?? false;
-                return (
-                  <Box key={parent.id} className={styles["layer-toggle"]}>
-                    <Box display="flex" alignItems="center">
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={isParentVisible}
-                            onChange={() => toggleHazardLayerVisibility(hazardsMapId, parent.id)}
-                            size="small"
-                          />
-                        }
-                        label={
-                          <Box className={styles["layer-label"]}>
-                            <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-                              <ParentIcon size="1rem" />
-                            </span>
-                            {parent.name}
-                          </Box>
-                        }
-                      />
-                      {(parent.subLayers ?? []).length > 0 && (
-                        <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
-                          {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      )}
-                    </Box>
-                    {parent.subLayers && parent.subLayers.length > 0 && (
-                      <Collapse in={expandedHazards[parent.id]}>
-                        <Stack spacing={1} sx={{ pl: 3 }}>
-                          {parent.subLayers.map((sub) => {
-                            const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible =
-                              visibleHazardLayerIdsByMap[hazardsMapId]?.has(compositeId) ?? false;
-                            return (
-                              <FormControlLabel
-                                key={sub.id}
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0 } }}
-                                control={
-                                  <Checkbox
-                                    checked={isSubVisible}
-                                    onChange={() =>
-                                      toggleSubLayerVisibility(hazardsMapId, parent.id, sub.id)
-                                    }
-                                    size="small"
-                                  />
-                                }
-                                label={sub.name}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Collapse>
-                    )}
-                  </Box>
-                );
-              })}
-            </Stack>
-          )}
-        </Box>
-      </Menu>
-
-      {/* ── Terrain Menu ── */}
-      <Menu
+        onInfoClick={(e) => handleInfoClick("hazards", e)}
+      />
+      <RastersMenu
         open={Boolean(anchors.rasters)}
-        anchorEl={anchors.rasters}
+        anchorEl={anchors.rasters ?? null}
         onClose={() => closeMenu("rasters")}
-        {...menuProps}
-      >
-        <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Terrain / Rasters
-          </Typography>
-          <MapTabSelector
-            mapConfigs={visibleMaps}
-            selectedMapId={rastersMapId}
-            onChange={setRastersMapId}
-          />
-          {rastersMapId && (
-            <Stack spacing={1}>
-              {rasterLayerConfigs.map((parent) => {
-                const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
-                const hasChildren = !!parent.subLayers?.length;
-                const visibleRasterIdsForMap =
-                  visibleRasterLayerIdsByMap[rastersMapId] ?? new Set<string>();
-                const isParentVisible = visibleRasterIdsForMap.has(parent.id);
-                return (
-                  <Box key={parent.id} className={styles["layer-toggle"]}>
-                    <Box display="flex" alignItems="center">
-                      {!hasChildren && (
-                        <Checkbox
-                          checked={isParentVisible}
-                          onChange={() => toggleRasterLayerVisibility(rastersMapId, parent.id)}
-                          size="small"
-                        />
-                      )}
-                      <Typography
-                        className={styles["layer-label"]}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          flexGrow: 1,
-                          ml: hasChildren ? "21px" : 0,
-                        }}
-                      >
-                        <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-                          <ParentIcon size="1rem" />
-                        </span>
-                        {parent.name}
-                      </Typography>
-                      {hasChildren && (
-                        <IconButton size="small" onClick={() => toggleExpandRaster(parent.id)}>
-                          {expandedRasters[parent.id] ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      )}
-                    </Box>
-                    {hasChildren && (
-                      <Collapse in={expandedRasters[parent.id]}>
-                        <Stack spacing={1} sx={{ pl: 3 }}>
-                          {parent.subLayers!.map((sub) => {
-                            const compositeId = `${parent.id}.${sub.id}`;
-                            const isSubVisible = visibleRasterIdsForMap.has(compositeId);
-                            return (
-                              <FormControlLabel
-                                key={sub.id}
-                                sx={{ ml: 0, "& .MuiFormControlLabel-label": { ml: 0.9 } }}
-                                control={
-                                  <Checkbox
-                                    checked={isSubVisible}
-                                    onChange={() =>
-                                      toggleSubRasterLayerVisibility(
-                                        rastersMapId,
-                                        parent.id,
-                                        sub.id,
-                                      )
-                                    }
-                                    size="small"
-                                  />
-                                }
-                                label={sub.name}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Collapse>
-                    )}
-                  </Box>
-                );
-              })}
-            </Stack>
-          )}
-        </Box>
-      </Menu>
-
-      {/* ── HCDP Menu ── */}
-      <Menu
+        onInfoClick={(e) => handleInfoClick("rasters", e)}
+      />
+      {/* HCDP Menu */}
+      <HcdpMenu
         open={Boolean(anchors.HCDP)}
-        anchorEl={anchors.HCDP}
+        anchorEl={anchors.HCDP ?? null}
         onClose={() => closeMenu("HCDP")}
-        {...menuProps}
+        onInfoClick={(e) => handleInfoClick("HCDP", e)}
+      />
+
+      {/* ── Info Popover ── */}
+      <Popover
+        open={Boolean(infoAnchor)}
+        anchorEl={infoAnchor}
+        onClose={handleInfoClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        disableRestoreFocus
       >
-        <Box className={styles["menu-content"]}>
-          <Typography variant="subtitle2" className={styles["popover-title"]}>
-            Hawaii Climate Data Portal
+        <Box className={styles["info-popover-content"]}>
+          <Typography variant="body2">
+            {infoKey ? navItems.find((n) => n.key === infoKey)?.description : ""}
           </Typography>
-          <MapTabSelector
-            mapConfigs={visibleMaps}
-            selectedMapId={HCDPMapId}
-            onChange={setHCDPMapId}
-          />
-          {HCDPMapId && <HCDPLoad mapId={HCDPMapId} />}
         </Box>
-      </Menu>
-      
+      </Popover>
     </Paper>
   );
 };

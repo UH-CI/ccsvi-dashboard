@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -35,22 +35,37 @@ export function useUrlSync(isInitialized: boolean) {
 
   // --- STORE > URL SYNC ---
 
-  const mapConfigKey = mapConfigs
-    .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
-    .join("|");
-  const pointLayerKey = Object.entries(visiblePointLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
-  const hazardLayerKey = Object.entries(visibleHazardLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
-  //const rasterLayerKey = Array.from(visibleRasterLayers).sort().join(',');
-  const rasterLayerKey = Object.entries(VisibleRasterLayersByMap)
-    .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-    .sort()
-    .join(",");
+  const mapConfigKey = useMemo(
+    () =>
+      mapConfigs
+        .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.dataset2 ?? ""}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
+        .join("|"),
+    [mapConfigs],
+  );
+  const pointLayerKey = useMemo(
+    () =>
+      Object.entries(visiblePointLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [visiblePointLayersByMap],
+  );
+  const hazardLayerKey = useMemo(
+    () =>
+      Object.entries(visibleHazardLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [visibleHazardLayersByMap],
+  );
+  const rasterLayerKey = useMemo(
+    () =>
+      Object.entries(VisibleRasterLayersByMap)
+        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
+        .sort()
+        .join(","),
+    [VisibleRasterLayersByMap],
+  );
 
   useEffect(() => {
     if (!isInitialized || isUpdatingFromUrl.current) return;
@@ -66,7 +81,14 @@ export function useUrlSync(isInitialized: boolean) {
 
         // --- Map configs ---
         Array.from(prev.keys()).forEach((key) => {
-          if (key.startsWith("d_") || key.startsWith("m_") || key.startsWith("af_"))
+          if (
+            key.startsWith("d_") ||
+            key.startsWith("d2_") ||
+            key.startsWith("m_") ||
+            key.startsWith("m2_") ||
+            key.startsWith("bcs_") ||
+            key.startsWith("af_")
+          )
             newParams.delete(key);
         });
 
@@ -78,7 +100,16 @@ export function useUrlSync(isInitialized: boolean) {
           Object.entries(serialized.datasets).forEach(([key, val]) => {
             newParams.set(key, val);
           });
+          Object.entries(serialized.datasets2).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
           Object.entries(serialized.metrics).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
+          Object.entries(serialized.metrics2).forEach(([key, val]) => {
+            newParams.set(key, val);
+          });
+          Object.entries(serialized.bivariateColorSchemes).forEach(([key, val]) => {
             newParams.set(key, val);
           });
           Object.entries(serialized.activeFeatures).forEach(([key, val]) => {

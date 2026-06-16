@@ -171,42 +171,45 @@
 
 // Map List ────────────────────────────────────────────────────────────────
 
-.map-list {
+// .map-list {
+//   display: flex;
+//   flex-direction: column;
+//   gap: 8px;
+// }
+
+// Single Map Controls (tab view) ──────────────────────────────────────────
+
+.single-map-controls {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.map-item {
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background: #fafafa;
-  overflow: hidden;
-}
-
-.map-item-header {
+.single-map-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: #f0f0f0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.map-item-title {
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-}
-
-.map-item-actions {
-  display: flex;
+  justify-content: space-between;
   gap: 4px;
 }
 
-.map-item-config {
-  padding: 12px;
-  background: white;
+.single-map-title {
+  color: #666;
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.single-map-action-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.single-map-fields {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -214,37 +217,37 @@
 
 // Section headers ─────────────────────────────────────────────────────────
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-  background: #fafafa;
-  transition: background-color 0.2s;
+// .section-header {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   padding: 8px 12px;
+//   cursor: pointer;
+//   background: #fafafa;
+//   transition: background-color 0.2s;
+//
+//   &:hover {
+//     background: #f0f0f0;
+//   }
+// }
 
-  &:hover {
-    background: #f0f0f0;
-  }
-}
+// .section-title {
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+//   font-weight: 500;
+//   color: #333;
+//   margin: 0;
+//   font-size: 0.85rem !important;
+// }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-  font-size: 0.85rem !important;
-}
+// .section-content {
+//   padding: 8px 12px;
+// }
 
-.section-content {
-  padding: 8px 12px;
-}
-
-.section-divider {
-  margin: 0;
-}
+// .section-divider {
+//   margin: 0;
+// }
 
 // Layer Toggles ───────────────────────────────────────────────────────────
 
@@ -262,19 +265,24 @@
   width: 100%;
 }
 
-.expand-icon {
-  margin-left: auto;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+// .expand-icon {
+//   margin-left: auto;
+//   padding: 4px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+// }
 
 .layer-label {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-left: 8px;
+  flex-grow: 1;
+
+  &--no-checkbox {
+    margin-left: 21px;
+  }
 }
 
 .layer-icon {
@@ -325,5 +333,65 @@
     &:hover {
       background: rgba(25, 118, 210, 0.12);
     }
+  }
+}
+
+.map-tab-input {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  outline: none;
+  padding: 0;
+  width: 80px;
+  min-width: 40px;
+}
+
+// Info popover ────────────────────────────────────────────────────────────────
+
+.info-popover-content {
+  padding: 16px;
+  max-width: 300px;
+}
+
+// MenuShell ────────────────────────────────────────────────────────────────────
+
+.menu-info-btn {
+  margin-left: 8px !important;
+}
+
+// Color scheme menu opacity section ───────────────────────────────────────────
+
+.opacity-section {
+  padding: 12px 16px;
+  min-width: 200px;
+}
+
+.opacity-section-label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.opacity-field {
+  margin-bottom: 16px;
+}
+
+// Sub-layer indent stack (Hazards, Rasters) ───────────────────────────────────
+
+.layer-sub-stack {
+  padding-left: 24px;
+}
+
+// Raster sub-layer form label ─────────────────────────────────────────────────
+
+.raster-form-label {
+  margin-left: 0;
+
+  :global(.MuiFormControlLabel-label) {
+    margin-left: 7.2px;
   }
 }

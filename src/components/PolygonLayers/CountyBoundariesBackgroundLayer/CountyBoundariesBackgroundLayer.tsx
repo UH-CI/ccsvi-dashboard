@@ -18,7 +18,7 @@ export const CountyBoundariesBackgroundLayer: React.FC<CountyBoundariesBackgroun
 }) => {
   const getStyle = useCallback(
     (feature: Feature<Geometry, { NAME20: string; POP20: number }> | undefined): StyleConfig => {
-      return LAYER_CONFIG.styles.grayedOut;
+      return LAYER_CONFIG.styles.disabled;
     },
     [],
   );

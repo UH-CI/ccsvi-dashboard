@@ -23,9 +23,21 @@ env/
 
 # Local configuration
 *.env
+.env.*
 config.json
 
 # Node.js dependencies
 node_modules/
 # Build output
 dist/
+
+# Scratch notes
+docs/
+
+# Deprecated data files
+public/data/Hazards
+public/data/HCDP_API
+public/data/metrics
+public/data/point_data
+public/data/Rasters
+public/data/vulnerability_datasets

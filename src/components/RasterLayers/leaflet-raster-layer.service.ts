@@ -1,3 +1,8 @@
+// DEPRECATED — Custom L.GridLayer extension (R.GridLayer.RasterLayer) that rendered decoded
+// raster data onto canvas tiles pixel-by-pixel using DataRetreiverService and ColorScale.
+// Used by the old RasterLayerRenderer. Replaced by L.tileLayer consuming PNG tiles from TiTiler
+// (/api/tiles/cog/tiles/{z}/{x}/{y}.png). Pending deletion.
+
 import * as L from "leaflet";
 import { DataRetreiverService } from "./data-retreiver.service";
 import { ColorScale } from "./colorScale";

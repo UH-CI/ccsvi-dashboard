@@ -1,3 +1,7 @@
+// DEPRECATED — ColorScale and Color supported the client-side GeoTIFF decode → canvas render
+// pipeline via color-generator.service.ts and leaflet-raster-layer.service.ts. Replaced by
+// TiTiler PNG tiles (rendering) and /api/v1/rasters/colormap (legend). Pending deletion.
+
 export interface Color {
   r: number;
   g: number;

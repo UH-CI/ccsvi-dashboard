@@ -68,7 +68,7 @@ const initialMapConfig: MapConfig = {
   dataset: "",
   metric: "",
   visible: true,
-  colorScheme: "viridis",
+  colorScheme: "Viridis",
 };
 
 export const defaultExpandedSections = {
@@ -100,7 +100,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       dataset: "",
       metric: "",
       visible: true,
-      colorScheme: "viridis",
+      colorScheme: "Viridis",
     };
     set((state) => ({
       mapConfigs: [...state.mapConfigs, newMap],
@@ -224,6 +224,7 @@ export const usePrimaryMapState = () => {
       return {
         dataset: primary?.dataset ?? "",
         metric: primary?.metric ?? "",
+        activeFeature: primary?.activeFeature,
       };
     }),
   );

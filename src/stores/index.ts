@@ -10,15 +10,14 @@ export {
 export { usePointLayerStore, usePointLayerConfigs, useIsLayerVisible } from "./usePointLayersStore";
 export {
   useHazardLayersStore,
-  useHazardLayerData,
   useIsHazardLayerVisible,
 } from "./useHazardLayersStore";
 export {
   useRasterLayersStore,
-  useRasterLayerConfigs,
   useIsRasterLayerVisible,
-  useRasterLayerData,
+  //useRasterLayerData,
   type RasterLegendInfo,
+  type COGInfo,
 } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";
 export {
@@ -26,4 +25,5 @@ export {
   buildHcdpOverlayTitle,
   type HcdpRasterOverlay,
 } from "./useHCDPStore";
-
+export { useHcdpOverlay, useHasHcdpOverlay, useHcdpOverlayLoadId } from "./useHCDPStore";
+export { useFilterStore, useIsFiltered, useFilteredGeoids } from "./useFilterStore";

@@ -1,3 +1,8 @@
+// DEPRECATED — DataRetreiverService translated geographic coordinates to canvas pixel colors
+// using decoded RasterData from DataProcessorService. Used in leaflet-raster-layer.service.ts.
+// Replaced by TiTiler's /api/tiles/cog/point/{lon},{lat} endpoint for click-to-query.
+// Pending deletion.
+
 import { LatLng, LatLngBounds } from "leaflet";
 import { ColorScale, Color } from "./colorScale";
 import { RasterHeader, IndexedValues } from "./RasterData";

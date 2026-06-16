@@ -1,3 +1,8 @@
+// DEPRECATED — ColorGeneratorService generated chroma-js color scales for client-side GeoTIFF ArrayBuffer → L.GridLayer render
+// pipeline. Used by RasterLayerRenderer and RasterMapLegend. Replaced by TiTiler PNG tile
+// rendering (RasterLayerRenderer) and the /api/v1/rasters/colormap endpoint (RasterMapLegend).
+// May still be referenced for HCDP integration? Pending deletion.
+
 import chroma from "chroma-js";
 import { Color, ColorScale } from "./colorScale";
 import { Parser } from "xml2js";
@@ -14,7 +19,7 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       const color = colorScale(value);
@@ -45,17 +50,13 @@ export class ColorGeneratorService {
     }
     //let colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"];
 
-    const colorScale = chroma.scale(colors).domain(range).correctLightness();
+    const colorScale = chroma.scale(colors as any).domain(range).correctLightness();
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);
@@ -113,17 +114,13 @@ export class ColorGeneratorService {
               domain.push(x);
             }
             // chroma.scale().domain() accepts array of numbers, not just [number, number]
-            const colorScaleF = chroma.scale(colors).domain(domain as any);
+            const colorScaleF = chroma.scale(colors as any).domain(domain as any);
 
             const getColor = (value: number) => {
               //value = Math.pow(value, 1);
               const color = colorScaleF(value);
-              return {
-                r: color._rgb[0],
-                g: color._rgb[1],
-                b: color._rgb[2],
-                a: color._rgb[3] * 255,
-              };
+              const [r, g, b, a] = color.rgba();
+              return { r, g, b, a: a * 255 };
             };
 
             colorScale = new ColorScale(getColor, range, parts);
@@ -414,17 +411,13 @@ export class ColorGeneratorService {
         color[i] *= 255;
       }
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);
@@ -486,17 +479,13 @@ export class ColorGeneratorService {
       }
     }
 
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);
@@ -521,17 +510,13 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range).correctLightness();
+    const colorScale = chroma.scale(colors as any).domain(range).correctLightness();
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);
@@ -553,17 +538,13 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);
@@ -584,17 +565,13 @@ export class ColorGeneratorService {
     if (reverse) {
       colors = colors.reverse();
     }
-    const colorScale = chroma.scale(colors).domain(range);
+    const colorScale = chroma.scale(colors as any).domain(range);
 
     const getColor = (value: number) => {
       //value = Math.pow(value, 1);
       const color = colorScale(value);
-      return {
-        r: color._rgb[0],
-        g: color._rgb[1],
-        b: color._rgb[2],
-        a: color._rgb[3] * 255,
-      };
+      const [r, g, b, a] = color.rgba();
+      return { r, g, b, a: a * 255 };
     };
 
     return new ColorScale(getColor, range, parts);

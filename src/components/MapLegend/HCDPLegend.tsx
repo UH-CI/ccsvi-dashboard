@@ -87,7 +87,7 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
   // Gracefully hide the legend entirely if no HCDP overlay or data stats are loaded
   if (!overlay || !stats) return null;
 
-  const widthPx = RASTER_LEGEND_DEFAULT_WIDTH_PX;
+  const widthPx = 125;
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
   // Emulates the exact chroma-js scale colors applied in HCDPRasterLayer.tsx

@@ -1,12 +1,11 @@
 .table-viewer {
   z-index: 1000;
   transition: all 0.3s ease-in-out;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: #fffffff2;
   backdrop-filter: blur(0.3125rem);
   display: flex;
   flex-direction: column;
   border-top: 0.0625rem solid #e0e0e0;
-  flex-shrink: 0;
 
   &--collapsed {
     flex: 0 0 3.125rem;
@@ -14,19 +13,54 @@
   }
 
   &--expanded {
-    flex: 0 0 40vh;
-    min-height: 12.5rem;
-    height: 40vh;
+    flex: 1 1 30vh;
+    max-height: 40vh;
+    min-height: max(6rem, 10vh);
   }
 
   &--full {
-    position: absolute;
-    inset: 0;
+    position: fixed;
+    top: 52px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     z-index: 1100;
-    height: 100%;
+    height: auto;
     flex: none;
   }
 }
+
+@media (max-height: 700px) {
+  .table-viewer--expanded {
+    flex: 1 1 20vh;
+    max-height: 28vh;
+    min-height: max(5rem, 8vh);
+  }
+}
+
+// .resize-handle {
+//   height: 12px;
+//   cursor: ns-resize;
+//   background: #e0e0e0;
+//   flex-shrink: 0;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   transition: background 0.15s;
+//
+//   &::after {
+//     content: "";
+//     width: 32px;
+//     height: 3px;
+//     border-radius: 2px;
+//     background: #9e9e9e;
+//     box-shadow: 0 -4px 0 #9e9e9e, 0 4px 0 #9e9e9e;
+//   }
+//
+//   &:hover {
+//     background: #bdbdbd;
+//   }
+// }
 
 .header {
   display: flex;
@@ -37,6 +71,8 @@
   flex-shrink: 0;
   height: 3.125rem;
   box-sizing: border-box;
+  background-color: #1976d2;
+  cursor: pointer;
 
   &--collapsed {
     border-bottom: none;
@@ -47,17 +83,26 @@
   }
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.header-title {
+  font-weight: 600;
+  color: white;
 }
 
-.title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
+.header-icon-btn {
+  color: white !important;
 }
+
+// .header-content {
+//   display: flex;
+//   align-items: center;
+//   gap: 0.5rem;
+// }
+
+// .title {
+//   font-size: 1rem;
+//   font-weight: 600;
+//   margin: 0;
+// }
 
 .chip {
   background-color: rgba(255, 255, 255, 0.2);
@@ -67,61 +112,188 @@
   border-radius: 0.75rem;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-}
+// .header-actions {
+//   display: flex;
+//   align-items: center;
+// }
 
-.toggle-button {
-  color: white;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-}
+// .toggle-button {
+//   color: white;
+//   background: none;
+//   border: none;
+//   cursor: pointer;
+//   padding: 0.25rem;
+//   border-radius: 0.25rem;
+//
+//   &:hover {
+//     background-color: rgba(255, 255, 255, 0.1);
+//   }
+// }
 
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.table-collapse {
+  flex: 1;
+  min-height: 0;
+
+  :global(.MuiCollapse-wrapper),
+  :global(.MuiCollapse-wrapperInner) {
+    height: 100%;
+  }
 }
 
 .data-grid-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   height: 100%;
-  width: 100%;
-  position: relative; // Creates containing block for DataGrid
-  overflow: hidden; // Establishes scrolling context
+  overflow: hidden;
 }
 
 .custom-header {
   white-space: normal;
-  line-height: 1.4;
+  line-height: 1.2;
   font-weight: bold;
-  font-size: 0.8rem;
-  padding: 0.5rem 0.375rem;
-  overflow: visible;
-  text-align: center;
-  word-break: break-word;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.25rem;
+  word-break: normal;
+  overflow-wrap: break-word;
   hyphens: auto;
-  height: 100%;
-  min-height: 5.625rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
   box-sizing: border-box;
 }
 
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem;
+.active-row {
+  // Background color applied via DataGrid sx prop to beat alternating-row specificity
+  outline: none;
 }
+
+.data-grid {
+  height: 100%;
+  width: 100%;
+  border: none;
+
+  :global(.MuiDataGrid-main) {
+    overflow: hidden;
+  }
+
+  :global(.MuiDataGrid-virtualScroller) {
+    overflow: auto !important;
+  }
+
+  :global(.MuiDataGrid-columnHeaders) {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 60px !important;
+    max-height: 80px !important;
+  }
+
+  :global(.MuiDataGrid-columnHeaderDraggableContainer) {
+    flex-direction: row !important;
+  }
+
+  :global(.MuiDataGrid-columnHeader) {
+    background-color: #f5f5f5;
+    padding: 2px 4px !important;
+    height: auto !important;
+    min-height: 60px !important;
+    max-height: 80px !important;
+
+    :global(.MuiDataGrid-columnHeaderTitle) {
+      white-space: normal !important;
+      line-height: 1.2 !important;
+      font-weight: bold !important;
+      font-size: 0.75rem !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis;
+      word-break: normal !important;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+    }
+
+    :global(.MuiDataGrid-columnHeaderTitleContainer) {
+      height: 100% !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 2px;
+    }
+
+    :global(.MuiDataGrid-columnHeaderTitleContainerContent) {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    :global(.MuiDataGrid-iconButtonContainer) {
+      flex: 0 0 auto;
+      width: auto !important;
+      visibility: visible;
+      margin-left: 2px;
+    }
+  }
+
+  :global(.MuiDataGrid-columnHeader--withRightBorder) {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  :global(.MuiDataGrid-footerContainer) {
+    border-top: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    flex-shrink: 0;
+  }
+
+  :global(.MuiDataGrid-row):hover {
+    background-color: #0000000a;
+  }
+
+  :global(.MuiDataGrid-cell):focus,
+  :global(.MuiDataGrid-cell):focus-within {
+    outline: none;
+  }
+
+  :global(.MuiDataGrid-row):nth-of-type(odd) {
+    background-color: #fafafa;
+  }
+
+  // Placed after :nth-of-type(odd) so the active row wins by source order.
+  :global(.MuiDataGrid-row).active-row {
+    background-color: #1976d226;
+  }
+
+  :global(.MuiDataGrid-row).active-row:hover {
+    background-color: #1976d238;
+  }
+}
+
+.data-grid--clickable {
+  :global(.MuiDataGrid-row) {
+    cursor: pointer;
+  }
+}
+
+// .loading-container {
+//   display: flex;
+//   justify-content: center;
+//   padding: 1.5rem;
+// }
 
 .error-alert {
   margin: 1rem;
@@ -130,4 +302,59 @@
   border: 0.0625rem solid #f44336;
   border-radius: 0.25rem;
   color: #c62828;
+}
+
+// CustomTableToolbar ──────────────────────────────────────────────────────────
+
+.toolbar-bar {
+  display: flex;
+  background-color: #1976d2;
+  color: white;
+  padding: 4px 8px;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :global(.MuiButton-root) {
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+}
+
+.toolbar-title {
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-icon {
+  font-size: 1rem !important;
+}
+
+.toolbar-search-icon {
+  color: white;
+  font-size: 1rem !important;
+  margin-right: 4px;
+}
+
+.toolbar-search-box {
+  align-items: center;
+  border: 1px solid #ffffff66;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.toolbar-divider {
+  border-color: #ffffff4d !important;
+  margin: 0 4px !important;
+}
+
+.toolbar-icon-btn {
+  color: white !important;
 }

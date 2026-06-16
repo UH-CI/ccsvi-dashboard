@@ -1,5 +1,5 @@
 import type {
-  MetricsData,
+  GeographiesData,
   Dataset,
   BlockGroupProperties,
   HawaiianHomelandProperties,
@@ -7,13 +7,15 @@ import type {
 } from "../types";
 import type { FeatureCollection, Geometry } from "geojson";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export const DATASETS_CONFIG = {
-  metricsData: {
-    path: "./data/metrics/census_metrics_by_block_group.json",
-    errorPrefix: "Failed to fetch census metrics dataset",
+  geographiesData: {
+    path: `${API_BASE}/api/v1/geographies`,
+    errorPrefix: "Failed to fetch geography metadata",
   },
   blockGroupData: {
-    path: "./data/metrics/census_datasets_config.json",
+    path: `${API_BASE}/api/v1/datasets`,
     errorPrefix: "Failed to fetch dataset metadata",
   },
   censusBlockGroups: {
@@ -36,7 +38,7 @@ export const DATA_SOURCE_KEYS = Object.keys(DATASETS_CONFIG) as DataSourceKey[];
 
 // Type map for store
 export interface DataSourceTypeMap {
-  metricsData: MetricsData;
+  geographiesData: GeographiesData;
   blockGroupData: Dataset;
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties>;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties>;
