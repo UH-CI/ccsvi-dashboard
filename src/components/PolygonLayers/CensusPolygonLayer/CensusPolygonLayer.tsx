@@ -3,7 +3,13 @@ import { Feature, FeatureCollection, Geometry } from "geojson";
 import { BlockGroupProperties, GeographiesData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
-import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
+import {
+  buildPolygonPopupHtml,
+  renderPolygonPopup,
+  type PolygonPopupContext,
+} from "../../../utils/renderPolygonPopup.ts";
+import { meanHcdpForFeature } from "../../../utils/hcdpZonalStats.ts";
+import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
 
 interface CensusPolygonLayerProps {
@@ -43,6 +49,33 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   filteredGeoids,
   onFeatureClick,
 }) => {
+  const hcdpOverlay = useHcdpOverlay(mapId);
+
+  const popupContext = useMemo<PolygonPopupContext>(
+    () => ({
+      config: {
+        fields: LAYER_CONFIG.popup.fields,
+        geoidProperty: LAYER_CONFIG.geoidProperty,
+      },
+      activeMetric,
+      getMetricValue,
+      geographiesData,
+      activeMetric2,
+      getMetricValue2,
+      getMetricMoE,
+      getMetricMoE2,
+    }),
+    [
+      activeMetric,
+      activeMetric2,
+      getMetricValue,
+      getMetricMoE,
+      getMetricValue2,
+      getMetricMoE2,
+      geographiesData,
+    ],
+  );
+
   const isMatched = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties>) => {
       if (filteredGeoids == null) return true;
@@ -104,20 +137,46 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const renderPopup = useMemo(
     () =>
       renderPolygonPopup(
-        {
-          fields: LAYER_CONFIG.popup.fields,
-          geoidProperty: LAYER_CONFIG.geoidProperty,
-        },
-        activeMetric,
-        getMetricValue,
-        geographiesData,
-        activeMetric2,
-        getMetricValue2,
-        getMetricMoE,
-        getMetricMoE2,
+        popupContext.config,
+        popupContext.activeMetric,
+        popupContext.getMetricValue,
+        popupContext.geographiesData,
+        popupContext.activeMetric2,
+        popupContext.getMetricValue2,
+        popupContext.getMetricMoE,
+        popupContext.getMetricMoE2,
       ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, geographiesData],
+    [popupContext],
   );
+
+  const enrichPopupOnOpen = useMemo(() => {
+    if (!hcdpOverlay) return undefined;
+
+    return async (
+      feature: Feature<Geometry, BlockGroupProperties>,
+      setContent: (html: string) => void,
+    ) => {
+      const overlay = useHCDPStore.getState().overlaysByMap[mapId];
+      if (!overlay?.arrayBuffer) return;
+
+      const loadingHtml = buildPolygonPopupHtml(feature, popupContext, {
+        label: overlay.title,
+        loading: true,
+      });
+      if (loadingHtml) setContent(loadingHtml);
+
+      const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+
+      const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
+      if (!currentOverlay?.arrayBuffer) return;
+
+      const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, {
+        label: currentOverlay.title,
+        value: mean,
+      });
+      if (enrichedHtml) setContent(enrichedHtml);
+    };
+  }, [hcdpOverlay, mapId, popupContext]);
 
   const guardedOnFeatureClick = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => {
@@ -146,6 +205,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       activeFeatureGeoid={activeFeatureGeoid}
       onFeatureClick={guardedOnFeatureClick}
       renderPopup={guardedRenderPopup}
+      enrichPopupOnOpen={enrichPopupOnOpen}
     />
   );
 };

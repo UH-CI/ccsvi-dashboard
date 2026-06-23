@@ -240,9 +240,11 @@ export function HCDPRasterLayer({ mapId }: { mapId: string }) {
         }
         ctx.putImageData(imageData, 0, 0);
 
+        const yDelta = (georaster.ymax - georaster.ymin) / height;
+        const offset = yDelta * 3.75; // adjust the number at the end to move down or up. high number lower it goes down.
         const bounds = L.latLngBounds([
-          [georaster.ymin, georaster.xmin],
-          [georaster.ymax, georaster.xmax]
+          [georaster.ymin - offset, georaster.xmin],
+          [georaster.ymax - offset, georaster.xmax]
         ]);
 
         if (cancelled) return;

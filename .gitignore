@@ -7,6 +7,7 @@
 
 # Jupyter Notebook checkpoint files
 **/.ipynb_checkpoints/
+public/data/HCDP_API/test.ipynb
 
 # Scratch files
 Notebooks/scovi-Copy1.ipynb
