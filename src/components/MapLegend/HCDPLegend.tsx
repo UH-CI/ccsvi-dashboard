@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import LayersIcon from "@mui/icons-material/Layers";
 import parseGeoraster from "georaster";
 import { useHCDPStore } from "../../stores/useHCDPStore";
 import { cloneArrayBuffer } from "../../utils/hcdpRaster";
@@ -6,6 +7,7 @@ import {
   RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX,
   RASTER_LEGEND_DEFAULT_WIDTH_PX,
 } from "./rasterLegendDefaults";
+import { CollapsibleLegend } from "./CollapsibleLegend";
 import styles from "./MapLegend.module.scss";
 
 function formatValue(v: number): string {
@@ -87,7 +89,7 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
   // Gracefully hide the legend entirely if no HCDP overlay or data stats are loaded
   if (!overlay || !stats) return null;
 
-  const widthPx = 125;
+  const widthPx = 55;
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
   // Emulates the exact chroma-js scale colors applied in HCDPRasterLayer.tsx
@@ -97,53 +99,55 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
   const units = (overlay.row as any)?.units?.trim() || (overlay.row as any)?.unit?.trim() || "";
 
   return (
-    <div
-      className={`${styles.legend} ${styles["raster-legend"]}`}
-      style={{ width: widthPx }}
-    >
-      <div className={styles["raster-legend__title"]} title={overlay.title}>
-        {overlay.title}
-      </div>
-      <div className={styles["raster-legend__row"]}>
-        <div
-          className={styles["raster-legend__gradient"]}
-          style={{ background: gradient, height: gradientHeightPx }}
-          aria-hidden
-        />
-        {units ? (
+    <CollapsibleLegend title="HCDP" icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
+      <div
+        className={`${styles.legend} ${styles["raster-legend"]}`}
+        style={{ width: widthPx }}
+      >
+        {/* <div className={styles["raster-legend__title"]} title={overlay.title}>
+          {overlay.title}
+        </div> */}
+        <div className={styles["raster-legend__row"]}>
           <div
-            className={styles["raster-legend__unit-col"]}
-            style={{ minHeight: gradientHeightPx }}
+            className={styles["raster-legend__gradient"]}
+            style={{ background: gradient, height: gradientHeightPx }}
             aria-hidden
+          />
+          {units ? (
+            <div
+              className={styles["raster-legend__unit-col"]}
+              style={{ minHeight: gradientHeightPx }}
+              aria-hidden
+            >
+              <span>{units}</span>
+              <span>{units}</span>
+            </div>
+          ) : null}
+          <div
+            className={styles["raster-legend__nums"]}
+            style={{ minHeight: gradientHeightPx }}
           >
-            <span>{units}</span>
-            <span>{units}</span>
+            <span
+              title={
+                units
+                  ? `${formatValue(stats.max)}\u00a0${units}`
+                  : undefined
+              }
+            >
+              {formatValue(stats.max)}
+            </span>
+            <span
+              title={
+                units
+                  ? `${formatValue(stats.min)}\u00a0${units}`
+                  : undefined
+              }
+            >
+              {formatValue(stats.min)}
+            </span>
           </div>
-        ) : null}
-        <div
-          className={styles["raster-legend__nums"]}
-          style={{ minHeight: gradientHeightPx }}
-        >
-          <span
-            title={
-              units
-                ? `${formatValue(stats.max)}\u00a0${units}`
-                : undefined
-            }
-          >
-            {formatValue(stats.max)}
-          </span>
-          <span
-            title={
-              units
-                ? `${formatValue(stats.min)}\u00a0${units}`
-                : undefined
-            }
-          >
-            {formatValue(stats.min)}
-          </span>
         </div>
       </div>
-    </div>
+    </CollapsibleLegend>
   );
 };
