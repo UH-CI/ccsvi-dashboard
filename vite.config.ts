@@ -5,14 +5,12 @@ import react from "@vitejs/plugin-react";
 import type { ProxyOptions } from "vite";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const hcdpEnvDir = path.resolve(projectRoot, "public/data/HCDP_API");
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const rootEnv = loadEnv(mode, projectRoot, "");
-  const hcdpEnv = loadEnv(mode, hcdpEnvDir, "");
-  const hcdpApiToken = hcdpEnv.HCDP_API_TOKEN || rootEnv.HCDP_API_TOKEN;
-  const hcdpEmail = hcdpEnv.HCDP_EMAIL || rootEnv.HCDP_EMAIL;
+  const env = loadEnv(mode, projectRoot, "");
+  const hcdpApiToken = env.HCDP_API_TOKEN;
+  const hcdpEmail = env.HCDP_EMAIL;
 
   const hcdpProxy: ProxyOptions = {
     target: "https://api.hcdp.ikewai.org",

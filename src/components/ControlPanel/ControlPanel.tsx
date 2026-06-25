@@ -96,7 +96,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
   const handleResetView = useCallback(() => {
     resetMapStore();
-    
+
     mapConfigs.forEach((map) => {
       setVisiblePointLayerIds(map.id, []);
       setVisibleHazardLayerIds(map.id, []);
@@ -289,7 +289,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         onClose={() => closeMenu("rasters")}
         onInfoClick={(e) => handleInfoClick("rasters", e)}
       />
-      {/* HCDP Menu */}
       <HcdpMenu
         open={Boolean(anchors.HCDP)}
         anchorEl={anchors.HCDP ?? null}
