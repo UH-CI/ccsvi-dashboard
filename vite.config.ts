@@ -1,8 +1,12 @@
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import type { ProxyOptions } from "vite";
+
+const gitBranch = execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
+const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,6 +40,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: "/ccsvi-dashboard/",
+    define: {
+      __GIT_BRANCH__: JSON.stringify(gitBranch),
+      __GIT_COMMIT__: JSON.stringify(gitCommit),
+    },
     worker: {
       format: "es",
     },

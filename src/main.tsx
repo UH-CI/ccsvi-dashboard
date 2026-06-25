@@ -5,6 +5,8 @@ import { StyledEngineProvider } from "@mui/material/styles";
 import "./index.css";
 import App from "./App";
 
+console.info(`[ccsvi] build: ${__GIT_BRANCH__} @ ${__GIT_COMMIT__}`);
+
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
 root.render(
