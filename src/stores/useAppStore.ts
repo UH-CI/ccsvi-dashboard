@@ -29,6 +29,8 @@ interface AppState {
   // Data
   geographiesData: GeographiesData | null;
   metricValuesCache: Record<string, Record<string, MetricValue>>;
+  filterRange: [number, number] | null;
+  setFilterRange: (range: [number, number] | null) => void;
   blockGroupData: Dataset | null;
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties> | null;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
@@ -107,6 +109,8 @@ export const useAppStore = create<AppState>((set, get) => {
     // Initial state
     geographiesData: null,
     metricValuesCache: {},
+    filterRange: null,
+    setFilterRange: (range) => set({ filterRange: range }),
     blockGroupData: null,
     censusBlockGroups: null,
     hawaiianHomelands: null,

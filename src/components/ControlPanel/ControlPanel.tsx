@@ -19,6 +19,7 @@ import {
   MenuItem,
   ListSubheader,
   Popover,
+  Popper,
 } from "@mui/material";
 import {
   Camera,
@@ -34,6 +35,7 @@ import {
   Assessment,
   Factory,
   InfoOutlined,
+  BarChart,
 } from "@mui/icons-material";
 import * as FaIcons from "react-icons/fa";
 import {
@@ -45,6 +47,7 @@ import {
 } from "../../stores";
 import { SVI_CATEGORIES } from "../../config";
 import { SingleMapControls } from "./SingleMapControls";
+import { DataAnalyzerMenu } from "../DataAnalyzerMenu/DataAnalyzerMenu";
 import styles from "./ControlPanel.module.scss";
 
 interface IntegratedControlPanelProps {
@@ -54,7 +57,7 @@ interface IntegratedControlPanelProps {
   onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "rasters" | null;
+type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "rasters" | "analyzer" | null;
 
 const SCHOOL_IDS = ["preschools", "public_schools", "private_schools"];
 
@@ -232,6 +235,7 @@ const resetMapStore = useMapStore((state) => state.reset);
     { key: "locations", label: "Locations of Enhanced Exposure", icon: <Factory fontSize="small" />, description: "Show locations that may be particularly vulnerable to environmental or climate hazards, such as onsite sewage disposal systems." },
     { key: "hazards", label: "Hazards", icon: <Warning fontSize="small" />, description: "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), and solar insolation." },
     { key: "rasters", label: "Rasters", icon: <Terrain fontSize="small" />, description: "Overlay raster data layers such as terrain and elevation data." },
+    { key: "analyzer", label: "Data Analyzer", icon: <BarChart fontSize="small" />, description: "Explore the distribution of the selected Social Vulnerability Indicator across block groups and filter by value range." },
   ];
 
   const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
@@ -996,6 +1000,21 @@ const resetMapStore = useMapStore((state) => state.reset);
           )}
         </Box>
       </Menu>
+      {/* ── Data Analyzer Menu ── */}
+      <Popper
+        open={Boolean(anchors.analyzer)}
+        anchorEl={anchors.analyzer}
+        placement="bottom-start"
+        style={{ zIndex: 1300 }}
+      >
+        <Paper className={styles["menu-paper"]} elevation={8}>
+          <Box className={styles["menu-content"]}>
+            {renderMenuTitle("analyzer", "Data Analyzer")}
+            <DataAnalyzerMenu />
+          </Box>
+        </Paper>
+      </Popper>
+
       {/* ── Info Popover ── */}
       <Popover
         open={Boolean(infoAnchor)}

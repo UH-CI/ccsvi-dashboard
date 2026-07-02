@@ -11,6 +11,7 @@ import {
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
 import { MapLegend, RasterMapLegend, LegendContainer } from "../MapLegend";
+// import { DataAnalyzerPanel } from "../DataAnalyzerMenu/DataAnalyzerPanel";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
@@ -111,7 +112,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const { blockGroupData, metricValuesCache, geographiesData, censusBlockGroups, hawaiianHomelands, countyBoundaries } =
+    const { blockGroupData, metricValuesCache, geographiesData, censusBlockGroups, hawaiianHomelands, countyBoundaries, filterRange } =
       useAppStore(
         useShallow((state) => ({
           blockGroupData: state.blockGroupData,
@@ -120,6 +121,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           censusBlockGroups: state.censusBlockGroups,
           hawaiianHomelands: state.hawaiianHomelands,
           countyBoundaries: state.countyBoundaries,
+          filterRange: state.filterRange,
         })),
       );
     const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
@@ -464,6 +466,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 activeMetric2={effectiveMetric2 ?? undefined}
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.census}
+                filterRange={filterRange}
                 getColor={getColor}
                 onFeatureClick={handleFeatureClick}
               />
@@ -541,6 +544,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           </MapContainer>
 
           <LegendContainer>
+            {/* <DataAnalyzerPanel /> */}
             <RasterMapLegend mapId={mapId} />
             <MapLegend
               limits={colorScale?.limits ?? null}
