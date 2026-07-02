@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import parseGeoraster from "georaster";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import { useHCDPStore } from "../../stores/useHCDPStore";
 import { cloneArrayBuffer } from "../../utils/hcdpRaster";
 import {
@@ -7,6 +8,7 @@ import {
   RASTER_LEGEND_DEFAULT_WIDTH_PX,
 } from "./rasterLegendDefaults";
 import styles from "./MapLegend.module.scss";
+import { CollapsibleLegend } from "./CollapsibleLegend";
 
 function formatValue(v: number): string {
   if (!Number.isFinite(v)) return "";
@@ -87,24 +89,17 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
   // Gracefully hide the legend entirely if no HCDP overlay or data stats are loaded
   if (!overlay || !stats) return null;
 
-  const widthPx = 125;
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
   // Emulates the exact chroma-js scale colors applied in HCDPRasterLayer.tsx
   const gradient = "linear-gradient(to top, #313695, #74add1, #fee090, #f46d43, #a50026)";
-  
+
   // Safely grab units from the row payload if they exist
   const units = (overlay.row as any)?.units?.trim() || (overlay.row as any)?.unit?.trim() || "";
 
   return (
-    <div
-      className={`${styles.legend} ${styles["raster-legend"]}`}
-      style={{ width: widthPx }}
-    >
-      <div className={styles["raster-legend__title"]} title={overlay.title}>
-        {overlay.title}
-      </div>
-      <div className={styles["raster-legend__row"]}>
+    <CollapsibleLegend title={overlay.title} icon={<CloudQueueIcon className={styles["legend-icon"]} />} order={0}>
+      <div className={styles["raster-legend__row"]} style={{ width: RASTER_LEGEND_DEFAULT_WIDTH_PX }}>
         <div
           className={styles["raster-legend__gradient"]}
           style={{ background: gradient, height: gradientHeightPx }}
@@ -124,26 +119,14 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
           className={styles["raster-legend__nums"]}
           style={{ minHeight: gradientHeightPx }}
         >
-          <span
-            title={
-              units
-                ? `${formatValue(stats.max)}\u00a0${units}`
-                : undefined
-            }
-          >
+          <span title={units ? `${formatValue(stats.max)}\u00a0${units}` : undefined}>
             {formatValue(stats.max)}
           </span>
-          <span
-            title={
-              units
-                ? `${formatValue(stats.min)}\u00a0${units}`
-                : undefined
-            }
-          >
+          <span title={units ? `${formatValue(stats.min)}\u00a0${units}` : undefined}>
             {formatValue(stats.min)}
           </span>
         </div>
       </div>
-    </div>
+    </CollapsibleLegend>
   );
 };
