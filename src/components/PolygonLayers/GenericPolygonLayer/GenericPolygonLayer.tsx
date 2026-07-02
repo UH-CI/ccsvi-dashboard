@@ -36,6 +36,7 @@ export interface GenericPolygonLayerProps<
   ) => StyleConfig;
   onFeatureClick?: (feature: Feature<Geometry, T>, e: LeafletMouseEvent) => void;
   renderPopup?: (feature: Feature<Geometry, T>) => string | null;
+  getLayerOpacity?: (feature: Feature<Geometry, T> | undefined) => StyleConfig;
   /** Runs on popupopen when provided (e.g. async HCDP zonal stats). */
   enrichPopupOnOpen?: (
     feature: Feature<Geometry, T>,

@@ -16,6 +16,7 @@ export interface LayerStyleConfig {
   disabled?: PathOptions;
   filterMatch?: PathOptions;
   noData?: PathOptions;
+  background?: PathOptions;
 }
 
 export interface PolygonLayerConfig {
@@ -64,6 +65,13 @@ export const POLYGON_LAYERS = {
         weight: 3,
         opacity: 1,
         fillOpacity: 0.85,
+      },
+      background: {
+        fillColor: "#cccccc",
+        weight: 2,
+        opacity: 1,
+        color: "#333333",
+        fillOpacity: 0.05,
       },
     },
   } satisfies PolygonLayerConfig,

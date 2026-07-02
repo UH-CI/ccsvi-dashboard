@@ -35,7 +35,7 @@ function isNoDataValue(v: number, georaster: ParsedGeoraster): boolean {
   return false;
 }
 
-/** Mean raster value for pixels intersecting the feature geometry. */
+// Mean raster value for pixels intersecting the feature geometry.
 export async function meanHcdpForFeature(
   arrayBuffer: ArrayBuffer,
   loadId: number,
