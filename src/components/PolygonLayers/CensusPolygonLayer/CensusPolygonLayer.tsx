@@ -118,29 +118,11 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             ...LAYER_CONFIG.styles.filterMatch,
           } as StyleConfig;
 
-          //return { ...LAYER_CONFIG.styles.default, fillColor, ...LAYER_CONFIG.styles.filterMatch } as StyleConfig;
         } else {
           return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
         }
-        //return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
       }
       return finalStyle;
-
-      // if (hcdpOverlay) {
-      //   console.log("Switching to background style");
-      //   return {
-      //     ...LAYER_CONFIG.styles.background,
-      //     fillColor,
-      //     opacity: 0.9,
-      //     fillOpacity: 0.05,
-      //   }
-      // }
-
-      // return {
-        
-      //   ...LAYER_CONFIG.styles.default,
-      //   fillColor,
-      // };
     },
     [getMetricValue, getMetricValue2, getColor, filteredGeoids, hcdpOverlay],
   );
@@ -237,7 +219,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
-      layerOpacity={filteredGeoids != null ? undefined : layerOpacity}//hcdpOverlay ? LAYER_CONFIG.styles.background.fillOpacity : 
+      layerOpacity={filteredGeoids != null || hcdpOverlay ? undefined : layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
