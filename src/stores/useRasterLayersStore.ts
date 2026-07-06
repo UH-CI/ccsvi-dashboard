@@ -16,15 +16,6 @@ export interface RasterLegendInfo {
   max: number;
   colormapName: string;
   units?: string;
-}
-
-/** Min/max + title for the on-map raster legend (mirrors active GeoTIFF color scale). */
-export interface RasterLegendInfo {
-  layerId: string;
-  title: string;
-  min: number;
-  max: number;
-  units?: string;
   legendWidthPx?: number;
   legendGradientHeightPx?: number;
 }

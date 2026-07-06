@@ -10,8 +10,6 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-// import { MapLegend, RasterMapLegend, HcdpMapLegend } from "../MapLegend";
-// import mapLegendStyles from "../MapLegend/MapLegend.module.scss";
 import { MapLegend, RasterMapLegend, HcdpMapLegend, LegendContainer } from "../MapLegend";
 import { MAP_CONFIG } from "../../config";
 import styles from "./SingleMapView.module.scss";
