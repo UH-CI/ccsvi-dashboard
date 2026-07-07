@@ -71,7 +71,7 @@ export const POLYGON_LAYERS = {
         weight: 2,
         opacity: 1,
         color: "#333333",
-        fillOpacity: 0.05,
+        fillOpacity: 0.1,
       },
     },
   } satisfies PolygonLayerConfig,
