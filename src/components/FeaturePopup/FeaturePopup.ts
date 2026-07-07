@@ -6,6 +6,12 @@ interface PopupField {
   label: string;
 }
 
+export interface HcdpPopupField {
+  label: string;
+  value?: number | null;
+  loading?: boolean;
+}
+
 interface FeaturePopupProps {
   // title: string;
   metadata?: string[];
@@ -17,6 +23,7 @@ interface FeaturePopupProps {
   metricName2?: string;
   metricValue2?: number | null;
   metricMoE2?: number | null;
+  hcdp?: HcdpPopupField;
 }
 
 export function FeaturePopup({
@@ -30,6 +37,7 @@ export function FeaturePopup({
   metricName2,
   metricValue2,
   metricMoE2,
+  hcdp,
 }: FeaturePopupProps): string {
   const properties = feature.properties || {};
 
@@ -40,6 +48,7 @@ export function FeaturePopup({
           ? `
         <div class="${styles["popup-metadata"]}">
           ${metadata.map((line) => `<div class="${styles["popup-metadata-line"]}">${escapeHtml(line)}</div>`).join("")}
+          
         </div>
       `
           : ""
@@ -77,6 +86,22 @@ export function FeaturePopup({
             <span class="${styles["popup-field-value-group"]}">
               <span class="${styles["popup-field-value"]}">${metricValue2.toFixed(2)}%${metricMoE2 !== null && metricMoE2 !== undefined ? ` ± ${metricMoE2} (MoE)` : ""}</span>
             </span>
+          </div>
+        `
+            : ""
+        }
+        ${
+          hcdp
+            ? `
+          <div class="${styles["popup-field"]}">
+            <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)} (mean):</span>
+            <span class="${styles["popup-field-value"]}">${
+              hcdp.loading
+                ? "Calculating…"
+                : hcdp.value != null
+                  ? hcdp.value.toFixed(2)
+                  : "N/A"
+            }</span>
           </div>
         `
             : ""
