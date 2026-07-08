@@ -222,7 +222,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
-      layerOpacity={filteredGeoids != null || hcdpOverlay ? undefined : layerOpacity} 
+      layerOpacity={filteredGeoids != null || hcdpOverlay ? undefined : layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
