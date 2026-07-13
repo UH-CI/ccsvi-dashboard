@@ -88,12 +88,14 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const getStyle = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
       if (!feature) {
+        console.log("Not feature")
         return LAYER_CONFIG.styles.default;
       }
 
       const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
 
       if (!geoid) {
+        console.log("Not geoid")
         return LAYER_CONFIG.styles.default;
       }
 
@@ -102,19 +104,30 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       const metricValue2 = getMetricValue2?.(geoidStr) ?? undefined;
       const fillColor = getColor(metricValue, metricValue2);
 
+
+
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoidStr)) {
+          console.log("Is filtered")
           return { ...LAYER_CONFIG.styles.default, fillColor, ...LAYER_CONFIG.styles.filterMatch } as StyleConfig;
         }
         return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
       }
 
+      if (hcdpOverlay) {
+        console.log("Switching to background style");
+        return {
+          ...LAYER_CONFIG.styles.background,
+          fillColor,
+        } as StyleConfig;
+      }
+      console.log("Default style");
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
       };
     },
-    [getMetricValue, getMetricValue2, getColor, filteredGeoids],
+    [getMetricValue, getMetricValue2, getColor, filteredGeoids, hcdpOverlay],
   );
 
   const getHighlightStyle = useCallback(
@@ -133,6 +146,16 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     },
     [filteredGeoids, isMatched],
   );
+
+  const getLayerOpacity = useCallback((feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
+    if (hcdpOverlay) {
+      return LAYER_CONFIG.styles.background;
+    }
+    if (filteredGeoids != null) {
+      return LAYER_CONFIG.styles.default;
+    }
+    return LAYER_CONFIG.styles.default;
+  }, [hcdpOverlay, filteredGeoids, layerOpacity]);
 
   const renderPopup = useMemo(
     () =>
@@ -199,7 +222,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
-      layerOpacity={filteredGeoids != null ? undefined : layerOpacity}
+      layerOpacity={filteredGeoids != null || hcdpOverlay ? undefined : layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
