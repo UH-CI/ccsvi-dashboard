@@ -35,7 +35,7 @@ app.include_router(rasters.router)
 app.include_router(rasters.cog.router, prefix="/api/tiles/cog", tags=["COG"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
-# Stand-in for Caddy static file serving — replace with Caddy reverse proxy in production.
+# Local-dev fallback only. In beta/prod, nginx serves /data/ directly from disk
 app.mount("/data", StaticFiles(directory="/home/exouser/ccsvi-data"), name="data")
 
 
