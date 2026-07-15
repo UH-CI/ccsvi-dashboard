@@ -23,6 +23,7 @@ import {
   CalendarViewWeek,
   Assessment,
   Factory,
+  BarChart,
 } from "@mui/icons-material";
 import {
   useMapStore,
@@ -41,6 +42,7 @@ import { LocationsMenu } from "./components/LocationsMenu";
 import { HazardsMenu } from "./components/HazardsMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
 import { RastersMenu } from "./components/RastersMenu";
+import { AnalyzerMenu } from "./components/AnalyzerMenu";
 
 interface IntegratedControlPanelProps {
   maxMaps: number;
@@ -49,7 +51,16 @@ interface IntegratedControlPanelProps {
   onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "rasters" | "HCDP" | null;
+type PopoverKey =
+  | "maps"
+  | "svi"
+  | "points"
+  | "locations"
+  | "hazards"
+  | "rasters"
+  | "HCDP"
+  | "analyzer"
+  | null;
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   maxMaps,
@@ -185,6 +196,13 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       description:
         "Load Hawaii Climate Data Portal (HCDP) raster datasets. After selecting a dataset, use the HCDP tab on the map legend to choose a specific raster layer to display.",
     },
+    {
+      key: "analyzer",
+      label: "Data Analyzer",
+      icon: <BarChart fontSize="small" />,
+      description:
+        "Explore the distribution of the selected Social Vulnerability Indicator across block groups and filter by value range.",
+    },
   ];
 
   return (
@@ -295,7 +313,12 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         onClose={() => closeMenu("HCDP")}
         onInfoClick={(e) => handleInfoClick("HCDP", e)}
       />
-
+      <AnalyzerMenu
+        open={Boolean(anchors.analyzer)}
+        anchorEl={anchors.analyzer ?? null}
+        onClose={() => closeMenu("analyzer")}
+        onInfoClick={(e) => handleInfoClick("analyzer", e)}
+      />
       {/* ── Info Popover ── */}
       <Popover
         open={Boolean(infoAnchor)}

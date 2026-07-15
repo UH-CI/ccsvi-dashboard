@@ -122,6 +122,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       censusBlockGroups,
       hawaiianHomelands,
       countyBoundaries,
+      filterRange,
     } = useAppStore(
       useShallow((state) => ({
         blockGroupData: state.blockGroupData,
@@ -130,6 +131,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         censusBlockGroups: state.censusBlockGroups,
         hawaiianHomelands: state.hawaiianHomelands,
         countyBoundaries: state.countyBoundaries,
+        filterRange: state.filterRange,
       })),
     );
     const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
@@ -405,6 +407,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 activeMetric2={effectiveMetric2 ?? undefined}
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.census}
+                filterRange={filterRange}
                 getColor={getColor}
                 filteredGeoids={filteredGeoids}
                 onFeatureClick={handleFeatureClick}
