@@ -106,7 +106,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     }
 
     const tileUrl =
-      `${TILES_COG_BASE}/tiles/WebMercatorQuad/{z}/{x}/{y}.png` +
+      `${TILES_COG_BASE}/tiles/WebMercatorQuad/{z}/{x}/{y}.webp` +
       `?raster_id=${encodeURIComponent(activeLayerId)}` +
       `&colormap_name=${encodeURIComponent(colormapName)}` +
       `&rescale=${cogInfo.min},${cogInfo.max}`;
