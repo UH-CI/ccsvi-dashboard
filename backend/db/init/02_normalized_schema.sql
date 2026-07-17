@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS metrics (
     dataset_id          TEXT    NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
     name                TEXT    NOT NULL,
     classification_mode TEXT    NOT NULL DEFAULT 'q',
+    mv_column           TEXT,
     UNIQUE (dataset_id, name)
 );
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { DATASETS_CONFIG, DataSourceKey, DataSourceTypeMap } from "../config";
-import { GeographiesData, MetricValue, Dataset, PointLayerConfig } from "../types";
-import { getMetricValues } from "../api/client";
+import { GeographiesData, MetricValue, Dataset, PointLayerConfig, DatasetCatalog } from "../types";
+import { getMetricValues, getDatasets } from "../api/client";
 import { FeatureCollection, Geometry } from "geojson";
 import {
   BlockGroupProperties,
@@ -29,6 +29,7 @@ interface AppState {
   // Data
   geographiesData: GeographiesData | null;
   metricValuesCache: Record<string, Record<string, MetricValue>>;
+  datasetCatalog: DatasetCatalog | null;
   filterRange: [number, number] | null;
   setFilterRange: (range: [number, number] | null) => void;
   blockGroupData: Dataset | null;
@@ -56,6 +57,7 @@ interface AppState {
   // Data fetching
   fetchGeographiesData: () => Promise<void>;
   fetchMetricValues: (dataset: string, metric: string) => Promise<void>;
+  fetchDatasetCatalog: () => Promise<void>;
   fetchBlockGroupData: () => Promise<void>;
   fetchCensusBlockGroups: () => Promise<void>;
   fetchHawaiianHomelands: () => Promise<void>;
@@ -77,6 +79,7 @@ const initialLoadingState: LoadingState = {
 const initialErrorState: ErrorState = {};
 
 const fetchingMetrics = new Set<string>();
+let fetchingDatasetCatalog = false;
 
 export const useAppStore = create<AppState>((set, get) => {
   const fetchData = async <K extends DataSourceKey>(
@@ -109,6 +112,7 @@ export const useAppStore = create<AppState>((set, get) => {
     // Initial state
     geographiesData: null,
     metricValuesCache: {},
+    datasetCatalog: null,
     filterRange: null,
     setFilterRange: (range) => set({ filterRange: range }),
     blockGroupData: null,
@@ -158,6 +162,19 @@ export const useAppStore = create<AppState>((set, get) => {
         console.error(`Failed to fetch metric values for ${dataset}::${metric}:`, err);
       } finally {
         fetchingMetrics.delete(cacheKey);
+      }
+    },
+    fetchDatasetCatalog: async () => {
+      if (get().datasetCatalog !== null) return;
+      if (fetchingDatasetCatalog) return;
+      fetchingDatasetCatalog = true;
+      try {
+        const data = await getDatasets();
+        set({ datasetCatalog: data });
+      } catch (err) {
+        console.error("Failed to fetch dataset catalog:", err);
+      } finally {
+        fetchingDatasetCatalog = false;
       }
     },
     fetchBlockGroupData: () => {

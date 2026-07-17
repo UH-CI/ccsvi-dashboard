@@ -200,6 +200,19 @@ export interface BlockGroupResult {
   [key: string]: number | string | null;
 }
 
+export interface CatalogMetric {
+  classificationMode: string;
+  mvColumn: string | null;
+}
+
+export interface CatalogDataset {
+  metricLabel: string;
+  hawaiianHomelands: boolean;
+  columnThresholds: Record<string, CatalogMetric>;
+}
+
+export type DatasetCatalog = Record<string, CatalogDataset>;
+
 export interface FilterParams {
   county?: string;
   hazardId?: string;

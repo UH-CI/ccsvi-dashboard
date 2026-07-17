@@ -12,6 +12,7 @@ router = APIRouter()
 
 class MetricConfig(BaseModel):
     classificationMode: str
+    mvColumn: str | None = None
 
 
 class DatasetRecord(BaseModel):
@@ -31,7 +32,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
         """
-        SELECT d.id, d.label, d.hawaiian_homelands, m.name, m.classification_mode
+        SELECT d.id, d.label, d.hawaiian_homelands, m.name, m.classification_mode, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, m.name
@@ -48,6 +49,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
             }
         result[dataset_id]["columnThresholds"][row["name"]] = {
             "classificationMode": row["classification_mode"],
+            "mvColumn": row["mv_column"],
         }
     return result
 

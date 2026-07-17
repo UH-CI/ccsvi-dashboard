@@ -1,3 +1,5 @@
+import { DatasetCatalog } from "../types";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const get = async <T>(path: string): Promise<T> => {
@@ -6,7 +8,7 @@ const get = async <T>(path: string): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
-export const getDatasets = () => get<Record<string, unknown>>("/api/v1/datasets");
+export const getDatasets = () => get<DatasetCatalog>("/api/v1/datasets");
 
 // DEPRECATED: replaced by getDatasetTable → /api/v1/datasets/{id}/table
 // export const getMetrics = (dataset: string) =>
