@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { DataAnalyzerMenu } from "../../DataAnalyzerMenu/DataAnalyzerMenu";
 import { MenuShell } from "./MenuShell";
+import { useAppStore } from "../../../stores";
+import styles from "../ControlPanel.module.scss";
 
 interface AnalyzerMenuProps {
   open: boolean;
@@ -14,14 +16,23 @@ export const AnalyzerMenu: React.FC<AnalyzerMenuProps> = ({
   anchorEl,
   onClose,
   onInfoClick,
-}) => (
-  <MenuShell
-    open={open}
-    anchorEl={anchorEl}
-    onClose={onClose}
-    title="Data Analyzer"
-    onInfoClick={onInfoClick}
-  >
-    <DataAnalyzerMenu />
-  </MenuShell>
-);
+}) => {
+  const fetchDatasetCatalog = useAppStore((state) => state.fetchDatasetCatalog);
+
+  useEffect(() => {
+    if (open) fetchDatasetCatalog();
+  }, [open, fetchDatasetCatalog]);
+
+  return (
+    <MenuShell
+      open={open}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      title="Data Analyzer"
+      onInfoClick={onInfoClick}
+      paperClassName={styles["menu-paper-wide"]}
+    >
+      <DataAnalyzerMenu />
+    </MenuShell>
+  );
+};
