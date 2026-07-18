@@ -457,7 +457,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <React.Fragment key={layer.id}>
                 {/* Render parent layer if it is COG-backed (colormapName set) and visible */}
                 {layer.colormapName && visibleRasterIds.has(layer.id) && (
-                  <RasterLayerRenderer mapId={mapId} parentId={layer.id} mapZoom={mapZoom} />
+                  <RasterLayerRenderer
+                    mapId={mapId}
+                    parentId={layer.id}
+                    mapZoom={mapZoom}
+                    interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
+                  />
                 )}
 
                 {/* Render sublayers that are visible */}
@@ -470,6 +475,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                       parentId={layer.id}
                       layerId={sub.id}
                       mapZoom={mapZoom}
+                      interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
                     />
                   ) : null;
                 })}

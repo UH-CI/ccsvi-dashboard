@@ -10,6 +10,7 @@ import {
 } from "../../../utils/renderPolygonPopup.ts";
 import { meanHcdpForFeature } from "../../../utils/hcdpZonalStats.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
+import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
 
 interface CensusPolygonLayerProps {
@@ -50,6 +51,26 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   onFeatureClick,
 }) => {
   const hcdpOverlay = useHcdpOverlay(mapId);
+  const visibleRasterLayerIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId] ?? new Set<string>());
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const hasActiveRasterLayer = (visibleRasterLayerIds?.size ?? 0) > 0;
+  const hasSocialDataActive = Boolean(activeMetric?.trim()) || Boolean(activeMetric2?.trim());
+  const shouldUseBackgroundStyle = Boolean(hcdpOverlay || hasActiveRasterLayer);
+  const shouldShowPolygonPopup = Boolean(hcdpOverlay || hasSocialDataActive);
+  const shouldConsumePolygonClicks = shouldShowPolygonPopup;
+
+  const activeRasterLayerId = useMemo(() => {
+    const ids = Array.from(visibleRasterLayerIds ?? []);
+    return ids.find((id) => id.includes(".")) ?? ids[0] ?? null;
+  }, [visibleRasterLayerIds]);
+
+  const activeRasterLayerConfig = useMemo(() => {
+    if (!activeRasterLayerId) return null;
+    const [parentId, subId] = activeRasterLayerId.split(".");
+    const parent = rasterLayerConfigs.find((layer) => layer.id === parentId);
+    if (!parent) return null;
+    return subId ? parent.subLayers?.find((layer) => layer.id === subId) ?? parent : parent;
+  }, [activeRasterLayerId, rasterLayerConfigs]);
 
   const popupContext = useMemo<PolygonPopupContext>(
     () => ({
@@ -114,7 +135,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
       }
 
-      if (hcdpOverlay) {
+      if (shouldUseBackgroundStyle) {
         console.log("Switching to background style");
         return {
           ...LAYER_CONFIG.styles.background,
@@ -127,7 +148,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         fillColor,
       };
     },
-    [getMetricValue, getMetricValue2, getColor, filteredGeoids, hcdpOverlay],
+    [getMetricValue, getMetricValue2, getColor, filteredGeoids, shouldUseBackgroundStyle],
   );
 
   const getHighlightStyle = useCallback(
@@ -148,14 +169,14 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   );
 
   const getLayerOpacity = useCallback((feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
-    if (hcdpOverlay) {
+    if (shouldUseBackgroundStyle) {
       return LAYER_CONFIG.styles.background;
     }
     if (filteredGeoids != null) {
       return LAYER_CONFIG.styles.default;
     }
     return LAYER_CONFIG.styles.default;
-  }, [hcdpOverlay, filteredGeoids, layerOpacity]);
+  }, [shouldUseBackgroundStyle, filteredGeoids, layerOpacity]);
 
   const renderPopup = useMemo(
     () =>
@@ -173,33 +194,114 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   );
 
   const enrichPopupOnOpen = useMemo(() => {
-    if (!hcdpOverlay) return undefined;
+    if (!hcdpOverlay && !activeRasterLayerId) return undefined;
 
     return async (
       feature: Feature<Geometry, BlockGroupProperties>,
       setContent: (html: string) => void,
     ) => {
-      const overlay = useHCDPStore.getState().overlaysByMap[mapId];
-      if (!overlay?.arrayBuffer) return;
+      if (hcdpOverlay) {
+        const overlay = useHCDPStore.getState().overlaysByMap[mapId];
+        if (!overlay?.arrayBuffer) return;
 
-      const loadingHtml = buildPolygonPopupHtml(feature, popupContext, {
-        label: overlay.title,
+        const loadingHtml = buildPolygonPopupHtml(feature, popupContext, {
+          label: overlay.title,
+          loading: true,
+        });
+        if (loadingHtml) setContent(loadingHtml);
+
+        const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+
+        const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
+        if (!currentOverlay?.arrayBuffer) return;
+
+        const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, {
+          label: currentOverlay.title,
+          value: mean,
+        });
+        if (enrichedHtml) setContent(enrichedHtml);
+        return;
+      }
+
+      if (!activeRasterLayerId) return;
+
+      const overlayLabel = activeRasterLayerConfig?.name ?? "Raster layer";
+      const overlaySuffix = activeRasterLayerConfig?.units ? ` ${activeRasterLayerConfig.units}` : "";
+      const loadingHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
+        label: overlayLabel,
         loading: true,
+        suffix: overlaySuffix,
       });
       if (loadingHtml) setContent(loadingHtml);
 
-      const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+      const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+      if (!currentVisibleIds?.has(activeRasterLayerId)) return;
 
-      const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
-      if (!currentOverlay?.arrayBuffer) return;
+      const samplePoint = (() => {
+        const geometry = feature.geometry;
+        if (!geometry) return null;
 
-      const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, {
-        label: currentOverlay.title,
-        value: mean,
-      });
-      if (enrichedHtml) setContent(enrichedHtml);
+        const coords: Array<[number, number]> = [];
+        const pushCoords = (value: unknown) => {
+          if (Array.isArray(value) && value.length >= 2 && typeof value[0] === "number" && typeof value[1] === "number") {
+            coords.push([value[0], value[1]] as [number, number]);
+            return;
+          }
+          if (Array.isArray(value)) {
+            value.forEach(pushCoords);
+          }
+        };
+
+        if ("coordinates" in geometry) {
+          pushCoords((geometry as { coordinates: unknown }).coordinates);
+        } else if ("geometries" in geometry) {
+          geometry.geometries.forEach((child) => {
+            if ("coordinates" in child) {
+              pushCoords((child as { coordinates: unknown }).coordinates);
+            }
+          });
+        }
+
+        if (coords.length === 0) return null;
+
+        const total = coords.reduce(
+          (acc, [lng, lat]) => ({ lng: acc.lng + lng, lat: acc.lat + lat }),
+          { lng: 0, lat: 0 },
+        );
+        const count = coords.length;
+        return { lng: total.lng / count, lat: total.lat / count };
+      })();
+
+      if (!samplePoint) return;
+
+      try {
+        const res = await fetch(
+          `/api/tiles/cog/point/${samplePoint.lng},${samplePoint.lat}` +
+            `?raster_id=${encodeURIComponent(activeRasterLayerId)}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const value: number | null = data.values?.[0] ?? null;
+
+        const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+        if (!currentRasterId?.has(activeRasterLayerId)) return;
+
+        const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
+          label: overlayLabel,
+          value: Number.isFinite(value) ? value : null,
+          suffix: overlaySuffix,
+        });
+        if (enrichedHtml) setContent(enrichedHtml);
+      } catch {
+        const fallbackHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
+          label: overlayLabel,
+          value: null,
+          suffix: overlaySuffix,
+        });
+        if (fallbackHtml) setContent(fallbackHtml);
+      }
     };
-  }, [hcdpOverlay, mapId, popupContext]);
+  }, [activeRasterLayerConfig, activeRasterLayerId, hcdpOverlay, mapId, popupContext]);
 
   const guardedOnFeatureClick = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => {
@@ -222,13 +324,14 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       mapId={mapId}
       layerType="census"
       geoidProperty={LAYER_CONFIG.geoidProperty}
-      layerOpacity={filteredGeoids != null || hcdpOverlay ? undefined : layerOpacity}
+      layerOpacity={filteredGeoids != null || shouldUseBackgroundStyle ? undefined : layerOpacity}
       getStyle={getStyle}
       getHighlightStyle={getHighlightStyle}
       activeFeatureGeoid={activeFeatureGeoid}
       onFeatureClick={guardedOnFeatureClick}
-      renderPopup={guardedRenderPopup}
-      enrichPopupOnOpen={enrichPopupOnOpen}
+      renderPopup={shouldShowPolygonPopup ? guardedRenderPopup : undefined}
+      enrichPopupOnOpen={shouldShowPolygonPopup ? enrichPopupOnOpen : undefined}
+      stopClickPropagation={shouldConsumePolygonClicks}
     />
   );
 };

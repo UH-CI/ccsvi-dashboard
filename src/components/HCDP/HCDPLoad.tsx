@@ -22,6 +22,7 @@ import {
 } from "../../utils/hcdpRaster";
 import { buildHcdpOverlayTitle, useHCDPStore } from "../../stores/useHCDPStore";
 import styles from "./HCDPLoad.module.scss";
+import { useRasterLayersStore } from "../../stores";
 
 const RANGE_JSON = `${import.meta.env.BASE_URL || ""}data/HCDP_API/date_Range_Combined.json`;
 
@@ -277,7 +278,10 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
 
     try {
       const arrayBuffer = await fetchHcdpRaster(activeRow, selectedDate);
-      
+
+      useRasterLayersStore.getState().setVisibleLayerIds(mapId, []);
+      useRasterLayersStore.getState().setRasterLegend(mapId, null);
+
       const dateStr = selectedDate.format("YYYY-MM-DD");
       setRasterOverlay(mapId, {
         arrayBuffer: cloneArrayBuffer(arrayBuffer),
