@@ -31,6 +31,7 @@ export const AnalyzerMenu: React.FC<AnalyzerMenuProps> = ({
       title="Data Analyzer"
       onInfoClick={onInfoClick}
       paperClassName={styles["menu-paper-wide"]}
+      variant="panel"
     >
       <DataAnalyzerMenu />
     </MenuShell>
