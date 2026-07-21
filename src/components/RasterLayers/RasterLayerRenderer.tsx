@@ -24,12 +24,14 @@ interface RasterLayerRendererProps {
   /** Kept for interface compatibility — TiTiler selects overview level per tile automatically. */
   mapZoom?: number;
   mapId: string;
+  interactionMode?: "raster" | "social";
 }
 
 export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   parentId,
   layerId,
   mapId,
+  interactionMode = "raster",
 }) => {
   const map = useMap();
 
@@ -102,7 +104,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
     if (!map.getPane("rasterPane")) {
       const pane = map.createPane("rasterPane");
-      pane.style.zIndex = "420";
+      pane.style.zIndex = "350";
     }
 
     const tileUrl =
@@ -147,6 +149,10 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   useEffect(() => {
     if (!isVisible || !cogInfo) return;
 
+    if (interactionMode === "social") {
+      return;
+    }
+
     // Sample the rendered tile's alpha at the click pixel — transparent means no-data.
     const hasRasterAtPoint = (latlng: L.LatLng): boolean => {
       if (!tilesLoadedRef.current) return false;
@@ -188,6 +194,11 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       const latlng = map.mouseEventToLatLng(e);
       if (!hasRasterAtPoint(latlng)) return;
 
+      if (popupRef.current) {
+        popupRef.current.remove();
+        popupRef.current = null;
+      }
+
       e.stopImmediatePropagation();
 
       const { lng, lat } = latlng;
@@ -208,13 +219,13 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     };
 
     clickHandlerRef.current = handler;
-    map.getContainer().addEventListener("click", handler, true);
+    map.getContainer().addEventListener("click", handler);
 
     return () => {
-      map.getContainer().removeEventListener("click", handler, true);
+      map.getContainer().removeEventListener("click", handler);
       clickHandlerRef.current = null;
     };
-  }, [isVisible, cogInfo, map, activeLayerId, layerName, units]);
+  }, [interactionMode, isVisible, cogInfo, map, activeLayerId, layerName, units]);
 
   // Remove tile layer, popup, and legend when visibility is toggled off
   useEffect(() => {
@@ -233,7 +244,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     return () => {
       tileLayerRef.current?.remove();
       if (clickHandlerRef.current)
-        map.getContainer().removeEventListener("click", clickHandlerRef.current, true);
+        map.getContainer().removeEventListener("click", clickHandlerRef.current);
       if (popupRef.current) {
         popupRef.current.close();
         popupRef.current = null;

@@ -1,1 +1,1 @@
-export { FeaturePopup, type HcdpPopupField } from "./FeaturePopup";
+export { FeaturePopup, type HcdpPopupField, type OverlayPopupField } from "./FeaturePopup";
