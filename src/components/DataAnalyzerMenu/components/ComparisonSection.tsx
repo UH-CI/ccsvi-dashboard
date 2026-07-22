@@ -39,22 +39,28 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   const cachedValues1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
   const cachedValues2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
 
-  const { points, isPct1, isPct2, maxX, maxY } = useMemo(() => {
+  const { points, activePoint, isPct1, isPct2, maxX, maxY } = useMemo(() => {
     if (!cachedValues1 || !cachedValues2) {
-      return { points: [], isPct1: false, isPct2: false, maxX: 1, maxY: 1 };
+      return { points: [], activePoint: null, isPct1: false, isPct2: false, maxX: 1, maxY: 1 };
     }
     const isPct1 = Object.values(cachedValues1).some((e) => e.percentage != null);
     const isPct2 = Object.values(cachedValues2).some((e) => e.percentage != null);
     const pts: { geoid: string; x: number; y: number }[] = [];
+    let active: { geoid: string; x: number; y: number } | null = null;
     for (const geoid of Object.keys(cachedValues1)) {
       const x = pickValue(cachedValues1[geoid]);
       const y = pickValue(cachedValues2[geoid]);
-      if (x !== null && y !== null) pts.push({ geoid, x, y });
+      if (x === null || y === null) continue;
+      const point = { geoid, x, y };
+      if (geoid === activeGeoid) active = point;
+      else pts.push(point);
     }
-    const maxX = pts.length ? Math.max(...pts.map((p) => p.x)) : 1;
-    const maxY = pts.length ? Math.max(...pts.map((p) => p.y)) : 1;
-    return { points: pts, isPct1, isPct2, maxX, maxY };
-  }, [cachedValues1, cachedValues2]);
+    const allX = active ? [...pts.map((p) => p.x), active.x] : pts.map((p) => p.x);
+    const allY = active ? [...pts.map((p) => p.y), active.y] : pts.map((p) => p.y);
+    const maxX = allX.length ? Math.max(...allX) : 1;
+    const maxY = allY.length ? Math.max(...allY) : 1;
+    return { points: pts, activePoint: active, isPct1, isPct2, maxX, maxY };
+  }, [cachedValues1, cachedValues2, activeGeoid]);
 
   if (!metric2) {
     return (
@@ -121,20 +127,27 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             isAnimationActive={false}
             shape={(props: any) => {
               const { cx, cy, payload } = props;
-              const isActive = payload.geoid === activeGeoid;
               const inFilter = filteredGeoids ? filteredGeoids.has(payload.geoid) : true;
-              const fill = isActive ? RED : inFilter ? BLUE : GRAY;
               return (
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={isActive ? 4 : 2.5}
-                  fill={fill}
-                  fillOpacity={isActive ? 1 : 0.6}
-                />
+                <circle cx={cx} cy={cy} r={2.5} fill={inFilter ? BLUE : GRAY} fillOpacity={0.6} />
               );
             }}
           />
+          {activePoint && (
+            <Scatter
+              data={[activePoint]}
+              isAnimationActive={false}
+              shape={(props: any) => {
+                const { cx, cy } = props;
+                return (
+                  <g>
+                    <circle cx={cx} cy={cy} r={6} fill="#fff" fillOpacity={0.9} />
+                    <circle cx={cx} cy={cy} r={4} fill={RED} />
+                  </g>
+                );
+              }}
+            />
+          )}
         </ScatterChart>
       </ResponsiveContainer>
     </Box>
