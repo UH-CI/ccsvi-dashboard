@@ -13,6 +13,8 @@ export const DataAnalyzerMenu = () => {
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
   const dataset = primaryConfig?.dataset;
   const metric = primaryConfig?.metric;
+  const dataset2 = primaryConfig?.dataset2 ?? dataset;
+  const metric2 = primaryConfig?.metric2;
   const activeGeoid = primaryConfig?.activeFeature?.geoid ?? null;
   const cacheKey = dataset && metric ? `${dataset}::${metric}` : null;
   const cachedValues = cacheKey ? metricValuesCache[cacheKey] : null;
@@ -32,6 +34,9 @@ export const DataAnalyzerMenu = () => {
         metric={metric}
         cachedValues={cachedValues}
         activeGeoid={activeGeoid}
+        dataset={dataset}
+        dataset2={dataset2}
+        metric2={metric2}
       />
 
       <Divider />

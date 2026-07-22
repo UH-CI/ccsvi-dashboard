@@ -12,6 +12,7 @@ import {
 import { useAppStore } from "../../../stores";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
+import { ComparisonSection } from "./ComparisonSection";
 
 const NUM_BINS = 20;
 
@@ -19,12 +20,18 @@ interface HistogramSectionProps {
   metric: string | undefined;
   cachedValues: Record<string, MetricValue> | null | undefined;
   activeGeoid: string | null;
+  dataset: string | undefined;
+  dataset2: string | undefined;
+  metric2: string | undefined;
 }
 
 export const HistogramSection: React.FC<HistogramSectionProps> = ({
   metric,
   cachedValues,
   activeGeoid,
+  dataset,
+  dataset2,
+  metric2,
 }) => {
   const setFilterRange = useAppStore((state) => state.setFilterRange);
 
@@ -244,6 +251,15 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           {filteredCount} / {allValues.length}
         </Typography>
       </Box>
+
+      <Divider />
+      <ComparisonSection
+        dataset={dataset}
+        metric={metric}
+        dataset2={dataset2}
+        metric2={metric2}
+        activeGeoid={activeGeoid}
+      />
     </Stack>
   );
 };
