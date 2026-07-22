@@ -120,8 +120,13 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
         >
           Metric
         </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metric}>
-          {metric}
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 500, mt: 0.25 }}
+          noWrap
+          title={metric2 ? `${metric} vs ${metric2}` : metric}
+        >
+          {metric2 ? `${metric} vs ${metric2}` : metric}
         </Typography>
       </Box>
 
