@@ -12,6 +12,10 @@ export const HazardSection: React.FC = () => {
     [visibleLayerIdsByMap, primaryMapId],
   );
 
+  if (!derivedHazard) {
+    return null;
+  }
+
   return (
     <Box>
       <Typography
@@ -22,7 +26,7 @@ export const HazardSection: React.FC = () => {
         Hazard
       </Typography>
       <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }}>
-        {derivedHazard ? derivedHazard.label : <em>none visible</em>}
+        {derivedHazard.label}
       </Typography>
     </Box>
   );

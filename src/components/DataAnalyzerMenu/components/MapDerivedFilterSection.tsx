@@ -7,18 +7,23 @@ import { deriveHazard } from "../deriveHazard";
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
   metric: string | undefined;
+  dataset2: string | undefined;
+  metric2: string | undefined;
   onClearAll: () => void;
 }
 
 export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = ({
   dataset,
   metric,
+  dataset2,
+  metric2,
   onClearAll,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
   const datasetCatalog = useAppStore((state) => state.datasetCatalog);
   const filterRange = useAppStore((state) => state.filterRange);
+  const filterRange2 = useAppStore((state) => state.filterRange2);
 
   const setHazard = useFilterStore((state) => state.setHazard);
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
@@ -34,18 +39,27 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     [visibleLayerIdsByMap, primaryMapId],
   );
 
+  // Primary metric threshold, from the Explore section's "Filter range" slider
   const mvColumn =
     dataset && metric && datasetCatalog
       ? (datasetCatalog[dataset]?.columnThresholds[metric]?.mvColumn ?? null)
       : null;
 
+  // Comparison metric threshold, from the Explore section's "Comparison Metric Filter Range" slider
+  const mvColumn2 =
+    dataset2 && metric2 && datasetCatalog
+      ? (datasetCatalog[dataset2]?.columnThresholds[metric2]?.mvColumn ?? null)
+      : null;
+
   const hasMetricThreshold = mvColumn !== null && filterRange !== null;
-  const hasCriteria = derivedHazard !== null || hasMetricThreshold;
+  const hasMetricThreshold2 = mvColumn2 !== null && filterRange2 !== null;
+  const hasCriteria = derivedHazard !== null || hasMetricThreshold || hasMetricThreshold2;
 
   const handleApply = () => {
     setHazard(derivedHazard?.hazardId ?? null, derivedHazard?.subId ?? null);
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
+    if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
     applyFilter();
   };
 

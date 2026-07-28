@@ -30,8 +30,12 @@ interface AppState {
   geographiesData: GeographiesData | null;
   metricValuesCache: Record<string, Record<string, MetricValue>>;
   datasetCatalog: DatasetCatalog | null;
-  filterRange: [number, number] | null;
+  // Primary metric's threshold slider (Data Analyzer)
+    filterRange: [number, number] | null;
   setFilterRange: (range: [number, number] | null) => void;
+  // Comparison metric's threshold slider (Data Analyzer)
+  filterRange2: [number, number] | null;
+  setFilterRange2: (range: [number, number] | null) => void;
   blockGroupData: Dataset | null;
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties> | null;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
@@ -115,6 +119,8 @@ export const useAppStore = create<AppState>((set, get) => {
     datasetCatalog: null,
     filterRange: null,
     setFilterRange: (range) => set({ filterRange: range }),
+    filterRange2: null,
+    setFilterRange2: (range) => set({ filterRange2: range }),
     blockGroupData: null,
     censusBlockGroups: null,
     hawaiianHomelands: null,

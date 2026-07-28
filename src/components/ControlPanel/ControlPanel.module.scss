@@ -54,9 +54,24 @@
   align-items: center;
   gap: 2px;
   flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+  }
 }
 
 .nav-btn {
+  flex-shrink: 0;
   text-transform: none !important;
   font-weight: 500 !important;
   font-size: 0.82rem !important;
@@ -145,6 +160,11 @@
 .menu-paper-wide {
   min-width: 400px !important;
   max-width: 460px !important;
+}
+
+.menu-panel-paper {
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
 }
 
 .menu-list {

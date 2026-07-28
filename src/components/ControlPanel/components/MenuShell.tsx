@@ -27,9 +27,13 @@ export const MenuShell: React.FC<MenuShellProps> = ({
   paperClassName,
   variant = "menu",
 }) => {
-  const paperClass = paperClassName
-    ? `${styles["menu-paper"]} ${paperClassName}`
-    : styles["menu-paper"];
+  const paperClass = [
+    styles["menu-paper"],
+    variant === "panel" ? styles["menu-panel-paper"] : null,
+    paperClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const content = (
     <Box className={styles["menu-content"]}>

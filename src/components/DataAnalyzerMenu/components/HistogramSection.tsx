@@ -34,6 +34,27 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   metric2,
 }) => {
   const setFilterRange = useAppStore((state) => state.setFilterRange);
+  const setFilterRange2 = useAppStore((state) => state.setFilterRange2);
+  const metricValuesCache = useAppStore((state) => state.metricValuesCache);
+
+  const cacheKey2 = dataset2 && metric2 ? `${dataset2}::${metric2}` : null;
+  const cachedValues2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
+
+  const { isPercentage2, dataMin2, dataMax2 } = useMemo(() => {
+    if (!cachedValues2) return { isPercentage2: false, dataMin2: 0, dataMax2: 1 };
+    const entries = Object.values(cachedValues2);
+    const isPercentage2 = entries.some((e) => e.percentage != null);
+    const vals = entries.map(pickValue).filter((v): v is number => v !== null);
+    if (vals.length === 0) return { isPercentage2, dataMin2: 0, dataMax2: 1 };
+    return { isPercentage2, dataMin2: Math.min(...vals), dataMax2: Math.max(...vals) };
+  }, [cachedValues2]);
+
+  const [range2, setRange2] = useState<[number, number]>([0, 1]);
+
+  useEffect(() => {
+    setRange2([dataMin2, dataMax2]);
+    setFilterRange2(null);
+  }, [dataMin2, dataMax2, setFilterRange2]);
 
   const { allValues, isPercentage } = useMemo(() => {
     if (!cachedValues) return { allValues: [], isPercentage: false };
@@ -247,6 +268,42 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           </Typography>
         </Box>
       </Box>
+
+      {metric2 && cachedValues2 && (
+        <Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
+          >
+            Comparison Metric Filter Range
+          </Typography>
+          <Box sx={{ px: 1, mt: 1 }}>
+            <Slider
+              value={range2}
+              min={dataMin2}
+              max={dataMax2}
+              step={(dataMax2 - dataMin2) / 100 || 1}
+              onChange={(_, v) => {
+                const r = v as [number, number];
+                setRange2(r);
+                setFilterRange2(r);
+              }}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => formatValue(v, isPercentage2, dataMax2)}
+              size="small"
+            />
+          </Box>
+          <Box display="flex" justifyContent="space-between">
+            <Typography variant="caption" color="text.secondary">
+              {formatValue(dataMin2, isPercentage2, dataMax2)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {formatValue(dataMax2, isPercentage2, dataMax2)}
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="body2" color="text.secondary">

@@ -10,6 +10,7 @@ interface FilterState {
   heightFt: number | null;
   metricFilters: Partial<Record<string, number>>;
   results: BlockGroupResult[] | null;
+  filteredGeoids: Set<string> | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -30,6 +31,7 @@ const initialState: FilterState = {
   heightFt: null,
   metricFilters: {},
   results: null,
+  filteredGeoids: null,
   isLoading: false,
   error: null,
 };
@@ -71,7 +73,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       const res = await fetch(`${BASE_URL}/api/v1/block-groups?${params}`);
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as BlockGroupResult[];
-      set({ results: data, isLoading: false });
+      set({ results: data, filteredGeoids: new Set(data.map((r) => r.geoid)), isLoading: false });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : "Filter failed",
@@ -91,7 +93,4 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
 export const useIsFiltered = () => useFilterStore((s) => s.results !== null);
 
-export const useFilteredGeoids = () =>
-  useFilterStore((s) =>
-    s.results ? new Set(s.results.map((r) => r.geoid)) : null,
-  );
+export const useFilteredGeoids = () => useFilterStore((s) => s.filteredGeoids);

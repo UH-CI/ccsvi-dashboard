@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
-import { useAppStore, useMapStore, useFilterStore } from "../../stores";
+import { useAppStore, useMapStore, useFilterStore, useHazardLayersStore } from "../../stores";
 import { HistogramSection } from "./components/HistogramSection";
 import { HazardSection } from "./components/HazardSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
+import { deriveHazard } from "./deriveHazard";
 
 export const DataAnalyzerMenu = () => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
+  const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+
+  const hasHazard = useMemo(
+    () => deriveHazard(visibleLayerIdsByMap[primaryMapId]) !== null,
+    [visibleLayerIdsByMap, primaryMapId],
+  );
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
   const dataset = primaryConfig?.dataset;
@@ -19,7 +26,6 @@ export const DataAnalyzerMenu = () => {
   const cacheKey = dataset && metric ? `${dataset}::${metric}` : null;
   const cachedValues = cacheKey ? metricValuesCache[cacheKey] : null;
 
-  // remounts HistogramSection
   const [resetKey, setResetKey] = useState(0);
 
   const handleClearAll = () => {
@@ -39,15 +45,26 @@ export const DataAnalyzerMenu = () => {
         metric2={metric2}
       />
 
-      <Divider />
-      <HazardSection />
+      {hasHazard && (
+        <>
+          <Divider />
+          <HazardSection />
+        </>
+      )}
 
       <Divider />
       <Typography variant="caption" color="text.secondary">
         Overlap filtering derived from what's currently visible on the map
       </Typography>
 
-      <MapDerivedFilterSection dataset={dataset} metric={metric} onClearAll={handleClearAll} />
+      <MapDerivedFilterSection
+        key={resetKey}
+        dataset={dataset}
+        metric={metric}
+        dataset2={dataset2}
+        metric2={metric2}
+        onClearAll={handleClearAll}
+      />
     </Stack>
   );
 };
