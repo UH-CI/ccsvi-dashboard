@@ -203,18 +203,20 @@ async def get_metric_values(
     summary="Filter block groups by county, hazard, and metric thresholds",
     description=(
         "Returns block groups matching all specified filters. Supports county equality, "
-        "hazard spatial join (ST_Intersects against the hazards table), and numeric "
-        "lower-bound thresholds on any block_group_metrics column via min_<col>=<value> "
-        "query params. Use ?format=csv for a downloadable CSV attachment."
+        "a unioned hazard spatial join (ST_Intersects against the hazards table — a block "
+        "group matches if it intersects ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
+        "and numeric lower-bound thresholds on any block_group_metrics column via "
+        "min_<col>=<value> query params. Use ?format=csv for a downloadable CSV attachment."
     ),
 )
 async def filter_block_groups(
     conn: ConnDep,
     request: Request,
     county: str | None = Query(None, description="Exact county name, e.g. 'Maui County'"),
-    hazard_id: str | None = Query(None, description="Hazard layer ID, e.g. 'floodHazard'"),
-    sub_id: str | None = Query(None, description="Hazard sub-layer, e.g. 'AE'"),
-    height_ft: float | None = Query(None, description="SLR height in feet (SLR layers only)"),
+    hazard: list[str] | None = Query(
+        None,
+        description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
+    ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
     # Validate and collect min_<col> metric threshold params.
@@ -241,21 +243,23 @@ async def filter_block_groups(
     if county:
         add_cond("bgm.county = ?", county)
 
-    if hazard_id:
-        # Built separately — the EXISTS subquery has up to 3 placeholders
-        # with offsets that must be computed after the current params length.
-        hazard_conds = ["h.hazard_id = $?"]
-        hazard_params: list[Any] = [hazard_id]
-        if sub_id:
-            hazard_conds.append("h.sub_id = $?")
-            hazard_params.append(sub_id)
-        if height_ft is not None:
-            hazard_conds.append("h.height_ft = $?")
-            hazard_params.append(height_ft)
-        base = len(params) + 1
+    if hazard:
+        # One OR-branch per requested hazard/sub-layer, all inside a single
+        # EXISTS — a block group matches if it intersects ANY of them.
+        hazard_branches: list[str] = []
+        hazard_params: list[Any] = []
+        for entry in hazard:
+            hazard_id, _, sub_id = entry.partition(".")
+            base = len(params) + len(hazard_params) + 1
+            if sub_id:
+                hazard_branches.append(f"(h.hazard_id = ${base} AND h.sub_id = ${base + 1})")
+                hazard_params.extend([hazard_id, sub_id])
+            else:
+                hazard_branches.append(f"(h.hazard_id = ${base})")
+                hazard_params.append(hazard_id)
         exists_clause = (
-            f"EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(bgm.geom, h.geom)"
-            f" AND {' AND '.join(c.replace('$?', f'${base + i}') for i, c in enumerate(hazard_conds))})"
+            "EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(bgm.geom, h.geom)"
+            f" AND ({' OR '.join(hazard_branches)}))"
         )
         params.extend(hazard_params)
         conditions.append(exists_clause)
