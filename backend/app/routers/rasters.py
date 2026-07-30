@@ -43,6 +43,24 @@ def raster_path_dep(
 cog = TilerFactory(path_dependency=raster_path_dep)
 
 
+@router.get("/api/tiles/cog/file")
+async def get_raster_file(
+    raster_id: Annotated[
+        str,
+        Query(description="Composite raster layer ID (e.g. 'stormSurge.inundation_category1')"),
+    ],
+    response: Response,
+) -> Response:
+    """Return the full COG bytes for a raster layer so the client can compute zonal statistics."""
+    file_path = Path(raster_path_dep(raster_id))
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Raster file not found for '{raster_id}'")
+
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    response.headers["Content-Disposition"] = f'attachment; filename="{file_path.name}"'
+    return Response(content=file_path.read_bytes(), media_type="application/octet-stream")
+
+
 @router.get("/api/v1/rasters")
 async def list_rasters(response: Response) -> dict[str, list[str]]:
     """Return the catalog of available raster layer IDs."""
