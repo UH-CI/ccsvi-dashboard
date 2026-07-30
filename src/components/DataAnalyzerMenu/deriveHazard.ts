@@ -6,24 +6,25 @@ export interface DerivedHazard {
   label: string;
 }
 
-// Prefer a visible sub-layer over its parent
-// Priority is defined by HAZARD_LAYERS config top down order
-export function deriveHazard(visibleIds: Set<string> | undefined): DerivedHazard | null {
-  if (!visibleIds || visibleIds.size === 0) return null;
+// Collects every visible hazard/sub-layer, in HAZARD_LAYERS config order.
+export function deriveVisibleHazards(visibleIds: Set<string> | undefined): DerivedHazard[] {
+  if (!visibleIds || visibleIds.size === 0) return [];
+
+  const derived: DerivedHazard[] = [];
 
   for (const parent of HAZARD_LAYERS) {
     for (const sub of parent.subLayers ?? []) {
       if (visibleIds.has(`${parent.id}.${sub.id}`)) {
-        return { hazardId: parent.id, subId: sub.id, label: `${parent.name} — ${sub.name}` };
+        derived.push({ hazardId: parent.id, subId: sub.id, label: `${parent.name} — ${sub.name}` });
       }
     }
   }
 
   for (const parent of HAZARD_LAYERS) {
     if (visibleIds.has(parent.id)) {
-      return { hazardId: parent.id, subId: null, label: parent.name };
+      derived.push({ hazardId: parent.id, subId: null, label: parent.name });
     }
   }
 
-  return null;
+  return derived;
 }

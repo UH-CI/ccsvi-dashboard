@@ -1,18 +1,18 @@
 import { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
 import { useMapStore, useHazardLayersStore } from "../../../stores";
-import { deriveHazard } from "../deriveHazard";
+import { deriveVisibleHazards } from "../deriveHazard";
 
 export const HazardSection: React.FC = () => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
 
-  const derivedHazard = useMemo(
-    () => deriveHazard(visibleLayerIdsByMap[primaryMapId]),
+  const derivedHazards = useMemo(
+    () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]),
     [visibleLayerIdsByMap, primaryMapId],
   );
 
-  if (!derivedHazard) {
+  if (derivedHazards.length === 0) {
     return null;
   }
 
@@ -25,9 +25,15 @@ export const HazardSection: React.FC = () => {
       >
         Hazard
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }}>
-        {derivedHazard.label}
-      </Typography>
+      {derivedHazards.map((hazard) => (
+        <Typography
+          key={`${hazard.hazardId}.${hazard.subId ?? ""}`}
+          variant="body2"
+          sx={{ fontWeight: 500, mt: 0.25 }}
+        >
+          {hazard.label}
+        </Typography>
+      ))}
     </Box>
   );
 };

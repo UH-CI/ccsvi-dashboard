@@ -4,7 +4,7 @@ import { useAppStore, useMapStore, useFilterStore, useHazardLayersStore } from "
 import { HistogramSection } from "./components/HistogramSection";
 import { HazardSection } from "./components/HazardSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
-import { deriveHazard } from "./deriveHazard";
+import { deriveVisibleHazards } from "./deriveHazard";
 
 export const DataAnalyzerMenu = () => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
@@ -13,7 +13,7 @@ export const DataAnalyzerMenu = () => {
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
 
   const hasHazard = useMemo(
-    () => deriveHazard(visibleLayerIdsByMap[primaryMapId]) !== null,
+    () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]).length > 0,
     [visibleLayerIdsByMap, primaryMapId],
   );
 

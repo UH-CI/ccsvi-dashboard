@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Stack, Typography, Chip, Button, IconButton, CircularProgress } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useAppStore, useFilterStore, useMapStore, useHazardLayersStore } from "../../../stores";
-import { deriveHazard } from "../deriveHazard";
+import { deriveVisibleHazards } from "../deriveHazard";
 
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
@@ -25,7 +25,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
 
-  const setHazard = useFilterStore((state) => state.setHazard);
+  const setHazards = useFilterStore((state) => state.setHazards);
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
   const metricFilters = useFilterStore((state) => state.metricFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
@@ -34,8 +34,8 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const error = useFilterStore((state) => state.error);
   const results = useFilterStore((state) => state.results);
 
-  const derivedHazard = useMemo(
-    () => deriveHazard(visibleLayerIdsByMap[primaryMapId]),
+  const derivedHazards = useMemo(
+    () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]),
     [visibleLayerIdsByMap, primaryMapId],
   );
 
@@ -53,10 +53,10 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
 
   const hasMetricThreshold = mvColumn !== null && filterRange !== null;
   const hasMetricThreshold2 = mvColumn2 !== null && filterRange2 !== null;
-  const hasCriteria = derivedHazard !== null || hasMetricThreshold || hasMetricThreshold2;
+  const hasCriteria = derivedHazards.length > 0 || hasMetricThreshold || hasMetricThreshold2;
 
   const handleApply = () => {
-    setHazard(derivedHazard?.hazardId ?? null, derivedHazard?.subId ?? null);
+    setHazards(derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId)));
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
