@@ -5,18 +5,17 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 interface FilterState {
   county: string | null;
-  hazardId: string | null;
-  subId: string | null;
-  heightFt: number | null;
+  hazards: string[];
   metricFilters: Partial<Record<string, number>>;
   results: BlockGroupResult[] | null;
+  filteredGeoids: Set<string> | null;
   isLoading: boolean;
   error: string | null;
 }
 
 interface FilterActions {
   setCounty: (county: string | null) => void;
-  setHazard: (hazardId: string | null, subId?: string | null, heightFt?: number | null) => void;
+  setHazards: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
   applyFilter: () => Promise<void>;
   buildExportUrl: () => string;
@@ -25,11 +24,10 @@ interface FilterActions {
 
 const initialState: FilterState = {
   county: null,
-  hazardId: null,
-  subId: null,
-  heightFt: null,
+  hazards: [],
   metricFilters: {},
   results: null,
+  filteredGeoids: null,
   isLoading: false,
   error: null,
 };
@@ -37,9 +35,7 @@ const initialState: FilterState = {
 const buildParams = (state: FilterState): URLSearchParams => {
   const params = new URLSearchParams();
   if (state.county && state.county !== "__all__") params.set("county", state.county);
-  if (state.hazardId) params.set("hazard_id", state.hazardId);
-  if (state.subId) params.set("sub_id", state.subId);
-  if (state.heightFt !== null) params.set("height_ft", String(state.heightFt));
+  for (const id of state.hazards) params.append("hazard", id);
   for (const [col, val] of Object.entries(state.metricFilters)) {
     if (val !== undefined) params.set(`min_${col}`, String(val));
   }
@@ -50,7 +46,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
   ...initialState,
 
   setCounty: (county) => set({ county }),
-  setHazard: (hazardId, subId = null, heightFt = null) => set({ hazardId, subId, heightFt }),
+  setHazards: (ids) => set({ hazards: ids }),
 
   setMetricFilter: (col, value) =>
     set((state) => {
@@ -71,7 +67,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       const res = await fetch(`${BASE_URL}/api/v1/block-groups?${params}`);
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as BlockGroupResult[];
-      set({ results: data, isLoading: false });
+      set({ results: data, filteredGeoids: new Set(data.map((r) => r.geoid)), isLoading: false });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : "Filter failed",
@@ -91,7 +87,4 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
 export const useIsFiltered = () => useFilterStore((s) => s.results !== null);
 
-export const useFilteredGeoids = () =>
-  useFilterStore((s) =>
-    s.results ? new Set(s.results.map((r) => r.geoid)) : null,
-  );
+export const useFilteredGeoids = () => useFilterStore((s) => s.filteredGeoids);

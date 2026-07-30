@@ -83,7 +83,14 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
 
   const openMenu = useCallback((key: NonNullable<PopoverKey>, el: HTMLElement) => {
-    setAnchors({ [key]: el });
+    setAnchors((prev) => {
+      // The Analyzer panel is persistent, stays open while other menus are used
+      if (key === "analyzer") return { ...prev, analyzer: el };
+      const next: Partial<Record<NonNullable<PopoverKey>, HTMLElement>> = {};
+      if (prev.analyzer) next.analyzer = prev.analyzer;
+      next[key] = el;
+      return next;
+    });
   }, []);
 
   const closeMenu = useCallback((key: NonNullable<PopoverKey>) => {
