@@ -1,11 +1,31 @@
 import geoblaze from "geoblaze";
 import parseGeoraster from "georaster";
 import type { Feature, Geometry } from "geojson";
+import { RASTER_LAYERS } from "../config/rasterLayers";
 import { cloneArrayBuffer } from "./hcdpRaster";
 
 type ParsedGeoraster = Awaited<ReturnType<typeof parseGeoraster>>;
 
 const georasterByCacheKey = new Map<string, ParsedGeoraster>();
+
+function resolveRasterConfig(layerId: string) {
+  const directMatch = RASTER_LAYERS.find((layer) => layer.id === layerId);
+  if (directMatch?.sourceFileName) return directMatch;
+
+  const [parentId, subId] = layerId.split(".");
+  const parentLayer = RASTER_LAYERS.find((layer) => layer.id === parentId);
+  if (!parentLayer?.subLayers) return null;
+
+  const subLayer = parentLayer.subLayers.find((layer) => layer.id === subId);
+  return subLayer?.sourceFileName ? subLayer : null;
+}
+
+export function getRasterDataUrl(layerId: string): string | null {
+  const rasterConfig = resolveRasterConfig(layerId);
+  const filename = rasterConfig?.sourceFileName;
+  if (!filename) return null;
+  return `/data/v05-2026/rasters/${encodeURIComponent(filename)}`;
+}
 
 export function clearHcdpGeorasterCache(loadId?: number): void {
   if (loadId == null) {
