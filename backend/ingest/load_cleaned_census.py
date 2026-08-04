@@ -2,18 +2,32 @@
 Geographies table are assumed to already exist.
 
 Usage (from the backend/ directory, after activating .venv and exporting DATABASE_URL):
+    # Load CSVs that are already cleaned:
     python -m ingest.load_cleaned_census --dir /path/to/cleaned-data-TEST
+
+    # Clean straight from raw Census CSVs first, then load the result:
+    python -m ingest.load_cleaned_census \\
+        --raw-base-path /path/to/raw/Metrics \\
+        --notes-xlsx /path/to/JPL_CCSVI_all_fields.xlsx \\
+        --central-dir /path/to/centralized-raw-copies \\
+        --boundaries-geojson /path/to/2020_Census_Block_Groups_Stripped.geojson \\
+        --hawaiian-homelands-geojson /path/to/Census_Hawaiian_Homelands_hhl10_Stripped.geojson \\
+        --output-dir /path/to/cleaned-data-TEST
 """
 
 import argparse
 import asyncio
 import glob
 import os
+import tempfile
 
 import asyncpg
 import pandas as pd
 
+from cleaning import pipeline, proportions
 from cleaning.census_transform import clean_column_name
+
+DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "cleaning", "config", "census_datasets_config.json")
 
 PREFIXES_TO_REMOVE = ["Estimate!!Total:!!", "Estimate!!Total!!", "Margin of Error!!", "Estimate!!"]
 
@@ -149,6 +163,38 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
     print(f"  {dataset_id}: {len(metric_names)} metrics, {len(value_rows)} metric_values rows")
 
 
+# If --raw-base-path was given, runs the full raw-to-cleaned pipeline first and
+# returns the folder its output landed in; otherwise just returns --dir as-is.
+def resolve_cleaned_dir(args: argparse.Namespace) -> str:
+    if not args.raw_base_path:
+        return args.dir
+
+    cleaned_dir = args.output_dir or args.dir or tempfile.mkdtemp(prefix="ccsvi-cleaned-")
+
+    print(f"Cleaning raw datasets into {cleaned_dir} ...")
+    pipeline.run_full_cleaning(
+        args.config,
+        args.raw_base_path,
+        args.notes_xlsx,
+        args.central_dir,
+        output_dir=cleaned_dir,
+    )
+
+    block_group_populations = proportions.load_block_group_populations(args.boundaries_geojson)
+    hawaiian_homelands_populations = proportions.load_hawaiian_homelands_populations(
+        args.hawaiian_homelands_geojson
+    )
+    pipeline.add_percentages_to_directory(
+        cleaned_dir,
+        args.config,
+        args.raw_base_path,
+        block_group_populations,
+        hawaiian_homelands_populations,
+    )
+
+    return cleaned_dir
+
+
 async def main(cleaned_dir: str) -> None:
     conn = await asyncpg.connect(DATABASE_URL)
     try:
@@ -169,6 +215,31 @@ async def main(cleaned_dir: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dir", required=True, help="Path to a folder of cleaned census CSVs")
+    parser.add_argument("--dir", help="Folder of already-cleaned census CSVs to load")
+    parser.add_argument(
+        "--raw-base-path",
+        help="Clean from raw first: base path the config's original_file_path entries are relative to",
+    )
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="Path to census_datasets_config.json")
+    parser.add_argument("--notes-xlsx", help="Path to JPL_CCSVI_all_fields.xlsx (required with --raw-base-path)")
+    parser.add_argument("--central-dir", help="Where to centralize copied raw files (required with --raw-base-path)")
+    parser.add_argument(
+        "--boundaries-geojson", help="Block group boundaries GeoJSON (required with --raw-base-path)"
+    )
+    parser.add_argument(
+        "--hawaiian-homelands-geojson", help="Hawaiian Homelands GeoJSON (required with --raw-base-path)"
+    )
+    parser.add_argument(
+        "--output-dir", help="Where to write cleaned CSVs when using --raw-base-path (defaults to --dir)"
+    )
     args = parser.parse_args()
-    asyncio.run(main(args.dir))
+
+    if not args.dir and not args.raw_base_path:
+        parser.error("pass either --dir (already-cleaned CSVs) or --raw-base-path (clean from raw first)")
+    if args.raw_base_path and not all([args.notes_xlsx, args.central_dir, args.boundaries_geojson, args.hawaiian_homelands_geojson]):
+        parser.error(
+            "--raw-base-path also requires --notes-xlsx, --central-dir, --boundaries-geojson, "
+            "and --hawaiian-homelands-geojson"
+        )
+
+    asyncio.run(main(resolve_cleaned_dir(args)))
