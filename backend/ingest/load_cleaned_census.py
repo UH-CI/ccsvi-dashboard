@@ -92,6 +92,10 @@ def read_dataset_rows(csv_path: str) -> tuple[list[str], list[tuple[str, dict]]]
         geoid = row["Geography"]
         if pd.isna(geoid):
             continue
+        # The raw file's "Geography" column holds the Census Bureau's long ID, e.g.
+        # "1500000US150010201001" or "2500000US5048" — the geographies table stores
+        # just the part after "US" ("150010201001" / "5048"), so strip it to match.
+        geoid = str(geoid).split("US")[-1]
 
         values = {}
         for col in base_cols:
