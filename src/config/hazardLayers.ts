@@ -73,6 +73,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "erosion",
     name: "Coastal Erosion",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
     color: "#A89C90",
@@ -114,6 +115,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
@@ -155,6 +157,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "exposure_area",
     name: "Exposure Area",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
     color: "#7ea834",
@@ -197,6 +200,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "passive_flood",
     name: "Passive Flood",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
     color: "#37bbf0",
@@ -238,6 +242,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "sidewalks_and_paths",
     name: "Sidewalks and Paths",
+    menuPanel: "points",
     visible: false,
     icon: "FaWalking",
     color: "#000000",
@@ -254,6 +259,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "state_roads",
     name: "State Roads",
+    menuPanel: "points",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
