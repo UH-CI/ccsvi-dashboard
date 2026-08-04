@@ -11,9 +11,21 @@ def _estimate_total_cols(df: pd.DataFrame) -> list:
     return [col for col in df.columns if len(col) == 2 and col[1].startswith("Estimate!!Total:!!")]
 
 
-# Adds a single "Total Housing Built Before 1990" column
+# Finds the raw "Estimate!!Total:" universe column (not a "!!" subcategory of it)
+def _total_universe_col(df: pd.DataFrame):
+    for col in df.columns:
+        if len(col) == 2 and col[1] == "Estimate!!Total:":
+            return col
+    return None
+
+
+# Adds a single "Total Housing Built Before 1990" column, and carries through the
+# raw total-housing-units column so it can be used as a percentage denominator
 def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        cleaned_df[total_col] = df[total_col]
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = df[cols_to_sum].sum(axis=1)
     return cleaned_df
@@ -153,6 +165,17 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
 # The Hawaiian Homelands source also carries poverty-status columns that belong on the FPL dataset
 def merge_hawaiian_homelands_poverty(fpl_df: pd.DataFrame, hawaiian_homelands_raw_df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([fpl_df, hawaiian_homelands_raw_df.iloc[:, -4:].copy()], axis=1)
+
+
+# aggregate_vehicles' own raw table has no household-count column (it only has the vehicle
+# sums, split by owner/renter occupied) — borrow tenure's total occupied housing units,
+# since that's the same owner/renter-occupied universe this dataset is split by
+def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
+    total_col = _total_universe_col(tenure_raw_df)
+    merged = vehicles_df.copy()
+    if total_col is not None:
+        merged[total_col] = tenure_raw_df[total_col]
+    return merged
 
 
 RECIPES = {
