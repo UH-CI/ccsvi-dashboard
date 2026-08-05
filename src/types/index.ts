@@ -125,9 +125,7 @@ export interface HazardLayerConfig {
     fields?: { key: string; label: string }[];
   };
   subLayers?: SubHazardLayerConfig[];
-  /** Which control-panel menu lists this layer (default: hazards). */
   menuPanel?: HazardLayerMenuPanel;
-  /** Optional accordion label; layers with the same value render under one group. */
   menuGroup?: string;
 }
 
