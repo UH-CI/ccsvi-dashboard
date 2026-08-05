@@ -8,8 +8,11 @@ import { MapTabSelector } from "./MapTabSelector";
 import { LayerToggleItem } from "./LayerToggleItem";
 import { LayerToggleGroup } from "./LayerToggleGroup";
 import { useResolvedMapId } from "../hooks/useResolvedMapId";
-
-const SLR_IDS = ["passive_flood", "potential_flood_highways", "erosion", "exposure_area"];
+import type { HazardLayerConfig } from "../../../types";
+import {
+  buildHazardMenuSections,
+  hazardMenuGroupExpandKey,
+} from "../../../utils/hazardMenuSections";
 
 interface HazardsMenuProps {
   open: boolean;
@@ -40,7 +43,12 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
     [],
   );
 
-  const renderHazardParent = (parent: (typeof hazardLayerConfigs)[number]) => {
+  const menuSections = useMemo(
+    () => buildHazardMenuSections(hazardLayerConfigs, "hazards"),
+    [hazardLayerConfigs],
+  );
+
+  const renderHazardParent = (parent: HazardLayerConfig) => {
     const isParentVisible =
       visibleHazardLayerIdsByMap[resolvedHazardsMapId]?.has(parent.id) ?? false;
     const hasSubs = (parent.subLayers ?? []).length > 0;
@@ -88,11 +96,6 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
     );
   };
 
-  const floodingLayer = hazardLayerConfigs.find((l) => l.id === "flood_hazard");
-  const slrLayers = hazardLayerConfigs.filter((l) => SLR_IDS.includes(l.id));
-  const solarInsolationLayer = hazardLayerConfigs.find((l) => l.id === "solar_insolation");
-  const fireZoneLayer = hazardLayerConfigs.find((l) => l.id === "fire_zone");
-
   return (
     <MenuShell
       open={open}
@@ -108,19 +111,23 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
       />
       {resolvedHazardsMapId && (
         <Stack spacing={1}>
-          {floodingLayer && renderHazardParent(floodingLayer)}
-
-          <LayerToggleGroup
-            label="Sea Level Rise"
-            expanded={expandedHazards["__slr__"] ?? false}
-            onToggleExpand={() => toggleExpand("__slr__")}
-            childrenPl={2}
-          >
-            {slrLayers.map(renderHazardParent)}
-          </LayerToggleGroup>
-
-          {solarInsolationLayer && renderHazardParent(solarInsolationLayer)}
-          {fireZoneLayer && renderHazardParent(fireZoneLayer)}
+          {menuSections.map((section) => {
+            if (section.kind === "layer") {
+              return renderHazardParent(section.layer);
+            }
+            const expandKey = hazardMenuGroupExpandKey(section.label);
+            return (
+              <LayerToggleGroup
+                key={expandKey}
+                label={section.label}
+                expanded={expandedHazards[expandKey] ?? false}
+                onToggleExpand={() => toggleExpand(expandKey)}
+                childrenPl={2}
+              >
+                {section.layers.map(renderHazardParent)}
+              </LayerToggleGroup>
+            );
+          })}
         </Stack>
       )}
     </MenuShell>
