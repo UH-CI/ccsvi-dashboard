@@ -129,6 +129,8 @@ export interface SubRasterLayerConfig {
   id: string;
   name: string;
   color?: string;
+  // The underlying COG file name, used by the popup zonal stats flow.
+  sourceFileName?: string;
   // Use TiTiler built-in colormap names
   colormapName?: string;
   // Shown on the map legend and click-to-query popup
@@ -160,6 +162,8 @@ export interface RasterLayerConfig {
   name: string;
   icon?: string;
   color?: string;
+  // The underlying COG file name, used by the popup zonal stats flow.
+  sourceFileName?: string;
   // Use TiTiler built-in colormap names
   colormapName?: string;
   // Shown on the map legend and click-to-query popup

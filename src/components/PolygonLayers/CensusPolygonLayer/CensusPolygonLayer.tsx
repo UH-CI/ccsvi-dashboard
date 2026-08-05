@@ -10,7 +10,7 @@ import {
 } from "../../../utils/renderPolygonPopup.ts";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { meanHcdpForFeature } from "../../../utils/hcdpZonalStats.ts";
+import { getRasterDataUrl, meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
@@ -248,58 +248,22 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
       if (!currentVisibleIds?.has(activeRasterLayerId)) return;
 
-      const samplePoint = (() => {
-        const geometry = feature.geometry;
-        if (!geometry) return null;
-
-        const coords: Array<[number, number]> = [];
-        const pushCoords = (value: unknown) => {
-          if (Array.isArray(value) && value.length >= 2 && typeof value[0] === "number" && typeof value[1] === "number") {
-            coords.push([value[0], value[1]] as [number, number]);
-            return;
-          }
-          if (Array.isArray(value)) {
-            value.forEach(pushCoords);
-          }
-        };
-
-        if ("coordinates" in geometry) {
-          pushCoords((geometry as { coordinates: unknown }).coordinates);
-        } else if ("geometries" in geometry) {
-          geometry.geometries.forEach((child) => {
-            if ("coordinates" in child) {
-              pushCoords((child as { coordinates: unknown }).coordinates);
-            }
-          });
-        }
-
-        if (coords.length === 0) return null;
-
-        const total = coords.reduce(
-          (acc, [lng, lat]) => ({ lng: acc.lng + lng, lat: acc.lat + lat }),
-          { lng: 0, lat: 0 },
-        );
-        const count = coords.length;
-        return { lng: total.lng / count, lat: total.lat / count };
-      })();
-
-      if (!samplePoint) return;
-
       try {
-        const res = await fetch(
-          `/api/tiles/cog/point/${samplePoint.lng},${samplePoint.lat}` +
-            `?raster_id=${encodeURIComponent(activeRasterLayerId)}`,
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const value: number | null = data.values?.[0] ?? null;
+        const rasterDataUrl = getRasterDataUrl(activeRasterLayerId);
+        const primaryRes = rasterDataUrl ? await fetch(rasterDataUrl) : null;
+        const res = primaryRes?.ok
+          ? primaryRes
+          : await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
+        if (!res?.ok) return;
+        const arrayBuffer = await res.arrayBuffer();
+        const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
 
         const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (!currentRasterId?.has(activeRasterLayerId)) return;
 
         const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
           label: overlayLabel,
-          value: Number.isFinite(value) ? value : null,
+          value: Number.isFinite(value ?? NaN) ? value : null,
           suffix: overlaySuffix,
         });
         if (enrichedHtml) setContent(enrichedHtml);
