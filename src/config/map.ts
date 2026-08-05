@@ -5,8 +5,8 @@ export const MAP_CONFIG = {
   zoom: 8,
   minZoom: 7,
   maxBounds: [
-    [18, -162],
-    [24, -154],
+    [17, -163],
+    [24.5, -153],
   ] as LatLngBoundsExpression,
   maxBoundsViscosity: 1,
 } as const;
