@@ -22,7 +22,7 @@
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
       "description": "Health insurance coverage status by age groups",
       "recipe": "health_insurance_coverage_by_age",
-      "percent_denominator": null
+      "percent_denominator": "Estimate!!Total:"
     },
     {
       "key": "households_with_a_computer",
@@ -54,7 +54,7 @@
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/living_arrangements/ACSDT5Y2022.B09019-Data.csv",
       "description": "Living arrangements including living alone by sex and relationship",
       "recipe": "living_arragements_including_living_alone_by_sex_and_relationship",
-      "percent_denominator": null
+      "percent_denominator": "Estimate!!Total:"
     },
     {
       "key": "income_share_of_fpl",
@@ -62,7 +62,7 @@
       "original_file_path": "All Exposures/Other/Ratio of Income to Poverty Level in the Past 12 Months (2022)/ACSDT5Y2022.C17002_2025-03-17T172135/ACSDT5Y2022.C17002-Data.csv",
       "description": "Ratio of income to poverty level",
       "recipe": "income_share_of_fpl",
-      "percent_denominator": null
+      "percent_denominator": "Estimate!!Total:"
     },
     {
       "key": "persons_under_5_65_years_table",
@@ -86,7 +86,7 @@
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/race_origin/ACSDT5Y2022.B02001-Data.csv",
       "description": "Race and Hispanic or Latino origin",
       "recipe": null,
-      "percent_denominator": null
+      "percent_denominator": "Estimate!!Total:"
     },
     {
       "key": "tenure",
@@ -102,7 +102,7 @@
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022_census_hawaiian_homelands/ACSST5Y2022.S0601-Data.csv",
       "description": "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
       "recipe": "2022_census_hawaiian_homelands",
-      "percent_denominator": null
+      "percent_denominator": "Estimate!!Total!!Total population"
     }
   ]
 }

@@ -57,6 +57,9 @@ def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
 # Adds a single "No Health Insurance Coverage" column
 def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        _carry_with_moe(cleaned_df, df, total_col)
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df[("CALCULATED", "No Health Insurance Coverage")] = df[cols_to_sum].sum(axis=1)
     return cleaned_df
@@ -139,18 +142,26 @@ Returns a dict of {output_name: dataframe} since one dataset produces three
 separate CSVs.
 """
 def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
+    total_col = _total_universe_col(df)
+
     genders_df = df.iloc[:, :2].copy()
+    if total_col is not None:
+        _carry_with_moe(genders_df, df, total_col)
     _carry_with_moe(genders_df, df, ("B01001_002E", "Estimate!!Total:!!Male:"))
     _carry_with_moe(genders_df, df, ("B01001_026E", "Estimate!!Total:!!Female:"))
 
     males_under_5, males_under_18, males_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Male:!!")
     males_df = df.iloc[:, :2].copy()
+    if total_col is not None:
+        _carry_with_moe(males_df, df, total_col)
     males_df[("CALCULATED", "Males Under 5")] = df[males_under_5].sum(axis=1)
     males_df[("CALCULATED", "Males Under 18")] = df[males_under_18].sum(axis=1)
     males_df[("CALCULATED", "Males Over 65")] = df[males_over_65].sum(axis=1)
 
     females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
     females_df = df.iloc[:, :2].copy()
+    if total_col is not None:
+        _carry_with_moe(females_df, df, total_col)
     females_df[("CALCULATED", "Females Under 5")] = df[females_under_5].sum(axis=1)
     females_df[("CALCULATED", "Females Under 18")] = df[females_under_18].sum(axis=1)
     females_df[("CALCULATED", "Females Over 65")] = df[females_over_65].sum(axis=1)
@@ -164,6 +175,11 @@ then appends the trailing poverty-status columns (kept as-is from source).
 """
 def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
+
+    for col in df.columns:
+        if len(col) == 2 and col[1] == "Estimate!!Total!!Total population":
+            _carry_with_moe(cleaned_df, df, col)
+            break
 
     under_5_cols, under_18_cols, over_65_cols = [], [], []
 

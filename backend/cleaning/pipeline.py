@@ -154,6 +154,14 @@ def run_full_cleaning(
     return cleaned
 
 
+# person_under_5_65 split outputs share one pop total but have no config alias of their own
+SPLIT_OUTPUT_DENOMINATORS = {
+    "genders": "Estimate!!Total:",
+    "person_under_5_65_males": "Estimate!!Total:",
+    "person_under_5_65_females": "Estimate!!Total:",
+}
+
+
 # Adds Census_Population and "(%)" columns to every CSV in cleaned_dir, in place
 def add_percentages_to_directory(
     cleaned_dir: str,
@@ -170,7 +178,7 @@ def add_percentages_to_directory(
 
     for csv_file in glob.glob(os.path.join(cleaned_dir, "*.csv")):
         alias = os.path.splitext(os.path.basename(csv_file))[0]
-        denominator_column = denominator_map.get(alias)
+        denominator_column = denominator_map.get(alias) or SPLIT_OUTPUT_DENOMINATORS.get(alias)
         print(f"Adding proportions to {os.path.basename(csv_file)}...")
         df_with_props = proportions.add_percentages_to_csv(
             csv_file,
