@@ -142,6 +142,13 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
 
     metric_names, rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
 
+    # Drop any metric this dataset no longer produces so stale values don't hang
+    await conn.execute(
+        "DELETE FROM metrics WHERE dataset_id = $1 AND name != ALL($2::text[])",
+        dataset_id,
+        list(dict.fromkeys(metric_names)),
+    )
+
     await conn.executemany(
         """
         INSERT INTO metrics (dataset_id, name, classification_mode)
