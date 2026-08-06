@@ -2,17 +2,10 @@
 Geographies table are assumed to already exist.
 
 Usage (from the backend/ directory, after activating .venv and exporting DATABASE_URL):
-    # Load CSVs that are already cleaned:
-    python -m ingest.load_cleaned_census --dir /path/to/cleaned-data-TEST
+    python -m ingest.load_cleaned_census
 
-    # Clean straight from raw Census CSVs first, then load the result:
-    python -m ingest.load_cleaned_census \\
-        --raw-base-path /path/to/raw/Metrics \\
-        --notes-xlsx /path/to/JPL_CCSVI_all_fields.xlsx \\
-        --central-dir /path/to/centralized-raw-copies \\
-        --boundaries-geojson /path/to/2020_Census_Block_Groups_Stripped.geojson \\
-        --hawaiian-homelands-geojson /path/to/Census_Hawaiian_Homelands_hhl10_Stripped.geojson \\
-        --output-dir /path/to/cleaned-data-TEST
+Cleans raw Census files and loads the result into database
+Pass --dir instead to skip cleaning and load CSVs you already have. 
 """
 
 import argparse
@@ -27,7 +20,19 @@ import pandas as pd
 from cleaning import pipeline, proportions
 from cleaning.census_transform import clean_column_name
 
+REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "cleaning", "config", "census_datasets_config.json")
+
+# Where the raw-cleaning pipeline reads its inputs from on the VM. Edit if
+# VM's directory layout changes.
+DEFAULT_RAW_BASE_PATH = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
+DEFAULT_CENTRAL_DIR = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
+DEFAULT_NOTES_XLSX = "/home/exouser/ccsvi-data/archived/raw_files/metrics/JPL_CCSVI_all_fields.xlsx"
+DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
+DEFAULT_HAWAIIAN_HOMELANDS_GEOJSON = os.path.join(
+    REPO_ROOT, "public", "data", "Census_Hawaiian_Homelands_hhl10_Stripped.geojson"
+)
+DEFAULT_OUTPUT_DIR = "/home/exouser/ccsvi-data/archived/cleaned-data"
 
 PREFIXES_TO_REMOVE = ["Estimate!!Total:!!", "Estimate!!Total!!", "Margin of Error!!", "Estimate!!"]
 
@@ -94,6 +99,10 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         geoid = row["Geography"]
         if pd.isna(geoid):
             continue
+        # The raw file's "Geography" column holds the Census Bureau's long ID, e.g.
+        # "1500000US150010201001" or "2500000US5048" — the geographies table stores
+        # just the part after "US" ("150010201001" / "5048"), so strip it to match.
+        geoid = str(geoid).split("US")[-1]
 
         values = {}
         for col in base_cols:
@@ -170,13 +179,13 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
     print(f"  {dataset_id}: {len(metric_names)} metrics, {len(value_rows)} metric_values rows")
 
 
-# If --raw-base-path was given, runs the full raw-to-cleaned pipeline first and
-# returns the folder its output landed in; otherwise just returns --dir as-is.
+# If --dir given, skip cleaning and use that folder. Else, run the full
+# raw-to-cleaned pipeline and return the folder its output landed in.
 def resolve_cleaned_dir(args: argparse.Namespace) -> str:
-    if not args.raw_base_path:
+    if args.dir:
         return args.dir
 
-    cleaned_dir = args.output_dir or args.dir or tempfile.mkdtemp(prefix="ccsvi-cleaned-")
+    cleaned_dir = args.output_dir or tempfile.mkdtemp(prefix="ccsvi-cleaned-")
 
     print(f"Cleaning raw datasets into {cleaned_dir} ...")
     pipeline.run_full_cleaning(
@@ -222,31 +231,16 @@ async def main(cleaned_dir: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dir", help="Folder of already-cleaned census CSVs to load")
     parser.add_argument(
-        "--raw-base-path",
-        help="Clean from raw first: base path the config's original_file_path entries are relative to",
+        "--dir", help="Skip cleaning — load a folder of already-cleaned census CSVs instead"
     )
-    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="Path to census_datasets_config.json")
-    parser.add_argument("--notes-xlsx", help="Path to JPL_CCSVI_all_fields.xlsx (required with --raw-base-path)")
-    parser.add_argument("--central-dir", help="Where to centralize copied raw files (required with --raw-base-path)")
-    parser.add_argument(
-        "--boundaries-geojson", help="Block group boundaries GeoJSON (required with --raw-base-path)"
-    )
-    parser.add_argument(
-        "--hawaiian-homelands-geojson", help="Hawaiian Homelands GeoJSON (required with --raw-base-path)"
-    )
-    parser.add_argument(
-        "--output-dir", help="Where to write cleaned CSVs when using --raw-base-path (defaults to --dir)"
-    )
+    parser.add_argument("--raw-base-path", default=DEFAULT_RAW_BASE_PATH)
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
+    parser.add_argument("--notes-xlsx", default=DEFAULT_NOTES_XLSX)
+    parser.add_argument("--central-dir", default=DEFAULT_CENTRAL_DIR)
+    parser.add_argument("--boundaries-geojson", default=DEFAULT_BOUNDARIES_GEOJSON)
+    parser.add_argument("--hawaiian-homelands-geojson", default=DEFAULT_HAWAIIAN_HOMELANDS_GEOJSON)
+    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
-
-    if not args.dir and not args.raw_base_path:
-        parser.error("pass either --dir (already-cleaned CSVs) or --raw-base-path (clean from raw first)")
-    if args.raw_base_path and not all([args.notes_xlsx, args.central_dir, args.boundaries_geojson, args.hawaiian_homelands_geojson]):
-        parser.error(
-            "--raw-base-path also requires --notes-xlsx, --central-dir, --boundaries-geojson, "
-            "and --hawaiian-homelands-geojson"
-        )
 
     asyncio.run(main(resolve_cleaned_dir(args)))
