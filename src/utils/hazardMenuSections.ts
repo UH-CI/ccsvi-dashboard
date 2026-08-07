@@ -13,20 +13,20 @@ export function buildHazardMenuSections(
   configs: HazardLayerConfig[],
   panel: HazardLayerConfig["menuPanel"] = "hazards",
 ): HazardMenuSection[] {
-  const sorted = configs
-    .map((layer, index) => ({ layer, index }))
-    .filter(({ layer }) => (layer.menuPanel ?? "hazards") === panel);
+  const filtered = configs.filter((layer) => (layer.menuPanel ?? "hazards") === panel);
 
   const sections: HazardMenuSection[] = [];
+  const groupsByLabel = new Map<string, Extract<HazardMenuSection, { kind: "group" }>>();
 
-  for (const { layer } of sorted) {
+  for (const layer of filtered) {
     if (layer.menuGroup) {
-      const last = sections[sections.length - 1];
-      if (last?.kind === "group" && last.label === layer.menuGroup) {
-        last.layers.push(layer);
-      } else {
-        sections.push({ kind: "group", label: layer.menuGroup, layers: [layer] });
+      let group = groupsByLabel.get(layer.menuGroup);
+      if (!group) {
+        group = { kind: "group", label: layer.menuGroup, layers: [] };
+        groupsByLabel.set(layer.menuGroup, group);
+        sections.push(group);
       }
+      group.layers.push(layer);
     } else {
       sections.push({ kind: "layer", layer });
     }
