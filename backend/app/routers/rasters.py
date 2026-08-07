@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi.responses import FileResponse
 from rio_tiler.colormap import cmap as colormap_registry
 from titiler.core.factory import TilerFactory
 
@@ -49,16 +50,19 @@ async def get_raster_file(
         str,
         Query(description="Composite raster layer ID (e.g. 'stormSurge.inundation_category1')"),
     ],
-    response: Response,
-) -> Response:
-    """Return the full COG bytes for a raster layer so the client can compute zonal statistics."""
+) -> FileResponse:
+    """Stream the full COG file for a raster layer so the client can compute zonal statistics."""
     file_path = Path(raster_path_dep(raster_id))
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"Raster file not found for '{raster_id}'")
 
-    response.headers["Cache-Control"] = "public, max-age=86400"
-    response.headers["Content-Disposition"] = f'attachment; filename="{file_path.name}"'
-    return Response(content=file_path.read_bytes(), media_type="application/octet-stream")
+    # FileResponse streams the file in chunks instead of reading it fully into memory,
+    # so a large COG request doesn't block the event loop for other in-flight requests.
+    return FileResponse(
+        file_path,
+        media_type="application/octet-stream",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.get("/api/v1/rasters")
