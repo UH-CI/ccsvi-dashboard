@@ -91,6 +91,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
   const floodingLayer = hazardLayerConfigs.find((l) => l.id === "flood_hazard");
   const slrLayers = hazardLayerConfigs.filter((l) => SLR_IDS.includes(l.id));
   const solarInsolationLayer = hazardLayerConfigs.find((l) => l.id === "solar_insolation");
+  const fireZoneLayer = hazardLayerConfigs.find((l) => l.id === "fire_zone");
 
   return (
     <MenuShell
@@ -119,6 +120,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
           </LayerToggleGroup>
 
           {solarInsolationLayer && renderHazardParent(solarInsolationLayer)}
+          {fireZoneLayer && renderHazardParent(fireZoneLayer)}
         </Stack>
       )}
     </MenuShell>

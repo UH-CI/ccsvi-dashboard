@@ -12,6 +12,13 @@ export interface HcdpPopupField {
   loading?: boolean;
 }
 
+export interface OverlayPopupField {
+  label: string;
+  value?: number | null;
+  loading?: boolean;
+  suffix?: string;
+}
+
 interface FeaturePopupProps {
   // title: string;
   metadata?: string[];
@@ -24,6 +31,7 @@ interface FeaturePopupProps {
   metricValue2?: number | null;
   metricMoE2?: number | null;
   hcdp?: HcdpPopupField;
+  overlay?: OverlayPopupField;
 }
 
 export function FeaturePopup({
@@ -38,6 +46,7 @@ export function FeaturePopup({
   metricValue2,
   metricMoE2,
   hcdp,
+  overlay,
 }: FeaturePopupProps): string {
   const properties = feature.properties || {};
 
@@ -100,6 +109,22 @@ export function FeaturePopup({
                 ? "Calculating…"
                 : hcdp.value != null
                   ? hcdp.value.toFixed(2)
+                  : "N/A"
+            }</span>
+          </div>
+        `
+            : ""
+        }
+        ${
+          overlay
+            ? `
+          <div class="${styles["popup-field"]}">
+            <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)}:</span>
+            <span class="${styles["popup-field-value"]}">${
+              overlay.loading
+                ? "Calculating…"
+                : overlay.value != null
+                  ? `${overlay.value.toFixed(2)}${overlay.suffix ?? ""}`
                   : "N/A"
             }</span>
           </div>

@@ -1,5 +1,5 @@
 import { Feature } from "geojson";
-import { FeaturePopup, type HcdpPopupField } from "../components/FeaturePopup";
+import { FeaturePopup, type HcdpPopupField, type OverlayPopupField } from "../components/FeaturePopup";
 import { GeographiesData } from "../types";
 
 interface PopupConfig {
@@ -22,6 +22,7 @@ export function buildPolygonPopupHtml(
   feature: Feature,
   ctx: PolygonPopupContext,
   hcdp?: HcdpPopupField,
+  overlay?: OverlayPopupField,
 ): string | null {
   const geoid = feature.properties?.[ctx.config.geoidProperty];
   if (!geoid) return null;
@@ -53,6 +54,7 @@ export function buildPolygonPopupHtml(
     metricValue2: metricValue2 ?? undefined,
     metricMoE2,
     hcdp,
+    overlay,
   });
 }
 
