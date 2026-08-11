@@ -13,7 +13,7 @@ import {
   ListSubheader,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, ExpandMore } from "@mui/icons-material";
-// UI: Button + Menu used to expose a visible, labeled "Controls" submenu for each map
+//"Controls" submenu for each map
 import {
   useAppStore,
   useMapStore,
@@ -54,21 +54,23 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
-  // Preview state: show underlined/bold title with trailing underscore to indicate editable
   const [isRenamingPreview, setIsRenamingPreview] = useState(false);
-  // Anchor element for the visible "Controls" dropdown that groups map actions
   const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
 
-  // Ref to the inline title input so it can be focused when switching to edit mode
   const titleInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Focus the input when entering edit mode
+  // Focus input
   React.useEffect(() => {
-    if (isEditingTitle && titleInputRef.current) {
-      titleInputRef.current.focus();
-      // Move caret to end
-      const len = titleInputRef.current.value.length;
-      titleInputRef.current.setSelectionRange(len, len);
+    if (isEditingTitle) {
+      // Defer focusing to the next macrotask to ensure the input is mounted and visible
+      // (closing menus can affect focus timing)
+      setTimeout(() => {
+        if (titleInputRef.current) {
+          titleInputRef.current.focus();
+          const len = titleInputRef.current.value.length;
+          titleInputRef.current.setSelectionRange(len, len);
+        }
+      }, 0);
     }
   }, [isEditingTitle]);
 
@@ -200,11 +202,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             {/* Rename Control */}
             <MenuItem
               onClick={() => {
-                // Show a visual preview state (bold + underline + trailing underscore)
-                // to signal the title is editable. Clicking the title will open the input.
-                setIsRenamingPreview(true);
+                // close Controls menu so the inline input is visible and delay focus slightly.
+                setIsEditingTitle(true);
+                setIsRenamingPreview(false);
                 setTitleEditValue(config.title);
-                // Keep Controls menu open so the preview is visible
+                setControlsMenuAnchor(null);
               }}
             >
               <Edit fontSize="small" />
