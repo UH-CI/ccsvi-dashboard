@@ -74,35 +74,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
     }
   }, [isEditingTitle]);
 
-  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
-  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
-  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
-  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
-
-  // The "leaf" raster ID is the one passed to TiTiler as raster_id.
-  const activeRasterLeafId = useMemo(() => {
-    const visible = visibleRasterIdsByMap[mapId];
-    if (!visible || visible.size === 0) return null;
-    for (const id of visible) {
-      if (id.includes(".")) return id;
-    }
-    return [...visible][0] ?? null;
-  }, [visibleRasterIdsByMap, mapId]);
-
-  // Resolve the current colormap: override takes precedence, then the layer config default.
-  const activeRasterColormap = useMemo(() => {
-    if (!activeRasterLeafId) return null;
-    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
-    if (override) return override;
-    const [parentId, subId] = activeRasterLeafId.split(".");
-    if (!subId) {
-      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
-    }
-    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
-    return (
-      parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null
-    );
-  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
   const datasetList = useMemo(() => {
     if (!dataset) return [];
@@ -164,6 +135,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </Typography>
           )}
           {/* Prominent Controls button — opens a labeled submenu replacing small icon buttons */}
+          {/* Keep a visible Palette icon for quick access to color schemes (matches original UX) */}
           <Button
             size="small"
             onClick={(e) => setControlsMenuAnchor(e.currentTarget)}
@@ -217,45 +189,23 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
             <Divider />
 
-            {/* Color Scheme Control */}
-            {config.visible && config.dataset && config.metric && (
-              <>
-                <MenuItem
-                  onClick={(e) => {
-                    setColorSchemeAnchor(e.currentTarget);
-                  }}
-                  sx={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Palette fontSize="small" />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      Color Scheme
-                    </Typography>
-                  </Box>
-                  <ExpandMore fontSize="small" />
-                </MenuItem>
-              </>
-            )}
+            {/* Color Scheme Control - always present but disabled until a dataset+metric is selected */}
+            <MenuItem
+              disabled={!(config.visible && config.dataset && config.metric)}
+              onClick={(e) => {
+                if (config.visible && config.dataset && config.metric) setColorSchemeAnchor(e.currentTarget);
+              }}
+              sx={{ display: "flex", justifyContent: "space-between" }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Palette fontSize="small" />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  Color Scheme
+                </Typography>
+              </Box>
+              <ExpandMore fontSize="small" />
+            </MenuItem>
 
-            {/* Raster Colormap Control */}
-            {activeRasterLeafId && (
-              <>
-                <MenuItem
-                  onClick={(e) => {
-                    setRasterColorSchemeAnchor(e.currentTarget);
-                  }}
-                  sx={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Gradient fontSize="small" />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      Raster Colormap
-                    </Typography>
-                  </Box>
-                  <ExpandMore fontSize="small" />
-                </MenuItem>
-              </>
-            )}
 
             <Divider />
 
@@ -277,31 +227,16 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           </Menu>
 
           {/* Color Scheme Submenu */}
-          {config.visible && config.dataset && config.metric && (
-            <ColorSchemeMenu
-              anchorEl={colorSchemeAnchor}
-              open={Boolean(colorSchemeAnchor)}
-              onClose={() => setColorSchemeAnchor(null)}
-              config={config}
-              dataset={dataset}
-              mapOpacities={mapOpacities}
-              updateMapConfig={updateMapConfig}
-              setLayerOpacity={setLayerOpacity}
-            />
-          )}
-
-          {/* Raster Colormap Submenu */}
-          {activeRasterLeafId && (
-            <RasterColormapMenu
-              anchorEl={rasterColorSchemeAnchor}
-              open={Boolean(rasterColorSchemeAnchor)}
-              onClose={() => setRasterColorSchemeAnchor(null)}
-              mapId={mapId}
-              activeRasterLeafId={activeRasterLeafId}
-              activeRasterColormap={activeRasterColormap}
-              setRasterColormap={setRasterColormap}
-            />
-          )}
+          <ColorSchemeMenu
+            anchorEl={colorSchemeAnchor}
+            open={Boolean(colorSchemeAnchor)}
+            onClose={() => setColorSchemeAnchor(null)}
+            config={config}
+            dataset={dataset}
+            mapOpacities={mapOpacities}
+            updateMapConfig={updateMapConfig}
+            setLayerOpacity={setLayerOpacity}
+          />
         </Box>
       )}
 
