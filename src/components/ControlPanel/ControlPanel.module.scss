@@ -228,6 +228,21 @@
   min-width: 0;
 }
 
+// Input used when renaming a map — bold, underlined, and shows trailing underscore as edit hint
+.map-tab-input {
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  /* leave space on the right to show a trailing underscore during preview */
+  padding-right: 8px;
+}
+
 // Styles for the prominent "Controls" button that opens the map submenu
 .single-map-controls-btn {
   flex-shrink: 0;

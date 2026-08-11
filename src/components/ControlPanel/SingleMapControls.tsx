@@ -54,8 +54,23 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
+  // Preview state: show underlined/bold title with trailing underscore to indicate editable
+  const [isRenamingPreview, setIsRenamingPreview] = useState(false);
   // Anchor element for the visible "Controls" dropdown that groups map actions
   const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
+
+  // Ref to the inline title input so it can be focused when switching to edit mode
+  const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Focus the input when entering edit mode
+  React.useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      // Move caret to end
+      const len = titleInputRef.current.value.length;
+      titleInputRef.current.setSelectionRange(len, len);
+    }
+  }, [isEditingTitle]);
 
   const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
   const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
@@ -104,22 +119,43 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
         <Box className={styles["single-map-actions"]}>
           {isEditingTitle ? (
             <input
+              ref={titleInputRef}
               className={styles["map-tab-input"]}
               value={titleEditValue}
-              autoFocus
               onChange={(e) => setTitleEditValue(e.target.value)}
               onBlur={() => {
                 updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
                 setIsEditingTitle(false);
+                setIsRenamingPreview(false);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
                   setIsEditingTitle(false);
+                  setIsRenamingPreview(false);
                 }
-                if (e.key === "Escape") setIsEditingTitle(false);
+                if (e.key === "Escape") {
+                  setIsEditingTitle(false);
+                  setIsRenamingPreview(false);
+                }
               }}
             />
+          ) : isRenamingPreview ? (
+            // Preview state: styled title with trailing underscore to hint editability
+            <Typography
+              variant="body2"
+              className={styles["single-map-title"]}
+              onClick={() => {
+                // Switch to real edit input when user clicks the previewed title
+                setIsEditingTitle(true);
+                setIsRenamingPreview(false);
+                setTitleEditValue(config.title);
+              }}
+              style={{ fontWeight: 700, cursor: "text" }}
+            >
+              {config.title}
+              <span style={{ opacity: 0.8 }}>{" _"}</span>
+            </Typography>
           ) : (
             <Typography variant="body2" className={styles["single-map-title"]}>
               {config.title}
@@ -164,9 +200,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             {/* Rename Control */}
             <MenuItem
               onClick={() => {
-                setIsEditingTitle(true);
+                // Show a visual preview state (bold + underline + trailing underscore)
+                // to signal the title is editable. Clicking the title will open the input.
+                setIsRenamingPreview(true);
                 setTitleEditValue(config.title);
-                setControlsMenuAnchor(null);
+                // Keep Controls menu open so the preview is visible
               }}
             >
               <Edit fontSize="small" />
