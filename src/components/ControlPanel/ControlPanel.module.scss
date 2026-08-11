@@ -228,6 +228,22 @@
   min-width: 0;
 }
 
+// Styles for the prominent "Controls" button that opens the map submenu
+.single-map-controls-btn {
+  flex-shrink: 0;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  border-radius: 6px !important;
+  color: #1976d2 !important;
+  padding: 6px 12px !important;
+  background-color: rgba(25, 118, 210, 0.08) !important;
+  
+  &:hover {
+    background-color: rgba(25, 118, 210, 0.12) !important;
+  }
+}
+
 .single-map-action-btns {
   display: flex;
   gap: 2px;
