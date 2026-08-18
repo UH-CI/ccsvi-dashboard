@@ -10,7 +10,7 @@ import {
 } from "../../../utils/renderPolygonPopup.ts";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { getRasterDataUrl, meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
+import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
@@ -249,12 +249,8 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       if (!currentVisibleIds?.has(activeRasterLayerId)) return;
 
       try {
-        const rasterDataUrl = getRasterDataUrl(activeRasterLayerId);
-        const primaryRes = rasterDataUrl ? await fetch(rasterDataUrl) : null;
-        const res = primaryRes?.ok
-          ? primaryRes
-          : await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
-        if (!res?.ok) return;
+        const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
+        if (!res.ok) return;
         const arrayBuffer = await res.arrayBuffer();
         const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
 
