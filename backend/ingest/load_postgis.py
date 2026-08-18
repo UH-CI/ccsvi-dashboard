@@ -34,15 +34,16 @@ COUNTY_GEOIDS = {
 
 # (filename, layer_id matching pointLayers.ts, name property key)
 POINT_LAYERS = [
-    ("Fire_Stations_(Statewide).geojson",        "fire_stations",   "name"),
-    ("Hospitals.geojson",                         "hospitals",       "name"),
-    ("Police_Stations_(Statewide).geojson",       "police_stations", "name"),
-    ("emergency_shelters.geojson",                "shelters",        "BUSNAME"),
-    ("Preschools.geojson",                        "preschools",      "name"),
-    ("Public_Schools.geojson",                    "public_schools",  "sch_name"),
-    ("Private_Schools.geojson",                   "private_schools", "school"),
-    ("National_Bridge_Inventory.geojson",         "bridges",         "structure_"),
-    ("HI_Onsite_Sewage_Disposal_Systems.geojson", "sewage",          "island"),
+    ("Fire_Stations_(Statewide).geojson",           "fire_stations",     "name"),
+    ("Hospitals.geojson",                           "hospitals",         "name"),
+    ("Police_Stations_(Statewide).geojson",         "police_stations",   "name"),
+    ("emergency_shelters.geojson",                  "shelters",          "BUSNAME"),
+    ("Preschools.geojson",                          "preschools",        "name"),
+    ("Public_Schools.geojson",                      "public_schools",    "sch_name"),
+    ("Private_Schools.geojson",                     "private_schools",   "school"),
+    ("National_Bridge_Inventory.geojson",           "bridges",           "structure_"),
+    ("HI_Onsite_Sewage_Disposal_Systems.geojson",   "sewage",            "island"),
+    ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",  "wwtp_name"),
 ]
 
 # (filename, hazard_id, sub_id, height_ft) — IDs match hazardLayers.ts
