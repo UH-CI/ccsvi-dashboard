@@ -75,8 +75,13 @@ server {
         add_header Cache-Control "public, max-age=86400";
     }
 
+    # Hostname held in a variable so nginx looks it up per-request, not at
+    # startup. A failed startup lookup stops nginx from starting.
     location /ccsvi-dashboard/api/ {
-        proxy_pass https://api.hcdp.ikewai.org/;
+        resolver 127.0.0.53 valid=300s ipv6=off;
+        set \$hcdp_host "api.hcdp.ikewai.org";
+        rewrite ^/ccsvi-dashboard/api/(.*)\$ /\$1 break;
+        proxy_pass https://\$hcdp_host;
         proxy_set_header Host api.hcdp.ikewai.org;
         proxy_set_header Authorization "Bearer ${HCDP_API_TOKEN}";
         proxy_set_header User-Agent "${HCDP_EMAIL}";

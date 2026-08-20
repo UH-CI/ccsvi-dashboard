@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { RASTER_LAYERS } from "../config/rasterLayers";
 import type { RasterLayerConfig } from "../types";
+import { useHCDPStore } from "./useHCDPStore";
 
 export interface COGInfo {
   min: number;
@@ -95,11 +96,11 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     const layer = rasterLayerConfigs.find((l) => l.id === id);
     if (!layer || layer.subLayers?.length) return;
 
-    // Check if this layer is currently visible for this map
     const isVisible = visibleLayerIdsByMap[mapId]?.has(id) ?? false;
     if (isVisible) {
       setVisibleLayerIds(mapId, []);
     } else {
+      useHCDPStore.getState().clearRasterOverlay(mapId);
       setVisibleLayerIds(mapId, [id]);
       fetchCOGInfo(id);
     }
@@ -115,6 +116,7 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     if (isVisible) {
       setVisibleLayerIds(mapId, []);
     } else {
+      useHCDPStore.getState().clearRasterOverlay(mapId);
       setVisibleLayerIds(mapId, [parentId, fullId]);
       fetchCOGInfo(fullId);
     }

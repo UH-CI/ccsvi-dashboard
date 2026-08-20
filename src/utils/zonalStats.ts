@@ -5,22 +5,30 @@ import { cloneArrayBuffer } from "./hcdpRaster";
 
 type ParsedGeoraster = Awaited<ReturnType<typeof parseGeoraster>>;
 
-const georasterByLoadId = new Map<number, ParsedGeoraster>();
+const georasterByCacheKey = new Map<string, ParsedGeoraster>();
 
 export function clearHcdpGeorasterCache(loadId?: number): void {
   if (loadId == null) {
-    georasterByLoadId.clear();
+    georasterByCacheKey.clear();
     return;
   }
-  georasterByLoadId.delete(loadId);
+  georasterByCacheKey.delete(`hcdp:${loadId}`);
 }
 
-async function getHcdpGeoraster(arrayBuffer: ArrayBuffer, loadId: number): Promise<ParsedGeoraster> {
-  const cached = georasterByLoadId.get(loadId);
+export function clearRasterGeorasterCache(cacheKey?: string): void {
+  if (cacheKey == null) {
+    georasterByCacheKey.clear();
+    return;
+  }
+  georasterByCacheKey.delete(cacheKey);
+}
+
+async function getGeoraster(arrayBuffer: ArrayBuffer, cacheKey: string): Promise<ParsedGeoraster> {
+  const cached = georasterByCacheKey.get(cacheKey);
   if (cached) return cached;
 
   const georaster = await parseGeoraster(cloneArrayBuffer(arrayBuffer));
-  georasterByLoadId.set(loadId, georaster);
+  georasterByCacheKey.set(cacheKey, georaster);
   return georaster;
 }
 
@@ -35,13 +43,12 @@ function isNoDataValue(v: number, georaster: ParsedGeoraster): boolean {
   return false;
 }
 
-// Mean raster value for pixels intersecting the feature geometry.
-export async function meanHcdpForFeature(
+export async function meanRasterForFeature(
   arrayBuffer: ArrayBuffer,
-  loadId: number,
+  cacheKey: string,
   feature: Feature<Geometry>,
 ): Promise<number | null> {
-  const georaster = await getHcdpGeoraster(arrayBuffer, loadId);
+  const georaster = await getGeoraster(arrayBuffer, cacheKey);
 
   try {
     const means = await geoblaze.mean(georaster, feature.geometry);
@@ -53,7 +60,16 @@ export async function meanHcdpForFeature(
 
     return mean;
   } catch (err) {
-    console.warn("HCDP zonal mean failed:", err);
+    console.warn("Raster zonal mean failed:", err);
     return null;
   }
+}
+
+// Mean raster value for pixels intersecting the feature geometry.
+export async function meanHcdpForFeature(
+  arrayBuffer: ArrayBuffer,
+  loadId: number,
+  feature: Feature<Geometry>,
+): Promise<number | null> {
+  return meanRasterForFeature(arrayBuffer, `hcdp:${loadId}`, feature);
 }

@@ -15,6 +15,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         color: "#0000FF",
         units: "m",
         opacity: 0.7,
+        sourceFileName: "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
         colormapName: "blues",
       },
       {
@@ -23,6 +24,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         color: "#0066FF",
         units: "m",
         opacity: 0.7,
+        sourceFileName: "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
         colormapName: "blues",
       },
       {
@@ -31,6 +33,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         color: "#0099FF",
         units: "m",
         opacity: 0.7,
+        sourceFileName: "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
         colormapName: "blues",
       },
       {
@@ -39,6 +42,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         color: "#00CCFF",
         units: "m",
         opacity: 0.7,
+        sourceFileName: "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
         colormapName: "blues",
       },
     ],
@@ -50,6 +54,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
     color: "#6D4C41",
     units: "Susceptibility Index",
     opacity: 0.7,
+    sourceFileName: "lw_hi.cog.tif",
     colormapName: "ylorrd",
   },
 ];

@@ -73,6 +73,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "erosion",
     name: "Coastal Erosion",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
     color: "#A89C90",
@@ -114,6 +115,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
@@ -155,6 +157,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "exposure_area",
     name: "Exposure Area",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
     color: "#7ea834",
@@ -197,6 +200,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "passive_flood",
     name: "Passive Flood",
+    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
     color: "#37bbf0",
@@ -238,6 +242,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "sidewalks_and_paths",
     name: "Sidewalks and Paths",
+    menuPanel: "points",
     visible: false,
     icon: "FaWalking",
     color: "#000000",
@@ -254,6 +259,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "state_roads",
     name: "State Roads",
+    menuPanel: "points",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
@@ -373,6 +379,105 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       },
     ],
   },
+  {
+    id: "fire_zone",
+    name: "Fire Zone",
+    visible: false,
+    icon: "faFire",
+    color: "#D73502",
+    subLayers: [
+      { 
+        id: "Zone_1",
+        name: "Zone 1",
+        color: "#D73502",
+        visible: false,
+        filePath: "Fire_zone_1.pmtiles",
+        popupConfig: {
+          titleField: "Zone 1", 
+          fields: [ 
+            { key: "commu_name", label: "Community name" }, 
+            { key: "island", label: "Island" },
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+      {
+        id: "Zone_2",
+        name: "Zone 2",
+        color: "#FF7500",
+        visible: false,
+        filePath: "Fire_zone_2.pmtiles",
+        popupConfig: {
+          titleField: "Zone 2",
+          fields: [
+            { key: "commu_name", label: "Community name" },
+            { key: "island", label: "Island" },
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+      {
+        id: "Zone_3",
+        name: "Zone 3",
+        color: "#F46D43",
+        visible: false,
+        filePath: "Fire_zone_3.pmtiles",
+        popupConfig: {
+          titleField: "Zone 3",
+          fields: [
+            { key: "commu_name", label: "Community name" },  
+            { key: "island", label: "Island" }, 
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+      {
+        id: "Zone_4",
+        name: "Zone 4",
+        color: "#FDAE61",
+        visible: false,
+        filePath: "Fire_zone_4.pmtiles",
+        popupConfig: {
+          titleField: "Zone 4",
+          fields: [
+            { key: "commu_name", label: "Community name" },  
+            { key: "island", label: "Island" }, 
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+      {
+        id: "Zone_5",
+        name: "Zone 5",
+        color: "#A6D96A",
+        visible: false,
+        filePath: "Fire_zone_5.pmtiles",
+        popupConfig: {
+          titleField: "Zone 5",
+          fields: [
+            { key: "commu_name", label: "Community name" },  
+            { key: "island", label: "Island" }, 
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+      {
+        id: "Zone_6",
+        name: "Zone 6",
+        color: "#1A9641",
+        visible: false,
+        filePath: "Fire_zone_6.pmtiles",
+        popupConfig: {
+          titleField: "Zone 6",
+          fields: [
+            { key: "commu_name", label: "Community name" },  
+            { key: "island", label: "Island" }, 
+            { key: "risk_ratin", label: "Risk Rating" },
+          ],
+        },
+      },
+    ],
+  }, 
   /*
   {
     id: "potent_econ_loss",

@@ -120,4 +120,18 @@ export const POINT_LAYERS: PointLayerConfig[] = [
       ],
     },
   },
+  {
+    id: "wastewater_plant",
+    name: "Wastewater Treatment Plants",
+    visible: false,
+    icon: "FaIndustry",
+    color: "#2E8B57",
+    filePath: "Wastewater_Treatment_Plants.geojson",
+    popupConfig: {
+      titleField: "wwtp_name",
+      fields: [
+        { key: "county", label: "County" },
+      ],
+    },
+  },
 ];

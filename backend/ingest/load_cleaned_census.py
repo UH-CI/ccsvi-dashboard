@@ -74,13 +74,20 @@ def moe_column_for(col: str) -> str | None:
         return None
     return "Margin of Error!!" + col[len("Estimate!!"):]
 
-def read_dataset_rows(csv_path: str) -> tuple[list[str], list[tuple[str, dict]]]:
+# person_under_5_65's total population column is duplicated into all three of its output files, so it's only kept as a metric under "genders"
+DUPLICATE_METRIC_COLUMNS = {
+    "person_under_5_65_males": "Estimate!!Total:",
+    "person_under_5_65_females": "Estimate!!Total:",
+}
+
+def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[str], list[tuple[str, dict]]]:
     df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
 
     base_cols = [
         col
         for col in df.columns
         if col not in NON_METRIC_COLS
+        and col != skip_column
         and not col.startswith("Margin of Error")
         and not col.endswith(" (%)")
     ]
@@ -133,7 +140,14 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
         hawaiian_homelands,
     )
 
-    metric_names, rows = read_dataset_rows(csv_path)
+    metric_names, rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
+
+    # Drop any metric this dataset no longer produces so stale values don't hang
+    await conn.execute(
+        "DELETE FROM metrics WHERE dataset_id = $1 AND name != ALL($2::text[])",
+        dataset_id,
+        list(dict.fromkeys(metric_names)),
+    )
 
     await conn.executemany(
         """

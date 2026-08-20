@@ -56,8 +56,10 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomCha
     containerRef.current = map.getContainer();
     onMapRef(map);
 
-    const timeoutId = setTimeout(() => {
-      map.invalidateSize();
+    const timeoutId = window.setTimeout(() => {
+      if (map && map.getContainer()) {
+        map.invalidateSize();
+      }
     }, 100);
 
     return () => {
@@ -107,6 +109,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
     const [mapZoom, setMapZoom] = useState<number>(MAP_CONFIG.zoom);
+
+    const handleMapRef = useCallback((map: L.Map | null) => {
+      mapRef.current = map;
+    }, [mapRef]);
+
+    const handleZoomChange = useCallback((zoom: number) => {
+      setMapZoom(zoom);
+    }, []);
 
     // Snapshot registry store
     const registerSnapshot = useSnapshotStore((s) => s.register);
@@ -189,12 +199,16 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const hcdpOverlayLoadId = useHCDPStore((s) => s.overlaysByMap[mapId]?.loadId);
 
     useEffect(() => {
-      if (mapRef.current) {
-        const timeoutId = setTimeout(() => {
-          mapRef.current?.invalidateSize();
-        }, 200);
-        return () => clearTimeout(timeoutId);
-      }
+      const map = mapRef.current;
+      if (!map) return;
+
+      const timeoutId = window.setTimeout(() => {
+        if (map.getContainer()) {
+          map.invalidateSize();
+        }
+      }, 200);
+
+      return () => clearTimeout(timeoutId);
     }, [mapConfigsLength, mapRef]);
 
     const visiblePointLayerIds = useMemo(
@@ -373,12 +387,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             style={{ zIndex: 1 }}
           >
             <MapResizeHandler
-              onMapRef={(map) => {
-                mapRef.current = map;
-              }}
-              onZoomChange={(z) => {
-                setMapZoom(z);
-              }}
+              onMapRef={handleMapRef}
+              onZoomChange={handleZoomChange}
             />
 
             <TileLayer
@@ -460,7 +470,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <React.Fragment key={layer.id}>
                 {/* Render parent layer if it is COG-backed (colormapName set) and visible */}
                 {layer.colormapName && visibleRasterIds.has(layer.id) && (
-                  <RasterLayerRenderer mapId={mapId} parentId={layer.id} mapZoom={mapZoom} />
+                  <RasterLayerRenderer
+                    mapId={mapId}
+                    parentId={layer.id}
+                    mapZoom={mapZoom}
+                    interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
+                  />
                 )}
 
                 {/* Render sublayers that are visible */}
@@ -473,6 +488,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                       parentId={layer.id}
                       layerId={sub.id}
                       mapZoom={mapZoom}
+                      interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
                     />
                   ) : null;
                 })}

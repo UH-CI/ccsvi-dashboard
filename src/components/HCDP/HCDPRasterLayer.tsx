@@ -18,6 +18,11 @@ export function HCDPRasterLayer({ mapId }: { mapId: string }) {
   useEffect(() => {
     let cancelled = false;
 
+    if (!map.getPane("rasterPane")) {
+      const pane = map.createPane("rasterPane");
+      pane.style.zIndex = "350";
+    }
+
     const clearLayer = () => {
       if (activeOverlayRef.current) {
         if (map.hasLayer(activeOverlayRef.current)) {
@@ -127,6 +132,7 @@ export function HCDPRasterLayer({ mapId }: { mapId: string }) {
         const imageOverlay = L.imageOverlay(canvas.toDataURL(), bounds, {
           opacity: 0.75,
           interactive: false,
+          pane: "rasterPane",
         });
 
         activeOverlayRef.current = imageOverlay;
