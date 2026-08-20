@@ -19,7 +19,14 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "age_of_structure",
         metric: "Total Housing Built Before 1990 (calc.)",
+        label: "Houses built before 1990",
       },
+      // TODO: Add when dataset available: Houses built before 1970
+      // {
+      //   dataset: "age_of_structure",
+      //   metric: "Total Housing Built Before 1970 (calc.)",
+      //   label: "Houses built before 1970",
+      // },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
@@ -29,6 +36,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Juvenile facilities", label: "Group quarters: Juvenile facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
+      { dataset: "tenure", metric: "Renter occupied", label: "Renter occupied units" },
     ],
   },
   {
