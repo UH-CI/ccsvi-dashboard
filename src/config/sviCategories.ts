@@ -19,7 +19,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "age_of_structure",
         metric: "Total Housing Built Before 1990 (calc.)",
-        label: "Houses built before 1990",
       },
       {
         dataset: "population_group_quarters",
@@ -30,7 +29,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Juvenile facilities", label: "Group quarters: Juvenile facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
-      { dataset: "tenure", metric: "Renter occupied", label: "Renter occupied units" },
     ],
   },
   {
@@ -129,31 +127,31 @@ export const SVI_CATEGORIES: SviCategory[] = [
   },
   {
     id: "underserved_populations",
-    label: "Social and demographic context",
+    label: "Social Context and Access",
     indicators: [
-      { dataset: "race_origin", metric: "White alone", label: "White alone" },
+      { dataset: "race_origin", metric: "White alone", label: "White population" },
       {
         dataset: "race_origin",
         metric: "Black or African American alone",
-        label: "Black or African American alone",
+        label: "Black or African American population",
       },
       {
         dataset: "race_origin",
         metric: "American Indian and Alaska Native alone",
         label: "American Indian and Alaska Native alone",
       },
-      { dataset: "race_origin", metric: "Asian alone", label: "Asian alone" },
+      { dataset: "race_origin", metric: "Asian alone", label: "Asian population" },
       {
         dataset: "race_origin",
         metric: "Native Hawaiian and Other Pacific Islander alone",
-        label: "Native Hawaiian and Other Pacific Islander alone",
+        label: "Native Hawaiian and Other Pacific Islander population",
       },
       { dataset: "race_origin", metric: "Some Other Race alone", label: "Some other race alone" },
-      { dataset: "race_origin", metric: "Two or More Races", label: "Two or more races" },
+      { dataset: "race_origin", metric: "Two or More Races", label: "Two or More Races" },
       {
         dataset: "limited_english_speaking",
         metric: "Total Limited English Speaking Households (calc.)",
-        label: "Speaking English less than well",
+        label: "Limited English proficiency",
       },
       {
         dataset: "limited_english_speaking",
