@@ -50,7 +50,7 @@ def moe_column_name(col: str) -> str:
 
 # Coefficient of variation MOE as a share of the estimate. NaN when estimate is 0
 def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
-    return (moe / 1.645) / estimate.replace(0, pd.NA) * 100
+    return (moe / 1.645) / estimate.replace(0, float("nan")) * 100
 
 
 # Adds Census_Population and, per numeric metric column, "(%)" / "(MOE pp)" / "(CV)" /
