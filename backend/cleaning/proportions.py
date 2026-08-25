@@ -42,15 +42,19 @@ def build_denominator_map(dataset_configs: list) -> dict:
     }
 
 
-"""
-Adds a Census_Population column and a "(%)" column for every numeric metric
-column in a cleaned CSV, using the GeoID -> population lookups passed in.
+def moe_column_name(col: str) -> str:
+    if col.startswith("Estimate!!"):
+        return "Margin of Error!!" + col[len("Estimate!!"):]
+    return "Margin of Error!!" + col
 
-denominator_column, if given, is used as the percentage denominator instead
-of population (e.g. "Estimate!!Total:" for datasets counting households or
-housing units rather than people) — Census_Population is still added either
-way, just not used for the math in that case.
-"""
+
+# Coefficient of variation MOE as a share of the estimate. NaN when estimate is 0
+def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
+    return (moe / 1.645) / estimate.replace(0, pd.NA) * 100
+
+
+# Adds Census_Population and, per numeric metric column, "(%)" / "(MOE pp)" / "(CV)" /
+# "(MOE derived)". denominator_column, if given, replaces population as the divisor.
 def add_percentages_to_csv(
     csv_path: str,
     total_population: int,
@@ -76,10 +80,10 @@ def add_percentages_to_csv(
 
         found_count = block_populations.notna().sum()
         total_count = len(block_populations)
-        print(f"  → Found {found_count}/{total_count} Hawaiian Homelands populations")
+        print(f"  - Found {found_count}/{total_count} Hawaiian Homelands populations")
         if found_count == 0:
-            print(f"  ⚠ WARNING: No populations found! Sample Geography IDs: {df['Geography'].head(3).tolist()}")
-            print(f"  ⚠ Available population keys: {list(hawaiian_homelands_populations.keys())[:5]}")
+            print(f"  WARNING: No populations found! Sample Geography IDs: {df['Geography'].head(3).tolist()}")
+            print(f"  Available population keys: {list(hawaiian_homelands_populations.keys())[:5]}")
     else:
         block_populations = df["Geography"].map(block_group_populations)
 
@@ -90,20 +94,32 @@ def add_percentages_to_csv(
     # Add Census_Population right after Geographic Area Name, replacing it if it already exists
     if "Census_Population" in df.columns:
         df["Census_Population"] = block_populations
-        print(f"  → Updated existing Census_Population column in {filename}")
+        print(f"  - Updated existing Census_Population column in {filename}")
     else:
         df.insert(2, "Census_Population", block_populations)
-        print(f"  → Added Census_Population column to {filename}")
+        print(f"  - Added Census_Population column to {filename}")
 
-    # Drop any previously computed (%) columns before recomputing, to avoid duplicates
-    existing_pct_cols = [col for col in df.columns if " (%)" in col]
-    df = df.drop(columns=existing_pct_cols)
+    # Drop any previously computed (%) / (MOE pp) / (CV) / (MOE derived) columns before
+    # recomputing, to avoid duplicates
+    existing_derived_cols = [
+        col
+        for col in df.columns
+        if " (%)" in col or " (MOE pp)" in col or " (CV)" in col or " (MOE derived)" in col
+    ]
+    df = df.drop(columns=existing_derived_cols)
 
     if denominator_column and denominator_column in df.columns:
         denominator = pd.to_numeric(df[denominator_column], errors="coerce")
         print(f"  → Using '{denominator_column}' as the percentage denominator instead of population")
     else:
-        denominator = block_populations
+        denominator = pd.to_numeric(block_populations, errors="coerce")
+
+    # 0 unless the denominator has its own MOE (an ACS column does, Census population does not)
+    denominator_moe_col = moe_column_name(denominator_column) if denominator_column else None
+    if denominator_moe_col and denominator_moe_col in df.columns:
+        denominator_moe = pd.to_numeric(df[denominator_moe_col], errors="coerce")
+    else:
+        denominator_moe = pd.Series(0.0, index=df.index)
 
     metric_cols = [
         col
@@ -115,11 +131,47 @@ def add_percentages_to_csv(
     ]
 
     pct_cols = {}
-    for col in metric_cols:
-        if pd.api.types.is_numeric_dtype(df[col]):
-            pct_cols[col] = ((df[col] / denominator) * 100).round(1)
+    moe_pp_cols = {}
+    cv_cols = {}
+    moe_derived_cols = {}
 
-    # Insert each percentage column immediately after its absolute value column
+    for col in metric_cols:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            continue
+
+        values = df[col]
+
+        already_pct = "hawaiian_homelands" in filename.lower() or "POVERTY STATUS IN THE PAST 12 MONTHS" in col
+
+        if already_pct:
+            pct_cols[col] = values.round(1)
+        else:
+            pct_cols[col] = ((values / denominator) * 100).round(1)
+
+        moe_col = moe_column_name(col)
+        if moe_col not in df.columns:
+            continue
+        moe_values = pd.to_numeric(df[moe_col], errors="coerce")
+
+        if already_pct:
+            # margin already a percentage
+            moe_pp_cols[col] = moe_values.round(1)
+        else:
+            # Census's approximation formula for a proportion
+            # (100/D) * sqrt(MOE_N^2 -+ p^2*MOE_D^2), p = N/D.
+            # Falls back to "+" if "-" goes negative. moe_d = 0 differs to the simple 100*MOE_N/D.
+            p = values / denominator
+            radicand = moe_values**2 - (p**2) * (denominator_moe**2)
+            radicand = radicand.where(radicand >= 0, moe_values**2 + (p**2) * (denominator_moe**2))
+            moe_pp_cols[col] = ((100 / denominator) * radicand.pow(0.5)).round(1)
+
+        cv_cols[col] = _coefficient_of_variation(values, moe_values).round(1)
+
+        # metrics we calculate
+        moe_derived_cols[col] = col.endswith("(calc.)")
+
+    # Insert each derived column immediately after its absolute value column, in a
+    # fixed order: (%), (MOE pp), (CV), (MOE derived)
     new_order = []
     for col in df.columns:
         new_order.append(col)
@@ -127,6 +179,18 @@ def add_percentages_to_csv(
             prop_col = f"{col} (%)"
             df[prop_col] = pct_cols[col]
             new_order.append(prop_col)
+        if col in moe_pp_cols:
+            moe_pp_col = f"{col} (MOE pp)"
+            df[moe_pp_col] = moe_pp_cols[col]
+            new_order.append(moe_pp_col)
+        if col in cv_cols:
+            cv_col = f"{col} (CV)"
+            df[cv_col] = cv_cols[col]
+            new_order.append(cv_col)
+        if col in moe_derived_cols:
+            moe_derived_col = f"{col} (MOE derived)"
+            df[moe_derived_col] = moe_derived_cols[col]
+            new_order.append(moe_derived_col)
     df = df[new_order]
 
     df = df.replace([float("inf"), float("-inf")], None)

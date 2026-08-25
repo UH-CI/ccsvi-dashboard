@@ -19,6 +19,7 @@ import pandas as pd
 
 from cleaning import pipeline, proportions
 from cleaning.census_transform import clean_column_name
+from cleaning.proportions import moe_column_name
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "cleaning", "config", "census_datasets_config.json")
@@ -67,12 +68,9 @@ def metric_name_for(col: str) -> str:
     name = clean_column_name(col, PREFIXES_TO_REMOVE)
     return name if name else "Total"
 
-# Finds the matching Margin of Error column for an Estimate column, if any.
-# Calculated (non-Census) columns never have one.
+# Finds the matching Margin of Error column for a metric column, if the cleaned CSV has one.
 def moe_column_for(col: str) -> str | None:
-    if not col.startswith("Estimate!!"):
-        return None
-    return "Margin of Error!!" + col[len("Estimate!!"):]
+    return moe_column_name(col)
 
 # person_under_5_65's total population column is duplicated into all three of its output files, so it's only kept as a metric under "genders"
 DUPLICATE_METRIC_COLUMNS = {
@@ -90,9 +88,15 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         and col != skip_column
         and not col.startswith("Margin of Error")
         and not col.endswith(" (%)")
+        and not col.endswith(" (MOE pp)")
+        and not col.endswith(" (CV)")
+        and not col.endswith(" (MOE derived)")
     ]
     col_to_metric = {col: metric_name_for(col) for col in base_cols}
     metric_names = list(col_to_metric.values())
+
+    def numeric_or_none(row, col):
+        return None if col not in df.columns or pd.isna(row[col]) else float(row[col])
 
     rows = []
     for _, row in df.iterrows():
@@ -107,16 +111,16 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         values = {}
         for col in base_cols:
             moe_col = moe_column_for(col)
-            pct_col = f"{col} (%)"
             values[col_to_metric[col]] = {
                 "absolute": None if pd.isna(row[col]) else float(row[col]),
-                "margin_of_error": (
+                "margin_of_error": numeric_or_none(row, moe_col) if moe_col else None,
+                "percentage": numeric_or_none(row, f"{col} (%)"),
+                "moe_percentage_points": numeric_or_none(row, f"{col} (MOE pp)"),
+                "cv": numeric_or_none(row, f"{col} (CV)"),
+                "moe_derived": (
                     None
-                    if moe_col is None or moe_col not in df.columns or pd.isna(row[moe_col])
-                    else float(row[moe_col])
-                ),
-                "percentage": (
-                    None if pct_col not in df.columns or pd.isna(row[pct_col]) else float(row[pct_col])
+                    if f"{col} (MOE derived)" not in df.columns or pd.isna(row[f"{col} (MOE derived)"])
+                    else bool(row[f"{col} (MOE derived)"])
                 ),
             }
         rows.append((str(geoid), values))
@@ -164,7 +168,16 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
     }
 
     value_rows = [
-        (geoid, metric_id_map[name], v["absolute"], v["margin_of_error"], v["percentage"])
+        (
+            geoid,
+            metric_id_map[name],
+            v["absolute"],
+            v["margin_of_error"],
+            v["percentage"],
+            v["moe_percentage_points"],
+            v["cv"],
+            v["moe_derived"],
+        )
         for geoid, values in rows
         for name, v in values.items()
     ]
@@ -173,12 +186,18 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
     for i in range(0, len(value_rows), chunk_size):
         await conn.executemany(
             """
-            INSERT INTO metric_values (geoid, metric_id, absolute, margin_of_error, percentage)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO metric_values (
+                geoid, metric_id, absolute, margin_of_error, percentage,
+                moe_percentage_points, cv, moe_derived
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (geoid, metric_id) DO UPDATE SET
-                absolute        = EXCLUDED.absolute,
-                margin_of_error = EXCLUDED.margin_of_error,
-                percentage      = EXCLUDED.percentage
+                absolute               = EXCLUDED.absolute,
+                margin_of_error        = EXCLUDED.margin_of_error,
+                percentage             = EXCLUDED.percentage,
+                moe_percentage_points  = EXCLUDED.moe_percentage_points,
+                cv                     = EXCLUDED.cv,
+                moe_derived            = EXCLUDED.moe_derived
             """,
             value_rows[i : i + chunk_size],
         )

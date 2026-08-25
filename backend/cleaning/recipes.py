@@ -42,13 +42,8 @@ def _carry_with_moe(cleaned_df: pd.DataFrame, df: pd.DataFrame, estimate_col) ->
         cleaned_df[moe_col] = df[moe_col]
 
 
-"""
-Combines moe for sum of ACS estimates, per the census bureau
-approximation formula: sqrt(sum of squared MOEs)
-- Columns with no matching MOE in the source are skipped
-- When several summed components have an estimate of 0, only the largest of their MOEs is counted
-- Returns None for a row where none of the summed columns had an MOE to begin wit
-"""
+# Combines MOEs for a sum of ACS estimates: sqrt(sum of squared MOEs). For zero-estimate
+# components, only the largest MOE among them is counted, not all of them.
 def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
     pairs = [(col, _moe_col_for(df, col)) for col in estimate_cols]
     pairs = [(est_col, moe_col) for est_col, moe_col in pairs if moe_col is not None]
