@@ -42,6 +42,49 @@ def _carry_with_moe(cleaned_df: pd.DataFrame, df: pd.DataFrame, estimate_col) ->
         cleaned_df[moe_col] = df[moe_col]
 
 
+"""
+Combines moe for sum of ACS estimates, per the census bureau
+approximation formula: sqrt(sum of squared MOEs)
+- Columns with no matching MOE in the source are skipped
+- When several summed components have an estimate of 0, only the largest of their MOEs is counted
+- Returns None for a row where none of the summed columns had an MOE to begin wit
+"""
+def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
+    pairs = [(col, _moe_col_for(df, col)) for col in estimate_cols]
+    pairs = [(est_col, moe_col) for est_col, moe_col in pairs if moe_col is not None]
+
+    if not pairs:
+        return pd.Series([None] * len(df), index=df.index, dtype="object")
+
+    estimates = {est_col: pd.to_numeric(df[est_col], errors="coerce") for est_col, _ in pairs}
+    moes = {moe_col: pd.to_numeric(df[moe_col], errors="coerce") for _, moe_col in pairs}
+
+    def combine(i) -> float | None:
+        zero_moes = []
+        sum_of_squares = 0.0
+        any_moe = False
+
+        for est_col, moe_col in pairs:
+            moe_val = moes[moe_col].iat[i]
+            if pd.isna(moe_val):
+                continue
+            any_moe = True
+
+            est_val = estimates[est_col].iat[i]
+            if est_val == 0:
+                zero_moes.append(moe_val)
+            else:
+                sum_of_squares += moe_val**2
+
+        if not any_moe:
+            return None
+        if zero_moes:
+            sum_of_squares += max(zero_moes) ** 2
+        return sum_of_squares**0.5
+
+    return pd.Series([combine(i) for i in range(len(df))], index=df.index)
+
+
 # Adds a single "Total Housing Built Before 1990" column, and carries through the
 # raw total-housing-units column so it can be used as a percentage denominator
 def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
@@ -51,6 +94,7 @@ def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
         _carry_with_moe(cleaned_df, df, total_col)
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = df[cols_to_sum].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1990")] = _sum_moe(df, cols_to_sum)
     return cleaned_df
 
 
@@ -62,6 +106,7 @@ def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
         _carry_with_moe(cleaned_df, df, total_col)
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df[("CALCULATED", "No Health Insurance Coverage")] = df[cols_to_sum].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!No Health Insurance Coverage")] = _sum_moe(df, cols_to_sum)
     return cleaned_df
 
 
@@ -70,6 +115,11 @@ def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df.insert(2, ("CALCULATED", "Total Limited English Speaking Households"), df[cols_to_sum].sum(axis=1))
+    cleaned_df.insert(
+        3,
+        ("CALCULATED", "Margin of Error!!Total Limited English Speaking Households"),
+        _sum_moe(df, cols_to_sum),
+    )
     return cleaned_df
 
 
@@ -78,6 +128,7 @@ def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = _estimate_total_cols(df)
     cleaned_df.insert(2, ("CALCULATED", 'Total "Living alone"'), df[cols_to_sum].sum(axis=1))
+    cleaned_df.insert(3, ("CALCULATED", 'Margin of Error!!Total "Living alone"'), _sum_moe(df, cols_to_sum))
     return cleaned_df
 
 
@@ -104,8 +155,11 @@ def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
             under_2_cols.append(col)
 
     cleaned_df[("CALCULATED", "Total Under 100% FPL")] = df[under_1_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 100% FPL")] = _sum_moe(df, under_1_cols)
     cleaned_df[("CALCULATED", "Total Under 150% FPL")] = df[under_1_5_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
     cleaned_df[("CALCULATED", "Total Under 200% FPL")] = df[under_2_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 200% FPL")] = _sum_moe(df, under_2_cols)
 
     return cleaned_df
 
@@ -155,16 +209,22 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     if total_col is not None:
         _carry_with_moe(males_df, df, total_col)
     males_df[("CALCULATED", "Males Under 5")] = df[males_under_5].sum(axis=1)
+    males_df[("CALCULATED", "Margin of Error!!Males Under 5")] = _sum_moe(df, males_under_5)
     males_df[("CALCULATED", "Males Under 18")] = df[males_under_18].sum(axis=1)
+    males_df[("CALCULATED", "Margin of Error!!Males Under 18")] = _sum_moe(df, males_under_18)
     males_df[("CALCULATED", "Males Over 65")] = df[males_over_65].sum(axis=1)
+    males_df[("CALCULATED", "Margin of Error!!Males Over 65")] = _sum_moe(df, males_over_65)
 
     females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
     females_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(females_df, df, total_col)
     females_df[("CALCULATED", "Females Under 5")] = df[females_under_5].sum(axis=1)
+    females_df[("CALCULATED", "Margin of Error!!Females Under 5")] = _sum_moe(df, females_under_5)
     females_df[("CALCULATED", "Females Under 18")] = df[females_under_18].sum(axis=1)
+    females_df[("CALCULATED", "Margin of Error!!Females Under 18")] = _sum_moe(df, females_under_18)
     females_df[("CALCULATED", "Females Over 65")] = df[females_over_65].sum(axis=1)
+    females_df[("CALCULATED", "Margin of Error!!Females Over 65")] = _sum_moe(df, females_over_65)
 
     return {"genders": genders_df, "males": males_df, "females": females_df}
 
@@ -196,8 +256,11 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
                 over_65_cols.append(col)
 
     cleaned_df[("CALCULATED", "Total Population Under 5")] = df[under_5_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 5")] = _sum_moe(df, under_5_cols)
     cleaned_df[("CALCULATED", "Total Population Under 18")] = df[under_18_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 18")] = _sum_moe(df, under_18_cols)
     cleaned_df[("CALCULATED", "Total Population Over 65")] = df[over_65_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Over 65")] = _sum_moe(df, over_65_cols)
 
     cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:-4].copy()], axis=1)
 
