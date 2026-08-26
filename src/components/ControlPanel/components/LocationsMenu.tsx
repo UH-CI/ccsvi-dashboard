@@ -45,7 +45,7 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
       {resolvedLocationsMapId && (
         <Stack spacing={1}>
           {pointLayerConfigs
-            .filter((l) => l.id === "sewage")
+            .filter((l) => l.id === "sewage" || l.id === "wastewater_plant")
             .map((layer) => (
               <LayerToggleItem
                 key={layer.id}

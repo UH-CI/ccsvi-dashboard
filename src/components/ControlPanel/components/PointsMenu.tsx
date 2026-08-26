@@ -67,7 +67,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
           return (
             <Stack spacing={1}>
               {pointLayerConfigs
-                .filter((l) => !SCHOOL_IDS.includes(l.id) && l.id !== "sewage")
+                .filter((l) => !SCHOOL_IDS.includes(l.id) && l.id !== "sewage" && l.id !== "wastewater_plant")
                 .map((layer) => (
                   <LayerToggleItem
                     key={layer.id}

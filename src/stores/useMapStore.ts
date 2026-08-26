@@ -69,6 +69,7 @@ const initialMapConfig: MapConfig = {
   metric: "",
   visible: true,
   colorScheme: "Viridis",
+  baseMap: "openstreet",
 };
 
 export const defaultExpandedSections = {

@@ -11,6 +11,7 @@ export interface MapConfig {
   bivariateColorScheme?: string;
   visible: boolean;
   colorScheme: string;
+  baseMap?: string;
   activeFeature?: {
     geoid: string;
     lat: number;
