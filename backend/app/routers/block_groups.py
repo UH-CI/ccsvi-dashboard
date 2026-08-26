@@ -24,6 +24,9 @@ class MetricValueRecord(BaseModel):
     absolute: float | None
     margin_of_error: float | None
     percentage: float | None
+    moe_percentage_points: float | None
+    cv: float | None
+    moe_derived: bool | None
 
 
 class BlockGroupResult(BaseModel):
@@ -174,7 +177,10 @@ async def get_metric_values(
         SELECT mv.geoid,
                mv.absolute::float,
                mv.margin_of_error::float,
-               mv.percentage::float
+               mv.percentage::float,
+               mv.moe_percentage_points::float,
+               mv.cv::float,
+               mv.moe_derived
         FROM metric_values mv
         JOIN metrics m ON m.id = mv.metric_id
         WHERE m.dataset_id = $1 AND m.name = $2
@@ -192,6 +198,9 @@ async def get_metric_values(
             "absolute": row["absolute"],
             "margin_of_error": row["margin_of_error"],
             "percentage": row["percentage"],
+            "moe_percentage_points": row["moe_percentage_points"],
+            "cv": row["cv"],
+            "moe_derived": row["moe_derived"],
         }
         for row in rows
     }
