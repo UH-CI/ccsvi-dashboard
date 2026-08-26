@@ -41,7 +41,6 @@ import { PointsMenu } from "./components/PointsMenu";
 import { LocationsMenu } from "./components/LocationsMenu";
 import { HazardsMenu } from "./components/HazardsMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
-import { RastersMenu } from "./components/RastersMenu";
 import { AnalyzerMenu } from "./components/AnalyzerMenu";
 
 interface IntegratedControlPanelProps {
@@ -57,7 +56,6 @@ type PopoverKey =
   | "points"
   | "locations"
   | "hazards"
-  | "rasters"
   | "HCDP"
   | "analyzer"
   | null;
@@ -178,23 +176,17 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     },
     {
       key: "locations",
-      label: "Locations of Enhanced Exposure",
+      label: "Secondary Environmental Risk Areas",
       icon: <Factory fontSize="small" />,
       description:
-        "Show locations that may be particularly vulnerable to environmental or climate hazards, such as onsite sewage disposal systems.",
+        "Show locations with environmental hazards or risk-prone infrastructure that can worsen climate impacts, such as onsite sewage disposal systems.",
     },
     {
       key: "hazards",
       label: "Hazards",
       icon: <Warning fontSize="small" />,
       description:
-        "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), and solar insolation.",
-    },
-    {
-      key: "rasters",
-      label: "Rasters",
-      icon: <Terrain fontSize="small" />,
-      description: "Overlay raster data layers such as terrain and elevation data.",
+        "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), solar insolation, storm surge, and landslide data.",
     },
     {
       key: "HCDP",
@@ -307,12 +299,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         anchorEl={anchors.hazards ?? null}
         onClose={() => closeMenu("hazards")}
         onInfoClick={(e) => handleInfoClick("hazards", e)}
-      />
-      <RastersMenu
-        open={Boolean(anchors.rasters)}
-        anchorEl={anchors.rasters ?? null}
-        onClose={() => closeMenu("rasters")}
-        onInfoClick={(e) => handleInfoClick("rasters", e)}
       />
       <HcdpMenu
         open={Boolean(anchors.HCDP)}

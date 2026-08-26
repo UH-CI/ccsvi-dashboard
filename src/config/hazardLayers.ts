@@ -3,7 +3,7 @@ import { HazardLayerConfig } from "../types";
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
-    name: "Flooding",
+    name: "Regulatory Flood Zones",
     description: "Flood hazard zones showing regulatory and modeled flood extents. Flood exposure can disrupt housing, infrastructure, and health services, increasing displacement risk.",
     visible: false,
     icon: "FaWater",
