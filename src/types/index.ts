@@ -98,6 +98,7 @@ export interface SubHazardLayerConfig {
   color?: string;
   visible: boolean;
   filePath?: string;
+  description?: string; // human-readable description for UI
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];
@@ -120,6 +121,7 @@ export interface HazardLayerConfig {
   color?: string;
   visible: boolean;
   filePath?: string;
+  description?: string; // human-readable description for UI
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];

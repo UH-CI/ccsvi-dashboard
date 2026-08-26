@@ -57,6 +57,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
         <Box display="flex" alignItems="center">
           <LayerToggleItem
             label={parent.name}
+            description={parent.description}
             icon={parent.icon}
             color={parent.color}
             fallbackIcon="FaExclamationTriangle"
@@ -80,6 +81,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
                   <LayerToggleItem
                     key={sub.id}
                     label={sub.name}
+                    description={sub.description}
                     checked={isSubVisible}
                     indented
                     labelMl={0}

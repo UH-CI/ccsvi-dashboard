@@ -4,6 +4,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
     name: "Flooding",
+    description: "Flood hazard zones showing regulatory and modeled flood extents. Flood exposure can disrupt housing, infrastructure, and health services, increasing displacement risk.",
     visible: false,
     icon: "FaWater",
     color: "#0000FF",
@@ -73,6 +74,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "erosion",
     name: "Coastal Erosion",
+    description: "Projected coastal erosion under sea level rise scenarios. Erosion threatens shoreline homes, cultural sites, and access to coastal resources.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
@@ -115,6 +117,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
+    description: "Sections of highway at risk of flooding under sea level rise scenarios. Flooded roadways impede evacuation and emergency response, affecting community mobility.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
@@ -157,6 +160,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "exposure_area",
     name: "Exposure Area",
+    description: "Areas exposed to frequent or persistent inundation under sea level rise. These exposure zones identify populations and places likely to experience repeated impacts.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
@@ -200,6 +204,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "passive_flood",
     name: "Passive Flood",
+    description: "Passive flooding extents from sea level rise scenarios showing low-lying inundation. Such passive floods can isolate communities and degrade infrastructure over time.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
@@ -301,6 +306,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "solar_insolation",
     name: "Solar Insolation",
+    description: "Surface solar radiation intensities. Higher insolation informs heat exposure and opportunities for solar energy, with implications for heat stress and infrastructure.",
     visible: false,
     icon: "FaSun",
     color: "#FFD700",
@@ -382,6 +388,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "fire_zone",
     name: "Fire Zone",
+    description: "Mapped fire risk zones indicating relative wildfire hazard. Fire-prone areas can threaten housing, infrastructure, and public health, especially where evacuation routes are limited.",
     visible: false,
     icon: "faFire",
     color: "#D73502",
