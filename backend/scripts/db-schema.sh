@@ -9,12 +9,20 @@ DB_USER=ccsvi
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INIT_DIR="$SCRIPTS_DIR/../db/init"
 
-echo "Applying 00_extensions.sql..."
-docker exec -i "$CONTAINER" psql -U "$DB_USER" "$DB_NAME" \
-    < "$INIT_DIR/00_extensions.sql"
+shopt -s nullglob
+files=("$INIT_DIR"/*.sql)
+shopt -u nullglob
 
-echo "Applying 01_metrics_schema.sql..."
-docker exec -i "$CONTAINER" psql -U "$DB_USER" "$DB_NAME" \
-    < "$INIT_DIR/01_metrics_schema.sql"
+if [ ${#files[@]} -eq 0 ]; then
+    echo "No .sql files found in $INIT_DIR" >&2
+    exit 1
+fi
 
-echo "Schema applied."
+for file in "${files[@]}"; do
+    echo "Applying $(basename "$file")..."
+    # Without ON_ERROR_STOP, psql exits 0 even after a failed statement
+    docker exec -i "$CONTAINER" \
+        psql -v ON_ERROR_STOP=1 -U "$DB_USER" "$DB_NAME" < "$file"
+done
+
+echo "Schema applied (${#files[@]} files)."
