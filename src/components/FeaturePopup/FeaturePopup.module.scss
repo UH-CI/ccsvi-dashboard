@@ -23,11 +23,31 @@
   align-items: flex-end;
 }
 
-// .popup-metric-subheader {
-//   font-size: 11px;
-//   color: #666;
-//   font-style: italic;
-// }
+.popup-reliability {
+  font-size: 11px;
+  color: #666;
+  font-style: italic;
+}
+
+.popup-reliability-reliable {
+  color: #2e7d32;
+}
+
+.popup-reliability-usable {
+  color: #b58100;
+}
+
+.popup-reliability-caution {
+  color: #e65100;
+}
+
+.popup-reliability-severe {
+  color: #d84315;
+}
+
+.popup-reliability-unreliable {
+  color: #c62828;
+}
 
 .popup-field {
   display: flex;

@@ -1,5 +1,15 @@
 import { Feature } from "geojson";
 import styles from "./FeaturePopup.module.scss";
+import type { Reliability, ReliabilityTier } from "../../utils/reliability";
+
+const RELIABILITY_TIER_CLASS: Record<ReliabilityTier, string> = {
+  reliable: styles["popup-reliability-reliable"],
+  usable: styles["popup-reliability-usable"],
+  caution: styles["popup-reliability-caution"],
+  severe: styles["popup-reliability-severe"],
+  unreliable: styles["popup-reliability-unreliable"],
+  neutral: "",
+};
 
 interface PopupField {
   key: string;
@@ -19,19 +29,38 @@ export interface OverlayPopupField {
   suffix?: string;
 }
 
+export interface MetricDisplay {
+  name: string;
+  value: number;
+  moePp: number | null;
+  reliability: Reliability | null;
+}
+
 interface FeaturePopupProps {
   // title: string;
   metadata?: string[];
   feature: Feature;
   fields: PopupField[];
-  metricName?: string;
-  metricValue?: number | null;
-  metricMoE?: number | null;
-  metricName2?: string;
-  metricValue2?: number | null;
-  metricMoE2?: number | null;
+  metric1?: MetricDisplay;
+  metric2?: MetricDisplay;
   hcdp?: HcdpPopupField;
   overlay?: OverlayPopupField;
+}
+
+function renderMetricField(metric: MetricDisplay): string {
+  return `
+    <div class="${styles["popup-field"]}">
+      <span class="${styles["popup-field-label"]}">${escapeHtml(metric.name)}:</span>
+      <span class="${styles["popup-field-value-group"]}">
+        <span class="${styles["popup-field-value"]}">${metric.value.toFixed(2)}%${metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}</span>
+        ${
+          metric.reliability
+            ? `<span class="${styles["popup-reliability"]} ${RELIABILITY_TIER_CLASS[metric.reliability.tier]}">${escapeHtml(metric.reliability.label)}</span>`
+            : ""
+        }
+      </span>
+    </div>
+  `;
 }
 
 export function FeaturePopup({
@@ -39,12 +68,8 @@ export function FeaturePopup({
   metadata,
   feature,
   fields,
-  metricName,
-  metricValue,
-  metricMoE,
-  metricName2,
-  metricValue2,
-  metricMoE2,
+  metric1,
+  metric2,
   hcdp,
   overlay,
 }: FeaturePopupProps): string {
@@ -75,30 +100,8 @@ export function FeaturePopup({
           `;
           })
           .join("")}
-        ${
-          metricName && metricValue !== null && metricValue !== undefined
-            ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(metricName)}:</span>
-            <span class="${styles["popup-field-value-group"]}">
-              <span class="${styles["popup-field-value"]}">${metricValue.toFixed(2)}%${metricMoE !== null && metricMoE !== undefined ? ` ± ${metricMoE} (MoE)` : ""}</span>
-            </span>
-          </div>
-        `
-            : ""
-        }
-        ${
-          metricName2 && metricValue2 !== null && metricValue2 !== undefined
-            ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(metricName2)}:</span>
-            <span class="${styles["popup-field-value-group"]}">
-              <span class="${styles["popup-field-value"]}">${metricValue2.toFixed(2)}%${metricMoE2 !== null && metricMoE2 !== undefined ? ` ± ${metricMoE2} (MoE)` : ""}</span>
-            </span>
-          </div>
-        `
-            : ""
-        }
+        ${metric1 ? renderMetricField(metric1) : ""}
+        ${metric2 ? renderMetricField(metric2) : ""}
         ${
           hcdp
             ? `

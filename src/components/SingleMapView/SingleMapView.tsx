@@ -244,14 +244,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         void fetchMetricValues(effectiveDataset2, effectiveMetric2);
     }, [effectiveDataset, effectiveDataset2, effectiveMetric, effectiveMetric2, fetchMetricValues]);
 
-    const {
-      allMetricValues,
-      getMetricValue,
-      getMetricMoE,
-      allMetricValues2,
-      getMetricValue2,
-      getMetricMoE2,
-    } = useMetricLookups(cachedMetric1, cachedMetric2, effectiveMetric, effectiveMetric2);
+    const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
+      cachedMetric1,
+      cachedMetric2,
+      effectiveMetric,
+      effectiveMetric2,
+    );
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
@@ -408,10 +406,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <CensusPolygonLayer
                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                 geographiesData={geographiesData}
-                getMetricValue={getMetricValue}
-                getMetricMoE={getMetricMoE ?? undefined}
-                getMetricValue2={getMetricValue2 ?? undefined}
-                getMetricMoE2={getMetricMoE2 ?? undefined}
+                metric1={metric1}
+                metric2={metric2}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeMetric2={effectiveMetric2 ?? undefined}
@@ -428,10 +424,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <HawaiianHomelandsPolygonLayer
                 data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
                 geographiesData={geographiesData}
-                getMetricValue={getMetricValue}
-                getMetricMoE={getMetricMoE ?? undefined}
-                getMetricValue2={getMetricValue2 ?? undefined}
-                getMetricMoE2={getMetricMoE2 ?? undefined}
+                metric1={metric1}
+                metric2={metric2}
                 mapId={config.id}
                 activeMetric={effectiveMetric}
                 activeMetric2={effectiveMetric2 ?? undefined}
