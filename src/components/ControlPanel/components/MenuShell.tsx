@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, Popper, Paper, Box, Typography, Tooltip, IconButton } from "@mui/material";
+import { Menu, Popper, Paper, Box, Typography, IconButton } from "@mui/material";
 import { InfoOutlined } from "@mui/icons-material";
 import styles from "../ControlPanel.module.scss";
 
@@ -41,11 +41,9 @@ export const MenuShell: React.FC<MenuShellProps> = ({
         <Typography variant="subtitle2" className={styles["popover-title"]}>
           {title}
         </Typography>
-        <Tooltip title="About this section">
-          <IconButton size="small" onClick={onInfoClick} className={styles["menu-info-btn"]}>
-            <InfoOutlined fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <IconButton size="small" onClick={onInfoClick} className={styles["menu-info-btn"]}>
+          <InfoOutlined fontSize="small" />
+        </IconButton>
       </Box>
       {children}
     </Box>

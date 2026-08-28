@@ -4,7 +4,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
     name: "Regulatory Flood Zones",
-    description: "Flood hazard zones showing regulatory and modeled flood extents. Flood exposure can disrupt housing, infrastructure, and health services, increasing displacement risk.",
+    description: "Regulatory flood zones designate locations with established flood risk and indicate potential flood exposure.",
     visible: false,
     icon: "FaWater",
     color: "#0000FF",
@@ -12,6 +12,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_VE",
         name: "Coastal High Risk",
+        description: "Elevated coastal flood risk can increase exposure to flooding and inundation.",
         color: "#0000FF",
         visible: false,
         filePath: "Flood_Hazard_VE.pmtiles",
@@ -26,6 +27,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AE",
         name: "Base Flood Area",
+        description: "The estimated base floodplain represents locations with a 1% annual chance of flooding and greater potential for flood exposure.",
         color: "#1313c2",
         visible: false,
         filePath: "Flood_Hazard_AE.pmtiles",
@@ -40,6 +42,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AO",
         name: "Shallow Sheet Flow",
+        description: "Shallow, flowing water during flood events can increase exposure to localized flooding.",
         color: "#161691",
         visible: false,
         filePath: "Flood_Hazard_AO.pmtiles",
@@ -54,6 +57,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AH",
         name: "Shallow Ponding",
+        description: "Low lying areas where water may collect during flood events can experience increased localized flood exposure.",
         color: "#12126e",
         visible: false,
         filePath: "Flood_Hazard_AH.pmtiles",
@@ -74,7 +78,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "erosion",
     name: "Coastal Erosion",
-    description: "Projected coastal erosion under sea level rise scenarios. Erosion threatens shoreline homes, cultural sites, and access to coastal resources.",
+    description: "Projected shoreline erosion under sea level rise scenarios can increase long term exposure along the coast.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
@@ -117,7 +121,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
-    description: "Sections of highway at risk of flooding under sea level rise scenarios. Flooded roadways impede evacuation and emergency response, affecting community mobility.",
+    description: "Highway sections at risk of flooding under sea level rise scenarios can reduce transportation access during hazard events.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
@@ -160,7 +164,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "exposure_area",
     name: "Exposure Area",
-    description: "Areas exposed to frequent or persistent inundation under sea level rise. These exposure zones identify populations and places likely to experience repeated impacts.",
+    description: "Frequent inundation under sea level rise scenarios indicates locations with greater exposure to repeated flooding.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
@@ -204,7 +208,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "passive_flood",
     name: "Passive Flood",
-    description: "Passive flooding extents from sea level rise scenarios showing low-lying inundation. Such passive floods can isolate communities and degrade infrastructure over time.",
+    description: "Low lying areas projected to experience inundation as sea levels rise may face increasing long-term exposure.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
@@ -306,7 +310,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "solar_insolation",
     name: "Solar Insolation",
-    description: "Surface solar radiation intensities. Higher insolation informs heat exposure and opportunities for solar energy, with implications for heat stress and infrastructure.",
+    description: "Surface solar radiation intensity indicates potential exposure to higher levels of heat.",
     visible: false,
     icon: "FaSun",
     color: "#FFD700",
@@ -388,7 +392,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "fire_zone",
     name: "Fire Zone",
-    description: "Mapped fire risk zones indicating relative wildfire hazard. Fire-prone areas can threaten housing, infrastructure, and public health, especially where evacuation routes are limited.",
+    description: "Mapped wildfire risk indicates locations with greater potential for fire exposure.",
     visible: false,
     icon: "faFire",
     color: "#D73502",

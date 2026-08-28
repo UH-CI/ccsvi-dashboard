@@ -8,6 +8,7 @@ interface LayerToggleGroupProps {
   label: string;
   expanded: boolean;
   onToggleExpand: () => void;
+  description?: string; // optional hover text for the group header
   selectAll?: { checked: boolean; indeterminate: boolean; onToggle: () => void };
   icon?: string;
   color?: string;
@@ -16,10 +17,16 @@ interface LayerToggleGroupProps {
   children: React.ReactNode;
 }
 
+export function defaultLayerGroupIcon(label: string): keyof typeof FaIcons | undefined {
+  if (label === "Sea Level Rise") return "FaArrowUp";
+  return undefined;
+}
+
 export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
   label,
   expanded,
   onToggleExpand,
+  description,
   selectAll,
   icon,
   color,
@@ -27,7 +34,8 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
   childrenPl = 3,
   children,
 }) => {
-  const IconComponent = (icon && FaIcons[icon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
+  const resolvedIcon = icon ?? defaultLayerGroupIcon(label);
+  const IconComponent = (resolvedIcon && FaIcons[resolvedIcon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
   return (
     <Box className={styles["layer-toggle"]}>
       <Box display="flex" alignItems="center">
@@ -42,12 +50,12 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
         <Typography
           className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
         >
-          {icon && (
+          {resolvedIcon && (
             <span className={styles["layer-icon"]} style={{ color }}>
               <IconComponent size="1rem" />
             </span>
           )}
-          {label}
+          <span>{label}</span>
         </Typography>
         <IconButton size="small" onClick={onToggleExpand}>
           {expanded ? <ExpandLess /> : <ExpandMore />}

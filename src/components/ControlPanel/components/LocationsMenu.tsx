@@ -50,6 +50,7 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
               <LayerToggleItem
                 key={layer.id}
                 label={layer.name}
+                description={layer.description}
                 icon={layer.icon}
                 color={layer.color}
                 checked={visiblePointLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false}

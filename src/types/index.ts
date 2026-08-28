@@ -78,6 +78,7 @@ export interface CountyBoundariesProperties {
 export interface PointLayerConfig {
   id: string;
   name: string;
+  description?: string;
   visible: boolean;
   icon: string;
   color: string;
@@ -166,6 +167,7 @@ export interface SubRasterLayerConfig {
 export interface RasterLayerConfig {
   id: string;
   name: string;
+  description?: string;
   icon?: string;
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.

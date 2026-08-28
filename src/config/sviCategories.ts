@@ -89,28 +89,28 @@ export const SVI_CATEGORIES: SviCategory[] = [
         description: "Number of male children aged 0-5. Young children have specific caregiving and evacuation needs and increase household vulnerability.",
       },
       {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 5 (calc.)",
-        label: "Aged 5 years and under (female)",
-        description: "Number of female children aged 0-5. Young children have specific caregiving and evacuation needs and increase household vulnerability.",
-      },
-      {
         dataset: "person_under_5_65_males",
         metric: "Males Under 18 (calc.)",
         label: "Aged 17 years and under (male)",
         description: "Number of male children and adolescents under 18. These households may require child-focused support during emergencies.",
       },
       {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 18 (calc.)",
-        label: "Aged 17 years and under (female)",
-        description: "Number of female children and adolescents under 18. These households may require child-focused support during emergencies.",
-      },
-      {
         dataset: "person_under_5_65_males",
         metric: "Males Over 65 (calc.)",
         label: "Aged 65 years and older (male)",
         description: "Number of older male adults (65+). Older adults often have mobility, health, and social care needs that affect resilience and evacuation.",
+      },
+      {
+        dataset: "person_under_5_65_females",
+        metric: "Females Under 5 (calc.)",
+        label: "Aged 5 years and under (female)",
+        description: "Number of female children aged 0-5. Young children have specific caregiving and evacuation needs and increase household vulnerability.",
+      },
+      {
+        dataset: "person_under_5_65_females",
+        metric: "Females Under 18 (calc.)",
+        label: "Aged 17 years and under (female)",
+        description: "Number of female children and adolescents under 18. These households may require child-focused support during emergencies.",
       },
       {
         dataset: "person_under_5_65_females",
@@ -123,18 +123,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Total Living alone (calc.)",
         label: "Living alone",
         description: "Number of people living alone. Single-occupant households may have reduced social support and face higher isolation during hazards.",
-      },
-      {
-        dataset: "living_arrangements",
-        metric: "In households: Householder: Male: Living alone",
-        label: "Living alone (male)",
-        description: "Number of male householders living alone. Single-occupant households may have reduced social support and face higher isolation during hazards.",
-      },
-      {
-        dataset: "living_arrangements",
-        metric: "In households: Householder: Female: Living alone",
-        label: "Living alone (female)",
-        description: "Number of female householders living alone. Single-occupant households may have reduced social support and face higher isolation during hazards.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",

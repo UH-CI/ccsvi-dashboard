@@ -107,6 +107,8 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "sewage",
     name: "Sewage Disposal Systems",
+    description:
+      "Areas reliant on on site wastewater treatment, which may be vulnerable to flooding and other hazards.",
     visible: false,
     icon: "FaToilet",
     color: "#964B00",

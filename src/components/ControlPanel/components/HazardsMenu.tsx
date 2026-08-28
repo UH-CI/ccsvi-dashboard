@@ -79,6 +79,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
             fallbackIcon="FaExclamationTriangle"
             checked={isParentVisible}
             onToggle={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
+            hideCheckbox={["flood_hazard", "erosion", "potential_flood_highways", "exposure_area", "passive_flood", "solar_insolation", "fire_zone"].includes(parent.id)}
           />
           {(hasSubs || stormSurgeConfig) && (
             <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
@@ -111,29 +112,6 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               {stormSurgeConfig && (
                 <>
                   <Box display="flex" alignItems="center" ml={1}>
-                    <Checkbox
-                      checked={
-                        stormSurgeConfig.subLayers?.every(
-                          (sub) =>
-                            visibleRasterLayerIdsByMap[resolvedHazardsMapId]?.has(
-                              `stormSurge.${sub.id}`
-                            ) ?? false
-                        ) ?? false
-                      }
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          // Check all sublayers - set all at once
-                          const idsToShow = stormSurgeConfig.subLayers!.map(
-                            (sub) => `stormSurge.${sub.id}`
-                          );
-                          setVisibleLayerIds(resolvedHazardsMapId, idsToShow);
-                        } else {
-                          // Uncheck all sublayers
-                          setVisibleLayerIds(resolvedHazardsMapId, []);
-                        }
-                      }}
-                      size="small"
-                    />
                     <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
                       <span>{stormSurgeConfig.name}</span>
                     </Box>
@@ -203,6 +181,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               <LayerToggleGroup
                 key={expandKey}
                 label={section.label}
+                description={section.layers.find((layer) => layer.description)?.description}
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}
                 childrenPl={2}
@@ -242,7 +221,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
                          <span className={styles["layer-icon"]} style={{ color: parent.color }}>
                            <ParentIcon size="1rem" />
                          </span>
-                         {parent.name}
+                         <span>{parent.name}</span>
                        </Box>
                        {hasChildren && (
                          <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
