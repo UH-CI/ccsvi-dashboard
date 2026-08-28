@@ -78,7 +78,12 @@ DUPLICATE_METRIC_COLUMNS = {
     "person_under_5_65_females": "Estimate!!Total:",
 }
 
-def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[str], list[tuple[str, dict]]]:
+# True when the CSV has this column and at least one row has a value in it
+def _column_has_values(df: pd.DataFrame, col: str) -> bool:
+    return col in df.columns and bool(df[col].notna().any())
+
+
+def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[dict], list[tuple[str, dict]]]:
     df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
 
     base_cols = [
@@ -93,7 +98,25 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         and not col.endswith(" (MOE derived)")
     ]
     col_to_metric = {col: metric_name_for(col) for col in base_cols}
-    metric_names = list(col_to_metric.values())
+
+    # One record per metric: column position, and which derived values it has.
+    # Two source columns can clean down to the same name, so merge those.
+    metric_specs: dict[str, dict] = {}
+    for order, col in enumerate(base_cols):
+        moe_col = moe_column_for(col)
+        spec = {
+            "name": col_to_metric[col],
+            "display_order": order,
+            "has_moe": bool(moe_col) and _column_has_values(df, moe_col),
+            "has_percentage": _column_has_values(df, f"{col} (%)"),
+            "has_moe_pp": _column_has_values(df, f"{col} (MOE pp)"),
+        }
+        existing = metric_specs.get(spec["name"])
+        if existing is None:
+            metric_specs[spec["name"]] = spec
+        else:
+            for flag in ("has_moe", "has_percentage", "has_moe_pp"):
+                existing[flag] = existing[flag] or spec[flag]
 
     def numeric_or_none(row, col):
         return None if col not in df.columns or pd.isna(row[col]) else float(row[col])
@@ -125,7 +148,7 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
             }
         rows.append((str(geoid), values))
 
-    return metric_names, rows
+    return list(metric_specs.values()), rows
 
 
 async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str) -> None:
@@ -144,22 +167,42 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
         hawaiian_homelands,
     )
 
-    metric_names, rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
+    metric_specs, rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
+    metric_names = [spec["name"] for spec in metric_specs]
 
     # Drop any metric this dataset no longer produces so stale values don't hang
     await conn.execute(
         "DELETE FROM metrics WHERE dataset_id = $1 AND name != ALL($2::text[])",
         dataset_id,
-        list(dict.fromkeys(metric_names)),
+        metric_names,
     )
 
+    # DO UPDATE so re-running refreshes existing metrics. classification_mode and
+    # mv_column are set elsewhere, so they're left alone.
     await conn.executemany(
         """
-        INSERT INTO metrics (dataset_id, name, classification_mode)
-        VALUES ($1, $2, 'q')
-        ON CONFLICT (dataset_id, name) DO NOTHING
+        INSERT INTO metrics (
+            dataset_id, name, classification_mode,
+            display_order, has_moe, has_percentage, has_moe_pp
+        )
+        VALUES ($1, $2, 'q', $3, $4, $5, $6)
+        ON CONFLICT (dataset_id, name) DO UPDATE SET
+            display_order  = EXCLUDED.display_order,
+            has_moe        = EXCLUDED.has_moe,
+            has_percentage = EXCLUDED.has_percentage,
+            has_moe_pp     = EXCLUDED.has_moe_pp
         """,
-        [(dataset_id, name) for name in dict.fromkeys(metric_names)],
+        [
+            (
+                dataset_id,
+                spec["name"],
+                spec["display_order"],
+                spec["has_moe"],
+                spec["has_percentage"],
+                spec["has_moe_pp"],
+            )
+            for spec in metric_specs
+        ],
     )
 
     metric_id_map = {

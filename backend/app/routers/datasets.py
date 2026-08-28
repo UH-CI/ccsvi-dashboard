@@ -78,7 +78,8 @@ async def get_dataset_table(
                mv.metric_id,
                mv.absolute::float,
                mv.margin_of_error::float,
-               mv.percentage::float
+               mv.percentage::float,
+               mv.moe_percentage_points::float
         FROM geographies g
         JOIN metric_values mv ON mv.geoid = g.geoid
         WHERE mv.metric_id = ANY($1::int[])
