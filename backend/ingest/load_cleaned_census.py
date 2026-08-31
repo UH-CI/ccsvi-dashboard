@@ -83,7 +83,19 @@ def _column_has_values(df: pd.DataFrame, col: str) -> bool:
     return col in df.columns and bool(df[col].notna().any())
 
 
-def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[dict], list[tuple[str, dict]]]:
+# Builds one geographies row from a cleaned CSV row, in table column order
+def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
+    pop = None if pd.isna(population) else int(float(population))
+    name = None if pd.isna(name) else str(name)
+
+    if is_homeland:
+        return (geoid, "hawaiian_homeland", name, None, None, None, None, pop)
+
+    parts = [p.strip() for p in name.split(";")]
+    return (geoid, "block_group", name, parts[0], parts[1], parts[2], parts[3], pop)
+
+
+def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[dict], list[tuple[str, dict]], list[tuple]]:
     df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
 
     base_cols = [
@@ -122,6 +134,7 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         return None if col not in df.columns or pd.isna(row[col]) else float(row[col])
 
     rows = []
+    geo_rows = []
     for _, row in df.iterrows():
         geoid = row["Geography"]
         if pd.isna(geoid):
@@ -129,7 +142,17 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         # The raw file's "Geography" column holds the Census Bureau's long ID, e.g.
         # "1500000US150010201001" or "2500000US5048" — the geographies table stores
         # just the part after "US" ("150010201001" / "5048"), so strip it to match.
-        geoid = str(geoid).split("US")[-1]
+        raw_geoid = str(geoid)
+        geoid = raw_geoid.split("US")[-1]
+
+        geo_rows.append(
+            geography_row(
+                geoid,
+                row["Geographic Area Name"],
+                row["Census_Population"],
+                raw_geoid.startswith("2500000US"),
+            )
+        )
 
         values = {}
         for col in base_cols:
@@ -148,10 +171,10 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
             }
         rows.append((str(geoid), values))
 
-    return list(metric_specs.values()), rows
+    return list(metric_specs.values()), rows, geo_rows
 
 
-async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str) -> None:
+async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str, seen_geoids: set[str]) -> None:
     label, hawaiian_homelands = DATASET_LABELS[dataset_id]
 
     await conn.execute(
@@ -167,8 +190,28 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str)
         hawaiian_homelands,
     )
 
-    metric_specs, rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
+    metric_specs, rows, geo_rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
     metric_names = [spec["name"] for spec in metric_specs]
+
+    geo_rows = [r for r in geo_rows if r[0] not in seen_geoids]
+    seen_geoids.update(r[0] for r in geo_rows)
+    await conn.executemany(
+        """
+        INSERT INTO geographies (
+            geoid, type, name, block_group, census_tract, county, state, population
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (geoid) DO UPDATE SET
+            type         = EXCLUDED.type,
+            name         = EXCLUDED.name,
+            block_group  = EXCLUDED.block_group,
+            census_tract = EXCLUDED.census_tract,
+            county       = EXCLUDED.county,
+            state        = EXCLUDED.state,
+            population   = EXCLUDED.population
+        """,
+        geo_rows,
+    )
 
     # Drop any metric this dataset no longer produces so stale values don't hang
     await conn.execute(
@@ -286,12 +329,13 @@ async def main(cleaned_dir: str) -> None:
         csv_files = sorted(glob.glob(os.path.join(cleaned_dir, "*.csv")))
         print(f"Found {len(csv_files)} CSV file(s) in {cleaned_dir}")
 
+        seen_geoids: set[str] = set()
         for csv_path in csv_files:
             dataset_id = os.path.splitext(os.path.basename(csv_path))[0]
             if dataset_id not in DATASET_LABELS:
                 print(f"  ⚠ Skipping {os.path.basename(csv_path)} — no entry in DATASET_LABELS")
                 continue
-            await load_dataset(conn, dataset_id, csv_path)
+            await load_dataset(conn, dataset_id, csv_path, seen_geoids)
 
         print("Done.")
     finally:
