@@ -83,7 +83,8 @@ def _column_has_values(df: pd.DataFrame, col: str) -> bool:
     return col in df.columns and bool(df[col].notna().any())
 
 
-# Builds one geographies row from a cleaned CSV row, in table column order
+# Builds one geographies row from a cleaned CSV row, in table column order. ACS files
+# separate the name parts with ";", the Decennial file (group quarters) with ","
 def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
     pop = None if pd.isna(population) else int(float(population))
     name = None if pd.isna(name) else str(name)
@@ -91,7 +92,7 @@ def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
     if is_homeland:
         return (geoid, "hawaiian_homeland", name, None, None, None, None, pop)
 
-    parts = [p.strip() for p in name.split(";")]
+    parts = [p.strip() for p in name.replace(";", ",").split(",")]
     return (geoid, "block_group", name, parts[0], parts[1], parts[2], parts[3], pop)
 
 
