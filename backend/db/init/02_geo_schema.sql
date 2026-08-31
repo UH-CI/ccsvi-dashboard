@@ -1,7 +1,8 @@
 -- Spatial tables and the wide metric materialized views.
 --
--- Views are dropped and recreated here, so they come back EMPTY. Refresh both after
--- applying, and again after load_postgis.py populates geographies.geom:
+-- Deletes and rebuilds VIEWS on every run, so edits to definitions always take effect, 
+-- and rebuilding refills them.
+-- VIEWS only go stale when geographies.geom changes, so refresh them after load_postgis.py:
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW block_group_metrics;"
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 
