@@ -1,18 +1,9 @@
--- Phase 3: geometry columns, spatial tables, and wide metric materialized views.
+-- Spatial tables and the wide metric materialized views.
 --
--- docker exec -i ccsvi-pg psql -U ccsvi -d ccsvi < backend/db/init/03_geo_schema.sql
---
--- After running load_postgis.py to populate geometry:
+-- Views are dropped and recreated here, so they come back EMPTY. Refresh both after
+-- applying, and again after load_postgis.py populates geographies.geom:
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW block_group_metrics;"
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
-
-
--- ── Geometry column on geographies ───────────────────────────────────────────
--- Populated by load_postgis.py (ogr2ogr from Census block group GeoJSON).
--- NULL for all rows until that ingestion runs.
-
-ALTER TABLE geographies ADD COLUMN IF NOT EXISTS geom geometry(MultiPolygon, 4326);
-CREATE INDEX IF NOT EXISTS idx_geographies_geom ON geographies USING GIST (geom);
 
 
 -- ── Static boundary tables ────────────────────────────────────────────────────
@@ -75,9 +66,9 @@ CREATE INDEX IF NOT EXISTS idx_hazards_height_ft ON hazards (height_ft);
 --   _pct_calc → percentage for a derived/calculated metric (no MoE in source data)
 --
 -- geom and centroid are NULL until load_postgis.py populates geographies.geom.
--- Run REFRESH MATERIALIZED VIEW after ingestion.
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS block_group_metrics AS
+DROP MATERIALIZED VIEW IF EXISTS block_group_metrics;
+CREATE MATERIALIZED VIEW block_group_metrics AS
 SELECT
     g.geoid,
     g.name,
@@ -247,7 +238,8 @@ CREATE INDEX        IF NOT EXISTS idx_bgm_county   ON block_group_metrics (count
 -- unit with a distinct metric set and different denominators.
 -- geom populated by load_postgis.py from Census_Hawaiian_Homelands GeoJSON.
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS hawaiian_homeland_metrics AS
+DROP MATERIALIZED VIEW IF EXISTS hawaiian_homeland_metrics;
+CREATE MATERIALIZED VIEW hawaiian_homeland_metrics AS
 SELECT
     g.geoid,
     g.name,

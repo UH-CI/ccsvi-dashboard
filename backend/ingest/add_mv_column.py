@@ -15,7 +15,7 @@ import asyncpg
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
 # (mv_column, dataset_id, metric name) — transcribed from the CASE expressions
-# in backend/db/init/03_geo_schema.sql (block_group_metrics MV). Cross-checked
+# in backend/db/init/02_geo_schema.sql (block_group_metrics MV). Cross-checked
 # against ALLOWED_METRIC_COLS / _BGM_METRIC_COLS in backend/app/routers/block_groups.py.
 MAPPINGS: list[tuple[str, str, str]] = [
     ("housing_pre_1990_pct_calc", "age_of_structure", "Total Housing Built Before 1990 (calc.)"),
