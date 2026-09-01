@@ -196,7 +196,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
       },
       {
         dataset: "aggregate_vehicles",
-        metric: "Estimate Aggregate number of vehicles available",
+        metric: "Aggregate number of vehicles available",
         label: "Households without a vehicle",
       },
     ],

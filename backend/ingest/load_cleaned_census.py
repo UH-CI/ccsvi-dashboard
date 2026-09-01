@@ -35,7 +35,13 @@ DEFAULT_HAWAIIAN_HOMELANDS_GEOJSON = os.path.join(
 )
 DEFAULT_OUTPUT_DIR = "/home/exouser/ccsvi-data/archived/cleaned-data"
 
-PREFIXES_TO_REMOVE = ["Estimate!!Total:!!", "Estimate!!Total!!", "Margin of Error!!", "Estimate!!"]
+PREFIXES_TO_REMOVE = [
+    "Estimate!!Total:!!",
+    "Estimate!!Total!!",
+    "Margin of Error!!",
+    "Estimate!!",
+    "!!Total:!!",  # Decennial files use "Total" not "Estimate"
+]
 
 NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
 
