@@ -31,6 +31,9 @@ psql_run() {
 
 $FULL && echo "== Full rebuild ==" || echo "== Census rebuild (keeping geometry) =="
 
+echo "-- checking generated SQL"
+(cd "$BACKEND_DIR" && "$PYTHON" -m db.generate_views --check)
+
 echo "-- dropping census tables"
 psql_run <<'SQL'
 DROP MATERIALIZED VIEW IF EXISTS block_group_metrics;
