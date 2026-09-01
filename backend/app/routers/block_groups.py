@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ..db import ConnDep
 
@@ -30,104 +30,25 @@ class MetricValueRecord(BaseModel):
 
 
 class BlockGroupResult(BaseModel):
+    # Metric columns come from metrics.mv_column and vary, so they arrive as extras
+    model_config = ConfigDict(extra="allow")
+
     geoid: str
     name: str | None
     county: str | None
     population: int | None
-    housing_pre_1990_pct_calc: float | None = None
-    vehicles_aggregate_abs: float | None = None
-    gender_male_pct: float | None = None
-    gender_female_pct: float | None = None
-    no_health_insurance_pct_calc: float | None = None
-    no_computer_pct: float | None = None
-    fpl_total_abs: float | None = None
-    fpl_under_100_pct_calc: float | None = None
-    fpl_under_150_pct_calc: float | None = None
-    fpl_under_200_pct_calc: float | None = None
-    fpl_below_100_abs: float | None = None
-    fpl_100_to_149_abs: float | None = None
-    no_internet_pct: float | None = None
-    limited_english_total_pct_calc: float | None = None
-    limited_english_spanish_pct: float | None = None
-    limited_english_indo_european_pct: float | None = None
-    limited_english_asian_pi_pct: float | None = None
-    limited_english_other_pct: float | None = None
-    living_alone_total_pct_calc: float | None = None
-    living_alone_male_pct: float | None = None
-    living_alone_female_pct: float | None = None
-    females_under_5_pct_calc: float | None = None
-    females_under_18_pct_calc: float | None = None
-    females_over_65_pct_calc: float | None = None
-    males_under_5_pct_calc: float | None = None
-    males_under_18_pct_calc: float | None = None
-    males_over_65_pct_calc: float | None = None
-    group_quarters_total_abs: float | None = None
-    group_quarters_correctional_abs: float | None = None
-    group_quarters_juvenile_abs: float | None = None
-    group_quarters_nursing_abs: float | None = None
-    group_quarters_other_abs: float | None = None
-    race_white_pct: float | None = None
-    race_black_pct: float | None = None
-    race_aian_pct: float | None = None
-    race_asian_pct: float | None = None
-    race_nhpi_pct: float | None = None
-    race_other_pct: float | None = None
-    race_two_or_more_pct: float | None = None
-    tenure_renter_pct: float | None = None
 
 
 # ── Column list for SELECT / CSV ──────────────────────────────────────────────
 
 _BGM_ID_COLS = ["geoid", "name", "county", "population"]
 
-_BGM_METRIC_COLS = [
-    "housing_pre_1990_pct_calc",
-    "vehicles_aggregate_abs",
-    "gender_male_pct",
-    "gender_female_pct",
-    "no_health_insurance_pct_calc",
-    "no_computer_pct",
-    "fpl_total_abs",
-    "fpl_under_100_pct_calc",
-    "fpl_under_150_pct_calc",
-    "fpl_under_200_pct_calc",
-    "fpl_below_100_abs",
-    "fpl_100_to_149_abs",
-    "no_internet_pct",
-    "limited_english_total_pct_calc",
-    "limited_english_spanish_pct",
-    "limited_english_indo_european_pct",
-    "limited_english_asian_pi_pct",
-    "limited_english_other_pct",
-    "living_alone_total_pct_calc",
-    "living_alone_male_pct",
-    "living_alone_female_pct",
-    "females_under_5_pct_calc",
-    "females_under_18_pct_calc",
-    "females_over_65_pct_calc",
-    "males_under_5_pct_calc",
-    "males_under_18_pct_calc",
-    "males_over_65_pct_calc",
-    "group_quarters_total_abs",
-    "group_quarters_correctional_abs",
-    "group_quarters_juvenile_abs",
-    "group_quarters_nursing_abs",
-    "group_quarters_other_abs",
-    "race_white_pct",
-    "race_black_pct",
-    "race_aian_pct",
-    "race_asian_pct",
-    "race_nhpi_pct",
-    "race_other_pct",
-    "race_two_or_more_pct",
-    "tenure_renter_pct",
-]
-
-_BGM_COLS = _BGM_ID_COLS + _BGM_METRIC_COLS
-
-# Allowlist for min_<col> query params — prevents SQL injection via identifier
-# interpolation. asyncpg can parameterize values ($1) but NOT column identifiers.
-ALLOWED_METRIC_COLS: frozenset[str] = frozenset(_BGM_METRIC_COLS)
+# View metric columns from metrics.mv_column — also the allowlist for min_<col> params
+async def metric_columns(conn) -> list[str]:
+    rows = await conn.fetch(
+        "SELECT DISTINCT mv_column FROM metrics WHERE mv_column IS NOT NULL ORDER BY 1"
+    )
+    return [r["mv_column"] for r in rows]
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -228,13 +149,16 @@ async def filter_block_groups(
     ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
+    metric_cols = await metric_columns(conn)
+    allowed_cols = frozenset(metric_cols)
+
     # Validate and collect min_<col> metric threshold params.
     metric_filters: list[tuple[str, float]] = []
     for key, val in request.query_params.multi_items():
         if not key.startswith("min_"):
             continue
         col = key[4:]
-        if col not in ALLOWED_METRIC_COLS:
+        if col not in allowed_cols:
             raise HTTPException(status_code=400, detail=f"Unknown metric column: {col!r}")
         try:
             metric_filters.append((col, float(val)))
@@ -274,12 +198,12 @@ async def filter_block_groups(
         conditions.append(exists_clause)
 
     for col, threshold in metric_filters:
-        # col has been validated against ALLOWED_METRIC_COLS — safe to interpolate.
+        # col has been validated against allowed_cols — safe to interpolate.
         add_cond(f"bgm.{col} >= ?", threshold)
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     id_select = ", ".join(f"bgm.{c}" for c in _BGM_ID_COLS)
-    metric_select = ", ".join(f"bgm.{c}::float" for c in _BGM_METRIC_COLS)
+    metric_select = ", ".join(f"bgm.{c}::float" for c in metric_cols)
     sql = f"SELECT {id_select}, {metric_select} FROM block_group_metrics bgm {where}"
 
     async with conn.transaction():
@@ -287,11 +211,12 @@ async def filter_block_groups(
         rows = await conn.fetch(sql, *params)
 
     if fmt == "csv":
+        all_cols = _BGM_ID_COLS + metric_cols
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(_BGM_COLS)
+        writer.writerow(all_cols)
         for row in rows:
-            writer.writerow([row[c] for c in _BGM_COLS])
+            writer.writerow([row[c] for c in all_cols])
         return Response(
             content=buf.getvalue(),
             media_type="text/csv",
