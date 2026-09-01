@@ -27,7 +27,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
     const items = [];
     for (let i = limits.length - 2; i >= 0; i--) {
-      const fmt = (n: number) => n.toFixed(3);
+      const fmt = (n: number) => n.toFixed(1);
       const label =
         i === limits.length - 2
           ? `> ${fmt(limits[i])}`

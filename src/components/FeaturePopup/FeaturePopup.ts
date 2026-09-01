@@ -52,7 +52,7 @@ function renderMetricField(metric: MetricDisplay): string {
     <div class="${styles["popup-field"]}">
       <span class="${styles["popup-field-label"]}">${escapeHtml(metric.name)}:</span>
       <span class="${styles["popup-field-value-group"]}">
-        <span class="${styles["popup-field-value"]}">${metric.value.toFixed(2)}%${metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}</span>
+        <span class="${styles["popup-field-value"]}">${metric.value.toFixed(1)}%${metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}</span>
         ${
           metric.reliability
             ? `<span class="${styles["popup-reliability"]} ${RELIABILITY_TIER_CLASS[metric.reliability.tier]}">${escapeHtml(metric.reliability.label)}</span>`
