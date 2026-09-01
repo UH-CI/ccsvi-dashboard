@@ -2,7 +2,6 @@ export interface SviIndicator {
   dataset: string;
   metric: string;
   label: string;
-  mvColumn?: string; // present only when indicator has a cross-data filter
 }
 
 export interface SviCategory {
@@ -41,7 +40,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "income_share_of_fpl",
         metric: "Total Under 100% FPL (calc.)",
         label: "Below 100% federal poverty line",
-        mvColumn: "fpl_under_100_pct_calc",
       },
       {
         dataset: "income_share_of_fpl",
@@ -57,7 +55,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "health_insurance",
         metric: "No Health Insurance Coverage (calc.)",
         label: "Without health insurance",
-        mvColumn: "no_health_insurance_pct_calc",
       },
     ],
   },
@@ -191,7 +188,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "internet_subscription",
         metric: "No Internet access",
         label: "Households without internet access",
-        mvColumn: "no_internet_pct",
       },
       {
         dataset: "households_w_computer",
