@@ -46,7 +46,8 @@ _BGM_ID_COLS = ["geoid", "name", "county", "population"]
 # View metric columns from metrics.mv_column — also the allowlist for min_<col> params
 async def metric_columns(conn) -> list[str]:
     rows = await conn.fetch(
-        "SELECT DISTINCT mv_column FROM metrics WHERE mv_column IS NOT NULL ORDER BY 1"
+        "SELECT mv_column FROM metrics WHERE mv_column IS NOT NULL"
+        " ORDER BY dataset_id, display_order"
     )
     return [r["mv_column"] for r in rows]
 
