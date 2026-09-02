@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Typography,
   FormControl,
@@ -56,11 +56,15 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [titleEditValue, setTitleEditValue] = useState("");
   const [isRenamingPreview, setIsRenamingPreview] = useState(false);
   const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
+  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
+  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
-  const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   // Focus input
-  React.useEffect(() => {
+  useEffect(() => {
     if (isEditingTitle) {
       // Defer focusing to the next macrotask to ensure the input is mounted and visible
       // (closing menus can affect focus timing)
@@ -83,6 +87,28 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
       hawaiianHomelands: cfg.hawaiianHomelands || false,
     }));
   }, [dataset]);
+  const activeRasterLeafId = useMemo(() => {
+    const visible = visibleRasterIdsByMap[mapId];
+    if (!visible || visible.size === 0) return null;
+    for (const id of visible) {
+      if (id.includes(".")) return id;
+    }
+    return [...visible][0] ?? null;
+  }, [visibleRasterIdsByMap, mapId]);
+
+  const activeRasterColormap = useMemo(() => {
+    if (!activeRasterLeafId) return null;
+    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
+    if (override) return override;
+    const [parentId, subId] = activeRasterLeafId.split(".");
+    if (!subId) {
+      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
+    }
+    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
+    return (
+      parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null
+    );
+  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
   if (!config) return null;
 
@@ -175,6 +201,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             <MenuItem
               onClick={() => {
                 // close Controls menu so the inline input is visible and delay focus slightly.
+                setIsRenamingPreview(true);
                 setIsEditingTitle(true);
                 setIsRenamingPreview(false);
                 setTitleEditValue(config.title);
@@ -189,12 +216,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
             <Divider />
 
-            {/* Color Scheme Control - always present but disabled until a dataset+metric is selected */}
+            {/* Color Scheme Control */}
             <MenuItem
-              disabled={!(config.visible && config.dataset && config.metric)}
-              onClick={(e) => {
-                if (config.visible && config.dataset && config.metric) setColorSchemeAnchor(e.currentTarget);
-              }}
+              onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
               sx={{ display: "flex", justifyContent: "space-between" }}
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -205,6 +229,21 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               </Box>
               <ExpandMore fontSize="small" />
             </MenuItem>
+
+            {activeRasterLeafId && (
+              <MenuItem
+                onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
+                sx={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Gradient fontSize="small" />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Raster Colormap
+                  </Typography>
+                </Box>
+                <ExpandMore fontSize="small" />
+              </MenuItem>
+            )}
 
 
             <Divider />
@@ -237,6 +276,17 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             updateMapConfig={updateMapConfig}
             setLayerOpacity={setLayerOpacity}
           />
+          {activeRasterLeafId && (
+            <RasterColormapMenu
+              anchorEl={rasterColorSchemeAnchor}
+              open={Boolean(rasterColorSchemeAnchor)}
+              onClose={() => setRasterColorSchemeAnchor(null)}
+              mapId={mapId}
+              activeRasterLeafId={activeRasterLeafId}
+              activeRasterColormap={activeRasterColormap}
+              setRasterColormap={setRasterColormap}
+            />
+          )}
         </Box>
       )}
 
