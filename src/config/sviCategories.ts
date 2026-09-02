@@ -177,37 +177,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Limited English proficiency",
         description: "Number or share of households with limited English proficiency. Language barriers can reduce access to warnings, assistance, and recovery information.",
       },
-      {
-        dataset: "limited_english_speaking",
-        metric: "Spanish: Limited English speaking household",
-        label: "Limited English: Spanish",
-        description: "Households where Spanish is spoken and English is spoken less than very well. Useful for targeted language access and outreach planning.",
-      },
-      {
-        dataset: "limited_english_speaking",
-        metric: "Other Indo-European languages: Limited English speaking household",
-        label: "Limited English: Other Indo-European languages",
-        description: "Households speaking other Indo-European languages with limited English proficiency; informs multi-lingual communication strategies.",
-      },
-      {
-        dataset: "limited_english_speaking",
-        metric: "Asian and Pacific Island languages: Limited English speaking household",
-        label: "Limited English: Asian and Pacific Island languages",
-        description: "Households speaking Asian and Pacific Island languages with limited English proficiency; highlights language groups needing accessible materials.",
-      },
-      {
-        dataset: "limited_english_speaking",
-        metric: "Other languages: Limited English speaking household",
-        label: "Limited English: Other languages",
-        description: "Households speaking languages not otherwise classified with limited English proficiency; useful for inclusive outreach planning.",
-      },
-      {
-        dataset: "2022_census_hawaiian_homelands",
-        metric:
-          "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
-        label: "Hawaiian homelands: limited English proficiency",
-        description: "Households on Hawaiian homelands where English is spoken less than very well. Captures language access needs within these land contexts.",
-      },
     ],
   },
   {
