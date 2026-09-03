@@ -29,6 +29,7 @@ import {
   useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
+import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { HCDPRasterLayer } from "../HCDP";
@@ -389,10 +390,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               onZoomChange={handleZoomChange}
             />
 
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
+            {(() => {
+              const baseMapId = config?.baseMap ?? "openstreet";
+              const baseMap = BASE_MAP_OPTIONS.find((b) => b.id === baseMapId) ?? BASE_MAP_OPTIONS[0];
+              return (
+                <TileLayer
+                  url={baseMap.url}
+                  attribution={baseMap.attribution}
+                  subdomains={baseMap.subdomains as any}
+                />
+              );
+            })()}
 
             {shouldRenderCountyBoundariesBackground && (
               <CountyBoundariesBackgroundLayer

@@ -7,8 +7,9 @@ import {
   MenuItem,
   IconButton,
   Box,
+  Menu,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, Map } from "@mui/icons-material";
 import {
   useAppStore,
   useMapStore,
@@ -20,6 +21,7 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
+import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -49,6 +51,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
+  const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
+
+  const activeBaseMapId = config?.baseMap ?? "openstreet";
 
   const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
   const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
@@ -181,6 +186,32 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 <VisibilityOff fontSize="small" />
               )}
             </IconButton>
+            <IconButton
+              size="small"
+              onClick={(e) => setBaseMapAnchor(e.currentTarget)}
+              title="Change Base Map"
+            >
+              <Map fontSize="small" />
+            </IconButton>
+            <Menu
+              anchorEl={baseMapAnchor}
+              open={Boolean(baseMapAnchor)}
+              onClose={() => setBaseMapAnchor(null)}
+              keepMounted
+            >
+              {BASE_MAP_OPTIONS.map((opt) => (
+                <MenuItem
+                  key={opt.id}
+                  selected={opt.id === activeBaseMapId}
+                  onClick={() => {
+                    updateMapConfig(config.id, { baseMap: opt.id });
+                    setBaseMapAnchor(null);
+                  }}
+                >
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Menu>
             {canRemoveMap && (
               <IconButton
                 size="small"
