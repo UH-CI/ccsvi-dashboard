@@ -7,7 +7,6 @@ import {
   MenuItem,
   IconButton,
   Box,
-  Button,
   Menu,
   Divider,
   ListSubheader,
@@ -55,7 +54,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
   const [isRenamingPreview, setIsRenamingPreview] = useState(false);
-  const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
   const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
   const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
   const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
@@ -115,7 +113,8 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   return (
     <Box className={styles["single-map-controls"]}>
       {section !== "dataset" && (
-        <Box className={styles["single-map-actions"]}>
+        <>
+          <Box className={styles["single-map-actions"]}>
           {isEditingTitle ? (
             <input
               ref={titleInputRef}
@@ -160,111 +159,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               {config.title}
             </Typography>
           )}
-          {/* Prominent Controls button — opens a labeled submenu replacing small icon buttons */}
-          {/* Keep a visible Palette icon for quick access to color schemes (matches original UX) */}
-          <Button
-            size="small"
-            onClick={(e) => setControlsMenuAnchor(e.currentTarget)}
-            endIcon={<ExpandMore fontSize="small" />}
-            className={styles["single-map-controls-btn"]}
-          >
-            Controls
-          </Button>
-          
-          {/* Controls Menu — central dropdown grouping map-specific actions (visibility, rename, color, raster colormap, remove) */}
-          <Menu
-            anchorEl={controlsMenuAnchor}
-            open={Boolean(controlsMenuAnchor)}
-            onClose={() => {
-              // Only close if no submenu is open
-              if (!colorSchemeAnchor && !rasterColorSchemeAnchor) {
-                setControlsMenuAnchor(null);
-              }
-            }}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-          >
-            {/* Visibility Control */}
-            <MenuItem
-              onClick={() => {
-                toggleMapVisibility(config.id);
-                setControlsMenuAnchor(null);
-              }}
-            >
-              {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                {config.visible ? "Hide Map" : "Show Map"}
-              </Typography>
-            </MenuItem>
-
-            {/* Rename Control */}
-            <MenuItem
-              onClick={() => {
-                // close Controls menu so the inline input is visible and delay focus slightly.
-                setIsRenamingPreview(true);
-                setIsEditingTitle(true);
-                setIsRenamingPreview(false);
-                setTitleEditValue(config.title);
-                setControlsMenuAnchor(null);
-              }}
-            >
-              <Edit fontSize="small" />
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                Rename Map
-              </Typography>
-            </MenuItem>
-
-            <Divider />
-
-            {/* Color Scheme Control */}
-            <MenuItem
-              onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
-              sx={{ display: "flex", justifyContent: "space-between" }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Palette fontSize="small" />
-                <Typography variant="body2" sx={{ ml: 1 }}>
-                  Color Scheme
-                </Typography>
-              </Box>
-              <ExpandMore fontSize="small" />
-            </MenuItem>
-
-            {activeRasterLeafId && (
-              <MenuItem
-                onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
-                sx={{ display: "flex", justifyContent: "space-between" }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Gradient fontSize="small" />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
-                    Raster Colormap
-                  </Typography>
-                </Box>
-                <ExpandMore fontSize="small" />
-              </MenuItem>
-            )}
-
-
-            <Divider />
-
-            {/* Remove Control */}
-            {canRemoveMap && (
-              <MenuItem
-                onClick={() => {
-                  onRemove(config.id);
-                  setControlsMenuAnchor(null);
-                }}
-                sx={{ color: "error.main" }}
-              >
-                <Close fontSize="small" />
-                <Typography variant="body2" sx={{ ml: 1 }}>
-                  Remove Map
-                </Typography>
-              </MenuItem>
-            )}
-          </Menu>
-
           {/* Color Scheme Submenu */}
           <ColorSchemeMenu
             anchorEl={colorSchemeAnchor}
@@ -287,7 +181,52 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               setRasterColormap={setRasterColormap}
             />
           )}
-        </Box>
+          </Box>
+          {section === "management" && (
+            <Box>
+              <Divider sx={{ my: 0.5 }} />
+              <MenuItem onClick={() => toggleMapVisibility(config.id)}>
+                {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  {config.visible ? "Hide Map" : "Show Map"}
+                </Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setIsRenamingPreview(true);
+                  setIsEditingTitle(true);
+                  setIsRenamingPreview(false);
+                  setTitleEditValue(config.title);
+                }}
+              >
+                <Edit fontSize="small" />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  Rename Map
+                </Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
+                sx={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Palette fontSize="small" />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Color Scheme
+                  </Typography>
+                </Box>
+                <ExpandMore fontSize="small" />
+              </MenuItem>
+              {canRemoveMap && (
+                <MenuItem onClick={() => onRemove(config.id)} sx={{ color: "error.main" }}>
+                  <Close fontSize="small" />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Remove Map
+                  </Typography>
+                </MenuItem>
+              )}
+            </Box>
+          )}
+        </>
       )}
 
       {section !== "management" && config.visible && (
