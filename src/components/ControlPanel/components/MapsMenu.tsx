@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
 import {
   useMapStore,
@@ -53,6 +53,9 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
       onClose={onClose}
       title="Map Management"
       onInfoClick={onInfoClick}
+      paperClassName={
+        mapConfigs.length === 1 ? styles["menu-paper-maps-single"] : styles["menu-paper-maps-multi"]
+      }
     >
       {canAddMap && (
         <Button
@@ -66,15 +69,25 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
           Add Map
         </Button>
       )}
-      {mapConfigs.map((mapConfig) => (
-        <SingleMapControls
-          key={mapConfig.id}
-          mapId={mapConfig.id}
-          canRemoveMap={canRemoveMap}
-          onRemove={handleRemoveMap}
-          section="management"
-        />
-      ))}
+      <Box
+        className={styles["map-management-grid"]}
+        sx={{
+          gridTemplateColumns:
+            mapConfigs.length === 1 ? "minmax(0, 1fr)" : "repeat(2, minmax(155px, 1fr))",
+          justifyItems: mapConfigs.length === 1 ? "stretch" : "initial",
+        }}
+      >
+        {mapConfigs.map((mapConfig) => (
+          <Box key={mapConfig.id} className={styles["map-management-item"]}>
+            <SingleMapControls
+              mapId={mapConfig.id}
+              canRemoveMap={canRemoveMap}
+              onRemove={handleRemoveMap}
+              section="management"
+            />
+          </Box>
+        ))}
+      </Box>
     </MenuShell>
   );
 };
