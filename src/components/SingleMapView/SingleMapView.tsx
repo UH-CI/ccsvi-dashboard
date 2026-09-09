@@ -256,6 +256,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
+    const activeBaseMap =
+      BASE_MAP_OPTIONS.find((b) => b.id === config?.baseMap) ?? BASE_MAP_OPTIONS[0];
 
     const { colorScale, bivariateColorScale, getColor } = useMapColorScale({
       allMetricValues,
@@ -392,12 +394,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               onZoomChange={handleZoomChange}
             />
 
-            {(() => {
-              const baseMapId = config?.baseMap ?? "openstreet";
-              const baseMap =
-                BASE_MAP_OPTIONS.find((b) => b.id === baseMapId) ?? BASE_MAP_OPTIONS[0];
-              return <TileLayer url={baseMap.url} attribution={baseMap.attribution} />;
-            })()}
+            <TileLayer url={activeBaseMap.url} attribution={activeBaseMap.attribution} />
 
             {shouldRenderCountyBoundariesBackground && (
               <CountyBoundariesBackgroundLayer

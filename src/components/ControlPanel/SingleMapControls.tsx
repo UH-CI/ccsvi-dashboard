@@ -7,9 +7,16 @@ import {
   MenuItem,
   IconButton,
   Box,
-  Menu,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, Map } from "@mui/icons-material";
+import {
+  Visibility,
+  VisibilityOff,
+  Close,
+  Palette,
+  Edit,
+  Gradient,
+  Map,
+} from "@mui/icons-material";
 import {
   useAppStore,
   useMapStore,
@@ -21,7 +28,7 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
-import { BASE_MAP_OPTIONS } from "../../config/basemaps";
+import { BaseMapMenu } from "./components/BaseMapMenu";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -193,25 +200,14 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             >
               <Map fontSize="small" />
             </IconButton>
-            <Menu
+            <BaseMapMenu
               anchorEl={baseMapAnchor}
               open={Boolean(baseMapAnchor)}
               onClose={() => setBaseMapAnchor(null)}
-              keepMounted
-            >
-              {BASE_MAP_OPTIONS.map((opt) => (
-                <MenuItem
-                  key={opt.id}
-                  selected={opt.id === activeBaseMapId}
-                  onClick={() => {
-                    updateMapConfig(config.id, { baseMap: opt.id });
-                    setBaseMapAnchor(null);
-                  }}
-                >
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Menu>
+              mapId={mapId}
+              activeBaseMapId={activeBaseMapId}
+              updateMapConfig={updateMapConfig}
+            />
             {canRemoveMap && (
               <IconButton
                 size="small"
