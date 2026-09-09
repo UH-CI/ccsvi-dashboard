@@ -102,6 +102,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       metric: "",
       visible: true,
       colorScheme: "Viridis",
+      baseMap: "openstreet",
     };
     set((state) => ({
       mapConfigs: [...state.mapConfigs, newMap],

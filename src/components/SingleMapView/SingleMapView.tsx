@@ -394,14 +394,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
             {(() => {
               const baseMapId = config?.baseMap ?? "openstreet";
-              const baseMap = BASE_MAP_OPTIONS.find((b) => b.id === baseMapId) ?? BASE_MAP_OPTIONS[0];
-              return (
-                <TileLayer
-                  url={baseMap.url}
-                  attribution={baseMap.attribution}
-                  subdomains={baseMap.subdomains as any}
-                />
-              );
+              const baseMap =
+                BASE_MAP_OPTIONS.find((b) => b.id === baseMapId) ?? BASE_MAP_OPTIONS[0];
+              return <TileLayer url={baseMap.url} attribution={baseMap.attribution} />;
             })()}
 
             {shouldRenderCountyBoundariesBackground && (
