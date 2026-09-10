@@ -12,7 +12,16 @@ import {
   Divider,
   ListSubheader,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, ExpandMore } from "@mui/icons-material";
+import {
+  Visibility,
+  VisibilityOff,
+  Close,
+  Palette,
+  Edit,
+  Gradient,
+  ExpandMore,
+  Map,
+} from "@mui/icons-material";
 //"Controls" submenu for each map
 import {
   useAppStore,
@@ -25,6 +34,7 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
+import { BaseMapMenu } from "./components/BaseMapMenu";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -56,6 +66,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [titleEditValue, setTitleEditValue] = useState("");
   const [isRenamingPreview, setIsRenamingPreview] = useState(false);
   const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
+  const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
+
+  const activeBaseMapId = config?.baseMap ?? "openstreet";
+
+
   const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
   const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
   const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
@@ -177,7 +192,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             open={Boolean(controlsMenuAnchor)}
             onClose={() => {
               // Only close if no submenu is open
-              if (!colorSchemeAnchor && !rasterColorSchemeAnchor) {
+              if (!colorSchemeAnchor && !rasterColorSchemeAnchor && !baseMapAnchor) {
                 setControlsMenuAnchor(null);
               }
             }}
@@ -245,6 +260,19 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               </MenuItem>
             )}
 
+            {/* Base Map Control */}
+            <MenuItem
+              onClick={(e) => setBaseMapAnchor(e.currentTarget)}
+              sx={{ display: "flex", justifyContent: "space-between" }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Map fontSize="small" />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  Base Map
+                </Typography>
+              </Box>
+              <ExpandMore fontSize="small" />
+            </MenuItem>
 
             <Divider />
 
@@ -287,6 +315,16 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               setRasterColormap={setRasterColormap}
             />
           )}
+
+          {/* Base Map Submenu */}
+          <BaseMapMenu
+            anchorEl={baseMapAnchor}
+            open={Boolean(baseMapAnchor)}
+            onClose={() => setBaseMapAnchor(null)}
+            mapId={mapId}
+            activeBaseMapId={activeBaseMapId}
+            updateMapConfig={updateMapConfig}
+          />
         </Box>
       )}
 

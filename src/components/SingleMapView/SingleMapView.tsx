@@ -29,6 +29,7 @@ import {
   useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
+import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { HCDPRasterLayer } from "../HCDP";
@@ -253,6 +254,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
+    const activeBaseMap =
+      BASE_MAP_OPTIONS.find((b) => b.id === config?.baseMap) ?? BASE_MAP_OPTIONS[0];
 
     const { colorScale, bivariateColorScale, getColor } = useMapColorScale({
       allMetricValues,
@@ -389,10 +392,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               onZoomChange={handleZoomChange}
             />
 
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
+            <TileLayer url={activeBaseMap.url} attribution={activeBaseMap.attribution} />
 
             {shouldRenderCountyBoundariesBackground && (
               <CountyBoundariesBackgroundLayer
