@@ -20,12 +20,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Total Housing Built Before 1990 (calc.)",
         label: "Houses built before 1990",
       },
-      // TODO: Add when dataset available: Houses built before 1970
-      // {
-      //   dataset: "age_of_structure",
-      //   metric: "Total Housing Built Before 1970 (calc.)",
-      //   label: "Houses built before 1970",
-      // },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
@@ -132,31 +126,31 @@ export const SVI_CATEGORIES: SviCategory[] = [
   },
   {
     id: "underserved_populations",
-    label: "Social Context and Access",
+    label: "Social and demographic context",
     indicators: [
-      { dataset: "race_origin", metric: "White alone", label: "White population" },
+      { dataset: "race_origin", metric: "White alone", label: "White alone" },
       {
         dataset: "race_origin",
         metric: "Black or African American alone",
-        label: "Black or African American population",
+        label: "Black or African American alone",
       },
       {
         dataset: "race_origin",
         metric: "American Indian and Alaska Native alone",
         label: "American Indian and Alaska Native alone",
       },
-      { dataset: "race_origin", metric: "Asian alone", label: "Asian population" },
+      { dataset: "race_origin", metric: "Asian alone", label: "Asian alone" },
       {
         dataset: "race_origin",
         metric: "Native Hawaiian and Other Pacific Islander alone",
-        label: "Native Hawaiian and Other Pacific Islander population",
+        label: "Native Hawaiian and Other Pacific Islander alone",
       },
       { dataset: "race_origin", metric: "Some Other Race alone", label: "Some other race alone" },
-      { dataset: "race_origin", metric: "Two or More Races", label: "Two or More Races" },
+      { dataset: "race_origin", metric: "Two or More Races", label: "Two or more races" },
       {
         dataset: "limited_english_speaking",
         metric: "Total Limited English Speaking Households (calc.)",
-        label: "Limited English proficiency",
+        label: "Speaking English less than well",
       },
       {
         dataset: "limited_english_speaking",
