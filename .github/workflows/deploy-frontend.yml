@@ -1,12 +1,12 @@
 name: Deploy frontend
 
 on:
-  push:
-    branches: [dev]
-    paths-ignore:
-      - 'backend/**'
-      - 'notebooks/**'
-      - '**/*.md'
+#  push:
+#    branches: [dev]
+#    paths-ignore:
+#      - 'backend/**'
+#      - 'notebooks/**'
+#      - '**/*.md'
   workflow_dispatch:
     inputs:
       environment:
