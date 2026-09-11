@@ -1,0 +1,65 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - 'backend/**'
+      - 'notebooks/**'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target VM
+        type: environment
+        required: true
+        default: dev-vm
+
+permissions:
+  contents: read
+
+# Never runs two deploys against the same VM simultaneously. cancel-in-progress
+# stays false so a run is never killed part-way through the rsync.
+concurrency:
+  group: deploy-frontend-${{ inputs.environment || 'beta' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'beta' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          VITE_DATA_BASE_URL: ${{ vars.VITE_DATA_BASE_URL }}
+
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Private deploy key (per-environment secret).
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+
+          # Public host key (per-environment secret).
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Rsync dist to ${{ vars.VM_HOST }}
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
+            dist/ "${{ vars.VM_USER }}@${{ vars.VM_HOST }}:${{ vars.WEB_ROOT }}"
+
+      - name: Smoke check
+        run: curl -fsS -o /dev/null "http://${{ vars.VM_HOST }}/ccsvi-dashboard/"
