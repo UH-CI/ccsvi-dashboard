@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { Button } from "@mui/material";
+import React, { useCallback } from "react";
+import { Box, Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
 import {
   useMapStore,
@@ -9,9 +9,7 @@ import {
 } from "../../../stores";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
-import { MapTabSelector } from "./MapTabSelector";
 import { SingleMapControls } from "../SingleMapControls";
-import { useResolvedMapId } from "../hooks/useResolvedMapId";
 
 interface MapsMenuProps {
   open: boolean;
@@ -29,15 +27,11 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
   maxMaps,
 }) => {
   const mapConfigs = useMapStore((s) => s.mapConfigs);
-  const primaryMapId = useMapStore((s) => s.primaryMapId);
   const addMap = useMapStore((s) => s.addMap);
   const removeMap = useMapStore((s) => s.removeMap);
   const setVisiblePointLayerIds = usePointLayerStore((s) => s.setVisibleLayerIds);
   const setVisibleHazardLayerIds = useHazardLayersStore((s) => s.setVisibleLayerIds);
   const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
-
-  const [mapsMapId, setMapsMapId] = useState<string>("");
-  const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
 
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
@@ -59,6 +53,9 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
       onClose={onClose}
       title="Map Management"
       onInfoClick={onInfoClick}
+      paperClassName={
+        mapConfigs.length === 1 ? styles["menu-paper-maps-single"] : styles["menu-paper-maps-multi"]
+      }
     >
       {canAddMap && (
         <Button
@@ -72,20 +69,25 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
           Add Map
         </Button>
       )}
-      <MapTabSelector
-        mapConfigs={mapConfigs}
-        selectedMapId={resolvedMapsMapId}
-        onChange={setMapsMapId}
-      />
-      {resolvedMapsMapId && (
-        <SingleMapControls
-          key={resolvedMapsMapId}
-          mapId={resolvedMapsMapId}
-          canRemoveMap={canRemoveMap}
-          onRemove={handleRemoveMap}
-          section="management"
-        />
-      )}
+      <Box
+        className={styles["map-management-grid"]}
+        sx={{
+          gridTemplateColumns:
+            mapConfigs.length === 1 ? "minmax(0, 1fr)" : "repeat(2, minmax(155px, 1fr))",
+          justifyItems: mapConfigs.length === 1 ? "stretch" : "initial",
+        }}
+      >
+        {mapConfigs.map((mapConfig) => (
+          <Box key={mapConfig.id} className={styles["map-management-item"]}>
+            <SingleMapControls
+              mapId={mapConfig.id}
+              canRemoveMap={canRemoveMap}
+              onRemove={handleRemoveMap}
+              section="management"
+            />
+          </Box>
+        ))}
+      </Box>
     </MenuShell>
   );
 };
