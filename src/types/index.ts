@@ -11,6 +11,7 @@ export interface MapConfig {
   bivariateColorScheme?: string;
   visible: boolean;
   colorScheme: string;
+  baseMap?: string;
   activeFeature?: {
     geoid: string;
     lat: number;
@@ -23,6 +24,9 @@ export interface MetricValue {
   absolute: number | null;
   margin_of_error: number | null;
   percentage: number | null;
+  moe_percentage_points: number | null;
+  cv: number | null;
+  moe_derived: boolean | null;
 }
 
 export interface GeographyMetadata {

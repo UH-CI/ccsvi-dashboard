@@ -11,7 +11,16 @@ import {
   Divider,
   ListSubheader,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, ExpandMore } from "@mui/icons-material";
+import {
+  Visibility,
+  VisibilityOff,
+  Close,
+  Palette,
+  Edit,
+  Gradient,
+  ExpandMore,
+  Map,
+} from "@mui/icons-material";
 //"Controls" submenu for each map
 import {
   useAppStore,
@@ -24,6 +33,7 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
+import { BaseMapMenu } from "./components/BaseMapMenu";
 
 interface SingleMapControlsProps {
   mapId: string;
