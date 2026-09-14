@@ -24,7 +24,7 @@ def map_census_aliases(file_path: str, column_mapping_dict: dict) -> pd.DataFram
 
         column_mapping_dict.update(dict(zip(names, codes)))
 
-    df = pd.read_csv(file_path, skiprows=[0], encoding="utf-8-sig")
+    df = pd.read_csv(file_path, skiprows=[0], na_values=["", "-", "**", "null", "(X)"], encoding="utf-8-sig")
     df.columns = pd.MultiIndex.from_tuples(list(zip(codes, names)), names=["Code", "Alias"])
 
     return df
