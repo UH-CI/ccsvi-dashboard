@@ -5,11 +5,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  MenuList,
   IconButton,
   Box,
-  Menu,
   Divider,
-  ListSubheader,
 } from "@mui/material";
 import {
   Visibility,
@@ -209,7 +208,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             />
           </Box>
           {section === "management" && (
-            <Box>
+            <MenuList disablePadding>
               <Divider sx={{ my: 0.5 }} />
               <MenuItem
                 onClick={() => toggleMapVisibility(config.id)}
@@ -221,7 +220,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 ) : (
                   <VisibilityOff fontSize="small" />
                 )}
-                <Typography variant="body2" sx={{ ml: 1 }}>
+                <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                   {config.visible ? "Hide Map" : "Show Map"}
                 </Typography>
               </MenuItem>
@@ -235,7 +234,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 sx={menuItemSx}
               >
                 <Edit fontSize="small" />
-                <Typography variant="body2" sx={{ ml: 1 }}>
+                <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                   Rename Map
                 </Typography>
               </MenuItem>
@@ -249,7 +248,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 {/* Color scheme selection requires loaded data */}
                 <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                   <Palette fontSize="small" />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
+                  <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                     Color Scheme
                   </Typography>
                 </Box>
@@ -263,7 +262,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 >
                   <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                     <Gradient fontSize="small" />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
+                    <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                       Raster Colormap
                     </Typography>
                   </Box>
@@ -277,7 +276,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               >
                 <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                   <Map fontSize="small" />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
+                  <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                     Base Map
                   </Typography>
                 </Box>
@@ -290,12 +289,12 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   sx={{ ...menuItemSx, color: "error.main" }}
                 >
                   <Close fontSize="small" />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
+                  <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
                     Remove Map
                   </Typography>
                 </MenuItem>
               )}
-            </Box>
+            </MenuList>
           )}
         </>
       )}
