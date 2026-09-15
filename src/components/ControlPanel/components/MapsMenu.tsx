@@ -65,9 +65,6 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
       onClose={onClose}
       title="Map Management"
       onInfoClick={onInfoClick}
-      paperClassName={
-        mapConfigs.length === 1 ? styles["menu-paper-maps-single"] : styles["menu-paper-maps-multi"]
-      }
     >
       {canAddMap && (
         <Button
