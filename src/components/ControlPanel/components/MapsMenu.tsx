@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button } from "@mui/material";
+import React, { useCallback, useState } from "react";
+import { Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
 import {
   useMapStore,
@@ -9,7 +9,9 @@ import {
 } from "../../../stores";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
+import { MapTabSelector } from "./MapTabSelector";
 import { SingleMapControls } from "../SingleMapControls";
+import { useResolvedMapId } from "../hooks/useResolvedMapId";
 
 interface MapsMenuProps {
   open: boolean;
@@ -27,6 +29,7 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
   maxMaps,
 }) => {
   const mapConfigs = useMapStore((s) => s.mapConfigs);
+  const primaryMapId = useMapStore((s) => s.primaryMapId);
   const addMap = useMapStore((s) => s.addMap);
   const removeMap = useMapStore((s) => s.removeMap);
   const setVisiblePointLayerIds = usePointLayerStore((s) => s.setVisibleLayerIds);
@@ -35,18 +38,8 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
 
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
-  const [activeMapId, setActiveMapId] = useState<string>(mapConfigs[0]?.id ?? "");
-
-  useEffect(() => {
-    if (!mapConfigs.some((map) => map.id === activeMapId)) {
-      setActiveMapId(mapConfigs[0]?.id ?? "");
-    }
-  }, [mapConfigs, activeMapId]);
-
-  const activeMapConfig = useMemo(
-    () => mapConfigs.find((map) => map.id === activeMapId) ?? mapConfigs[0],
-    [mapConfigs, activeMapId],
-  );
+  const [mapsMapId, setMapsMapId] = useState<string>("");
+  const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
 
   const handleRemoveMap = useCallback(
     (mapId: string) => {
@@ -78,23 +71,14 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
           Add Map
         </Button>
       )}
-      <Box className={styles["map-tab-selector"]}>
-        {mapConfigs.map((mapConfig) => (
-          <button
-            key={mapConfig.id}
-            type="button"
-            className={`${styles["map-tab-btn"]} ${
-              activeMapConfig?.id === mapConfig.id ? styles["map-tab-btn--active"] : ""
-            }`}
-            onClick={() => setActiveMapId(mapConfig.id)}
-          >
-            {mapConfig.title}
-          </button>
-        ))}
-      </Box>
-      {activeMapConfig && (
+      <MapTabSelector
+        mapConfigs={mapConfigs}
+        selectedMapId={resolvedMapsMapId}
+        onChange={setMapsMapId}
+      />
+      {resolvedMapsMapId && (
         <SingleMapControls
-          mapId={activeMapConfig.id}
+          mapId={resolvedMapsMapId}
           canRemoveMap={canRemoveMap}
           onRemove={handleRemoveMap}
           section="management"

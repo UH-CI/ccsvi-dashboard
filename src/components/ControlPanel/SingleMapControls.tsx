@@ -6,9 +6,7 @@ import {
   Select,
   MenuItem,
   MenuList,
-  IconButton,
   Box,
-  Divider,
 } from "@mui/material";
 import {
   Visibility,
@@ -63,20 +61,12 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
-  const [isRenamingPreview, setIsRenamingPreview] = useState(false);
   const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
   const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
   const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
   const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
-  const menuItemSx = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    width: "100%",
-    boxSizing: "border-box",
-  } as const;
 
   // Focus input
   useEffect(() => {
@@ -142,36 +132,22 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 onBlur={() => {
                   updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
                   setIsEditingTitle(false);
-                  setIsRenamingPreview(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
                     setIsEditingTitle(false);
-                    setIsRenamingPreview(false);
                   }
                   if (e.key === "Escape") {
                     setIsEditingTitle(false);
-                    setIsRenamingPreview(false);
                   }
                 }}
               />
-            ) : isRenamingPreview ? (
-              // Preview state: styled title that can be clicked to enter edit mode
-              <Typography
-                variant="body2"
-                className={styles["single-map-title"]}
-                onClick={() => {
-                  // Switch to real edit input when user clicks the previewed title
-                  setIsEditingTitle(true);
-                  setIsRenamingPreview(false);
-                  setTitleEditValue(config.title);
-                }}
-                style={{ fontWeight: 700, cursor: "text" }}
-              >
+            ) : (
+              <Typography variant="body2" className={styles["single-map-title"]}>
                 {config.title}
               </Typography>
-            ) : null}
+            )}
             {/* Color Scheme Submenu */}
             <ColorSchemeMenu
               anchorEl={colorSchemeAnchor}
@@ -208,7 +184,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               <MenuItem
                 onClick={() => toggleMapVisibility(config.id)}
                 className={styles["single-map-item"]}
-                sx={menuItemSx}
               >
                 {config.visible ? (
                   <Visibility fontSize="small" />
@@ -222,11 +197,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               <MenuItem
                 onClick={() => {
                   setTitleEditValue(config.title);
-                  setIsRenamingPreview(true);
-                  setIsEditingTitle(false);
+                  setIsEditingTitle(true);
                 }}
                 className={styles["single-map-item"]}
-                sx={menuItemSx}
               >
                 <Edit fontSize="small" />
                 <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
@@ -236,7 +209,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               <MenuItem
                 onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
                 className={styles["single-map-item"]}
-                sx={menuItemSx}
                 disabled={!config.dataset}
                 title={!config.dataset ? "Select a dataset first" : ""}
               >
@@ -253,7 +225,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 <MenuItem
                   onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
                   className={styles["single-map-item"]}
-                  sx={menuItemSx}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                     <Gradient fontSize="small" />
@@ -267,7 +238,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               <MenuItem
                 onClick={(e) => setBaseMapAnchor(e.currentTarget)}
                 className={styles["single-map-item"]}
-                sx={menuItemSx}
               >
                 <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                   <Map fontSize="small" />
@@ -281,7 +251,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 <MenuItem
                   onClick={() => onRemove(config.id)}
                   className={styles["single-map-item"]}
-                  sx={{ ...menuItemSx, color: "error.main" }}
+                  sx={{ color: "error.main" }}
                 >
                   <Close fontSize="small" />
                   <Typography variant="body2" className={styles["single-map-item-label"]} sx={{ ml: 1 }}>
