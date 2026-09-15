@@ -7,6 +7,7 @@ import {
   MenuItem,
   MenuList,
   Box,
+  Tooltip,
 } from "@mui/material";
 import {
   Visibility,
@@ -206,21 +207,24 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   Rename Map
                 </Typography>
               </MenuItem>
-              <MenuItem
-                onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
-                className={styles["single-map-item"]}
-                disabled={!config.dataset}
-                title={!config.dataset ? "Select a dataset first" : ""}
-              >
-                {/* Color scheme selection requires loaded data */}
-                <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
-                  <Palette fontSize="small" />
-                  <Typography variant="body2" sx={{ ml: 1 }}>
-                    Color Scheme
-                  </Typography>
-                </Box>
-                <ExpandMore fontSize="small" />
-              </MenuItem>
+              {/* Color scheme selection requires loaded data */}
+              <Tooltip title={config.dataset ? "" : "Select a dataset first"}>
+                <span>
+                  <MenuItem
+                    onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
+                    className={styles["single-map-item"]}
+                    disabled={!config.dataset}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <Palette fontSize="small" />
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        Color Scheme
+                      </Typography>
+                    </Box>
+                    <ExpandMore fontSize="small" />
+                  </MenuItem>
+                </span>
+              </Tooltip>
               {activeRasterLeafId && (
                 <MenuItem
                   onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
