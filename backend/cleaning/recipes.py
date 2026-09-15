@@ -80,16 +80,35 @@ def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
     return pd.Series([combine(i) for i in range(len(df))], index=df.index)
 
 
-# Adds a single "Total Housing Built Before 1990" column, and carries through the
-# raw total-housing-units column so it can be used as a percentage denominator
+# Adds "Total Housing Built Before 1990" and "Total Housing Built Before 1970" columns,
+# and carries through the raw total-housing-units column so it can be used as a
+# percentage denominator
 def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
     total_col = _total_universe_col(df)
     if total_col is not None:
         _carry_with_moe(cleaned_df, df, total_col)
-    cols_to_sum = _estimate_total_cols(df)
-    cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = df[cols_to_sum].sum(axis=1)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1990")] = _sum_moe(df, cols_to_sum)
+
+    cols_before_1970, cols_before_1990 = [], []
+    for col in _estimate_total_cols(df):
+        col_alias = col[1]
+
+        if (
+            "1960 to 1969" in col_alias
+            or "1950 to 1959" in col_alias
+            or "1940 to 1949" in col_alias
+            or "1939 or earlier" in col_alias
+        ):
+            cols_before_1970.append(col)
+            cols_before_1990.append(col)
+        elif "1970 to 1979" in col_alias or "1980 to 1989" in col_alias:
+            cols_before_1990.append(col)
+
+    cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = df[cols_before_1990].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1990")] = _sum_moe(df, cols_before_1990)
+    cleaned_df[("CALCULATED", "Total Housing Built Before 1970")] = df[cols_before_1970].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1970")] = _sum_moe(df, cols_before_1970)
+
     return cleaned_df
 
 
