@@ -212,17 +212,6 @@
 //   gap: 8px;
 // }
 
-.map-management-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(155px, 1fr));
-  gap: 8px;
-  align-items: stretch;
-}
-
-.map-management-item {
-  min-width: 0;
-}
-
 // Single Map Controls ─────────────────────────────────────────────────────
 
 .single-map-controls {

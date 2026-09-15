@@ -171,11 +171,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               >
                 {config.title}
               </Typography>
-            ) : (
-              <Typography variant="body2" className={styles["single-map-title"]}>
-                {config.title}
-              </Typography>
-            )}
+            ) : null}
             {/* Color Scheme Submenu */}
             <ColorSchemeMenu
               anchorEl={colorSchemeAnchor}
@@ -209,7 +205,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           </Box>
           {section === "management" && (
             <MenuList disablePadding>
-              <Divider sx={{ my: 0.5 }} />
               <MenuItem
                 onClick={() => toggleMapVisibility(config.id)}
                 className={styles["single-map-item"]}

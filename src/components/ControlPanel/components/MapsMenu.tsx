@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
 import {
@@ -35,6 +35,18 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
 
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
+  const [activeMapId, setActiveMapId] = useState<string>(mapConfigs[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!mapConfigs.some((map) => map.id === activeMapId)) {
+      setActiveMapId(mapConfigs[0]?.id ?? "");
+    }
+  }, [mapConfigs, activeMapId]);
+
+  const activeMapConfig = useMemo(
+    () => mapConfigs.find((map) => map.id === activeMapId) ?? mapConfigs[0],
+    [mapConfigs, activeMapId],
+  );
 
   const handleRemoveMap = useCallback(
     (mapId: string) => {
@@ -69,20 +81,28 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
           Add Map
         </Button>
       )}
-      <Box
-        className={styles["map-management-grid"]}
-      >
+      <Box className={styles["map-tab-selector"]}>
         {mapConfigs.map((mapConfig) => (
-          <Box key={mapConfig.id} className={styles["map-management-item"]}>
-            <SingleMapControls
-              mapId={mapConfig.id}
-              canRemoveMap={canRemoveMap}
-              onRemove={handleRemoveMap}
-              section="management"
-            />
-          </Box>
+          <button
+            key={mapConfig.id}
+            type="button"
+            className={`${styles["map-tab-btn"]} ${
+              activeMapConfig?.id === mapConfig.id ? styles["map-tab-btn--active"] : ""
+            }`}
+            onClick={() => setActiveMapId(mapConfig.id)}
+          >
+            {mapConfig.title}
+          </button>
         ))}
       </Box>
+      {activeMapConfig && (
+        <SingleMapControls
+          mapId={activeMapConfig.id}
+          canRemoveMap={canRemoveMap}
+          onRemove={handleRemoveMap}
+          section="management"
+        />
+      )}
     </MenuShell>
   );
 };
