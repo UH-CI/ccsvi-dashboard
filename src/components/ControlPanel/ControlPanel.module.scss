@@ -216,13 +216,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(155px, 1fr));
   gap: 8px;
+  align-items: stretch;
 }
 
 .map-management-item {
   min-width: 0;
 }
 
-// Single Map Controls (tab view) ──────────────────────────────────────────
+// Single Map Controls ─────────────────────────────────────────────────────
 
 .single-map-controls {
   display: flex;
@@ -248,7 +249,7 @@
   min-width: 0;
 }
 
-// Input used when renaming a map — bold, underlined, and shows trailing underscore as edit hint
+// Input used when renaming a map — bold and styled to match the title row
 .map-tab-input {
   font-weight: 700;
   font-size: 0.9rem;
@@ -259,11 +260,9 @@
   margin: 0;
   width: 100%;
   min-width: 0;
-  /* leave space on the right to show a trailing underscore during preview */
   padding-right: 8px;
 }
 
-// Styles for the prominent "Controls" button that opens the map submenu
 .single-map-controls-btn {
   flex-shrink: 0;
   text-transform: none !important;
@@ -291,13 +290,16 @@
   gap: 8px;
 }
 
-.single-map-controls :global(.MuiMenuItem-root) {
+.single-map-item {
   min-height: 28px;
   padding-top: 4px;
   padding-bottom: 4px;
+  width: 100%;
+  justify-content: flex-start !important;
+  gap: 8px;
 }
 
-.single-map-controls :global(.MuiTypography-body2) {
+.single-map-controls .single-map-item .MuiTypography-body2 {
   font-size: 0.8rem;
 }
 

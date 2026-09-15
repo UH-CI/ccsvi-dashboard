@@ -71,6 +71,13 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const menuItemSx = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    width: "100%",
+    boxSizing: "border-box",
+  } as const;
 
   // Focus input
   useEffect(() => {
@@ -151,7 +158,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 }}
               />
             ) : isRenamingPreview ? (
-              // Preview state: styled title with trailing underscore to hint editability
+              // Preview state: styled title that can be clicked to enter edit mode
               <Typography
                 variant="body2"
                 className={styles["single-map-title"]}
@@ -164,7 +171,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 style={{ fontWeight: 700, cursor: "text" }}
               >
                 {config.title}
-                <span style={{ opacity: 0.8 }}>{" _"}</span>
               </Typography>
             ) : (
               <Typography variant="body2" className={styles["single-map-title"]}>
@@ -205,7 +211,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           {section === "management" && (
             <Box>
               <Divider sx={{ my: 0.5 }} />
-              <MenuItem onClick={() => toggleMapVisibility(config.id)}>
+              <MenuItem
+                onClick={() => toggleMapVisibility(config.id)}
+                className={styles["single-map-item"]}
+                sx={menuItemSx}
+              >
                 {config.visible ? (
                   <Visibility fontSize="small" />
                 ) : (
@@ -221,6 +231,8 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   setIsRenamingPreview(true);
                   setIsEditingTitle(false);
                 }}
+                className={styles["single-map-item"]}
+                sx={menuItemSx}
               >
                 <Edit fontSize="small" />
                 <Typography variant="body2" sx={{ ml: 1 }}>
@@ -229,12 +241,13 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               </MenuItem>
               <MenuItem
                 onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
-                sx={{ display: "flex", justifyContent: "space-between" }}
+                className={styles["single-map-item"]}
+                sx={menuItemSx}
                 disabled={!config.dataset}
                 title={!config.dataset ? "Select a dataset first" : ""}
               >
                 {/* Color scheme selection requires loaded data */}
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                   <Palette fontSize="small" />
                   <Typography variant="body2" sx={{ ml: 1 }}>
                     Color Scheme
@@ -245,9 +258,10 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               {activeRasterLeafId && (
                 <MenuItem
                   onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
-                  sx={{ display: "flex", justifyContent: "space-between" }}
+                  className={styles["single-map-item"]}
+                  sx={menuItemSx}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                     <Gradient fontSize="small" />
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       Raster Colormap
@@ -258,9 +272,10 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
               )}
               <MenuItem
                 onClick={(e) => setBaseMapAnchor(e.currentTarget)}
-                sx={{ display: "flex", justifyContent: "space-between" }}
+                className={styles["single-map-item"]}
+                sx={menuItemSx}
               >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                   <Map fontSize="small" />
                   <Typography variant="body2" sx={{ ml: 1 }}>
                     Base Map
@@ -269,7 +284,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 <ExpandMore fontSize="small" />
               </MenuItem>
               {canRemoveMap && (
-                <MenuItem onClick={() => onRemove(config.id)} sx={{ color: "error.main" }}>
+                <MenuItem
+                  onClick={() => onRemove(config.id)}
+                  className={styles["single-map-item"]}
+                  sx={{ ...menuItemSx, color: "error.main" }}
+                >
                   <Close fontSize="small" />
                   <Typography variant="body2" sx={{ ml: 1 }}>
                     Remove Map

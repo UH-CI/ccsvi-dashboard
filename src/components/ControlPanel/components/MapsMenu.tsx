@@ -71,11 +71,6 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
       )}
       <Box
         className={styles["map-management-grid"]}
-        sx={{
-          gridTemplateColumns:
-            mapConfigs.length === 1 ? "minmax(0, 1fr)" : "repeat(2, minmax(155px, 1fr))",
-          justifyItems: mapConfigs.length === 1 ? "stretch" : "initial",
-        }}
       >
         {mapConfigs.map((mapConfig) => (
           <Box key={mapConfig.id} className={styles["map-management-item"]}>
