@@ -20,12 +20,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Total Housing Built Before 1990 (calc.)",
         label: "Houses built before 1990",
       },
-      // TODO: Add when dataset available: Houses built before 1970
-      // {
-      //   dataset: "age_of_structure",
-      //   metric: "Total Housing Built Before 1970 (calc.)",
-      //   label: "Houses built before 1970",
-      // },
+      {
+        dataset: "age_of_structure",
+        metric: "Total Housing Built Before 1970 (calc.)",
+        label: "Houses built before 1970",
+      },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
