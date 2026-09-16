@@ -112,6 +112,32 @@ def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned_df
 
 
+# Adds a "Total Overcrowded Housing Units" column (owner + renter households above
+# 1.0 occupants per room), and carries through the raw total-occupied-units column
+# so it can be used as a percentage denominator
+def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        _carry_with_moe(cleaned_df, df, total_col)
+
+    overcrowded_cols = []
+    for col in _estimate_total_cols(df):
+        col_alias = col[1]
+
+        if (
+            "1.01 to 1.50 occupants per room" in col_alias
+            or "1.51 to 2.00 occupants per room" in col_alias
+            or "2.01 or more occupants per room" in col_alias
+        ):
+            overcrowded_cols.append(col)
+
+    cleaned_df[("CALCULATED", "Total Overcrowded Housing Units")] = df[overcrowded_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Overcrowded Housing Units")] = _sum_moe(df, overcrowded_cols)
+
+    return cleaned_df
+
+
 # Adds a single "No Health Insurance Coverage" column
 def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
@@ -305,4 +331,5 @@ RECIPES = {
     "income_share_of_fpl": recipe_income_share_of_fpl,
     "persons_under_5_65_years_table": recipe_person_under_5_65,
     "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
+    "tenure_by_occupants_per_room": recipe_tenure_by_occupants_per_room,
 }

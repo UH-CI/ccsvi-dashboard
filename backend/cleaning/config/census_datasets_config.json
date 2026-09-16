@@ -97,6 +97,14 @@
       "percent_denominator": "Estimate!!Total:"
     },
     {
+      "key": "tenure_by_occupants_per_room",
+      "alias": "tenure_by_occupants_per_room",
+      "original_file_path": "All Exposures/Other/Tenure by Occupants per Room (2024)/ACSDT5Y2024.B25014-Data.csv",
+      "description": "Tenure by occupants per room (overcrowding)",
+      "recipe": "tenure_by_occupants_per_room",
+      "percent_denominator": "Estimate!!Total:"
+    },
+    {
       "key": "2022_census_hawaiian_homelands",
       "alias": "2022_census_hawaiian_homelands",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022_census_hawaiian_homelands/ACSST5Y2022.S0601-Data.csv",
