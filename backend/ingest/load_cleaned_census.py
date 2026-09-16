@@ -61,6 +61,11 @@ DATASET_LABELS = {
     "population_group_quarters": ("Population in group quarters", False),
     "race_origin": ("Race and Hispanic or Latino origin", False),
     "tenure": ("Tenure (owner vs. renter occupied housing)", False),
+    "tenure_by_occupants_per_room": ("Tenure by occupants per room (overcrowding)", False),
+    "family_type_by_children": (
+        "Family type by presence and age of own children (single-parent households)",
+        False,
+    ),
     "2022_census_hawaiian_homelands": (
         "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
         True,
