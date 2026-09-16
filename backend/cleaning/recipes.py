@@ -138,6 +138,29 @@ def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned_df
 
 
+# Adds a "Total Single-Parent Households With Children" column (male + female
+# householder, no spouse present, with own children under 18), and carries through
+# the raw total-families column so it can be used as a percentage denominator
+def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        _carry_with_moe(cleaned_df, df, total_col)
+
+    single_parent_labels = (
+        "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
+        "Estimate!!Total:!!Other family:!!Female householder, no spouse present:!!With own children of the householder under 18 years:",
+    )
+    single_parent_cols = [col for col in _estimate_total_cols(df) if col[1] in single_parent_labels]
+
+    cleaned_df[("CALCULATED", "Total Single-Parent Households With Children")] = df[single_parent_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Single-Parent Households With Children")] = _sum_moe(
+        df, single_parent_cols
+    )
+
+    return cleaned_df
+
+
 # Adds a single "No Health Insurance Coverage" column
 def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
@@ -332,4 +355,5 @@ RECIPES = {
     "persons_under_5_65_years_table": recipe_person_under_5_65,
     "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
     "tenure_by_occupants_per_room": recipe_tenure_by_occupants_per_room,
+    "family_type_by_children": recipe_family_type_by_children,
 }

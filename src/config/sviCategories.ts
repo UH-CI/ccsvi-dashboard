@@ -35,6 +35,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
       { dataset: "tenure", metric: "Renter occupied", label: "Renter occupied units" },
+      {
+        dataset: "tenure_by_occupants_per_room",
+        metric: "Total Overcrowded Housing Units (calc.)",
+        label: "Overcrowded units",
+      },
     ],
   },
   {
@@ -111,6 +116,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "living_arrangements",
         metric: "In households: Householder: Female: Living alone",
         label: "Living alone (female)",
+      },
+      {
+        dataset: "family_type_by_children",
+        metric: "Total Single-Parent Households With Children (calc.)",
+        label: "Single parent households",
       },
       {
         dataset: "2022_census_hawaiian_homelands",

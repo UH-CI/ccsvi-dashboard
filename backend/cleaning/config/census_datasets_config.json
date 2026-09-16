@@ -105,6 +105,14 @@
       "percent_denominator": "Estimate!!Total:"
     },
     {
+      "key": "family_type_by_children",
+      "alias": "family_type_by_children",
+      "original_file_path": "All Exposures/Other/Family Type by Presence and Age of Own Children Under 18 Years (2024)/ACSDT5Y2024.B11003-Data.csv",
+      "description": "Family type by presence and age of own children (single-parent households)",
+      "recipe": "family_type_by_children",
+      "percent_denominator": "Estimate!!Total:"
+    },
+    {
       "key": "2022_census_hawaiian_homelands",
       "alias": "2022_census_hawaiian_homelands",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022_census_hawaiian_homelands/ACSST5Y2022.S0601-Data.csv",
