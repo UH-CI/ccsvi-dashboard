@@ -39,15 +39,27 @@ class BlockGroupResult(BaseModel):
     population: int | None
 
 
+class HawaiianHomelandResult(BaseModel):
+    # Same as BlockGroupResult, but Homelands have no county
+    model_config = ConfigDict(extra="allow")
+
+    geoid: str
+    name: str | None
+    population: int | None
+
+
 # ── Column list for SELECT / CSV ──────────────────────────────────────────────
 
 _BGM_ID_COLS = ["geoid", "name", "county", "population"]
+_HHM_ID_COLS = ["geoid", "name", "population"]
 
 # View metric columns from metrics.mv_column — also the allowlist for min_<col> params
-async def metric_columns(conn) -> list[str]:
+async def metric_columns(conn, homelands: bool) -> list[str]:
     rows = await conn.fetch(
-        "SELECT mv_column FROM metrics WHERE mv_column IS NOT NULL"
-        " ORDER BY dataset_id, display_order"
+        "SELECT m.mv_column FROM metrics m JOIN datasets d ON d.id = m.dataset_id"
+        " WHERE m.mv_column IS NOT NULL AND d.hawaiian_homelands = $1"
+        " ORDER BY m.dataset_id, m.display_order",
+        homelands,
     )
     return [r["mv_column"] for r in rows]
 
@@ -150,7 +162,39 @@ async def filter_block_groups(
     ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    metric_cols = await metric_columns(conn)
+    return await run_filter(conn, request, False, county, hazard, fmt)
+
+
+@router.get(
+    "/api/v1/hawaiian-homelands",
+    response_model=list[HawaiianHomelandResult],
+    summary="Filter Hawaiian Homelands by hazard and metric thresholds",
+    description=(
+        "Same as /api/v1/block-groups, but searches hawaiian_homeland_metrics and has no "
+        "county filter (Homelands have no county)."
+    ),
+)
+async def filter_hawaiian_homelands(
+    conn: ConnDep,
+    request: Request,
+    hazard: list[str] | None = Query(
+        None,
+        description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
+    ),
+    fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
+) -> Any:
+    return await run_filter(conn, request, True, None, hazard, fmt)
+
+
+# Shared by both filter endpoints; homelands picks which view to search
+async def run_filter(
+    conn, request: Request, homelands: bool, county: str | None, hazard: list[str] | None, fmt: str
+) -> Any:
+    if homelands:
+        view, id_cols, filename = "hawaiian_homeland_metrics", _HHM_ID_COLS, "hawaiian_homelands_filtered.csv"
+    else:
+        view, id_cols, filename = "block_group_metrics", _BGM_ID_COLS, "block_groups_filtered.csv"
+    metric_cols = await metric_columns(conn, homelands)
     allowed_cols = frozenset(metric_cols)
 
     # Validate and collect min_<col> metric threshold params.
@@ -175,7 +219,7 @@ async def filter_block_groups(
         conditions.append(condition.replace("?", f"${len(params)}"))
 
     if county:
-        add_cond("bgm.county = ?", county)
+        add_cond("v.county = ?", county)
 
     if hazard:
         # One OR-branch per requested hazard/sub-layer, all inside a single
@@ -192,7 +236,7 @@ async def filter_block_groups(
                 hazard_branches.append(f"(h.hazard_id = ${base})")
                 hazard_params.append(hazard_id)
         exists_clause = (
-            "EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(bgm.geom, h.geom)"
+            "EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(v.geom, h.geom)"
             f" AND ({' OR '.join(hazard_branches)}))"
         )
         params.extend(hazard_params)
@@ -200,19 +244,19 @@ async def filter_block_groups(
 
     for col, threshold in metric_filters:
         # col has been validated against allowed_cols — safe to interpolate.
-        add_cond(f"bgm.{col} >= ?", threshold)
+        add_cond(f"v.{col} >= ?", threshold)
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
-    id_select = ", ".join(f"bgm.{c}" for c in _BGM_ID_COLS)
-    metric_select = ", ".join(f"bgm.{c}::float" for c in metric_cols)
-    sql = f"SELECT {id_select}, {metric_select} FROM block_group_metrics bgm {where}"
+    id_select = ", ".join(f"v.{c}" for c in id_cols)
+    metric_select = ", ".join(f"v.{c}::float" for c in metric_cols)
+    sql = f"SELECT {id_select}, {metric_select} FROM {view} v {where}"
 
     async with conn.transaction():
         await conn.execute("SET LOCAL statement_timeout = '5s'")
         rows = await conn.fetch(sql, *params)
 
     if fmt == "csv":
-        all_cols = _BGM_ID_COLS + metric_cols
+        all_cols = id_cols + metric_cols
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow(all_cols)
@@ -221,7 +265,7 @@ async def filter_block_groups(
         return Response(
             content=buf.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": 'attachment; filename="block_groups_filtered.csv"'},
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     return [dict(row) for row in rows]
