@@ -10,7 +10,6 @@ Pass --dir instead to skip cleaning and load CSVs you already have.
 
 import argparse
 import asyncio
-import glob
 import os
 import tempfile
 
@@ -45,33 +44,6 @@ PREFIXES_TO_REMOVE = [
 
 NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
 
-# dataset id -> (display label, is Hawaiian Homelands)
-DATASET_LABELS = {
-    "age_of_structure": ("Housing units by year structure was built", False),
-    "aggregate_vehicles": ("Aggregate number of vehicles available by tenure", False),
-    "genders": ("Population by sex", False),
-    "health_insurance": ("Health insurance coverage status by age", False),
-    "households_w_computer": ("Households with computer and internet access", False),
-    "income_share_of_fpl": ("Ratio of income to poverty level", False),
-    "internet_subscription": ("Types of internet subscriptions in household", False),
-    "limited_english_speaking": ("Households with limited English speaking ability", False),
-    "living_arrangements": ("Living arrangements including living alone by sex and relationship", False),
-    "person_under_5_65_males": ("Male population by age group (under 5, under 18, over 65)", False),
-    "person_under_5_65_females": ("Female population by age group (under 5, under 18, over 65)", False),
-    "population_group_quarters": ("Population in group quarters", False),
-    "race_origin": ("Race and Hispanic or Latino origin", False),
-    "tenure": ("Tenure (owner vs. renter occupied housing)", False),
-    "tenure_by_occupants_per_room": ("Tenure by occupants per room (overcrowding)", False),
-    "family_type_by_children": (
-        "Family type by presence and age of own children (single-parent households)",
-        False,
-    ),
-    "2022_census_hawaiian_homelands": (
-        "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
-        True,
-    ),
-}
-
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
 # Turns a raw Census column header into a short metric name
@@ -82,12 +54,6 @@ def metric_name_for(col: str) -> str:
 # Finds the matching Margin of Error column for a metric column, if the cleaned CSV has one.
 def moe_column_for(col: str) -> str | None:
     return moe_column_name(col)
-
-# person_under_5_65's total population column is duplicated into all three of its output files, so it's only kept as a metric under "genders"
-DUPLICATE_METRIC_COLUMNS = {
-    "person_under_5_65_males": "Estimate!!Total:",
-    "person_under_5_65_females": "Estimate!!Total:",
-}
 
 # True when the CSV has this column and at least one row has a value in it
 def _column_has_values(df: pd.DataFrame, col: str) -> bool:
@@ -186,8 +152,9 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
     return list(metric_specs.values()), rows, geo_rows
 
 
-async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str, seen_geoids: set[str]) -> None:
-    label, hawaiian_homelands = DATASET_LABELS[dataset_id]
+# output is one record from pipeline.dataset_outputs; its name is the dataset id and the CSV file name
+async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, seen_geoids: set[str]) -> None:
+    dataset_id = output["name"]
 
     await conn.execute(
         """
@@ -198,11 +165,11 @@ async def load_dataset(conn: asyncpg.Connection, dataset_id: str, csv_path: str,
             hawaiian_homelands = EXCLUDED.hawaiian_homelands
         """,
         dataset_id,
-        label,
-        hawaiian_homelands,
+        output["label"],
+        output["hawaiian_homelands"],
     )
 
-    metric_specs, rows, geo_rows = read_dataset_rows(csv_path, skip_column=DUPLICATE_METRIC_COLUMNS.get(dataset_id))
+    metric_specs, rows, geo_rows = read_dataset_rows(csv_path, skip_column=output["skip_metric_column"])
     metric_names = [spec["name"] for spec in metric_specs]
 
     geo_rows = [r for r in geo_rows if r[0] not in seen_geoids]
@@ -335,19 +302,16 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     return cleaned_dir
 
 
-async def main(cleaned_dir: str) -> None:
+# Loads one CSV per config output from cleaned_dir, in name order
+async def main(cleaned_dir: str, config_path: str) -> None:
+    outputs = sorted(pipeline.dataset_outputs(pipeline.load_dataset_config(config_path)), key=lambda output: output["name"])
+    print(f"Loading {len(outputs)} CSV file(s) from {cleaned_dir}")
+
     conn = await asyncpg.connect(DATABASE_URL)
     try:
-        csv_files = sorted(glob.glob(os.path.join(cleaned_dir, "*.csv")))
-        print(f"Found {len(csv_files)} CSV file(s) in {cleaned_dir}")
-
         seen_geoids: set[str] = set()
-        for csv_path in csv_files:
-            dataset_id = os.path.splitext(os.path.basename(csv_path))[0]
-            if dataset_id not in DATASET_LABELS:
-                print(f"  ⚠ Skipping {os.path.basename(csv_path)} — no entry in DATASET_LABELS")
-                continue
-            await load_dataset(conn, dataset_id, csv_path, seen_geoids)
+        for output in outputs:
+            await load_dataset(conn, output, os.path.join(cleaned_dir, f"{output['name']}.csv"), seen_geoids)
 
         print("Done.")
     finally:
@@ -368,4 +332,4 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
 
-    asyncio.run(main(resolve_cleaned_dir(args)))
+    asyncio.run(main(resolve_cleaned_dir(args), args.config))
