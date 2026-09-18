@@ -84,35 +84,54 @@ export const SVI_CATEGORIES: SviCategory[] = [
     id: "sensitive_populations",
     label: "Population and household structure",
     indicators: [
+      // Age-range indicators are consolidated below (male + female combined).
+      // The segregated male/female data still exists in the database
+      // (datasets person_under_5_65_males / person_under_5_65_females) and
+      // these entries work if uncommented — just no longer shown in the menu.
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Under 5 (calc.)",
+      //   label: "Aged 5 years and under (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Under 5 (calc.)",
+      //   label: "Aged 5 years and under (female)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Under 18 (calc.)",
+      //   label: "Aged 17 years and under (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Under 18 (calc.)",
+      //   label: "Aged 17 years and under (female)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Over 65 (calc.)",
+      //   label: "Aged 65 years and older (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Over 65 (calc.)",
+      //   label: "Aged 65 years and older (female)",
+      // },
       {
-        dataset: "person_under_5_65_males",
-        metric: "Males Under 5 (calc.)",
-        label: "Aged 5 years and under (male)",
+        dataset: "person_under_5_65_total",
+        metric: "Total Under 5 (calc.)",
+        label: "Aged 5 years and under",
       },
       {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 5 (calc.)",
-        label: "Aged 5 years and under (female)",
+        dataset: "person_under_5_65_total",
+        metric: "Total Under 18 (calc.)",
+        label: "Aged 17 years and under",
       },
       {
-        dataset: "person_under_5_65_males",
-        metric: "Males Under 18 (calc.)",
-        label: "Aged 17 years and under (male)",
-      },
-      {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 18 (calc.)",
-        label: "Aged 17 years and under (female)",
-      },
-      {
-        dataset: "person_under_5_65_males",
-        metric: "Males Over 65 (calc.)",
-        label: "Aged 65 years and older (male)",
-      },
-      {
-        dataset: "person_under_5_65_females",
-        metric: "Females Over 65 (calc.)",
-        label: "Aged 65 years and older (female)",
+        dataset: "person_under_5_65_total",
+        metric: "Total Over 65 (calc.)",
+        label: "Aged 65 years and older",
       },
       {
         dataset: "living_arrangements",
