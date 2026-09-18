@@ -45,6 +45,12 @@ def _carry_with_moe(cleaned_df: pd.DataFrame, df: pd.DataFrame, estimate_col) ->
         cleaned_df[moe_col] = df[moe_col]
 
 
+# Lines up another table's rows with df's rows by geography ID; errors if a place is missing
+def _rows_matching_geoids(df: pd.DataFrame, other: pd.DataFrame) -> pd.DataFrame:
+    geo_col = ("GEO_ID", "Geography")
+    return other.set_axis(other[geo_col], axis=0).loc[df[geo_col]].set_axis(df.index, axis=0)
+
+
 # Combines MOEs for a sum of ACS estimates: sqrt(sum of squared MOEs). For zero-estimate
 # components, only the largest MOE among them is counted, not all of them.
 def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
@@ -198,9 +204,8 @@ def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned_df
 
 
-# Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns,
-# then appends the poverty-status columns from the raw Hawaiian Homelands table
-def recipe_income_share_of_fpl(df: pd.DataFrame, hawaiian_homelands_raw_df: pd.DataFrame) -> pd.DataFrame:
+# Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns
+def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
     total_col = _total_universe_col(df)
     if total_col is not None:
@@ -228,7 +233,7 @@ def recipe_income_share_of_fpl(df: pd.DataFrame, hawaiian_homelands_raw_df: pd.D
     cleaned_df[("CALCULATED", "Total Under 200% FPL")] = df[under_2_cols].sum(axis=1)
     cleaned_df[("CALCULATED", "Margin of Error!!Total Under 200% FPL")] = _sum_moe(df, under_2_cols)
 
-    return merge_hawaiian_homelands_poverty(cleaned_df, hawaiian_homelands_raw_df)
+    return cleaned_df
 
 
 def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
@@ -332,24 +337,21 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df[("CALCULATED", "Total Population Over 65")] = df[over_65_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
     cleaned_df[("CALCULATED", "Margin of Error!!Total Population Over 65")] = _sum_moe(df, over_65_cols)
 
-    cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:-4].copy()], axis=1)
+    cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:].copy()], axis=1)
 
     return cleaned_df
 
 
-# The Hawaiian Homelands source also carries poverty-status columns that belong on the FPL dataset
-def merge_hawaiian_homelands_poverty(fpl_df: pd.DataFrame, hawaiian_homelands_raw_df: pd.DataFrame) -> pd.DataFrame:
-    return pd.concat([fpl_df, hawaiian_homelands_raw_df.iloc[:, -4:].copy()], axis=1)
-
-
 # aggregate_vehicles' own raw table has no household-count column (it only has the vehicle
 # sums, split by owner/renter occupied) — borrow tenure's total occupied housing units,
-# since that's the same owner/renter-occupied universe this dataset is split by
+# since that's the same owner/renter-occupied universe this dataset is split by.
+# Matched by geography ID, not row order.
 def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
-    total_col = _total_universe_col(tenure_raw_df)
+    tenure_df = _rows_matching_geoids(vehicles_df, tenure_raw_df)
+    total_col = _total_universe_col(tenure_df)
     merged = vehicles_df.copy()
     if total_col is not None:
-        _carry_with_moe(merged, tenure_raw_df, total_col)
+        _carry_with_moe(merged, tenure_df, total_col)
     return merged
 
 
@@ -363,7 +365,7 @@ RECIPES = {
     "internet_subscription": (None, []),
     "limited_english_speaking": (recipe_limited_english_speaking, []),
     "living_arrangements": (recipe_living_arrangements, []),
-    "income_share_of_fpl": (recipe_income_share_of_fpl, ["2022_census_hawaiian_homelands"]),
+    "income_share_of_fpl": (recipe_income_share_of_fpl, []),
     "person_under_5_65": (recipe_person_under_5_65, []),
     "population_group_quarters": (None, []),
     "race_origin": (None, []),

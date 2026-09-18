@@ -37,10 +37,6 @@ SELECT
         AND m.name = 'Total Under 150% FPL (calc.)') AS fpl_under_150_pct_calc,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = 'income_share_of_fpl'
         AND m.name = 'Total Under 200% FPL (calc.)') AS fpl_under_200_pct_calc,
-    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'income_share_of_fpl'
-        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS fpl_below_100_abs,
-    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'income_share_of_fpl'
-        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined 100 to 149 percent of the poverty level') AS fpl_100_to_149_abs,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = 'internet_subscription'
         AND m.name = 'No Internet access') AS no_internet_pct,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = 'limited_english_speaking'
@@ -156,7 +152,11 @@ SELECT
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
         AND m.name = 'LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well') AS limited_english_pct,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
-        AND m.name = 'INDIVIDUALS'' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS) Population 15 years and over Median income (dollars)') AS median_income_abs
+        AND m.name = 'INDIVIDUALS'' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS) Population 15 years and over Median income (dollars)') AS median_income_abs,
+    MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
+        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS fpl_below_100_pct,
+    MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
+        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined 100 to 149 percent of the poverty level') AS fpl_100_to_149_pct
 
 FROM geographies g
 JOIN metric_values mv ON mv.geoid = g.geoid

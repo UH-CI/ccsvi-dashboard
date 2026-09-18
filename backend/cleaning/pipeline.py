@@ -198,6 +198,7 @@ def add_percentages_to_directory(
             total_population,
             block_group_populations,
             hawaiian_homelands_populations,
+            output["hawaiian_homelands"],
             denominator_column=output["percent_denominator"],
         )
         df_with_props.to_csv(csv_file, index=False)

@@ -11,7 +11,7 @@
     {
       "key": "aggregate_number_of_vehicles_available_by_tenure",
       "alias": "aggregate_vehicles",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Mobility constraints/ACSDT5Y2022.B25046-Data.csv",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Mobility constraints/Aggregate number of vehicles available by tenure/ACSDT5Y2022.B25046-Data.csv",
       "label": "Aggregate number of vehicles available by tenure",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
@@ -19,7 +19,7 @@
     {
       "key": "health_insurance_coverage_by_age",
       "alias": "health_insurance",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
       "label": "Health insurance coverage status by age",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
@@ -51,7 +51,7 @@
     {
       "key": "living_arragements_including_living_alone_by_sex_and_relationship",
       "alias": "living_arrangements",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/living_arrangements/ACSDT5Y2022.B09019-Data.csv",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/Living arragements, including living alone, by sex and relationship/ACSDT5Y2022.B09019-Data.csv",
       "label": "Living arrangements including living alone by sex and relationship",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
@@ -118,7 +118,7 @@
     {
       "key": "tenure_by_occupants_per_room",
       "alias": "tenure_by_occupants_per_room",
-      "original_file_path": "All Exposures/Other/Tenure by Occupants per Room (2024)/ACSDT5Y2024.B25014-Data.csv",
+      "original_file_path": "All Exposures/Other/Tenure by Occupants per Room (2024)/ACSDT5Y2024.B25014_2026-09-15T214051/ACSDT5Y2024.B25014-Data.csv",
       "label": "Tenure by occupants per room (overcrowding)",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
@@ -126,7 +126,7 @@
     {
       "key": "family_type_by_presence_and_age_of_own_children",
       "alias": "family_type_by_children",
-      "original_file_path": "All Exposures/Other/Family Type by Presence and Age of Own Children Under 18 Years (2024)/ACSDT5Y2024.B11003-Data.csv",
+      "original_file_path": "All Exposures/Other/Family Type by Presence and Age of Own Children Under 18 Years (2024)/ACSDT5Y2024.B11003_2026-09-16T173856/ACSDT5Y2024.B11003-Data.csv",
       "label": "Family type by presence and age of own children (single-parent households)",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
@@ -134,7 +134,7 @@
     {
       "key": "2022_census_hawaiian_homelands",
       "alias": "2022_census_hawaiian_homelands",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022_census_hawaiian_homelands/ACSST5Y2022.S0601-Data.csv",
+      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022 Census Hawaiian Homelands /ACSST5Y2022.S0601-Data.csv",
       "label": "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
       "hawaiian_homelands": true,
       "percent_denominator": "Estimate!!Total!!Total population"

@@ -50,12 +50,12 @@ def add_percentages_to_csv(
     total_population: int,
     block_group_populations: dict,
     hawaiian_homelands_populations: dict,
+    is_hawaiian_homelands: bool,
     denominator_column: str | None = None,
 ) -> pd.DataFrame:
     df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
 
     filename = os.path.basename(csv_path)
-    is_hawaiian_homelands = "hawaiian_homelands" in filename.lower()
 
     if is_hawaiian_homelands:
         def get_hh_population(geo_id):
@@ -131,7 +131,7 @@ def add_percentages_to_csv(
 
         values = df[col]
 
-        already_pct = "hawaiian_homelands" in filename.lower() or "POVERTY STATUS IN THE PAST 12 MONTHS" in col
+        already_pct = is_hawaiian_homelands
 
         if already_pct:
             pct_cols[col] = values.round(1)
