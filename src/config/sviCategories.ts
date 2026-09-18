@@ -229,3 +229,9 @@ export const SVI_CATEGORIES: SviCategory[] = [
     ],
   },
 ];
+
+// The SVI menu's name for a metric, or the raw metric name if the menu doesn't list it
+export const sviLabel = (dataset: string | undefined, metric: string): string =>
+  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
+    (i) => i.dataset === dataset && i.metric === metric,
+  )?.label ?? metric;
