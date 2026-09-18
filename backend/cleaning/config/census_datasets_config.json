@@ -76,6 +76,12 @@
           "percent_denominator": "Estimate!!Total:"
         },
         {
+          "name": "person_under_5_65_total",
+          "label": "Total population by age group (under 5, under 18, over 65)",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Estimate!!Total:"
+        },
+        {
           "name": "person_under_5_65_males",
           "label": "Male population by age group (under 5, under 18, over 65)",
           "hawaiian_homelands": false,

@@ -261,10 +261,11 @@ def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
     return under_5_cols, under_18_cols, over_65_cols
 
 """
-Splits the persons-under-5/65 dataset into three outputs: overall gender
-totals, and male/female age-bucket totals (under 5, under 18, over 65).
-Returns a dict of {output_name: dataframe} since one dataset produces three
-separate CSVs.
+Splits the persons-under-5/65 dataset into outputs: overall gender totals,
+combined (male + female) age-bucket totals (under 5, under 18, over 65), and
+the original male-only/female-only age-bucket totals (kept for reference,
+no longer exposed as SVI indicators). Returns a dict of {output_name:
+dataframe} since one dataset produces multiple separate CSVs.
 """
 def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     total_col = _total_universe_col(df)
@@ -276,6 +277,24 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     _carry_with_moe(genders_df, df, ("B01001_026E", "Estimate!!Total:!!Female:"))
 
     males_under_5, males_under_18, males_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Male:!!")
+    females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
+
+    # Combined (male + female) age-bucket totals — the consolidated SVI indicators.
+    total_df = df.iloc[:, :2].copy()
+    if total_col is not None:
+        _carry_with_moe(total_df, df, total_col)
+    under_5_cols = males_under_5 + females_under_5
+    under_18_cols = males_under_18 + females_under_18
+    over_65_cols = males_over_65 + females_over_65
+    total_df[("CALCULATED", "Total Under 5")] = df[under_5_cols].sum(axis=1)
+    total_df[("CALCULATED", "Margin of Error!!Total Under 5")] = _sum_moe(df, under_5_cols)
+    total_df[("CALCULATED", "Total Under 18")] = df[under_18_cols].sum(axis=1)
+    total_df[("CALCULATED", "Margin of Error!!Total Under 18")] = _sum_moe(df, under_18_cols)
+    total_df[("CALCULATED", "Total Over 65")] = df[over_65_cols].sum(axis=1)
+    total_df[("CALCULATED", "Margin of Error!!Total Over 65")] = _sum_moe(df, over_65_cols)
+
+    # Segregated male/female age-bucket totals — kept for reference, no longer
+    # exposed as SVI indicators (see sviCategories.ts).
     males_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(males_df, df, total_col)
@@ -286,7 +305,6 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     males_df[("CALCULATED", "Males Over 65")] = df[males_over_65].sum(axis=1)
     males_df[("CALCULATED", "Margin of Error!!Males Over 65")] = _sum_moe(df, males_over_65)
 
-    females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
     females_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(females_df, df, total_col)
@@ -299,6 +317,7 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
 
     return {
         "genders": genders_df,
+        "person_under_5_65_total": total_df,
         "person_under_5_65_males": males_df,
         "person_under_5_65_females": females_df,
     }
