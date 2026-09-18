@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { useAppStore, useFilteredGeoids } from "../../../stores";
 import { pickValue, formatValue } from "../metricValueHelpers";
+import { sviLabel } from "../../../config";
 
 interface ComparisonSectionProps {
   dataset: string | undefined;
@@ -62,11 +63,14 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
     return { points: pts, activePoint: active, isPct1, isPct2, maxX, maxY };
   }, [cachedValues1, cachedValues2, activeGeoid]);
 
+  const label1 = metric ? sviLabel(dataset, metric) : undefined;
+  const label2 = metric2 ? sviLabel(dataset2, metric2) : undefined;
+
   if (!metric2) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-        Set a "Compare with" metric on the map (Social Vulnerability Indicators menu) to plot
-        it against {metric ?? "the selected metric"}.
+        Set a "Compare with" metric on the map (Social Vulnerability Indicators menu) to plot it
+        against {label1 ?? "the selected metric"}.
       </Typography>
     );
   }
@@ -92,9 +96,9 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
         variant="body2"
         sx={{ fontWeight: 500, mt: 0.25 }}
         noWrap
-        title={`${metric} vs ${metric2}`}
+        title={`${label1} vs ${label2}`}
       >
-        {metric} vs {metric2}
+        {label1} vs {label2}
       </Typography>
 
       <ResponsiveContainer width="100%" height={200}>
@@ -113,10 +117,10 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
                     {label}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {metric}: {formatValue(point.x, isPct1, maxX)}
+                    {label1}: {formatValue(point.x, isPct1, maxX)}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {metric2}: {formatValue(point.y, isPct2, maxY)}
+                    {label2}: {formatValue(point.y, isPct2, maxY)}
                   </Typography>
                 </Box>
               );
