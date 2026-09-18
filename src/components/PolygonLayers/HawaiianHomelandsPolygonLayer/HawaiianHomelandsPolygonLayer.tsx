@@ -18,6 +18,7 @@ interface HawaiianHomelandsPolygonLayerProps {
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   getColor: (value: number | null, value2?: number | null) => string;
+  filteredGeoids?: Set<string> | null;
   onFeatureClick?: (
     feature: Feature<Geometry, HawaiianHomelandProperties>,
     e: LeafletMouseEvent,
@@ -37,6 +38,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   activeFeatureGeoid,
   layerOpacity,
   getColor,
+  filteredGeoids,
   onFeatureClick,
 }) => {
   const getStyle = useCallback(
@@ -57,12 +59,23 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       const metricValue2 = metric2?.getData(geoidStr).value ?? undefined;
       const fillColor = getColor(metricValue, metricValue2);
 
+      if (filteredGeoids != null) {
+        if (filteredGeoids.has(geoidStr)) {
+          return {
+            ...LAYER_CONFIG.styles.default,
+            fillColor,
+            ...LAYER_CONFIG.styles.filterMatch,
+          } as StyleConfig;
+        }
+        return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
+      }
+
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
       };
     },
-    [metric1, metric2, getColor],
+    [metric1, metric2, getColor, filteredGeoids],
   );
 
   const getHighlightStyle = useCallback(
@@ -70,12 +83,19 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       feature: Feature<Geometry, HawaiianHomelandProperties>,
       baseStyle: StyleConfig | undefined,
     ): StyleConfig => {
-      return {
+      const base = {
         ...LAYER_CONFIG.styles.highlight,
         fillColor: baseStyle?.fillColor || LAYER_CONFIG.styles.default.fillColor,
       };
+      const geoid = String(
+        feature.properties?.[LAYER_CONFIG.geoidProperty as keyof HawaiianHomelandProperties] ?? "",
+      );
+      if (filteredGeoids?.has(geoid)) {
+        return { ...base, color: LAYER_CONFIG.styles.filterMatch.color as string };
+      }
+      return base;
     },
-    [],
+    [filteredGeoids],
   );
 
   const handleFeatureClick = useCallback(

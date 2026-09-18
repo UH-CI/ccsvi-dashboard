@@ -309,6 +309,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [filterResults],
     );
 
+    // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
+    const filterHomelands = useFilterStore((s) => s.homelands);
+    useEffect(() => {
+      if (isPrimary && filterResults && filterHomelands !== shouldShowHawaiianHomelands) {
+        useFilterStore.getState().clearFilter();
+      }
+    }, [isPrimary, filterResults, filterHomelands, shouldShowHawaiianHomelands]);
+
     const shouldRenderCensus =
       effectiveDataset &&
       effectiveMetric &&
@@ -430,8 +438,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 activeMetric={effectiveMetric}
                 activeMetric2={effectiveMetric2 ?? undefined}
                 activeFeatureGeoid={config.activeFeature?.geoid}
-                layerOpacity={mapOpacities.hawaiianHomelands}
+                layerOpacity={filteredGeoids != null ? undefined : mapOpacities.hawaiianHomelands}
                 getColor={getColor}
+                filteredGeoids={filteredGeoids}
                 onFeatureClick={handleFeatureClick}
               />
             )}

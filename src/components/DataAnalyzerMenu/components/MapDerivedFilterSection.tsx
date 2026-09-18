@@ -26,6 +26,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const filterRange2 = useAppStore((state) => state.filterRange2);
 
   const setHazards = useFilterStore((state) => state.setHazards);
+  const setHomelands = useFilterStore((state) => state.setHomelands);
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
   const metricFilters = useFilterStore((state) => state.metricFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
@@ -56,6 +57,9 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const hasCriteria = derivedHazards.length > 0 || hasMetricThreshold || hasMetricThreshold2;
 
   const handleApply = () => {
+    setHomelands(
+      dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false,
+    );
     setHazards(derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId)));
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
