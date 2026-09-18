@@ -1,6 +1,5 @@
 """Runs every dataset in a config file through the census_transform steps."""
 
-import glob
 import json
 import os
 
@@ -52,18 +51,13 @@ def load_and_process_all_datasets(config_path: str, base_path: str, file_blocks:
     processed_datasets = {}
 
     for config in dataset_configs:
-        try:
-            df = process_census_dataset(
-                key=config["key"],
-                alias=config["alias"],
-                original_file_path=config["original_file_path"],
-                file_blocks=file_blocks,
-                central_path_head=central_path_head,
-            )
-            processed_datasets[config["alias"]] = df
-
-        except Exception as e:
-            print(f"Error processing {config['alias']}: {e}")
+        processed_datasets[config["alias"]] = process_census_dataset(
+            key=config["key"],
+            alias=config["alias"],
+            original_file_path=config["original_file_path"],
+            file_blocks=file_blocks,
+            central_path_head=central_path_head,
+        )
         print("-" * 30)
 
     return processed_datasets
@@ -106,10 +100,29 @@ def build_file_blocks(notes_wb_path: str) -> dict:
     return file_blocks
 
 
+# One record per output file, from the config
+# A normal entry is one file named after its alias
+# An entry with "outputs" lists its files. 
+def dataset_outputs(dataset_configs: list) -> list:
+    outputs = []
+    for config in dataset_configs:
+        for output in config.get("outputs", [dict(config, name=config["alias"])]):
+            outputs.append(
+                {
+                    "name": output["name"],
+                    "label": output["label"],
+                    "hawaiian_homelands": output["hawaiian_homelands"],
+                    "percent_denominator": output["percent_denominator"],
+                    "skip_metric_column": output.get("skip_metric_column"),
+                }
+            )
+    return outputs
+
+
 """
-Runs every dataset from raw CSV to its final cleaned:
-Returns {output_name: cleaned_df}
-If output_dir is given, also writes each df out as a CSV.
+Runs every dataset in the config from raw CSV to its final cleaned:
+Returns {output file name: cleaned_df}
+If output_dir is given, also writes each out as a csv.
 """
 def run_full_cleaning(
     config_path: str,
@@ -118,34 +131,46 @@ def run_full_cleaning(
     central_path_head: str,
     output_dir: str = None,
 ) -> dict:
+    dataset_configs = load_dataset_config(config_path, base_path)
     file_blocks = build_file_blocks(notes_wb_path)
+
+    aliases = [config["alias"] for config in dataset_configs]
+    duplicates = sorted({alias for alias in aliases if aliases.count(alias) > 1})
+    if duplicates:
+        raise ValueError(f"Duplicate alias in config: {duplicates}")
+    if set(aliases) != set(recipes.RECIPES):
+        raise ValueError(
+            f"Config and RECIPES list different datasets. Only in config: {sorted(set(aliases) - set(recipes.RECIPES))}. "
+            f"Only in RECIPES: {sorted(set(recipes.RECIPES) - set(aliases))}"
+        )
+    for alias, (_, extra_inputs) in recipes.RECIPES.items():
+        missing = [name for name in extra_inputs if name not in aliases]
+        if missing:
+            raise ValueError(f"RECIPES[{alias!r}] needs {missing}, which are not config aliases")
+    for config in dataset_configs:
+        if config["key"] not in file_blocks:
+            raise ValueError(
+                f"{config['alias']}: key {config['key']!r} is not a section in the JPL notes spreadsheet. "
+                f"Sections found: {sorted(file_blocks)}"
+            )
+
     datasets = load_and_process_all_datasets(config_path, base_path, file_blocks, central_path_head)
 
-    cleaned = {
-        "age_of_structure": recipes.recipe_age_of_structure(datasets["age_of_structure"]),
-        "aggregate_vehicles": recipes.merge_tenure_households(datasets["aggregate_vehicles"], datasets["tenure"]),
-        "health_insurance": recipes.recipe_health_insurance(datasets["health_insurance"]),
-        "households_w_computer": datasets["households_w_computer"],
-        "internet_subscription": datasets["internet_subscription"],
-        "limited_english_speaking": recipes.recipe_limited_english_speaking(datasets["limited_english_speaking"]),
-        "living_arrangements": recipes.recipe_living_arrangements(datasets["living_arrangements"]),
-        "population_group_quarters": datasets["population_group_quarters"],
-        "race_origin": datasets["race_origin"],
-        "tenure": datasets["tenure"],
-    }
+    cleaned = {}
+    for alias in aliases:
+        recipe, extra_inputs = recipes.RECIPES[alias]
+        result = datasets[alias] if recipe is None else recipe(datasets[alias], *(datasets[name] for name in extra_inputs))
+        if isinstance(result, dict):
+            cleaned.update(result)
+        else:
+            cleaned[alias] = result
 
-    person_outputs = recipes.recipe_person_under_5_65(datasets["person_under_5_65"])
-    cleaned["genders"] = person_outputs["genders"]
-    cleaned["person_under_5_65_males"] = person_outputs["males"]
-    cleaned["person_under_5_65_females"] = person_outputs["females"]
-
-    # Hawaiian Homelands also carries poverty-status columns that belong on the FPL
-    # dataset, so the raw (pre-recipe) df is kept around for that merge below.
-    hawaiian_homelands_raw_df = datasets["2022_census_hawaiian_homelands"]
-    cleaned["2022_census_hawaiian_homelands"] = recipes.recipe_hawaiian_homelands(hawaiian_homelands_raw_df)
-
-    fpl_df = recipes.recipe_income_share_of_fpl(datasets["income_share_of_fpl"])
-    cleaned["income_share_of_fpl"] = recipes.merge_hawaiian_homelands_poverty(fpl_df, hawaiian_homelands_raw_df)
+    expected = [output["name"] for output in dataset_outputs(dataset_configs)]
+    if sorted(cleaned) != sorted(expected):
+        raise ValueError(
+            f"Recipes produced different files than the config expects. Missing: {sorted(set(expected) - set(cleaned))}. "
+            f"Unexpected: {sorted(set(cleaned) - set(expected))}"
+        )
 
     if output_dir:
         for name, df in cleaned.items():
@@ -154,15 +179,7 @@ def run_full_cleaning(
     return cleaned
 
 
-# person_under_5_65 split outputs share one pop total but have no config alias of their own
-SPLIT_OUTPUT_DENOMINATORS = {
-    "genders": "Estimate!!Total:",
-    "person_under_5_65_males": "Estimate!!Total:",
-    "person_under_5_65_females": "Estimate!!Total:",
-}
-
-
-# Adds Census_Population and "(%)" columns to every CSV in cleaned_dir, in place
+# Adds Census_Population and "(%)" columns to each config dataset's CSV in cleaned_dir, in place
 def add_percentages_to_directory(
     cleaned_dir: str,
     config_path: str,
@@ -173,18 +190,14 @@ def add_percentages_to_directory(
     cleaned_dir = os.path.expanduser(cleaned_dir)
     total_population = sum(block_group_populations.values()) + sum(hawaiian_homelands_populations.values())
 
-    dataset_configs = load_dataset_config(config_path, base_path)
-    denominator_map = proportions.build_denominator_map(dataset_configs)
-
-    for csv_file in glob.glob(os.path.join(cleaned_dir, "*.csv")):
-        alias = os.path.splitext(os.path.basename(csv_file))[0]
-        denominator_column = denominator_map.get(alias) or SPLIT_OUTPUT_DENOMINATORS.get(alias)
-        print(f"Adding proportions to {os.path.basename(csv_file)}...")
+    for output in dataset_outputs(load_dataset_config(config_path, base_path)):
+        csv_file = os.path.join(cleaned_dir, f"{output['name']}.csv")
+        print(f"Adding proportions to {output['name']}.csv...")
         df_with_props = proportions.add_percentages_to_csv(
             csv_file,
             total_population,
             block_group_populations,
             hawaiian_homelands_populations,
-            denominator_column=denominator_column,
+            denominator_column=output["percent_denominator"],
         )
         df_with_props.to_csv(csv_file, index=False)

@@ -80,39 +80,33 @@ def census_drop_cols(df: pd.DataFrame, cols_to_drop: list) -> pd.DataFrame:
 Writes a multi-index df out as a single-header CSV, using the alias row
 only (codes are dropped). Set overwrite=True to replace an existing file.
 """
-def export_census_csv(df: pd.DataFrame, output_dir: str, filename: str, overwrite: bool = False) -> bool:
-    try:
-        output_path = os.path.join(os.path.expanduser(output_dir), filename)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+def export_census_csv(df: pd.DataFrame, output_dir: str, filename: str, overwrite: bool = False) -> None:
+    output_path = os.path.join(os.path.expanduser(output_dir), filename)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        if os.path.exists(output_path) and not overwrite:
-            raise FileExistsError(f"File {filename} already exists and overwrite=False")
+    if os.path.exists(output_path) and not overwrite:
+        raise FileExistsError(f"File {filename} already exists and overwrite=False")
 
-        aliases = df.columns.get_level_values("Alias")
-        codes = df.columns.get_level_values("Code")
+    aliases = df.columns.get_level_values("Alias")
+    codes = df.columns.get_level_values("Code")
 
-        cleaned_aliases = []
-        for alias, code in zip(aliases, codes):
-            cleaned = alias.replace('"', "").replace('"', "").strip() if isinstance(alias, str) else alias
-            if code == "CALCULATED":
-                cleaned = f"{cleaned} (calc.)"
-            cleaned_aliases.append(cleaned)
+    cleaned_aliases = []
+    for alias, code in zip(aliases, codes):
+        cleaned = alias.replace('"', "").replace('"', "").strip() if isinstance(alias, str) else alias
+        if code == "CALCULATED":
+            cleaned = f"{cleaned} (calc.)"
+        cleaned_aliases.append(cleaned)
 
-        temp_df = df.copy()
+    temp_df = df.copy()
 
-        with open(output_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(cleaned_aliases)
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(cleaned_aliases)
 
-            temp_df.columns = cleaned_aliases
-            temp_df.to_csv(f, index=False, header=False)
+        temp_df.columns = cleaned_aliases
+        temp_df.to_csv(f, index=False, header=False)
 
-        print(f"Exported to {output_path}")
-        return True
-
-    except Exception as e:
-        print(f"Error exporting CSV: {str(e)}")
-        return False
+    print(f"Exported to {output_path}")
 
 
 # Strips a Census prefix (e.g. "Estimate!!Total:!!") and tidies up the rest of the name

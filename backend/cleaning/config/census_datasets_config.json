@@ -66,29 +66,30 @@
     },
     {
       "key": "persons_under_5_65_years_table",
-      "alias": "genders",
+      "alias": "person_under_5_65",
       "original_file_path": "All Exposures/Table2/Data Describing Unsafe Conditions/Special Group at Risk/person_under_5_65/ACSDT5Y2022.B01001-Data.csv",
-      "label": "Population by sex",
-      "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
-    },
-    {
-      "key": "persons_under_5_65_years_table",
-      "alias": "person_under_5_65_males",
-      "original_file_path": "All Exposures/Table2/Data Describing Unsafe Conditions/Special Group at Risk/person_under_5_65/ACSDT5Y2022.B01001-Data.csv",
-      "label": "Male population by age group (under 5, under 18, over 65)",
-      "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:",
-      "skip_metric_column": "Estimate!!Total:"
-    },
-    {
-      "key": "persons_under_5_65_years_table",
-      "alias": "person_under_5_65_females",
-      "original_file_path": "All Exposures/Table2/Data Describing Unsafe Conditions/Special Group at Risk/person_under_5_65/ACSDT5Y2022.B01001-Data.csv",
-      "label": "Female population by age group (under 5, under 18, over 65)",
-      "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:",
-      "skip_metric_column": "Estimate!!Total:"
+      "outputs": [
+        {
+          "name": "genders",
+          "label": "Population by sex",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Estimate!!Total:"
+        },
+        {
+          "name": "person_under_5_65_males",
+          "label": "Male population by age group (under 5, under 18, over 65)",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Estimate!!Total:",
+          "skip_metric_column": "Estimate!!Total:"
+        },
+        {
+          "name": "person_under_5_65_females",
+          "label": "Female population by age group (under 5, under 18, over 65)",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Estimate!!Total:",
+          "skip_metric_column": "Estimate!!Total:"
+        }
+      ]
     },
     {
       "key": "population_in_group_quarters",

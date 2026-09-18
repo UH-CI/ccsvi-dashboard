@@ -1,7 +1,10 @@
 """
 Per-dataset totals ("JPL Notes Cleaning" steps) — each sums a specific set of
-estimate columns into one or more CALCULATED totals. Registered in RECIPES so
-the cleaning pipeline can look one up by dataset key instead of hardcoding it inline.
+estimate columns into CALCULATED totals. RECIPES at the bottom list every dataset
+by alias; the pipeline calls each recipe with the dataset's own raw table, then any
+other raw tables its RECIPES line names, and saves what it returns: one table, or
+several tables keyed by output file name when one dataset makes several files.
+Recipes only read raw tables and never change a table they are given, so order does not matter.
 """
 
 import pandas as pd
@@ -195,8 +198,9 @@ def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     return cleaned_df
 
 
-# Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns
-def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
+# Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns,
+# then appends the poverty-status columns from the raw Hawaiian Homelands table
+def recipe_income_share_of_fpl(df: pd.DataFrame, hawaiian_homelands_raw_df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
     total_col = _total_universe_col(df)
     if total_col is not None:
@@ -224,7 +228,7 @@ def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df[("CALCULATED", "Total Under 200% FPL")] = df[under_2_cols].sum(axis=1)
     cleaned_df[("CALCULATED", "Margin of Error!!Total Under 200% FPL")] = _sum_moe(df, under_2_cols)
 
-    return cleaned_df
+    return merge_hawaiian_homelands_poverty(cleaned_df, hawaiian_homelands_raw_df)
 
 
 def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
@@ -250,7 +254,6 @@ def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
                 over_65_cols.append(col)
 
     return under_5_cols, under_18_cols, over_65_cols
-
 
 """
 Splits the persons-under-5/65 dataset into three outputs: overall gender
@@ -289,7 +292,11 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     females_df[("CALCULATED", "Females Over 65")] = df[females_over_65].sum(axis=1)
     females_df[("CALCULATED", "Margin of Error!!Females Over 65")] = _sum_moe(df, females_over_65)
 
-    return {"genders": genders_df, "males": males_df, "females": females_df}
+    return {
+        "genders": genders_df,
+        "person_under_5_65_males": males_df,
+        "person_under_5_65_females": females_df,
+    }
 
 
 """
@@ -346,14 +353,22 @@ def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFra
     return merged
 
 
+# One line per dataset alias: the recipe to run (None = write the raw cleaned table as is) and any other datasets' raw tables it needs.
+# A recipe returns one table, or a dict of {output file name: table} when one dataset makes several files.
 RECIPES = {
-    "age_of_structure": recipe_age_of_structure,
-    "health_insurance_coverage_by_age": recipe_health_insurance,
-    "limited_english_speaking_households": recipe_limited_english_speaking,
-    "living_arragements_including_living_alone_by_sex_and_relationship": recipe_living_arrangements,
-    "income_share_of_fpl": recipe_income_share_of_fpl,
-    "persons_under_5_65_years_table": recipe_person_under_5_65,
-    "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
-    "tenure_by_occupants_per_room": recipe_tenure_by_occupants_per_room,
-    "family_type_by_children": recipe_family_type_by_children,
+    "age_of_structure": (recipe_age_of_structure, []),
+    "aggregate_vehicles": (merge_tenure_households, ["tenure"]),
+    "health_insurance": (recipe_health_insurance, []),
+    "households_w_computer": (None, []),
+    "internet_subscription": (None, []),
+    "limited_english_speaking": (recipe_limited_english_speaking, []),
+    "living_arrangements": (recipe_living_arrangements, []),
+    "income_share_of_fpl": (recipe_income_share_of_fpl, ["2022_census_hawaiian_homelands"]),
+    "person_under_5_65": (recipe_person_under_5_65, []),
+    "population_group_quarters": (None, []),
+    "race_origin": (None, []),
+    "tenure": (None, []),
+    "tenure_by_occupants_per_room": (recipe_tenure_by_occupants_per_room, []),
+    "family_type_by_children": (recipe_family_type_by_children, []),
+    "2022_census_hawaiian_homelands": (recipe_hawaiian_homelands, []),
 }

@@ -32,16 +32,6 @@ def load_hawaiian_homelands_populations(geojson_path: str) -> dict:
     return populations
 
 
-# Builds {alias: percent_denominator} from the dataset config list (pipeline.load_dataset_config
-# output), so the cleaning loop knows which column to divide by for each cleaned CSV by filename
-def build_denominator_map(dataset_configs: list) -> dict:
-    return {
-        config["alias"]: config["percent_denominator"]
-        for config in dataset_configs
-        if config.get("percent_denominator")
-    }
-
-
 def moe_column_name(col: str) -> str:
     if col.startswith("Estimate!!"):
         return "Margin of Error!!" + col[len("Estimate!!"):]
