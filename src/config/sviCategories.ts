@@ -69,9 +69,8 @@ export const SVI_CATEGORIES: SviCategory[] = [
       },
       {
         dataset: "2022_census_hawaiian_homelands",
-        metric:
-          "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined 100 to 149 percent of the poverty level",
-        label: "Hawaiian homelands - 100 to 149% of federal poverty line",
+        metric: "Total Under 150% FPL (calc.)",
+        label: "Hawaiian homelands - below 150% federal poverty line",
       },
       {
         dataset: "health_insurance",

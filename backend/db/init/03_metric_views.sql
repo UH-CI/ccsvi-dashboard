@@ -148,9 +148,9 @@ SELECT
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
         AND m.name = 'INDIVIDUALS'' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS) Population 15 years and over Median income (dollars)') AS median_income_abs,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
-        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS fpl_below_100_pct,
+        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS fpl_under_100_pct,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
-        AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined 100 to 149 percent of the poverty level') AS fpl_100_to_149_pct
+        AND m.name = 'Total Under 150% FPL (calc.)') AS fpl_under_150_pct_calc
 
 FROM geographies g
 JOIN metric_values mv ON mv.geoid = g.geoid

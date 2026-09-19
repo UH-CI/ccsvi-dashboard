@@ -324,8 +324,8 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
 
 
 """
-Adds Under 5 / Under 18 / Over 65 population totals for Hawaiian Homelands,
-then appends the trailing poverty-status columns (kept as-is from source).
+Adds Under 5 / Under 18 / Over 65 population totals for Hawaiian Homelands, plus an
+Under 150% FPL total so the poverty bands nest like income_share_of_fpl's do.
 """
 def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
@@ -355,6 +355,21 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 18")] = _sum_moe(df, under_18_cols)
     cleaned_df[("CALCULATED", "Total Population Over 65")] = df[over_65_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
     cleaned_df[("CALCULATED", "Margin of Error!!Total Population Over 65")] = _sum_moe(df, over_65_cols)
+
+    # Both bands are already percentages of the same poverty universe, so they add directly
+    under_1_5_cols = [
+        col
+        for col in df.columns
+        if len(col) == 2
+        and col[1].startswith("Estimate!!Total!!POVERTY STATUS")
+        and ("Below 100 percent" in col[1] or "100 to 149 percent" in col[1])
+    ]
+
+    # min_count keeps places with no poverty data blank instead of reporting them as 0%
+    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = (
+        df[under_1_5_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+    )
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
 
     cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:].copy()], axis=1)
 
