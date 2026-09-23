@@ -115,7 +115,7 @@ export interface SubHazardLayerGroup {
   subLayers: SubHazardLayerConfig[];
 }
 
-export type HazardLayerMenuPanel = "hazards" | "points";
+export type HazardLayerMenuPanel = "hazards" | "points" | "locations";
 
 export interface HazardLayerConfig {
   id: string;
