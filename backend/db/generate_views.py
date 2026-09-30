@@ -68,7 +68,8 @@ SELECT
 
 FROM geographies g
 JOIN metric_values mv ON mv.geoid = g.geoid
-JOIN metrics m ON m.id = mv.metric_id AND m.dataset_id = '2022_census_hawaiian_homelands'
+JOIN metrics m ON m.id = mv.metric_id
+JOIN datasets d ON d.id = m.dataset_id AND d.hawaiian_homelands = true
 GROUP BY g.geoid, g.name, g.population, g.geom;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid    ON hawaiian_homeland_metrics (geoid);

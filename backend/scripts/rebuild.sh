@@ -61,6 +61,9 @@ if $FULL; then
     "$PYTHON" -m ingest.load_postgis
 fi
 
+echo "-- counting points per block group / Homeland area"
+"$PYTHON" -m ingest.load_point_counts
+
 # The schema step recreates the views while the tables are still empty, so refresh last.
 echo "-- refreshing views"
 psql_run <<'SQL'
