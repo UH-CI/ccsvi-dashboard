@@ -383,7 +383,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     id: "fire_zone",
     name: "Fire Zone",
     visible: false,
-    icon: "faFire",
+    icon: "FaFire",
     color: "#D73502",
     subLayers: [
       { 
@@ -478,6 +478,52 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       },
     ],
   }, 
+  {
+    id: "pcl_filtered",
+    name: "Previously Contaminated Land",
+    visible: false,
+    icon: "FaBarrel",
+    color: "#000000",
+    filePath: "Prev_contaminated_land_filtered.pmtiles",
+    popupConfig: {
+      titleField: "Previously Contaminated Land",
+      fields: [
+        { key: "city", label: "City" },
+        { key: "county", label: "County" },
+        { key: "island", label: "Island" },
+        { key: "site___fac", label: "Site/Facility name" },
+        { key: "site_addre", label: "Address" },
+        { key: "heer_asses", label: "Hazardous Waste Assessment" },
+        { key: "heer_respo", label: "Hazardous Waste Response" },
+        { key: "nature_of", label: "Nature of Contamination" },
+        { key: "nature_o_1", label: "Nature of Contamination 1" },
+      ],
+    },
+  },
+  {
+    id: "pcl_landfill",
+    name: "Landfills",
+    menuPanel: "locations",
+    visible: false,
+    icon: "FaTrash",
+    color: "#000000",
+    filePath: "Prev_contaminated_land_landfills.pmtiles",
+    popupConfig: {
+      titleField: "Landfills",
+      fields: [
+        { key: "city", label: "City" },
+        { key: "county", label: "County" },
+        { key: "island", label: "Island" },
+        { key: "site_addre", label: "Address" },
+        { key: "site___fac", label: "Site/Facility name" },
+        { key: "landfill_s", label: "Start year" },
+        { key: "landfill_y", label: "Currently Active" },
+        { key: "landfill_o", label: "Owner" },
+        
+      ],
+    },
+  },
+
   /*
   {
     id: "potent_econ_loss",
