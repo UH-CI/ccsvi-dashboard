@@ -86,7 +86,27 @@ SELECT
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = 'race_origin'
         AND m.name = 'Two or More Races') AS race_two_or_more_pct,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = 'tenure'
-        AND m.name = 'Renter occupied') AS tenure_renter_pct
+        AND m.name = 'Renter occupied') AS tenure_renter_pct,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'fire_stations_points'
+        AND m.name = 'Count') AS fire_stations_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'hospitals_points'
+        AND m.name = 'Count') AS hospitals_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'police_stations_points'
+        AND m.name = 'Count') AS police_stations_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'shelters_points'
+        AND m.name = 'Count') AS shelters_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'preschools_points'
+        AND m.name = 'Count') AS preschools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'public_schools_points'
+        AND m.name = 'Count') AS public_schools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'private_schools_points'
+        AND m.name = 'Count') AS private_schools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'bridges_points'
+        AND m.name = 'Count') AS bridges_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'sewage_points'
+        AND m.name = 'Count') AS sewage_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'wastewater_plant_points'
+        AND m.name = 'Count') AS wastewater_plant_count_abs
 
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
@@ -150,7 +170,27 @@ SELECT
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
         AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS fpl_under_100_pct,
     MAX(mv.percentage) FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands'
-        AND m.name = 'Total Under 150% FPL (calc.)') AS fpl_under_150_pct_calc
+        AND m.name = 'Total Under 150% FPL (calc.)') AS fpl_under_150_pct_calc,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'fire_stations_points_homelands'
+        AND m.name = 'Count') AS fire_stations_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'hospitals_points_homelands'
+        AND m.name = 'Count') AS hospitals_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'police_stations_points_homelands'
+        AND m.name = 'Count') AS police_stations_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'shelters_points_homelands'
+        AND m.name = 'Count') AS shelters_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'preschools_points_homelands'
+        AND m.name = 'Count') AS preschools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'public_schools_points_homelands'
+        AND m.name = 'Count') AS public_schools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'private_schools_points_homelands'
+        AND m.name = 'Count') AS private_schools_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'bridges_points_homelands'
+        AND m.name = 'Count') AS bridges_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'sewage_points_homelands'
+        AND m.name = 'Count') AS sewage_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'wastewater_plant_points_homelands'
+        AND m.name = 'Count') AS wastewater_plant_count_abs
 
 FROM geographies g
 JOIN metric_values mv ON mv.geoid = g.geoid

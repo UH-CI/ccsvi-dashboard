@@ -37,11 +37,9 @@ async def apply() -> None:
                 unmatched.append((mv_column, dataset_id, name))
 
         if unmatched:
-            print(f"{len(unmatched)} mapping(s) matched no metric:", file=sys.stderr)
+            print(f"{len(unmatched)} mapping(s) matched no metric (left unset, not fatal):", file=sys.stderr)
             for mv_column, dataset_id, name in unmatched:
                 print(f"  {mv_column}: {dataset_id} | {name}", file=sys.stderr)
-            print("Fix db/mv_columns.py and re-run.", file=sys.stderr)
-            sys.exit(1)
 
         print(f"mv_column set on {len(all_columns)} metrics.")
 

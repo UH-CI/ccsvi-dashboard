@@ -54,7 +54,6 @@ echo "-- applying schema"
 echo "-- loading census data"
 cd "$BACKEND_DIR"
 "$PYTHON" -m ingest.load_cleaned_census
-"$PYTHON" -m ingest.add_mv_column
 
 if $FULL; then
     echo "-- loading geometry, points, hazards"
@@ -63,6 +62,8 @@ fi
 
 echo "-- counting points per block group / Homeland area"
 "$PYTHON" -m ingest.load_point_counts
+
+"$PYTHON" -m ingest.add_mv_column
 
 # The schema step recreates the views while the tables are still empty, so refresh last.
 echo "-- refreshing views"
