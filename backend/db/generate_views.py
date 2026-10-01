@@ -42,8 +42,9 @@ WHERE EXISTS (
     SELECT 1
     FROM metric_values mv2
     JOIN metrics m2 ON m2.id = mv2.metric_id
+    JOIN datasets d2 ON d2.id = m2.dataset_id
     WHERE mv2.geoid = g.geoid
-      AND m2.dataset_id != '2022_census_hawaiian_homelands'
+      AND d2.hawaiian_homelands = false
 )
 GROUP BY g.geoid, g.name, g.county, g.population, g.geom;
 
