@@ -7,6 +7,7 @@ interface FilterState {
   county: string | null;
   hazards: string[];
   metricFilters: Partial<Record<string, number>>;
+  pointLayerFilters: Set<string>;
   // True when the filter searches Hawaiian Homelands instead of block groups
   homelands: boolean;
   results: BlockGroupResult[] | null;
@@ -20,6 +21,7 @@ interface FilterActions {
   setHomelands: (homelands: boolean) => void;
   setHazards: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
+  togglePointLayerFilter: (id: string) => void;
   applyFilter: () => Promise<void>;
   buildExportUrl: () => string;
   clearFilter: () => void;
@@ -29,6 +31,7 @@ const initialState: FilterState = {
   county: null,
   hazards: [],
   metricFilters: {},
+  pointLayerFilters: new Set(),
   homelands: false,
   results: null,
   filteredGeoids: null,
@@ -65,6 +68,17 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
         next[col] = value;
       }
       return { metricFilters: next };
+    }),
+
+  togglePointLayerFilter: (id) =>
+    set((state) => {
+      const next = new Set(state.pointLayerFilters);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return { pointLayerFilters: next };
     }),
 
   applyFilter: async () => {
