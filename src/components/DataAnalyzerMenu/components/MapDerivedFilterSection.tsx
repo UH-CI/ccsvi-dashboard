@@ -41,6 +41,8 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
   const metricFilters = useFilterStore((state) => state.metricFilters);
   const pointLayerFilters = useFilterStore((state) => state.pointLayerFilters);
+  const pointGroupModes = useFilterStore((state) => state.pointGroupModes);
+  const setAnyFilters = useFilterStore((state) => state.setAnyFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
   const buildExportUrl = useFilterStore((state) => state.buildExportUrl);
   const isLoading = useFilterStore((state) => state.isLoading);
@@ -52,15 +54,24 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     [visibleLayerIdsByMap, primaryMapId],
   );
 
-  // Checked point layers (§5 of the cross-type plan) that are still visible on the map —
-  // unchecking a layer there drops it here too, same rule hazards already follow.
-  const checkedVisiblePointLayers = useMemo(() => {
+  // Checked layers that are still visible on the map, kept separate per section so
+  // each section's own All/Any switch can be read when Apply runs.
+  const checkedVisibleBySection = useMemo(() => {
     const visiblePoints = visiblePointLayerIdsByMap[primaryMapId];
-    return [
-      ...deriveVisibleCriticalInfrastructure(visiblePoints),
-      ...deriveVisibleLocationsOfEnhancedExposure(visiblePoints),
-    ].filter((layer) => pointLayerFilters.has(layer.id));
+    return {
+      criticalInfrastructure: deriveVisibleCriticalInfrastructure(visiblePoints).filter((layer) =>
+        pointLayerFilters.has(layer.id),
+      ),
+      locationsOfEnhancedExposure: deriveVisibleLocationsOfEnhancedExposure(visiblePoints).filter(
+        (layer) => pointLayerFilters.has(layer.id),
+      ),
+    };
   }, [visiblePointLayerIdsByMap, primaryMapId, pointLayerFilters]);
+
+  const checkedVisiblePointLayers = [
+    ...checkedVisibleBySection.criticalInfrastructure,
+    ...checkedVisibleBySection.locationsOfEnhancedExposure,
+  ];
 
   // Primary metric threshold, from the Explore section's "Filter range" slider
   const mvColumn =
@@ -90,7 +101,20 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
-    for (const layer of checkedVisiblePointLayers) setMetricFilter(`${layer.id}_count_abs`, 1);
+
+    const anyEntries: string[] = [];
+    for (const [groupId, layers] of Object.entries(checkedVisibleBySection)) {
+      const mode = pointGroupModes[groupId] ?? "all";
+      for (const layer of layers) {
+        if (mode === "all") {
+          setMetricFilter(`${layer.id}_count_abs`, 1);
+        } else {
+          anyEntries.push(`${groupId}:${layer.id}_count_abs:1`);
+        }
+      }
+    }
+    setAnyFilters(anyEntries);
+
     applyFilter();
   };
 

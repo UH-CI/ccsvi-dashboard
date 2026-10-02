@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Typography, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Typography, FormControlLabel, Checkbox, ButtonGroup, Button } from "@mui/material";
 import { useMapStore, usePointLayerStore, useFilterStore } from "../../../stores";
 import {
   deriveVisibleCriticalInfrastructure,
@@ -16,6 +16,9 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
   const visibleLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
   const pointLayerFilters = useFilterStore((state) => state.pointLayerFilters);
   const togglePointLayerFilter = useFilterStore((state) => state.togglePointLayerFilter);
+  const pointGroupModes = useFilterStore((state) => state.pointGroupModes);
+  const setPointGroupMode = useFilterStore((state) => state.setPointGroupMode);
+  const mode = pointGroupModes[menu] ?? "all";
 
   const deriveFn =
     menu === "criticalInfrastructure"
@@ -31,17 +34,32 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
 
   return (
     <Box>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-      >
-        {title}
-      </Typography>
-      <Typography variant="caption" color="text.disabled" display="block" sx={{ mb: 0.5 }}>
-        Only layers currently turned on in this map menu are listed
-      </Typography>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
+        >
+          {title}
+        </Typography>
+      </Box>
+      {/*AND/OR switch */}
+      {/*  <ButtonGroup size="small">*/}
+      {/*    <Button*/}
+      {/*      variant={mode === "all" ? "contained" : "outlined"}*/}
+      {/*      onClick={() => setPointGroupMode(menu, "all")}*/}
+      {/*    >*/}
+      {/*      AND*/}
+      {/*    </Button>*/}
+      {/*    <Button*/}
+      {/*      variant={mode === "any" ? "contained" : "outlined"}*/}
+      {/*      onClick={() => setPointGroupMode(menu, "any")}*/}
+      {/*    >*/}
+      {/*      OR*/}
+      {/*    </Button>*/}
+      {/*  </ButtonGroup>*/}
+      {/*</Box>*/}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", mt: 0.5 }}>
         {layers.map((layer) => (
           <FormControlLabel
             key={layer.id}
