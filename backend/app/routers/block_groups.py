@@ -148,8 +148,10 @@ async def get_metric_values(
         "Returns block groups matching all specified filters. Supports county equality, "
         "a unioned hazard spatial join (ST_Intersects against the hazards table — a block "
         "group matches if it intersects ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
-        "and numeric lower-bound thresholds on any block_group_metrics column via "
-        "min_<col>=<value> query params. Use ?format=csv for a downloadable CSV attachment."
+        "numeric lower-bound thresholds on any block_group_metrics column via "
+        "min_<col>=<value> query params (ANDed together), and grouped OR thresholds via "
+        "repeatable ?any=<group>:<col>:<value> params (ORed within a group, ANDed between "
+        "groups and with every other filter). Use ?format=csv for a downloadable CSV attachment."
     ),
 )
 async def filter_block_groups(
@@ -160,9 +162,14 @@ async def filter_block_groups(
         None,
         description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
     ),
+    any_group: list[str] | None = Query(
+        None,
+        alias="any",
+        description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
+    ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, False, county, hazard, fmt)
+    return await run_filter(conn, request, False, county, hazard, any_group, fmt)
 
 
 @router.get(
@@ -181,14 +188,25 @@ async def filter_hawaiian_homelands(
         None,
         description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
     ),
+    any_group: list[str] | None = Query(
+        None,
+        alias="any",
+        description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
+    ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, True, None, hazard, fmt)
+    return await run_filter(conn, request, True, None, hazard, any_group, fmt)
 
 
 # Shared by both filter endpoints; homelands picks which view to search
 async def run_filter(
-    conn, request: Request, homelands: bool, county: str | None, hazard: list[str] | None, fmt: str
+    conn,
+    request: Request,
+    homelands: bool,
+    county: str | None,
+    hazard: list[str] | None,
+    any_group: list[str] | None,
+    fmt: str,
 ) -> Any:
     if homelands:
         view, id_cols, filename = "hawaiian_homeland_metrics", _HHM_ID_COLS, "hawaiian_homelands_filtered.csv"
@@ -209,6 +227,21 @@ async def run_filter(
             metric_filters.append((col, float(val)))
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid numeric value for {key!r}: {val!r}")
+
+    # Boxes checked in the same section can OR together, only when that section's
+    # own switch is set to Any. Different sections always AND
+    any_groups: dict[str, list[tuple[str, float]]] = {}
+    for entry in any_group or []:
+        group_id, _, rest = entry.partition(":")
+        col, _, raw_val = rest.partition(":")
+        if not group_id or not col or not raw_val:
+            raise HTTPException(status_code=400, detail=f"Malformed any param: {entry!r}")
+        if col not in allowed_cols:
+            raise HTTPException(status_code=400, detail=f"Unknown metric column: {col!r}")
+        try:
+            any_groups.setdefault(group_id, []).append((col, float(raw_val)))
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid numeric value in any param: {entry!r}")
 
     # Build dynamic WHERE clause with asyncpg positional params ($1, $2, ...).
     conditions: list[str] = []
@@ -245,6 +278,15 @@ async def run_filter(
     for col, threshold in metric_filters:
         # col has been validated against allowed_cols — safe to interpolate.
         add_cond(f"v.{col} >= ?", threshold)
+
+    for group_entries in any_groups.values():
+        # Turn one group into one OR bracket, then add it to the same list as
+        # hazards and metric filters
+        branches: list[str] = []
+        for col, threshold in group_entries:
+            params.append(threshold)
+            branches.append(f"v.{col} >= ${len(params)}")
+        conditions.append(f"({' OR '.join(branches)})")
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     id_select = ", ".join(f"v.{c}" for c in id_cols)
