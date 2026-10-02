@@ -4,6 +4,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "fire_stations",
     name: "Fire Stations",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaFireExtinguisher",
     color: "#FF0000",
@@ -13,6 +14,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "hospitals",
     name: "Hospitals",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHospital",
     color: "#00BFFF",
@@ -22,6 +24,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "police_stations",
     name: "Police Stations",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaShieldAlt",
     color: "#000080",
@@ -31,6 +34,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "shelters",
     name: "Emergency Shelters",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHouseUser",
     color: "#00CC00",
@@ -46,6 +50,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "preschools",
     name: "Preschools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#FFA500",
@@ -61,6 +66,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "public_schools",
     name: "Public Schools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#8A2BE2",
@@ -76,6 +82,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "private_schools",
     name: "Private Schools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#DC143C",
@@ -91,6 +98,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "bridges",
     name: "Bridges",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaArchway",
     color: "#6c757d",
@@ -107,6 +115,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "sewage",
     name: "Sewage Disposal Systems",
+    menu: "locationsOfEnhancedExposure",
     visible: false,
     icon: "FaToilet",
     color: "#964B00",
@@ -123,6 +132,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "wastewater_plant",
     name: "Wastewater Treatment Plants",
+    menu: "locationsOfEnhancedExposure",
     visible: false,
     icon: "FaIndustry",
     color: "#2E8B57",

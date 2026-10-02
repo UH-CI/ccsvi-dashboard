@@ -82,6 +82,7 @@ export interface CountyBoundariesProperties {
 export interface PointLayerConfig {
   id: string;
   name: string;
+  menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
   visible: boolean;
   icon: string;
   color: string;
