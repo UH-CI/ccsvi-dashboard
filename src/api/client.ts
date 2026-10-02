@@ -1,3 +1,4 @@
+import { FeatureCollection, Point } from "geojson";
 import { DatasetCatalog, MetricValue } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -31,3 +32,10 @@ export const getPointsByGeoid = (layerId: string, homelands: boolean) =>
   get<Record<string, string[]>>(
     `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&homelands=${homelands}`,
   );
+
+// One layer's points that fall inside any of the given areas
+export const getPointsInGeoids = (layerId: string, geoids: string[]) => {
+  const params = new URLSearchParams({ layer_id: layerId });
+  for (const geoid of geoids) params.append("geoid", geoid);
+  return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
+};

@@ -40,7 +40,8 @@ class PointFeatureCollection(BaseModel):
         "Returns a GeoJSON FeatureCollection from the points table. "
         "Supports filtering by layer_id (exact match), full-text search on "
         "feature name via plainto_tsquery (uses the idx_points_name_fts GIN index), "
-        "and geoid (only points inside that one block group / Hawaiian Homeland area). "
+        "and geoid (only points inside one of these block group / Hawaiian Homeland "
+        "areas; repeatable, matches any of them). "
         "All params are optional; omitting them all returns every point."
     ),
 )
@@ -48,7 +49,7 @@ async def get_points(
     conn: ConnDep,
     layer_id: str | None = Query(None, description="Layer ID, e.g. 'hospitals'"),
     q: str | None = Query(None, description="Full-text search term on feature name"),
-    geoid: str | None = Query(None, description="Only points inside this geoid's area"),
+    geoid: list[str] | None = Query(None, description="Only points inside any of these geoids' areas"),
 ) -> PointFeatureCollection:
     conditions: list[str] = []
     params: list[Any] = []
@@ -69,7 +70,7 @@ async def get_points(
     if geoid:
         params.append(geoid)
         join = "JOIN geographies g ON ST_Covers(g.geom, points.geom)"
-        conditions.append(f"g.geoid = ${len(params)}")
+        conditions.append(f"g.geoid = ANY(${len(params)})")
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     sql = (
