@@ -6,7 +6,7 @@ import { ParsedCSVData } from "../../utils/csvParser";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { usePrimaryMapState, useFilterStore, useMapStore } from "../../stores";
-import { usePointCountsForTable } from "../../hooks/usePointCounts";
+import { usePointCountsForTable, usePointNamesForTable } from "../../hooks/usePointCounts";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
 import { useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
@@ -110,6 +110,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const isHomelands = Boolean(datasetInfo?.hawaiianHomelands);
   const { layers: pointLayers, getCount } = usePointCountsForTable(isHomelands, primaryMapId);
+  const { getNames } = usePointNamesForTable(isHomelands, primaryMapId);
 
   const pointCountColumns = useMemo(
     () =>
@@ -126,20 +127,38 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     [pointLayers],
   );
 
-  const mergedColumns = useMemo(() => [...columns, ...pointCountColumns], [columns, pointCountColumns]);
+  const pointNameColumns = useMemo(
+    () =>
+      pointLayers.map((layer) => ({
+        field: `pointnames_${layer.id}`,
+        headerName: `${layer.name} (names)`,
+        flex: 1,
+        minWidth: 200,
+        sortable: false,
+        filterable: true,
+        hideable: true,
+      })),
+    [pointLayers],
+  );
+
+  const mergedColumns = useMemo(
+    () => [...columns, ...pointCountColumns, ...pointNameColumns],
+    [columns, pointCountColumns, pointNameColumns],
+  );
 
   const mergedRows = useMemo(() => {
     if (pointLayers.length === 0) return rows;
     return rows.map((row) => {
       const geoid = geoidFromRow(row);
-      const extra: Record<string, number> = {};
+      const extra: Record<string, number | string> = {};
       for (const layer of pointLayers) {
         extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid);
+        extra[`pointnames_${layer.id}`] = getNames(layer.id, geoid).join(", ") || "—";
       }
       return { ...row, ...extra };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, pointLayers, getCount, geoidColIndex]);
+  }, [rows, pointLayers, getCount, getNames, geoidColIndex]);
 
   const displayRows = useMemo(() => {
     if (!filteredGeoidsSet || geoidColIndex < 0) return mergedRows;
