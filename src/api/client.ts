@@ -25,3 +25,9 @@ export const getMetricValues = (dataset: string, metric: string) =>
 // DEPRECATED: reads from census_metrics table (dropped by migration); not currently used
 // export const getBlockGroup = (geoid: string) =>
 //   get<Record<string, unknown>>(`/api/v1/block-groups/${geoid}`);
+
+// One layer's point names, grouped by the geoid of the area they're in
+export const getPointsByGeoid = (layerId: string, homelands: boolean) =>
+  get<Record<string, string[]>>(
+    `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&homelands=${homelands}`,
+  );
