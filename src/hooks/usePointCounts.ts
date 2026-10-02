@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { useAppStore } from "../stores";
+import { usePointLayerStore } from "../stores/usePointLayersStore";
 import { POINT_LAYERS } from "../config/pointLayers";
+import type { PointLayerConfig } from "../types";
 
 export interface PointCounts {
   loading: boolean;
@@ -57,4 +59,35 @@ export async function fetchPointCounts(
     counts[layer.id] = cache[cacheKey]?.[geoid]?.absolute ?? null;
   }
   return counts;
+}
+
+export interface TablePointCounts {
+  layers: PointLayerConfig[]; // currently visible on the map
+  getCount: (layerId: string, geoid: string) => number;
+}
+
+// Point counts for every geoid, across whichever layers are currently toggled on map
+export function usePointCountsForTable(isHomelands: boolean, mapId: string): TablePointCounts {
+  const metricValuesCache = useAppStore((state) => state.metricValuesCache);
+  const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
+  const visibleIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
+
+  const layers = useMemo(
+    () => POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id)),
+    [visibleIds],
+  );
+
+  useEffect(() => {
+    for (const layer of layers) {
+      fetchMetricValues(datasetIdFor(layer.id, isHomelands), "Count");
+    }
+  }, [layers, isHomelands, fetchMetricValues]);
+
+  return useMemo(() => {
+    const getCount = (layerId: string, geoid: string): number => {
+      const cacheKey = `${datasetIdFor(layerId, isHomelands)}::Count`;
+      return metricValuesCache[cacheKey]?.[geoid]?.absolute ?? 0;
+    };
+    return { layers, getCount };
+  }, [layers, isHomelands, metricValuesCache]);
 }
