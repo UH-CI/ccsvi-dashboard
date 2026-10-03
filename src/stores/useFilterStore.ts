@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { BlockGroupResult } from "../types";
+import { POINT_LAYERS } from "../config/pointLayers";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -36,7 +37,7 @@ const initialState: FilterState = {
   county: null,
   hazards: [],
   metricFilters: {},
-  pointLayerFilters: new Set(),
+  pointLayerFilters: new Set(POINT_LAYERS.map((layer) => layer.id)),
   pointGroupModes: {},
   anyFilters: [],
   homelands: false,
