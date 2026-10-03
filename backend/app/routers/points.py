@@ -83,6 +83,10 @@ async def get_points(
     features = []
     for row in rows:
         props = json.loads(row["props"]) if row["props"] else {}
+        # Drop these so they can't collide with the same keyword args below
+        props.pop("id", None)
+        props.pop("layer_id", None)
+        props.pop("name", None)
         features.append(
             PointFeature(
                 type="Feature",
