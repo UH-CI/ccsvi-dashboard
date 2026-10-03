@@ -7,11 +7,42 @@ import L from "leaflet";
 import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
 import styles from "./PointLayers.module.scss";
-import { usePointLayerStore } from "../../stores";
+import { usePointLayerStore, useFilterStore } from "../../stores";
+import { getPointsInGeoids } from "../../api/client";
 
 interface GenericPointMarkersProps {
   layerId: string;
   mapId: string;
+}
+
+// Which of this layer's points are inside the current filter result.
+// null means no filter is running, so every point should show.
+function useMatchingIds(layerId: string): Set<string | number> | null {
+  const filteredGeoids = useFilterStore((state) => state.filteredGeoids);
+  const [ids, setIds] = useState<Set<string | number> | null>(null);
+
+  useEffect(() => {
+    if (!filteredGeoids) {
+      setIds(null);
+      return;
+    }
+    let cancelled = false;
+    getPointsInGeoids(layerId, Array.from(filteredGeoids)).then((data) => {
+      if (cancelled) return;
+      setIds(
+        new Set(
+          data.features.map(
+            (f, i) => f.properties?.objectid || f.properties?.OBJECTID || f.properties?.id || i,
+          ),
+        ),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [layerId, filteredGeoids]);
+
+  return ids;
 }
 
 export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerId, mapId }) => {
@@ -23,6 +54,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
     state.pointLayerConfigs.find((c) => c.id === layerId),
   );
   const data = usePointLayerStore((state) => state.pointLayerData.get(layerId));
+  const matchingIds = useMatchingIds(layerId);
   // const isVisible = usePointLayerStore(state => state.visibleLayerIds.has(layerId));
   const isVisible = usePointLayerStore((state) => {
     const mapLayers = state.visibleLayerIdsByMap[mapId];
@@ -185,6 +217,9 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
               feature.properties?.OBJECTID ||
               feature.properties?.id ||
               index;
+
+            // A filter is running and this point isn't in its result — hide it
+            if (matchingIds && !matchingIds.has(featureId)) return null;
 
             const coords = feature.geometry.coordinates;
             if (!coords || coords.length < 2) return null; // skip invalid
