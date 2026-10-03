@@ -24,6 +24,7 @@ class MetricValueRecord(BaseModel):
     absolute: float | None
     margin_of_error: float | None
     percentage: float | None
+
     moe_percentage_points: float | None
     cv: float | None
     moe_derived: bool | None

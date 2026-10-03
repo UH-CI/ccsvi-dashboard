@@ -58,12 +58,12 @@ async def get_points(
 
     if layer_id:
         params.append(layer_id)
-        conditions.append(f"layer_id = ${len(params)}")
+        conditions.append(f"points.layer_id = ${len(params)}")
 
     if q:
         params.append(q)
         conditions.append(
-            f"to_tsvector('english', coalesce(name, '')) "
+            f"to_tsvector('english', coalesce(points.name, '')) "
             f"@@ plainto_tsquery('english', ${len(params)})"
         )
 
@@ -74,8 +74,8 @@ async def get_points(
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     sql = (
-        f"SELECT id, layer_id, name, props, ST_AsGeoJSON(geom) AS geometry "
-        f"FROM points {join} {where}"
+        f"SELECT points.id, points.layer_id, points.name, points.props, "
+        f"ST_AsGeoJSON(points.geom) AS geometry FROM points {join} {where}"
     )
 
     rows = await conn.fetch(sql, *params)
