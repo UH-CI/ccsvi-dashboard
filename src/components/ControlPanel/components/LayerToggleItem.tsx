@@ -14,6 +14,7 @@ interface LayerToggleItemProps {
   indented?: boolean;
   labelMl?: number;
   description?: string; // optional hover text
+  className?: string;
 }
 
 // Leaf layer toggle: checkbox + optional colored FA icon + label.
@@ -28,6 +29,7 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
   indented = false,
   labelMl = 0.9,
   description,
+  className,
 }) => {
   const IconComponent = (icon && FaIcons[icon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
   const labelNode = icon ? (
@@ -51,6 +53,7 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
 
   return (
     <FormControlLabel
+      className={className}
       sx={indented ? { ml: 0, "& .MuiFormControlLabel-label": { ml: labelMl } } : undefined}
       control={
         <Checkbox

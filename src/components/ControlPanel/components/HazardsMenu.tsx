@@ -76,6 +76,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
             icon={parent.icon}
             color={parent.color}
             fallbackIcon="FaExclamationTriangle"
+            className={styles["hazard-parent-toggle"]}
             checked={visibleIds.has(parent.id)}
             onToggle={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
           />
@@ -209,6 +210,13 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               <LayerToggleGroup
                 key={expandKey}
                 label={section.label}
+                icon={section.label === "Sea Level Rise" ? "FaWaveSquare" : undefined}
+                color={section.label === "Sea Level Rise" ? "#1976d2" : undefined}
+                className={
+                  section.label === "Sea Level Rise"
+                    ? styles["layer-toggle--sea-level-rise"]
+                    : undefined
+                }
                 description={section.layers.find((layer) => layer.description)?.description}
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}

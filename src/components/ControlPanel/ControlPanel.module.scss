@@ -179,6 +179,12 @@
   outline: none;
 }
 
+.hazard-parent-toggle {
+  :global(.MuiCheckbox-root) {
+    opacity: 0;
+  }
+}
+
 // Shared dropdown content styles ─────────────────────────────────────────
 
 .popover-title {
@@ -296,6 +302,15 @@
   //raster specific spacing rule
   &--raster > div > .layer-label {
     margin-left: 37px;
+  }
+}
+
+.layer-toggle--sea-level-rise > div {
+  padding-left: 12px;
+  padding-right: 10px;
+
+  :global(.MuiIconButton-root) {
+    margin-right: 12px;
   }
 }
 
