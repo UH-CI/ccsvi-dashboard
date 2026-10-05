@@ -15,11 +15,20 @@ interface GenericPointMarkersProps {
   mapId: string;
 }
 
+function pointId(properties: Feature["properties"], idFields: string[]): string | undefined {
+  const values = idFields.map((field) => properties?.[field]);
+  if (values.some((value) => value == null)) return undefined;
+  return values.join("|");
+}
+
 // Which of this layer's points are inside the current filter result.
 // null means no filter is running, so every point should show.
-function useMatchingIds(layerId: string): Set<string | number> | null {
+function useMatchingIds(layerId: string): Set<string> | null {
   const filteredGeoids = useFilterStore((state) => state.filteredGeoids);
-  const [ids, setIds] = useState<Set<string | number> | null>(null);
+  const idFields = usePointLayerStore(
+    (state) => state.pointLayerConfigs.find((c) => c.id === layerId)!.idFields,
+  );
+  const [ids, setIds] = useState<Set<string> | null>(null);
 
   useEffect(() => {
     if (!filteredGeoids) {
@@ -31,16 +40,16 @@ function useMatchingIds(layerId: string): Set<string | number> | null {
       if (cancelled) return;
       setIds(
         new Set(
-          data.features.map(
-            (f, i) => f.properties?.objectid || f.properties?.OBJECTID || f.properties?.id || i,
-          ),
+          data.features
+            .map((f) => pointId(f.properties, idFields))
+            .filter((id): id is string => id !== undefined),
         ),
       );
     });
     return () => {
       cancelled = true;
     };
-  }, [layerId, filteredGeoids]);
+  }, [layerId, filteredGeoids, idFields]);
 
   return ids;
 }
@@ -208,18 +217,13 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
             (feature) =>
               feature.geometry &&
               feature.geometry.type === "Point" &&
-              feature.properties &&
-              (feature.properties.objectid || feature.properties.OBJECTID) !== 0,
+              feature.properties,
           )
           .map((feature, index) => {
-            const featureId =
-              feature.properties?.objectid ||
-              feature.properties?.OBJECTID ||
-              feature.properties?.id ||
-              index;
+            const featureId = pointId(feature.properties, config.idFields);
 
             // A filter is running and this point isn't in its result — hide it
-            if (matchingIds && !matchingIds.has(featureId)) return null;
+            if (matchingIds && (featureId === undefined || !matchingIds.has(featureId))) return null;
 
             const coords = feature.geometry.coordinates;
             if (!coords || coords.length < 2) return null; // skip invalid
@@ -228,7 +232,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
 
             return (
               <Marker
-                key={`${config.id}-${featureId}`}
+                key={`${config.id}-${index}`}
                 position={[latitude, longitude]}
                 icon={customIcon}
               >

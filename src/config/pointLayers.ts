@@ -9,6 +9,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaFireExtinguisher",
     color: "#FF0000",
     filePath: "Fire_Stations_(Statewide).geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
@@ -19,6 +20,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaHospital",
     color: "#00BFFF",
     filePath: "Hospitals.geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
@@ -29,6 +31,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaShieldAlt",
     color: "#000080",
     filePath: "Police_Stations_(Statewide).geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
@@ -39,6 +42,8 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaHouseUser",
     color: "#00CC00",
     filePath: "emergency_shelters.geojson",
+    // OBJECTID is stamped 0 on 28 shelters; the name is unique on all of them
+    idFields: ["BUSNAME"],
     popupConfig: {
       titleField: "BUSNAME",
       fields: [
@@ -55,6 +60,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaSchool",
     color: "#FFA500",
     filePath: "Preschools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "name",
       fields: [
@@ -71,6 +77,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaSchool",
     color: "#8A2BE2",
     filePath: "Public_Schools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "sch_name",
       fields: [
@@ -87,6 +94,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaSchool",
     color: "#DC143C",
     filePath: "Private_Schools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "school",
       fields: [
@@ -103,6 +111,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaArchway",
     color: "#6c757d",
     filePath: "National_Bridge_Inventory.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "structure_",
       fields: [
@@ -120,6 +129,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaToilet",
     color: "#964B00",
     filePath: "HI_Onsite_Sewage_Disposal_Systems.geojson",
+    idFields: ["layer", "objectid"],
     popupConfig: {
       titleField: "island",
       fields: [
@@ -137,6 +147,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     icon: "FaIndustry",
     color: "#2E8B57",
     filePath: "Wastewater_Treatment_Plants.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "wwtp_name",
       fields: [
