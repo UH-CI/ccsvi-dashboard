@@ -33,8 +33,6 @@ import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { HCDPRasterLayer } from "../HCDP";
-//list of basemap options
-import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
