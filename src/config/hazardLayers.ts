@@ -488,7 +488,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
         },
       },
     ],
-  },
+  }, 
   {
     id: "pcl_filtered",
     name: "Previously Contaminated Land",
@@ -530,9 +530,11 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
         { key: "landfill_s", label: "Start year" },
         { key: "landfill_y", label: "Currently Active" },
         { key: "landfill_o", label: "Owner" },
+        
       ],
     },
   },
+
   /*
   {
     id: "potent_econ_loss",

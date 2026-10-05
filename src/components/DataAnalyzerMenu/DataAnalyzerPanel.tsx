@@ -1,3 +1,4 @@
+// TODO: deprecate. Nothing imports this; the Data Analyzer is mounted through ControlPanel/components/AnalyzerMenu.tsx
 import { useState } from "react";
 import { Box } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";

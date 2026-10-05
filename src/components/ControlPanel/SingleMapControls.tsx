@@ -259,7 +259,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                 >
                   <Close fontSize="small" />
                   <Typography variant="body2" sx={{ ml: 1 }}>
-q                    Remove Map
+                    Remove Map
                   </Typography>
                 </MenuItem>
               )}

@@ -1,0 +1,51 @@
+name: Build frontend
+
+# Publishes dist.tar.gz as a release
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - 'backend/**'
+      - 'notebooks/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-frontend
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: beta
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          VITE_DATA_BASE_URL: ${{ vars.VITE_DATA_BASE_URL }}
+
+      - name: Record build info
+        run: |
+          printf 'branch: %s\ncommit: %s\nbuilt:  %s\n' \
+            "$GITHUB_REF_NAME" "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > dist/BUILD_INFO
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf dist.tar.gz -C dist .
+          gh release view beta > /dev/null 2>&1 ||
+            gh release create beta --title "Beta build" --notes "Latest dev branch build"
+          gh release upload beta dist.tar.gz --clobber

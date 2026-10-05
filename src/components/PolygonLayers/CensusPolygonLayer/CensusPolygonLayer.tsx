@@ -8,6 +8,7 @@ import {
   renderPolygonPopup,
   type PolygonPopupContext,
 } from "../../../utils/renderPolygonPopup.ts";
+import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
@@ -18,12 +19,9 @@ import { POLYGON_LAYERS } from "../../../config";
 interface CensusPolygonLayerProps {
   data: FeatureCollection<Geometry, BlockGroupProperties> | null;
   geographiesData: GeographiesData | null;
-  getMetricValue: (geoid: string) => number | null;
-  getMetricMoE?: (geoid: string) => number | null;
-  getMetricValue2?: (geoid: string) => number | null;
-  getMetricMoE2?: (geoid: string) => number | null;
+  metric1: MetricLookup;
+  metric2?: MetricLookup | null;
   mapId: string;
-  // activeDataset: string;
   activeMetric: string;
   activeMetric2?: string | null;
   activeFeatureGeoid?: string | null;
@@ -39,12 +37,9 @@ const LAYER_CONFIG = POLYGON_LAYERS.censusBlockGroups;
 export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   data,
   geographiesData,
-  getMetricValue,
-  getMetricMoE,
-  getMetricValue2,
-  getMetricMoE2,
+  metric1,
+  metric2,
   mapId,
-  // activeDataset,
   activeMetric,
   activeMetric2,
   activeFeatureGeoid,
@@ -85,22 +80,12 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         geoidProperty: LAYER_CONFIG.geoidProperty,
       },
       activeMetric,
-      getMetricValue,
+      metric1,
       geographiesData,
       activeMetric2,
-      getMetricValue2,
-      getMetricMoE,
-      getMetricMoE2,
+      metric2,
     }),
-    [
-      activeMetric,
-      activeMetric2,
-      getMetricValue,
-      getMetricMoE,
-      getMetricValue2,
-      getMetricMoE2,
-      geographiesData,
-    ],
+    [activeMetric, activeMetric2, metric1, metric2, geographiesData],
   );
 
   const isMatched = useCallback(
@@ -127,8 +112,8 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       }
 
       const geoidStr = String(geoid);
-      const metricValue = getMetricValue(geoidStr);
-      const metricValue2 = getMetricValue2?.(geoidStr) ?? undefined;
+      const metricValue = metric1.getData(geoidStr).value;
+      const metricValue2 = metric2?.getData(geoidStr).value ?? undefined;
 
       const outOfRange =
         filterRange != null &&
@@ -159,7 +144,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         color: outOfRange ? "#cccccc" : LAYER_CONFIG.styles.default.color,
       };
     },
-    [getMetricValue, getMetricValue2, getColor, filteredGeoids, shouldUseBackgroundStyle, filterRange],
+    [metric1, metric2, getColor, filteredGeoids, shouldUseBackgroundStyle, filterRange],
   );
 
   const getHighlightStyle = useCallback(
@@ -189,20 +174,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
     return LAYER_CONFIG.styles.default;
   }, [shouldUseBackgroundStyle, filteredGeoids, layerOpacity]);
 
-  const renderPopup = useMemo(
-    () =>
-      renderPolygonPopup(
-        popupContext.config,
-        popupContext.activeMetric,
-        popupContext.getMetricValue,
-        popupContext.geographiesData,
-        popupContext.activeMetric2,
-        popupContext.getMetricValue2,
-        popupContext.getMetricMoE,
-        popupContext.getMetricMoE2,
-      ),
-    [popupContext],
-  );
+  const renderPopup = useMemo(() => renderPolygonPopup(popupContext), [popupContext]);
 
   const enrichPopupOnOpen = useMemo(() => {
     if (!hcdpOverlay && !activeRasterLayerId) return undefined;

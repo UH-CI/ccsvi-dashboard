@@ -1,7 +1,10 @@
 """
 Per-dataset totals ("JPL Notes Cleaning" steps) — each sums a specific set of
-estimate columns into one or more CALCULATED totals. Registered in RECIPES so
-the cleaning pipeline can look one up by dataset key instead of hardcoding it inline.
+estimate columns into CALCULATED totals. RECIPES at the bottom list every dataset
+by alias; the pipeline calls each recipe with the dataset's own raw table, then any
+other raw tables its RECIPES line names, and saves what it returns: one table, or
+several tables keyed by output file name when one dataset makes several files.
+Recipes only read raw tables and never change a table they are given, so order does not matter.
 """
 
 import pandas as pd
@@ -42,15 +45,134 @@ def _carry_with_moe(cleaned_df: pd.DataFrame, df: pd.DataFrame, estimate_col) ->
         cleaned_df[moe_col] = df[moe_col]
 
 
-# Adds a single "Total Housing Built Before 1990" column, and carries through the
-# raw total-housing-units column so it can be used as a percentage denominator
+# Lines up another table's rows with df's rows by geography ID; errors if a place is missing
+def _rows_matching_geoids(df: pd.DataFrame, other: pd.DataFrame) -> pd.DataFrame:
+    geo_col = ("GEO_ID", "Geography")
+    return other.set_axis(other[geo_col], axis=0).loc[df[geo_col]].set_axis(df.index, axis=0)
+
+
+# Sums estimate columns into a CALCULATED total. Stays blank when every input is blank, so
+# places the Census left empty aren't reported as 0.
+def _sum_estimates(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
+    return df[estimate_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+
+
+# Combines MOEs for a sum of ACS estimates: sqrt(sum of squared MOEs). For zero-estimate
+# components, only the largest MOE among them is counted, not all of them.
+def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
+    pairs = [(col, _moe_col_for(df, col)) for col in estimate_cols]
+    pairs = [(est_col, moe_col) for est_col, moe_col in pairs if moe_col is not None]
+
+    if not pairs:
+        return pd.Series([None] * len(df), index=df.index, dtype="object")
+
+    estimates = {est_col: pd.to_numeric(df[est_col], errors="coerce") for est_col, _ in pairs}
+    moes = {moe_col: pd.to_numeric(df[moe_col], errors="coerce") for _, moe_col in pairs}
+
+    def combine(i) -> float | None:
+        zero_moes = []
+        sum_of_squares = 0.0
+        any_moe = False
+
+        for est_col, moe_col in pairs:
+            moe_val = moes[moe_col].iat[i]
+            if pd.isna(moe_val):
+                continue
+            any_moe = True
+
+            est_val = estimates[est_col].iat[i]
+            if est_val == 0:
+                zero_moes.append(moe_val)
+            else:
+                sum_of_squares += moe_val**2
+
+        if not any_moe:
+            return None
+        if zero_moes:
+            sum_of_squares += max(zero_moes) ** 2
+        return sum_of_squares**0.5
+
+    return pd.Series([combine(i) for i in range(len(df))], index=df.index)
+
+
+# Adds "Total Housing Built Before 1990" and "Total Housing Built Before 1970" columns,
+# and carries through the raw total-housing-units column so it can be used as a
+# percentage denominator
 def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
     total_col = _total_universe_col(df)
     if total_col is not None:
         _carry_with_moe(cleaned_df, df, total_col)
-    cols_to_sum = _estimate_total_cols(df)
-    cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = df[cols_to_sum].sum(axis=1)
+
+    cols_before_1970, cols_before_1990 = [], []
+    for col in _estimate_total_cols(df):
+        col_alias = col[1]
+
+        if (
+            "1960 to 1969" in col_alias
+            or "1950 to 1959" in col_alias
+            or "1940 to 1949" in col_alias
+            or "1939 or earlier" in col_alias
+        ):
+            cols_before_1970.append(col)
+            cols_before_1990.append(col)
+        elif "1970 to 1979" in col_alias or "1980 to 1989" in col_alias:
+            cols_before_1990.append(col)
+
+    cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = _sum_estimates(df, cols_before_1990)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1990")] = _sum_moe(df, cols_before_1990)
+    cleaned_df[("CALCULATED", "Total Housing Built Before 1970")] = _sum_estimates(df, cols_before_1970)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1970")] = _sum_moe(df, cols_before_1970)
+
+    return cleaned_df
+
+
+# Adds a "Total Overcrowded Housing Units" column (owner + renter households above
+# 1.0 occupants per room), and carries through the raw total-occupied-units column
+# so it can be used as a percentage denominator
+def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        _carry_with_moe(cleaned_df, df, total_col)
+
+    overcrowded_cols = []
+    for col in _estimate_total_cols(df):
+        col_alias = col[1]
+
+        if (
+            "1.01 to 1.50 occupants per room" in col_alias
+            or "1.51 to 2.00 occupants per room" in col_alias
+            or "2.01 or more occupants per room" in col_alias
+        ):
+            overcrowded_cols.append(col)
+
+    cleaned_df[("CALCULATED", "Total Overcrowded Housing Units")] = _sum_estimates(df, overcrowded_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Overcrowded Housing Units")] = _sum_moe(df, overcrowded_cols)
+
+    return cleaned_df
+
+
+# Adds a "Total Single-Parent Households With Children" column (male + female
+# householder, no spouse present, with own children under 18), and carries through
+# the raw total-families column so it can be used as a percentage denominator
+def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned_df = df.iloc[:, :2].copy()
+    total_col = _total_universe_col(df)
+    if total_col is not None:
+        _carry_with_moe(cleaned_df, df, total_col)
+
+    single_parent_labels = (
+        "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
+        "Estimate!!Total:!!Other family:!!Female householder, no spouse present:!!With own children of the householder under 18 years:",
+    )
+    single_parent_cols = [col for col in _estimate_total_cols(df) if col[1] in single_parent_labels]
+
+    cleaned_df[("CALCULATED", "Total Single-Parent Households With Children")] = _sum_estimates(df, single_parent_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Single-Parent Households With Children")] = _sum_moe(
+        df, single_parent_cols
+    )
+
     return cleaned_df
 
 
@@ -61,7 +183,8 @@ def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     if total_col is not None:
         _carry_with_moe(cleaned_df, df, total_col)
     cols_to_sum = _estimate_total_cols(df)
-    cleaned_df[("CALCULATED", "No Health Insurance Coverage")] = df[cols_to_sum].sum(axis=1)
+    cleaned_df[("CALCULATED", "No Health Insurance Coverage")] = _sum_estimates(df, cols_to_sum)
+    cleaned_df[("CALCULATED", "Margin of Error!!No Health Insurance Coverage")] = _sum_moe(df, cols_to_sum)
     return cleaned_df
 
 
@@ -69,7 +192,12 @@ def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
 def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = _estimate_total_cols(df)
-    cleaned_df.insert(2, ("CALCULATED", "Total Limited English Speaking Households"), df[cols_to_sum].sum(axis=1))
+    cleaned_df.insert(2, ("CALCULATED", "Total Limited English Speaking Households"), _sum_estimates(df, cols_to_sum))
+    cleaned_df.insert(
+        3,
+        ("CALCULATED", "Margin of Error!!Total Limited English Speaking Households"),
+        _sum_moe(df, cols_to_sum),
+    )
     return cleaned_df
 
 
@@ -77,7 +205,8 @@ def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
 def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = _estimate_total_cols(df)
-    cleaned_df.insert(2, ("CALCULATED", 'Total "Living alone"'), df[cols_to_sum].sum(axis=1))
+    cleaned_df.insert(2, ("CALCULATED", 'Total "Living alone"'), _sum_estimates(df, cols_to_sum))
+    cleaned_df.insert(3, ("CALCULATED", 'Margin of Error!!Total "Living alone"'), _sum_moe(df, cols_to_sum))
     return cleaned_df
 
 
@@ -103,9 +232,12 @@ def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
         elif "1.50 to 1.84" in col_alias or "1.85 to 1.99" in col_alias:
             under_2_cols.append(col)
 
-    cleaned_df[("CALCULATED", "Total Under 100% FPL")] = df[under_1_cols].sum(axis=1)
-    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = df[under_1_5_cols].sum(axis=1)
-    cleaned_df[("CALCULATED", "Total Under 200% FPL")] = df[under_2_cols].sum(axis=1)
+    cleaned_df[("CALCULATED", "Total Under 100% FPL")] = _sum_estimates(df, under_1_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 100% FPL")] = _sum_moe(df, under_1_cols)
+    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = _sum_estimates(df, under_1_5_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
+    cleaned_df[("CALCULATED", "Total Under 200% FPL")] = _sum_estimates(df, under_2_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 200% FPL")] = _sum_moe(df, under_2_cols)
 
     return cleaned_df
 
@@ -134,12 +266,12 @@ def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
 
     return under_5_cols, under_18_cols, over_65_cols
 
-
 """
-Splits the persons-under-5/65 dataset into three outputs: overall gender
-totals, and male/female age-bucket totals (under 5, under 18, over 65).
-Returns a dict of {output_name: dataframe} since one dataset produces three
-separate CSVs.
+Splits the persons-under-5/65 dataset into outputs: overall gender totals,
+combined (male + female) age-bucket totals (under 5, under 18, over 65), and
+the original male-only/female-only age-bucket totals (kept for reference,
+no longer exposed as SVI indicators). Returns a dict of {output_name:
+dataframe} since one dataset produces multiple separate CSVs.
 """
 def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     total_col = _total_universe_col(df)
@@ -151,27 +283,55 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     _carry_with_moe(genders_df, df, ("B01001_026E", "Estimate!!Total:!!Female:"))
 
     males_under_5, males_under_18, males_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Male:!!")
+    females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
+
+    # Combined (male + female) age-bucket totals — the consolidated SVI indicators.
+    total_df = df.iloc[:, :2].copy()
+    if total_col is not None:
+        _carry_with_moe(total_df, df, total_col)
+    under_5_cols = males_under_5 + females_under_5
+    under_18_cols = males_under_18 + females_under_18
+    over_65_cols = males_over_65 + females_over_65
+    total_df[("CALCULATED", "Total Under 5")] = _sum_estimates(df, under_5_cols)
+    total_df[("CALCULATED", "Margin of Error!!Total Under 5")] = _sum_moe(df, under_5_cols)
+    total_df[("CALCULATED", "Total Under 18")] = _sum_estimates(df, under_18_cols)
+    total_df[("CALCULATED", "Margin of Error!!Total Under 18")] = _sum_moe(df, under_18_cols)
+    total_df[("CALCULATED", "Total Over 65")] = _sum_estimates(df, over_65_cols)
+    total_df[("CALCULATED", "Margin of Error!!Total Over 65")] = _sum_moe(df, over_65_cols)
+
+    # Segregated male/female age-bucket totals — kept for reference, no longer
+    # exposed as SVI indicators (see sviCategories.ts).
     males_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(males_df, df, total_col)
-    males_df[("CALCULATED", "Males Under 5")] = df[males_under_5].sum(axis=1)
-    males_df[("CALCULATED", "Males Under 18")] = df[males_under_18].sum(axis=1)
-    males_df[("CALCULATED", "Males Over 65")] = df[males_over_65].sum(axis=1)
+    males_df[("CALCULATED", "Males Under 5")] = _sum_estimates(df, males_under_5)
+    males_df[("CALCULATED", "Margin of Error!!Males Under 5")] = _sum_moe(df, males_under_5)
+    males_df[("CALCULATED", "Males Under 18")] = _sum_estimates(df, males_under_18)
+    males_df[("CALCULATED", "Margin of Error!!Males Under 18")] = _sum_moe(df, males_under_18)
+    males_df[("CALCULATED", "Males Over 65")] = _sum_estimates(df, males_over_65)
+    males_df[("CALCULATED", "Margin of Error!!Males Over 65")] = _sum_moe(df, males_over_65)
 
-    females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
     females_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(females_df, df, total_col)
-    females_df[("CALCULATED", "Females Under 5")] = df[females_under_5].sum(axis=1)
-    females_df[("CALCULATED", "Females Under 18")] = df[females_under_18].sum(axis=1)
-    females_df[("CALCULATED", "Females Over 65")] = df[females_over_65].sum(axis=1)
+    females_df[("CALCULATED", "Females Under 5")] = _sum_estimates(df, females_under_5)
+    females_df[("CALCULATED", "Margin of Error!!Females Under 5")] = _sum_moe(df, females_under_5)
+    females_df[("CALCULATED", "Females Under 18")] = _sum_estimates(df, females_under_18)
+    females_df[("CALCULATED", "Margin of Error!!Females Under 18")] = _sum_moe(df, females_under_18)
+    females_df[("CALCULATED", "Females Over 65")] = _sum_estimates(df, females_over_65)
+    females_df[("CALCULATED", "Margin of Error!!Females Over 65")] = _sum_moe(df, females_over_65)
 
-    return {"genders": genders_df, "males": males_df, "females": females_df}
+    return {
+        "genders": genders_df,
+        "person_under_5_65_total": total_df,
+        "person_under_5_65_males": males_df,
+        "person_under_5_65_females": females_df,
+    }
 
 
 """
-Adds Under 5 / Under 18 / Over 65 population totals for Hawaiian Homelands,
-then appends the trailing poverty-status columns (kept as-is from source).
+Adds Under 5 / Under 18 / Over 65 population totals for Hawaiian Homelands, plus an
+Under 150% FPL total so the poverty bands nest like income_share_of_fpl's do.
 """
 def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
@@ -195,37 +355,59 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
             elif "65 to 74" in col_alias or "75" in col_alias:
                 over_65_cols.append(col)
 
-    cleaned_df[("CALCULATED", "Total Population Under 5")] = df[under_5_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
-    cleaned_df[("CALCULATED", "Total Population Under 18")] = df[under_18_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
-    cleaned_df[("CALCULATED", "Total Population Over 65")] = df[over_65_cols].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+    cleaned_df[("CALCULATED", "Total Population Under 5")] = _sum_estimates(df, under_5_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 5")] = _sum_moe(df, under_5_cols)
+    cleaned_df[("CALCULATED", "Total Population Under 18")] = _sum_estimates(df, under_18_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 18")] = _sum_moe(df, under_18_cols)
+    cleaned_df[("CALCULATED", "Total Population Over 65")] = _sum_estimates(df, over_65_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Over 65")] = _sum_moe(df, over_65_cols)
 
-    cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:-4].copy()], axis=1)
+    # Both bands are already percentages of the same poverty universe, so they add directly
+    under_1_5_cols = [
+        col
+        for col in df.columns
+        if len(col) == 2
+        and col[1].startswith("Estimate!!Total!!POVERTY STATUS")
+        and ("Below 100 percent" in col[1] or "100 to 149 percent" in col[1])
+    ]
+
+    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = _sum_estimates(df, under_1_5_cols)
+    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
+
+    cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:].copy()], axis=1)
 
     return cleaned_df
 
 
-# The Hawaiian Homelands source also carries poverty-status columns that belong on the FPL dataset
-def merge_hawaiian_homelands_poverty(fpl_df: pd.DataFrame, hawaiian_homelands_raw_df: pd.DataFrame) -> pd.DataFrame:
-    return pd.concat([fpl_df, hawaiian_homelands_raw_df.iloc[:, -4:].copy()], axis=1)
-
-
 # aggregate_vehicles' own raw table has no household-count column (it only has the vehicle
 # sums, split by owner/renter occupied) — borrow tenure's total occupied housing units,
-# since that's the same owner/renter-occupied universe this dataset is split by
+# since that's the same owner/renter-occupied universe this dataset is split by.
+# Matched by geography ID, not row order.
 def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
-    total_col = _total_universe_col(tenure_raw_df)
+    tenure_df = _rows_matching_geoids(vehicles_df, tenure_raw_df)
+    total_col = _total_universe_col(tenure_df)
     merged = vehicles_df.copy()
     if total_col is not None:
-        _carry_with_moe(merged, tenure_raw_df, total_col)
+        _carry_with_moe(merged, tenure_df, total_col)
     return merged
 
 
+# One line per dataset alias: the recipe to run (None = write the raw cleaned table as is) and any other datasets' raw tables it needs.
+# A recipe returns one table, or a dict of {output file name: table} when one dataset makes several files.
 RECIPES = {
-    "age_of_structure": recipe_age_of_structure,
-    "health_insurance_coverage_by_age": recipe_health_insurance,
-    "limited_english_speaking_households": recipe_limited_english_speaking,
-    "living_arragements_including_living_alone_by_sex_and_relationship": recipe_living_arrangements,
-    "income_share_of_fpl": recipe_income_share_of_fpl,
-    "persons_under_5_65_years_table": recipe_person_under_5_65,
-    "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
+    "age_of_structure": (recipe_age_of_structure, []),
+    "aggregate_vehicles": (merge_tenure_households, ["tenure"]),
+    "health_insurance": (recipe_health_insurance, []),
+    "households_w_computer": (None, []),
+    "internet_subscription": (None, []),
+    "limited_english_speaking": (recipe_limited_english_speaking, []),
+    "living_arrangements": (recipe_living_arrangements, []),
+    "income_share_of_fpl": (recipe_income_share_of_fpl, []),
+    "person_under_5_65": (recipe_person_under_5_65, []),
+    "population_group_quarters": (None, []),
+    "race_origin": (None, []),
+    "tenure": (None, []),
+    "tenure_by_occupants_per_room": (recipe_tenure_by_occupants_per_room, []),
+    "family_type_by_children": (recipe_family_type_by_children, []),
+    "2022_census_hawaiian_homelands": (recipe_hawaiian_homelands, []),
 }

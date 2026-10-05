@@ -11,7 +11,7 @@ import {
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
 import { MapLegend, RasterMapLegend, HcdpMapLegend, LegendContainer } from "../MapLegend";
-import { MAP_CONFIG } from "../../config";
+import { MAP_CONFIG, sviLabel } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
@@ -29,6 +29,7 @@ import {
   useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
+import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { RasterLayerRenderer } from "../RasterLayers";
 import { HCDPRasterLayer } from "../HCDP";
@@ -158,6 +159,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const effectiveDataset2 = config?.dataset2 ?? effectiveDataset;
     const effectiveMetric = config?.metric;
     const effectiveMetric2 = config?.metric2;
+    const metricLabel = effectiveMetric ? sviLabel(effectiveDataset, effectiveMetric) : undefined;
+    const metricLabel2 = effectiveMetric2
+      ? sviLabel(effectiveDataset2, effectiveMetric2)
+      : undefined;
 
     // Register this map's snapshot function
     useEffect(() => {
@@ -246,14 +251,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         void fetchMetricValues(effectiveDataset2, effectiveMetric2);
     }, [effectiveDataset, effectiveDataset2, effectiveMetric, effectiveMetric2, fetchMetricValues]);
 
-    const {
-      allMetricValues,
-      getMetricValue,
-      getMetricMoE,
-      allMetricValues2,
-      getMetricValue2,
-      getMetricMoE2,
-    } = useMetricLookups(cachedMetric1, cachedMetric2, effectiveMetric, effectiveMetric2);
+    const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
+      cachedMetric1,
+      cachedMetric2,
+      effectiveMetric,
+      effectiveMetric2,
+    );
 
     const activeColorScheme = config?.colorScheme || "Viridis";
     const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
@@ -312,6 +315,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [filterResults],
     );
 
+    // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
+    const filterHomelands = useFilterStore((s) => s.homelands);
+    useEffect(() => {
+      if (isPrimary && filterResults && filterHomelands !== shouldShowHawaiianHomelands) {
+        useFilterStore.getState().clearFilter();
+      }
+    }, [isPrimary, filterResults, filterHomelands, shouldShowHawaiianHomelands]);
+
     const shouldRenderCensus =
       effectiveDataset &&
       effectiveMetric &&
@@ -350,9 +361,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               {effectiveDataset && effectiveMetric ? (
                 <>
                   <span className={styles["dataset-name"]}>
-                    {effectiveDataset.replace(/_/g, " ").toUpperCase()}
+                    {activeDatasetObject?.metricLabel || effectiveDataset.replace(/_/g, " ")}
                   </span>
-                  <span className={styles["metric-name"]}>{effectiveMetric}</span>
+                  <span className={styles["metric-name"]}>
+                    {sviLabel(effectiveDataset, effectiveMetric)}
+                  </span>
                 </>
               ) : (
                 <span className={styles["empty-state"]}>Select dataset and metric</span>
@@ -409,13 +422,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <CensusPolygonLayer
                 data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
                 geographiesData={geographiesData}
-                getMetricValue={getMetricValue}
-                getMetricMoE={getMetricMoE ?? undefined}
-                getMetricValue2={getMetricValue2 ?? undefined}
-                getMetricMoE2={getMetricMoE2 ?? undefined}
+                metric1={metric1}
+                metric2={metric2}
                 mapId={config.id}
-                activeMetric={effectiveMetric}
-                activeMetric2={effectiveMetric2 ?? undefined}
+                activeMetric={sviLabel(effectiveDataset, effectiveMetric)}
+                activeMetric2={metricLabel2}
                 activeFeatureGeoid={config.activeFeature?.geoid}
                 layerOpacity={mapOpacities.census}
                 filterRange={filterRange}
@@ -429,16 +440,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <HawaiianHomelandsPolygonLayer
                 data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
                 geographiesData={geographiesData}
-                getMetricValue={getMetricValue}
-                getMetricMoE={getMetricMoE ?? undefined}
-                getMetricValue2={getMetricValue2 ?? undefined}
-                getMetricMoE2={getMetricMoE2 ?? undefined}
+                metric1={metric1}
+                metric2={metric2}
                 mapId={config.id}
-                activeMetric={effectiveMetric}
-                activeMetric2={effectiveMetric2 ?? undefined}
+                activeMetric={sviLabel(effectiveDataset, effectiveMetric)}
+                activeMetric2={metricLabel2}
                 activeFeatureGeoid={config.activeFeature?.geoid}
-                layerOpacity={mapOpacities.hawaiianHomelands}
+                layerOpacity={filteredGeoids != null ? undefined : mapOpacities.hawaiianHomelands}
                 getColor={getColor}
+                filteredGeoids={filteredGeoids}
                 onFeatureClick={handleFeatureClick}
               />
             )}
@@ -511,8 +521,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               limits={colorScale?.limits ?? null}
               colors={colorScale?.getLegendColors() ?? null}
               bivariate={bivariateColorScale ?? undefined}
-              metric1Label={effectiveMetric ?? undefined}
-              metric2Label={effectiveMetric2 ?? undefined}
+              metric1Label={metricLabel}
+              metric2Label={metricLabel2}
             />
           </LegendContainer>
         </div>

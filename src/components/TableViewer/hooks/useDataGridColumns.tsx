@@ -71,9 +71,8 @@ export const useDataGridColumns = (tableData: ParsedCSVData | null): DataGridCol
                 if (value === null || value === undefined || value === "—") return "—";
                 const num = parseFloat(String(value).replace(/[,$%]/g, ""));
                 if (isNaN(num)) return String(value);
-                // Locale formatting rounds decimals inconsistently with stored precision.
-                // Use toLocaleString for integers (comma formatting), fixed decimals otherwise.
-                return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(4);
+                // Counts get comma separators; decimals match the one place the backend stores.
+                return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(1);
               }
             : undefined,
         // Override quick filter to use substring matching for all columns.
@@ -94,7 +93,7 @@ export const useDataGridColumns = (tableData: ParsedCSVData | null): DataGridCol
       row.forEach((cell: string, cellIndex: number) => {
         if (columnTypes[cellIndex] === "number" && cell && !PLACEHOLDER_VALUES.has(cell.trim())) {
           const num = parseFloat(cell.replace(/[,$%]/g, ""));
-          const rounded = Number.isInteger(num) ? num : Math.round(num * 1e4) / 1e4;
+          const rounded = Number.isInteger(num) ? num : Math.round(num * 10) / 10;
           rowObj[`col_${cellIndex}`] = isNaN(num) ? cell || "—" : rounded;
         } else {
           rowObj[`col_${cellIndex}`] = cell || "—";

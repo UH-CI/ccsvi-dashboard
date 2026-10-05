@@ -3,7 +3,7 @@ export interface SviIndicator {
   metric: string;
   label: string;
   description?: string; //description for UI
-  mvColumn?: string; // present only when indicator has a cross-data filter
+  mvColumn?: string; //column name if applicable
 }
 
 export interface SviCategory {
@@ -84,6 +84,17 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Hawaiian homelands - below 150% federal poverty line",
       },
       {
+        dataset: "2022_census_hawaiian_homelands",
+        metric:
+          "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level",
+        label: "Hawaiian homelands - below 100% federal poverty line",
+      },
+      {
+        dataset: "2022_census_hawaiian_homelands",
+        metric: "Total Under 150% FPL (calc.)",
+        label: "Hawaiian homelands - below 150% federal poverty line",
+      },
+      {
         dataset: "health_insurance",
         metric: "No Health Insurance Coverage (calc.)",
         label: "Without health insurance",
@@ -97,6 +108,40 @@ export const SVI_CATEGORIES: SviCategory[] = [
     label: "Population and household structure",
     description: "Population age distribution and household composition relevant to climate preparedness, evacuation needs, and caregiving capacity.",
     indicators: [
+      // Age-range indicators are consolidated below (male + female combined).
+      // The segregated male/female data still exists in the database
+      // (datasets person_under_5_65_males / person_under_5_65_females) and
+      // these entries work if uncommented — just no longer shown in the menu.
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Under 5 (calc.)",
+      //   label: "Aged 5 years and under (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Under 5 (calc.)",
+      //   label: "Aged 5 years and under (female)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Under 18 (calc.)",
+      //   label: "Aged 17 years and under (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Under 18 (calc.)",
+      //   label: "Aged 17 years and under (female)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_males",
+      //   metric: "Males Over 65 (calc.)",
+      //   label: "Aged 65 years and older (male)",
+      // },
+      // {
+      //   dataset: "person_under_5_65_females",
+      //   metric: "Females Over 65 (calc.)",
+      //   label: "Aged 65 years and older (female)",
+      // },
       {
         dataset: "person_under_5_65_total",
         metric: "Total Under 5 (calc.)",
@@ -241,10 +286,16 @@ export const SVI_CATEGORIES: SviCategory[] = [
       },
       {
         dataset: "aggregate_vehicles",
-        metric: "Estimate Aggregate number of vehicles available",
+        metric: "Aggregate number of vehicles available",
         label: "Households without a vehicle",
         description: "Estimate of households lacking access to a vehicle. Vehicle access influences evacuation options and mobility during emergencies.",
       },
     ],
   },
 ];
+
+// The SVI menu's name for a metric, or the raw metric name if the menu doesn't list it
+export const sviLabel = (dataset: string | undefined, metric: string): string =>
+  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
+    (i) => i.dataset === dataset && i.metric === metric,
+  )?.label ?? metric;

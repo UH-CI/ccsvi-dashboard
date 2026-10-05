@@ -78,7 +78,10 @@ export function computeColorScale(
   if (values.length === 0) return null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const limits = chroma.limits(values, mode as any, numClasses);
+  const rawLimits = chroma.limits(values, mode as any, numClasses);
+  // Skewed data (e.g. mostly zeros) can produce repeated quantile cut
+  // points; collapse those so the legend doesn't show empty bins.
+  const limits = rawLimits.filter((limit, i) => i === 0 || limit !== rawLimits[i - 1]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const scale = chroma.scale(scaleName as any).classes(limits);
 

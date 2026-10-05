@@ -4,22 +4,21 @@ import { HawaiianHomelandProperties, GeographiesData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
 import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
+import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import { POLYGON_LAYERS } from "../../../config";
 
 interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
   geographiesData: GeographiesData | null;
-  getMetricValue: (geoid: string) => number | null;
-  getMetricMoE?: (geoid: string) => number | null;
-  getMetricValue2?: (geoid: string) => number | null;
-  getMetricMoE2?: (geoid: string) => number | null;
+  metric1: MetricLookup;
+  metric2?: MetricLookup | null;
   mapId: string;
-  // activeDataset: string;
   activeMetric: string;
   activeMetric2?: string | null;
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   getColor: (value: number | null, value2?: number | null) => string;
+  filteredGeoids?: Set<string> | null;
   onFeatureClick?: (
     feature: Feature<Geometry, HawaiianHomelandProperties>,
     e: LeafletMouseEvent,
@@ -31,17 +30,15 @@ const LAYER_CONFIG = POLYGON_LAYERS.hawaiianHomelands;
 export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLayerProps> = ({
   data,
   geographiesData,
-  getMetricValue,
-  getMetricMoE,
-  getMetricValue2,
-  getMetricMoE2,
+  metric1,
+  metric2,
   mapId,
-  // activeDataset,
   activeMetric,
   activeMetric2,
   activeFeatureGeoid,
   layerOpacity,
   getColor,
+  filteredGeoids,
   onFeatureClick,
 }) => {
   const getStyle = useCallback(
@@ -58,16 +55,27 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       }
 
       const geoidStr = String(geoid);
-      const metricValue = getMetricValue(geoidStr);
-      const metricValue2 = getMetricValue2?.(geoidStr) ?? undefined;
+      const metricValue = metric1.getData(geoidStr).value;
+      const metricValue2 = metric2?.getData(geoidStr).value ?? undefined;
       const fillColor = getColor(metricValue, metricValue2);
+
+      if (filteredGeoids != null) {
+        if (filteredGeoids.has(geoidStr)) {
+          return {
+            ...LAYER_CONFIG.styles.default,
+            fillColor,
+            ...LAYER_CONFIG.styles.filterMatch,
+          } as StyleConfig;
+        }
+        return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
+      }
 
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
       };
     },
-    [getMetricValue, getMetricValue2, getColor],
+    [metric1, metric2, getColor, filteredGeoids],
   );
 
   const getHighlightStyle = useCallback(
@@ -75,12 +83,19 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       feature: Feature<Geometry, HawaiianHomelandProperties>,
       baseStyle: StyleConfig | undefined,
     ): StyleConfig => {
-      return {
+      const base = {
         ...LAYER_CONFIG.styles.highlight,
         fillColor: baseStyle?.fillColor || LAYER_CONFIG.styles.default.fillColor,
       };
+      const geoid = String(
+        feature.properties?.[LAYER_CONFIG.geoidProperty as keyof HawaiianHomelandProperties] ?? "",
+      );
+      if (filteredGeoids?.has(geoid)) {
+        return { ...base, color: LAYER_CONFIG.styles.filterMatch.color as string };
+      }
+      return base;
     },
-    [],
+    [filteredGeoids],
   );
 
   const handleFeatureClick = useCallback(
@@ -94,20 +109,18 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
 
   const renderPopup = useMemo(
     () =>
-      renderPolygonPopup(
-        {
+      renderPolygonPopup({
+        config: {
           fields: LAYER_CONFIG.popup.fields,
           geoidProperty: LAYER_CONFIG.geoidProperty,
         },
         activeMetric,
-        getMetricValue,
+        metric1,
         geographiesData,
         activeMetric2,
-        getMetricValue2,
-        getMetricMoE,
-        getMetricMoE2,
-      ),
-    [activeMetric, activeMetric2, getMetricValue, getMetricMoE, getMetricValue2, getMetricMoE2, geographiesData],
+        metric2,
+      }),
+    [activeMetric, activeMetric2, metric1, metric2, geographiesData],
   );
 
   return (

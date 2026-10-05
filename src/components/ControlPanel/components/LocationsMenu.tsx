@@ -23,17 +23,27 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
 }) => {
   const mapConfigs = useMapStore((s) => s.mapConfigs);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
-  const pointLayerConfigs = usePointLayerStore((s) => s.pointLayerConfigs);
-  const hazardLayerConfigs = useHazardLayersStore((s) => s.hazardLayerConfigs);
-  const visiblePointLayerIdsByMap = usePointLayerStore((s) => s.visibleLayerIdsByMap);
-  const visibleHazardLayerIdsByMap = useHazardLayersStore((s) => s.visibleLayerIdsByMap);
-  const togglePointLayerVisibility = usePointLayerStore((s) => s.toggleLayerVisibility);
-  const toggleHazardLayerVisibility = useHazardLayersStore((s) => s.toggleHazardLayerVisibility);
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
+  const pointLayerConfigs = usePointLayerStore((s) => s.pointLayerConfigs);
+  const visiblePointLayerIdsByMap = usePointLayerStore((s) => s.visibleLayerIdsByMap);
+  const togglePointLayerVisibility = usePointLayerStore((s) => s.toggleLayerVisibility);
+
+  const hazardLayerConfigs = useHazardLayersStore((s) => s.hazardLayerConfigs);
+  const visibleHazardLayerIdsByMap = useHazardLayersStore((s) => s.visibleLayerIdsByMap);
+  const toggleHazardLayerVisibility = useHazardLayersStore(
+    (s) => s.toggleHazardLayerVisibility,
+  );
+
+  const visibleMaps = useMemo(() => mapConfigs.filter((config) => config.visible), [mapConfigs]);
+
   const [locationsMapId, setLocationsMapId] = useState<string>("");
-  const resolvedLocationsMapId = useResolvedMapId(locationsMapId, visibleMaps, primaryMapId);
-  
+
+  const resolvedLocationsMapId = useResolvedMapId(
+    locationsMapId,
+    visibleMaps,
+    primaryMapId,
+  );
+
   const hazardMenuSections = useMemo(
     () => buildHazardMenuSections(hazardLayerConfigs, "locations"),
     [hazardLayerConfigs],
@@ -44,6 +54,7 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
       return (
         <div key={section.label}>
           <strong>{section.label}</strong>
+
           <Stack spacing={1} sx={{ ml: 2 }}>
             {section.layers.map((layer) => (
               <LayerToggleItem
@@ -52,8 +63,12 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
                 description={layer.description}
                 icon={layer.icon}
                 color={layer.color}
-                checked={visibleHazardLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false}
-                onToggle={() => toggleHazardLayerVisibility(resolvedLocationsMapId, layer.id)}
+                checked={
+                  visibleHazardLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false
+                }
+                onToggle={() =>
+                  toggleHazardLayerVisibility(resolvedLocationsMapId, layer.id)
+                }
               />
             ))}
           </Stack>
@@ -68,8 +83,12 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
         description={section.layer.description}
         icon={section.layer.icon}
         color={section.layer.color}
-        checked={visibleHazardLayerIdsByMap[resolvedLocationsMapId]?.has(section.layer.id) ?? false}
-        onToggle={() => toggleHazardLayerVisibility(resolvedLocationsMapId, section.layer.id)}
+        checked={
+          visibleHazardLayerIdsByMap[resolvedLocationsMapId]?.has(section.layer.id) ?? false
+        }
+        onToggle={() =>
+          toggleHazardLayerVisibility(resolvedLocationsMapId, section.layer.id)
+        }
       />
     );
   };
@@ -87,10 +106,13 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
         selectedMapId={resolvedLocationsMapId}
         onChange={setLocationsMapId}
       />
+
       {resolvedLocationsMapId && (
         <Stack spacing={1}>
           {pointLayerConfigs
-            .filter((l) => l.id === "sewage" || l.id === "wastewater_plant")
+            .filter(
+              (layer) => layer.id === "sewage" || layer.id === "wastewater_plant",
+            )
             .map((layer) => (
               <LayerToggleItem
                 key={layer.id}
@@ -98,10 +120,15 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
                 description={layer.description}
                 icon={layer.icon}
                 color={layer.color}
-                checked={visiblePointLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false}
-                onToggle={() => togglePointLayerVisibility(resolvedLocationsMapId, layer.id)}
+                checked={
+                  visiblePointLayerIdsByMap[resolvedLocationsMapId]?.has(layer.id) ?? false
+                }
+                onToggle={() =>
+                  togglePointLayerVisibility(resolvedLocationsMapId, layer.id)
+                }
               />
             ))}
+
           {hazardMenuSections.map(renderHazardLayer)}
         </Stack>
       )}

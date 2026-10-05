@@ -7,6 +7,8 @@ interface FilterState {
   county: string | null;
   hazards: string[];
   metricFilters: Partial<Record<string, number>>;
+  // True when the filter searches Hawaiian Homelands instead of block groups
+  homelands: boolean;
   results: BlockGroupResult[] | null;
   filteredGeoids: Set<string> | null;
   isLoading: boolean;
@@ -15,6 +17,7 @@ interface FilterState {
 
 interface FilterActions {
   setCounty: (county: string | null) => void;
+  setHomelands: (homelands: boolean) => void;
   setHazards: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
   applyFilter: () => Promise<void>;
@@ -26,6 +29,7 @@ const initialState: FilterState = {
   county: null,
   hazards: [],
   metricFilters: {},
+  homelands: false,
   results: null,
   filteredGeoids: null,
   isLoading: false,
@@ -42,10 +46,14 @@ const buildParams = (state: FilterState): URLSearchParams => {
   return params;
 };
 
+const filterUrl = (state: FilterState, params: URLSearchParams): string =>
+  `${BASE_URL}/api/v1/${state.homelands ? "hawaiian-homelands" : "block-groups"}?${params}`;
+
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...initialState,
 
   setCounty: (county) => set({ county }),
+  setHomelands: (homelands) => set({ homelands }),
   setHazards: (ids) => set({ hazards: ids }),
 
   setMetricFilter: (col, value) =>
@@ -64,7 +72,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     const params = buildParams(get());
 
     try {
-      const res = await fetch(`${BASE_URL}/api/v1/block-groups?${params}`);
+      const res = await fetch(filterUrl(get(), params));
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as BlockGroupResult[];
       set({ results: data, filteredGeoids: new Set(data.map((r) => r.geoid)), isLoading: false });
@@ -79,7 +87,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
   buildExportUrl: () => {
     const params = buildParams(get());
     params.set("format", "csv");
-    return `${BASE_URL}/api/v1/block-groups?${params}`;
+    return filterUrl(get(), params);
   },
 
   clearFilter: () => set({ ...initialState }),

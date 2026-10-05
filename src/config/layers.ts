@@ -101,6 +101,19 @@ export const POLYGON_LAYERS = {
         opacity: 1,
         fillOpacity: 0.8,
       },
+      disabled: {
+        fillColor: "#aaaaaa",
+        fillOpacity: 0.4,
+        color: "#888888",
+        weight: 0.5,
+        opacity: 0.5,
+      },
+      filterMatch: {
+        color: "#ff6b00",
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.85,
+      },
     },
   } satisfies PolygonLayerConfig,
 

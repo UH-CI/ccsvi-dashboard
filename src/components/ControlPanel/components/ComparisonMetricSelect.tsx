@@ -1,6 +1,7 @@
 import React from "react";
 import { FormControl, InputLabel, Select, MenuItem, ListSubheader } from "@mui/material";
 import { Dataset } from "../../../types";
+import { sviLabel } from "../../../config";
 
 interface ComparisonMetricSelectProps {
   blockGroupData: Dataset | null;
@@ -59,7 +60,7 @@ export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
                   .filter((m) => !(dsId === dataset && m === metric))
                   .map((metricName) => (
                     <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
-                      {metricName}
+                      {sviLabel(dsId, metricName)}
                     </MenuItem>
                   )),
               ]);

@@ -10,6 +10,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { useAppStore } from "../../../stores";
+import { sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { ComparisonSection } from "./ComparisonSection";
@@ -131,6 +132,10 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     );
   }
 
+  const metricTitle = metric2
+    ? `${sviLabel(dataset, metric)} vs ${sviLabel(dataset2, metric2)}`
+    : sviLabel(dataset, metric);
+
   return (
     <Stack spacing={2}>
       <Box>
@@ -141,13 +146,8 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
         >
           Metric
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{ fontWeight: 500, mt: 0.25 }}
-          noWrap
-          title={metric2 ? `${metric} vs ${metric2}` : metric}
-        >
-          {metric2 ? `${metric} vs ${metric2}` : metric}
+        <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metricTitle}>
+          {metricTitle}
         </Typography>
       </Box>
 

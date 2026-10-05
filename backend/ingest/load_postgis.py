@@ -89,6 +89,8 @@ HAZARD_LAYERS = [
     ("Fire_zone_4.geojson",                         "fire_zone",               "Zone_4",        None),
     ("Fire_zone_5.geojson",                         "fire_zone",               "Zone_5",        None),
     ("Fire_zone_6.geojson",                         "fire_zone",               "Zone_6",        None),
+    ("Prev_contaminated_land_landfills.geojson",    "pcl_landfill",            None,            None),
+    ("Prev_contaminated_land_filtered.geojson",     "pcl_filtered",            None,            None),
 ]
 
 BATCH_SIZE = 500

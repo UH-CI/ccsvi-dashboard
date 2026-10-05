@@ -1,4 +1,4 @@
-import { DatasetCatalog } from "../types";
+import { DatasetCatalog, MetricValue } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -18,7 +18,7 @@ export const getDatasetTable = (dataset: string) =>
   get<Record<string, string | number | null>[]>(`/api/v1/datasets/${dataset}/table`);
 
 export const getMetricValues = (dataset: string, metric: string) =>
-  get<Record<string, { absolute: number | null; margin_of_error: number | null; percentage: number | null }>>(
+  get<Record<string, MetricValue>>(
     `/api/v1/metric-values?dataset=${encodeURIComponent(dataset)}&metric=${encodeURIComponent(metric)}`,
   );
 
