@@ -223,6 +223,8 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               label="Raster Layers"
               icon="FaMountain"
               color="#6D4C41"
+              //move raster layer header without affecting child layers
+              className={styles["layer-toggle--raster"]}
               expanded={expandedHazards["raster-group"] ?? false}
               onToggleExpand={() => toggleExpand("raster-group")}
               childrenPl={2}

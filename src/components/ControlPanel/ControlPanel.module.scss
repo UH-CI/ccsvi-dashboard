@@ -293,6 +293,10 @@
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
+  //raster specific spacing rule
+  &--raster > div > .layer-label {
+    margin-left: 37px;
+  }
 }
 
 .layer-toggle > div {

@@ -14,6 +14,7 @@ interface LayerToggleGroupProps {
   color?: string;
   fallbackIcon?: keyof typeof FaIcons;
   childrenPl?: number;
+  className?: string;
   children: React.ReactNode;
 }
 
@@ -27,11 +28,13 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
   color,
   fallbackIcon = "FaCircle",
   childrenPl = 3,
+  className,
   children,
 }) => {
   const IconComponent = (icon && FaIcons[icon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
   return (
-    <Box className={styles["layer-toggle"]}>
+    //combine base class w/ optional className
+    <Box className={[styles["layer-toggle"], className].filter(Boolean).join(" ")}>
       <Box display="flex" alignItems="center">
         {selectAll && (
           <Checkbox
