@@ -253,7 +253,7 @@ def load_hazards(cur) -> int:
         _batch_insert(
             cur,
             "INSERT INTO hazards (hazard_id, sub_id, height_ft, zone, props, geom) "
-            "VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s))",
+            "VALUES (%s, %s, %s, %s, %s, ST_MakeValid(ST_GeomFromGeoJSON(%s)))",
             rows,
         )
         total += len(rows)
