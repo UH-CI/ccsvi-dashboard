@@ -1,19 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  IconButton,
+  MenuList,
   Box,
-  Button,
-  Menu,
-  Divider,
-  ListSubheader,
+  Tooltip,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Close, Palette, Edit, Gradient, ExpandMore } from "@mui/icons-material";
-//"Controls" submenu for each map
+import {
+  Visibility,
+  VisibilityOff,
+  Close,
+  Palette,
+  Edit,
+  Gradient,
+  ExpandMore,
+  Map,
+} from "@mui/icons-material";
+// Management actions for each map
 import {
   useAppStore,
   useMapStore,
@@ -25,6 +31,7 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
+import { BaseMapMenu } from "./components/BaseMapMenu";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -52,15 +59,18 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
 
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
+  const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
-  const [isRenamingPreview, setIsRenamingPreview] = useState(false);
-  const [controlsMenuAnchor, setControlsMenuAnchor] = useState<HTMLElement | null>(null);
+  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
+  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
-  const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   // Focus input
-  React.useEffect(() => {
+  useEffect(() => {
     if (isEditingTitle) {
       // Defer focusing to the next macrotask to ensure the input is mounted and visible
       // (closing menus can affect focus timing)
@@ -74,7 +84,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
     }
   }, [isEditingTitle]);
 
-
   const datasetList = useMemo(() => {
     if (!dataset) return [];
     return Object.entries(dataset).map(([key, cfg]) => ({
@@ -83,161 +92,180 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
       hawaiianHomelands: cfg.hawaiianHomelands || false,
     }));
   }, [dataset]);
+  const activeRasterLeafId = useMemo(() => {
+    const visible = visibleRasterIdsByMap[mapId];
+    if (!visible || visible.size === 0) return null;
+    for (const id of visible) {
+      if (id.includes(".")) return id;
+    }
+    return [...visible][0] ?? null;
+  }, [visibleRasterIdsByMap, mapId]);
+
+  const activeRasterColormap = useMemo(() => {
+    if (!activeRasterLeafId) return null;
+    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
+    if (override) return override;
+    const [parentId, subId] = activeRasterLeafId.split(".");
+    if (!subId) {
+      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
+    }
+    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
+    return (
+      parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null
+    );
+  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
+
+  const activeBaseMapId = config?.baseMap ?? "openstreet";
 
   if (!config) return null;
 
   return (
     <Box className={styles["single-map-controls"]}>
       {section !== "dataset" && (
-        <Box className={styles["single-map-actions"]}>
-          {isEditingTitle ? (
-            <input
-              ref={titleInputRef}
-              className={styles["map-tab-input"]}
-              value={titleEditValue}
-              onChange={(e) => setTitleEditValue(e.target.value)}
-              onBlur={() => {
-                updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
-                setIsEditingTitle(false);
-                setIsRenamingPreview(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
+        <>
+          <Box className={styles["single-map-actions"]}>
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                className={styles["map-tab-input"]}
+                value={titleEditValue}
+                onChange={(e) => setTitleEditValue(e.target.value)}
+                onBlur={() => {
                   updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
                   setIsEditingTitle(false);
-                  setIsRenamingPreview(false);
-                }
-                if (e.key === "Escape") {
-                  setIsEditingTitle(false);
-                  setIsRenamingPreview(false);
-                }
-              }}
-            />
-          ) : isRenamingPreview ? (
-            // Preview state: styled title with trailing underscore to hint editability
-            <Typography
-              variant="body2"
-              className={styles["single-map-title"]}
-              onClick={() => {
-                // Switch to real edit input when user clicks the previewed title
-                setIsEditingTitle(true);
-                setIsRenamingPreview(false);
-                setTitleEditValue(config.title);
-              }}
-              style={{ fontWeight: 700, cursor: "text" }}
-            >
-              {config.title}
-              <span style={{ opacity: 0.8 }}>{" _"}</span>
-            </Typography>
-          ) : (
-            <Typography variant="body2" className={styles["single-map-title"]}>
-              {config.title}
-            </Typography>
-          )}
-          {/* Prominent Controls button — opens a labeled submenu replacing small icon buttons */}
-          {/* Keep a visible Palette icon for quick access to color schemes (matches original UX) */}
-          <Button
-            size="small"
-            onClick={(e) => setControlsMenuAnchor(e.currentTarget)}
-            endIcon={<ExpandMore fontSize="small" />}
-            className={styles["single-map-controls-btn"]}
-          >
-            Controls
-          </Button>
-          
-          {/* Controls Menu — central dropdown grouping map-specific actions (visibility, rename, color, raster colormap, remove) */}
-          <Menu
-            anchorEl={controlsMenuAnchor}
-            open={Boolean(controlsMenuAnchor)}
-            onClose={() => {
-              // Only close if no submenu is open
-              if (!colorSchemeAnchor && !rasterColorSchemeAnchor) {
-                setControlsMenuAnchor(null);
-              }
-            }}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-          >
-            {/* Visibility Control */}
-            <MenuItem
-              onClick={() => {
-                toggleMapVisibility(config.id);
-                setControlsMenuAnchor(null);
-              }}
-            >
-              {config.visible ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                {config.visible ? "Hide Map" : "Show Map"}
-              </Typography>
-            </MenuItem>
-
-            {/* Rename Control */}
-            <MenuItem
-              onClick={() => {
-                // close Controls menu so the inline input is visible and delay focus slightly.
-                setIsEditingTitle(true);
-                setIsRenamingPreview(false);
-                setTitleEditValue(config.title);
-                setControlsMenuAnchor(null);
-              }}
-            >
-              <Edit fontSize="small" />
-              <Typography variant="body2" sx={{ ml: 1 }}>
-                Rename Map
-              </Typography>
-            </MenuItem>
-
-            <Divider />
-
-            {/* Color Scheme Control - always present but disabled until a dataset+metric is selected */}
-            <MenuItem
-              disabled={!(config.visible && config.dataset && config.metric)}
-              onClick={(e) => {
-                if (config.visible && config.dataset && config.metric) setColorSchemeAnchor(e.currentTarget);
-              }}
-              sx={{ display: "flex", justifyContent: "space-between" }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Palette fontSize="small" />
-                <Typography variant="body2" sx={{ ml: 1 }}>
-                  Color Scheme
-                </Typography>
-              </Box>
-              <ExpandMore fontSize="small" />
-            </MenuItem>
-
-
-            <Divider />
-
-            {/* Remove Control */}
-            {canRemoveMap && (
-              <MenuItem
-                onClick={() => {
-                  onRemove(config.id);
-                  setControlsMenuAnchor(null);
                 }}
-                sx={{ color: "error.main" }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                    setIsEditingTitle(false);
+                  }
+                  if (e.key === "Escape") {
+                    setIsEditingTitle(false);
+                  }
+                }}
+              />
+            ) : (
+              <Typography variant="body2" className={styles["single-map-title"]}>
+                {config.title}
+              </Typography>
+            )}
+            {/* Color Scheme Submenu */}
+            <ColorSchemeMenu
+              anchorEl={colorSchemeAnchor}
+              open={Boolean(colorSchemeAnchor)}
+              onClose={() => setColorSchemeAnchor(null)}
+              config={config}
+              dataset={dataset}
+              mapOpacities={mapOpacities}
+              updateMapConfig={updateMapConfig}
+              setLayerOpacity={setLayerOpacity}
+            />
+            {activeRasterLeafId && (
+              <RasterColormapMenu
+                anchorEl={rasterColorSchemeAnchor}
+                open={Boolean(rasterColorSchemeAnchor)}
+                onClose={() => setRasterColorSchemeAnchor(null)}
+                mapId={mapId}
+                activeRasterLeafId={activeRasterLeafId}
+                activeRasterColormap={activeRasterColormap}
+                setRasterColormap={setRasterColormap}
+              />
+            )}
+            <BaseMapMenu
+              anchorEl={baseMapAnchor}
+              open={Boolean(baseMapAnchor)}
+              onClose={() => setBaseMapAnchor(null)}
+              mapId={mapId}
+              activeBaseMapId={activeBaseMapId}
+              updateMapConfig={updateMapConfig}
+            />
+          </Box>
+          {section === "management" && (
+            <MenuList disablePadding>
+              <MenuItem
+                onClick={() => toggleMapVisibility(config.id)}
+                className={styles["single-map-item"]}
               >
-                <Close fontSize="small" />
+                {config.visible ? (
+                  <Visibility fontSize="small" />
+                ) : (
+                  <VisibilityOff fontSize="small" />
+                )}
                 <Typography variant="body2" sx={{ ml: 1 }}>
-                  Remove Map
+                  {config.visible ? "Hide Map" : "Show Map"}
                 </Typography>
               </MenuItem>
-            )}
-          </Menu>
-
-          {/* Color Scheme Submenu */}
-          <ColorSchemeMenu
-            anchorEl={colorSchemeAnchor}
-            open={Boolean(colorSchemeAnchor)}
-            onClose={() => setColorSchemeAnchor(null)}
-            config={config}
-            dataset={dataset}
-            mapOpacities={mapOpacities}
-            updateMapConfig={updateMapConfig}
-            setLayerOpacity={setLayerOpacity}
-          />
-        </Box>
+              <MenuItem
+                onClick={() => {
+                  setTitleEditValue(config.title);
+                  setIsEditingTitle(true);
+                }}
+                className={styles["single-map-item"]}
+              >
+                <Edit fontSize="small" />
+                <Typography variant="body2" sx={{ ml: 1 }}>
+                  Rename Map
+                </Typography>
+              </MenuItem>
+              {/* Color scheme selection requires loaded data */}
+              <Tooltip title={config.dataset ? "" : "Select a dataset first"}>
+                <span>
+                  <MenuItem
+                    onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
+                    className={styles["single-map-item"]}
+                    disabled={!config.dataset}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+                      <Palette fontSize="small" />
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        Color Scheme
+                      </Typography>
+                    </Box>
+                    <ExpandMore fontSize="small" />
+                  </MenuItem>
+                </span>
+              </Tooltip>
+              {activeRasterLeafId && (
+                <MenuItem
+                  onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
+                  className={styles["single-map-item"]}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+                    <Gradient fontSize="small" />
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      Raster Colormap
+                    </Typography>
+                  </Box>
+                  <ExpandMore fontSize="small" />
+                </MenuItem>
+              )}
+              <MenuItem
+                onClick={(e) => setBaseMapAnchor(e.currentTarget)}
+                className={styles["single-map-item"]}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+                  <Map fontSize="small" />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Base Map
+                  </Typography>
+                </Box>
+                <ExpandMore fontSize="small" />
+              </MenuItem>
+              {canRemoveMap && (
+                <MenuItem
+                  onClick={() => onRemove(config.id)}
+                  className={styles["single-map-item"]}
+                  sx={{ color: "error.main" }}
+                >
+                  <Close fontSize="small" />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+q                    Remove Map
+                  </Typography>
+                </MenuItem>
+              )}
+            </MenuList>
+          )}
+        </>
       )}
 
       {section !== "management" && config.visible && (

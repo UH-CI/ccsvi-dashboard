@@ -25,12 +25,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Houses built before 1990",
         description: "Housing units built before 1990. Older housing can be less resilient to hazards and indicate higher displacement risk and maintenance burden for households.",
       },
-      // TODO: Add when dataset available: Houses built before 1970
-      // {
-      //   dataset: "age_of_structure",
-      //   metric: "Total Housing Built Before 1970 (calc.)",
-      //   label: "Houses built before 1970",
-      // },
+      {
+        dataset: "age_of_structure",
+        metric: "Total Housing Built Before 1970 (calc.)",
+        label: "Houses built before 1970",
+      },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
@@ -42,6 +41,11 @@ export const SVI_CATEGORIES: SviCategory[] = [
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
       { dataset: "tenure", metric: "Renter occupied", label: "Renter occupied units", description: "Number of housing units occupied by renters. Renters often have less control over mitigation measures and may face greater displacement risk after events." },
+      {
+        dataset: "tenure_by_occupants_per_room",
+        metric: "Total Overcrowded Housing Units (calc.)",
+        label: "Overcrowded units",
+      },
     ],
   },
   {
@@ -69,6 +73,17 @@ export const SVI_CATEGORIES: SviCategory[] = [
         description: "Percentage of population with income below 200% of the federal poverty level. Captures a wider group of economically precarious households whose recovery capacity is limited.",
       },
       {
+        dataset: "2022_census_hawaiian_homelands",
+        metric:
+          "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level",
+        label: "Hawaiian homelands - below 100% federal poverty line",
+      },
+      {
+        dataset: "2022_census_hawaiian_homelands",
+        metric: "Total Under 150% FPL (calc.)",
+        label: "Hawaiian homelands - below 150% federal poverty line",
+      },
+      {
         dataset: "health_insurance",
         metric: "No Health Insurance Coverage (calc.)",
         label: "Without health insurance",
@@ -83,46 +98,47 @@ export const SVI_CATEGORIES: SviCategory[] = [
     description: "Population age distribution and household composition relevant to climate preparedness, evacuation needs, and caregiving capacity.",
     indicators: [
       {
-        dataset: "person_under_5_65_males",
-        metric: "Males Under 5 (calc.)",
-        label: "Aged 5 years and under (male)",
-        description: "Number of male children aged 0-5. Young children have specific caregiving and evacuation needs and increase household vulnerability.",
+        dataset: "person_under_5_65_total",
+        metric: "Total Under 5 (calc.)",
+        label: "Aged 5 years and under",
+        description:
+          "Young children have specific caregiving and evacuation needs that can increase household vulnerability.",
       },
       {
-        dataset: "person_under_5_65_males",
-        metric: "Males Under 18 (calc.)",
-        label: "Aged 17 years and under (male)",
-        description: "Number of male children and adolescents under 18. These households may require child-focused support during emergencies.",
+        dataset: "person_under_5_65_total",
+        metric: "Total Under 18 (calc.)",
+        label: "Aged 17 years and under",
+        description:
+          "Children and adolescents may require child-focused communication and support during emergencies.",
       },
       {
-        dataset: "person_under_5_65_males",
-        metric: "Males Over 65 (calc.)",
-        label: "Aged 65 years and older (male)",
-        description: "Number of older male adults (65+). Older adults often have mobility, health, and social care needs that affect resilience and evacuation.",
-      },
-      {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 5 (calc.)",
-        label: "Aged 5 years and under (female)",
-        description: "Number of female children aged 0-5. Young children have specific caregiving and evacuation needs and increase household vulnerability.",
-      },
-      {
-        dataset: "person_under_5_65_females",
-        metric: "Females Under 18 (calc.)",
-        label: "Aged 17 years and under (female)",
-        description: "Number of female children and adolescents under 18. These households may require child-focused support during emergencies.",
-      },
-      {
-        dataset: "person_under_5_65_females",
-        metric: "Females Over 65 (calc.)",
-        label: "Aged 65 years and older (female)",
-        description: "Number of older female adults (65+). Older adults often have mobility, health, and social care needs that affect resilience and evacuation.",
+        dataset: "person_under_5_65_total",
+        metric: "Total Over 65 (calc.)",
+        label: "Aged 65 years and older",
+        description:
+          "Older adults may have mobility, health, and social care needs that affect resilience and evacuation.",
       },
       {
         dataset: "living_arrangements",
         metric: "Total Living alone (calc.)",
         label: "Living alone",
-        description: "Number of people living alone. Single-occupant households may have reduced social support and face higher isolation during hazards.",
+        description:
+          "Single-occupant households may have reduced social support and face higher isolation during hazards.",
+      },
+      {
+        dataset: "living_arrangements",
+        metric: "In households: Householder: Male: Living alone",
+        label: "Living alone (male)",
+      },
+      {
+        dataset: "living_arrangements",
+        metric: "In households: Householder: Female: Living alone",
+        label: "Living alone (female)",
+      },
+      {
+        dataset: "family_type_by_children",
+        metric: "Total Single-Parent Households With Children (calc.)",
+        label: "Single parent households",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
@@ -159,7 +175,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
       {
         dataset: "race_origin",
         metric: "American Indian and Alaska Native alone",
-        label: "American Indian and Alaska Native population",
+        label: "American Indian and Alaska Native alone",
         description: "Population identifying as American Indian or Alaska Native. Small population counts may indicate distinct vulnerabilities and the need for culturally appropriate outreach.",
       },
       { dataset: "race_origin", metric: "Asian alone", label: "Asian population", description: "Population identifying as Asian. Racial and ethnic context informs language access and service equity in emergencies." },
@@ -176,6 +192,32 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Total Limited English Speaking Households (calc.)",
         label: "Limited English proficiency",
         description: "Number or share of households with limited English proficiency. Language barriers can reduce access to warnings, assistance, and recovery information.",
+      },
+      {
+        dataset: "limited_english_speaking",
+        metric: "Spanish: Limited English speaking household",
+        label: "Limited English: Spanish",
+      },
+      {
+        dataset: "limited_english_speaking",
+        metric: "Other Indo-European languages: Limited English speaking household",
+        label: "Limited English: Other Indo-European languages",
+      },
+      {
+        dataset: "limited_english_speaking",
+        metric: "Asian and Pacific Island languages: Limited English speaking household",
+        label: "Limited English: Asian and Pacific Island languages",
+      },
+      {
+        dataset: "limited_english_speaking",
+        metric: "Other languages: Limited English speaking household",
+        label: "Limited English: Other languages",
+      },
+      {
+        dataset: "2022_census_hawaiian_homelands",
+        metric:
+          "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
+        label: "Hawaiian Homelands: speaking English less than well",
       },
     ],
   },
@@ -202,65 +244,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Estimate Aggregate number of vehicles available",
         label: "Households without a vehicle",
         description: "Estimate of households lacking access to a vehicle. Vehicle access influences evacuation options and mobility during emergencies.",
-      },
-    ],
-  },
-  {
-    id: "critical_infrastructure",
-    label: "Critical Infrastructure",
-    description: "Essential infrastructure and facilities that support emergency response, recovery, and community resilience.",
-    indicators: [
-      {
-        dataset: "fire_stations",
-        metric: "Fire stations",
-        label: "Fire stations",
-      },
-      {
-        dataset: "hospitals",
-        metric: "Hospitals",
-        label: "Hospitals",
-      },
-      {
-        dataset: "police_stations",
-        metric: "Police stations",
-        label: "Police stations",
-      },
-      {
-        dataset: "emergency_shelters",
-        metric: "Emergency shelters",
-        label: "Emergency shelters",
-      },
-      {
-        dataset: "state_roads",
-        metric: "State roads",
-        label: "State roads",
-      },
-      {
-        dataset: "sidewalks_paths",
-        metric: "Sidewalks and paths",
-        label: "Sidewalks and paths",
-      },
-      {
-        dataset: "bridges",
-        metric: "Bridges",
-        label: "Bridges",
-      },
-      {
-        dataset: "schools",
-        metric: "Schools",
-        label: "Schools",
-      },
-    ],
-  },
-  {
-    id: "secondary_environmental_risk",
-    label: "Secondary Environmental Risk Areas",
-    description: "Areas with environmental hazards or risk-prone infrastructure that can worsen climate impacts.",
-    indicators: [
-      {
-        dataset: "sewage_disposal",
-        metric: "Sewage disposal systems",
-        label: "Sewage disposal systems",
       },
     ],
   },

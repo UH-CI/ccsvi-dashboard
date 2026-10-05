@@ -67,11 +67,17 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
           return (
             <Stack spacing={1}>
               {pointLayerConfigs
-                .filter((l) => !SCHOOL_IDS.includes(l.id) && l.id !== "sewage")
+                .filter(
+                  (l) =>
+                    !SCHOOL_IDS.includes(l.id) &&
+                    l.id !== "sewage" &&
+                    l.id !== "wastewater_plant",
+                )
                 .map((layer) => (
                   <LayerToggleItem
                     key={layer.id}
                     label={layer.name}
+                    description={layer.description}
                     icon={layer.icon}
                     color={layer.color}
                     checked={visibleIds?.has(layer.id) ?? false}
@@ -88,6 +94,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
                 return (
                   <LayerToggleItem
                     label={layer.name}
+                    description={layer.description}
                     icon={layer.icon}
                     color={layer.color}
                     checked={isVisible}
@@ -129,6 +136,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
                         <LayerToggleItem
                           key={sub.id}
                           label={sub.name}
+                          description={sub.description}
                           checked={isSubVisible}
                           indented
                           onToggle={() =>
@@ -144,8 +152,6 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
               {/* Schools group */}
               <LayerToggleGroup
                 label="Schools"
-                icon="FaSchool"
-                color="#8A2BE2"
                 expanded={expandedPoints.schools ?? false}
                 onToggleExpand={() =>
                   setExpandedPoints((prev) => ({ ...prev, schools: !prev.schools }))
@@ -162,6 +168,9 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
                     <LayerToggleItem
                       key={layer.id}
                       label={layer.name}
+                      icon={layer.icon}
+                      color={layer.color}
+                      description={layer.description}
                       indented
                       checked={visibleIds?.has(layer.id) ?? false}
                       onToggle={() => togglePointLayerVisibility(resolvedPointsMapId, layer.id)}

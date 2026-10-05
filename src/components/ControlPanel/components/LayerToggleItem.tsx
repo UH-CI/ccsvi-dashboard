@@ -1,5 +1,5 @@
 import React from "react";
-import { FormControlLabel, Checkbox, Box } from "@mui/material";
+import { FormControlLabel, Checkbox, Box, Tooltip } from "@mui/material";
 import * as FaIcons from "react-icons/fa";
 import styles from "../ControlPanel.module.scss";
 
@@ -14,7 +14,6 @@ interface LayerToggleItemProps {
   indented?: boolean;
   labelMl?: number;
   description?: string; // optional hover text
-  hideCheckbox?: boolean; // hide the checkbox
 }
 
 // Leaf layer toggle: checkbox + optional colored FA icon + label.
@@ -29,7 +28,6 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
   indented = false,
   labelMl = 0.9,
   description,
-  hideCheckbox = false,
 }) => {
   const IconComponent = (icon && FaIcons[icon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
   const labelNode = icon ? (
@@ -42,20 +40,13 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
   ) : (
     <span>{label}</span>
   );
-
-  if (hideCheckbox) {
-    return (
-      <Box
-        sx={
-          indented
-            ? { ml: 0, pl: 4.5 }
-            : undefined
-        }
-      >
-        {labelNode}
-      </Box>
-    );
-  }
+  const renderedLabel = description ? (
+    <Tooltip title={description} placement="right">
+      <span>{labelNode}</span>
+    </Tooltip>
+  ) : (
+    labelNode
+  );
 
   return (
     <FormControlLabel
@@ -68,7 +59,7 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
           size="small"
         />
       }
-      label={labelNode}
+      label={renderedLabel}
     />
   );
 };

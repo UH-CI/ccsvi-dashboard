@@ -125,6 +125,8 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "wastewater_plant",
     name: "Wastewater Treatment Plants",
+    description:
+      "Wastewater treatment facilities can be vulnerable to flooding and other hazards that affect essential services.",
     visible: false,
     icon: "FaIndustry",
     color: "#2E8B57",

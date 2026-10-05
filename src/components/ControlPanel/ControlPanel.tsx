@@ -176,7 +176,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     },
     {
       key: "locations",
-      label: "Secondary Environmental Risk Areas",
+      label: "Locations of Enhanced Exposure",
       icon: <Factory fontSize="small" />,
       description:
         "Show locations with environmental hazards or risk-prone infrastructure that can worsen climate impacts, such as onsite sewage disposal systems.",

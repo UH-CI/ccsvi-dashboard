@@ -3,7 +3,7 @@ import { HazardLayerConfig } from "../types";
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
-    name: "Regulatory Flood Zones",
+    name: "Flooding",
     description: "Regulatory flood zones designate locations with established flood risk and indicate potential flood exposure.",
     visible: false,
     icon: "FaWater",
@@ -394,7 +394,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     name: "Fire Zone",
     description: "Mapped wildfire risk indicates locations with greater potential for fire exposure.",
     visible: false,
-    icon: "faFire",
+    icon: "FaFire",
     color: "#D73502",
     subLayers: [
       { 
@@ -488,7 +488,51 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
         },
       },
     ],
-  }, 
+  },
+  {
+    id: "pcl_filtered",
+    name: "Previously Contaminated Land",
+    visible: false,
+    icon: "FaBarrel",
+    color: "#000000",
+    filePath: "Prev_contaminated_land_filtered.pmtiles",
+    popupConfig: {
+      titleField: "Previously Contaminated Land",
+      fields: [
+        { key: "city", label: "City" },
+        { key: "county", label: "County" },
+        { key: "island", label: "Island" },
+        { key: "site___fac", label: "Site/Facility name" },
+        { key: "site_addre", label: "Address" },
+        { key: "heer_asses", label: "Hazardous Waste Assessment" },
+        { key: "heer_respo", label: "Hazardous Waste Response" },
+        { key: "nature_of", label: "Nature of Contamination" },
+        { key: "nature_o_1", label: "Nature of Contamination 1" },
+      ],
+    },
+  },
+  {
+    id: "pcl_landfill",
+    name: "Landfills",
+    menuPanel: "locations",
+    visible: false,
+    icon: "FaTrash",
+    color: "#000000",
+    filePath: "Prev_contaminated_land_landfills.pmtiles",
+    popupConfig: {
+      titleField: "Landfills",
+      fields: [
+        { key: "city", label: "City" },
+        { key: "county", label: "County" },
+        { key: "island", label: "Island" },
+        { key: "site_addre", label: "Address" },
+        { key: "site___fac", label: "Site/Facility name" },
+        { key: "landfill_s", label: "Start year" },
+        { key: "landfill_y", label: "Currently Active" },
+        { key: "landfill_o", label: "Owner" },
+      ],
+    },
+  },
   /*
   {
     id: "potent_econ_loss",

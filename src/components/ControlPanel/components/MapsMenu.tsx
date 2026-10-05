@@ -36,11 +36,10 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
   const setVisibleHazardLayerIds = useHazardLayersStore((s) => s.setVisibleLayerIds);
   const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
 
-  const [mapsMapId, setMapsMapId] = useState<string>("");
-  const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
-
   const canAddMap = mapConfigs.length < maxMaps;
   const canRemoveMap = mapConfigs.length > 1;
+  const [mapsMapId, setMapsMapId] = useState<string>("");
+  const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
 
   const handleRemoveMap = useCallback(
     (mapId: string) => {
@@ -79,7 +78,6 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
       />
       {resolvedMapsMapId && (
         <SingleMapControls
-          key={resolvedMapsMapId}
           mapId={resolvedMapsMapId}
           canRemoveMap={canRemoveMap}
           onRemove={handleRemoveMap}

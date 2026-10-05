@@ -79,12 +79,12 @@ export const RastersMenu: React.FC<RastersMenuProps> = ({
                     />
                   )}
                   <Typography
-                    className={styles["layer-label"]}
+                  //keep indentation centralized
+                    className={`${styles["layer-label"]}${hasChildren ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
                     sx={{
                       display: "flex",
                       alignItems: "center",
                       flexGrow: 1,
-                      ml: hasChildren ? "21px" : 0,
                     }}
                   >
                     <span className={styles["layer-icon"]} style={{ color: parent.color }}>

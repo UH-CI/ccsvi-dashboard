@@ -11,6 +11,7 @@ export interface MapConfig {
   bivariateColorScheme?: string;
   visible: boolean;
   colorScheme: string;
+  baseMap?: string;
   activeFeature?: {
     geoid: string;
     lat: number;
@@ -113,7 +114,7 @@ export interface SubHazardLayerGroup {
   subLayers: SubHazardLayerConfig[];
 }
 
-export type HazardLayerMenuPanel = "hazards" | "points";
+export type HazardLayerMenuPanel = "hazards" | "points" | "locations";
 
 export interface HazardLayerConfig {
   id: string;
@@ -135,6 +136,7 @@ export interface HazardLayerConfig {
 export interface SubRasterLayerConfig {
   id: string;
   name: string;
+  description?: string;
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.
   sourceFileName?: string;
