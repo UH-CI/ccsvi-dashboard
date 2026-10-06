@@ -199,6 +199,20 @@ async def filter_hawaiian_homelands(
     return await run_filter(conn, request, True, None, hazard, any_group, fmt)
 
 
+# Parses hazard layers and sub-layer requests
+def hazard_branches(entries: list[str], params: list[Any]) -> str:
+    branches: list[str] = []
+    for entry in entries:
+        hazard_id, _, sub_id = entry.partition(".")
+        params.append(hazard_id)
+        if sub_id:
+            params.append(sub_id)
+            branches.append(f"(h.hazard_id = ${len(params) - 1} AND h.sub_id = ${len(params)})")
+        else:
+            branches.append(f"(h.hazard_id = ${len(params)})")
+    return " OR ".join(branches)
+
+
 # Shared by both filter endpoints; homelands picks which view to search
 async def run_filter(
     conn,
@@ -256,26 +270,11 @@ async def run_filter(
         add_cond("v.county = ?", county)
 
     if hazard:
-        # One OR-branch per requested hazard/sub-layer, all inside a single
-        # EXISTS — a block group matches if it touches ANY of them. Looked up in
-        # geography_hazards (pre-computed per rebuild by ingest/load_hazard_overlaps.py).
-        hazard_branches: list[str] = []
-        hazard_params: list[Any] = []
-        for entry in hazard:
-            hazard_id, _, sub_id = entry.partition(".")
-            base = len(params) + len(hazard_params) + 1
-            if sub_id:
-                hazard_branches.append(f"(h.hazard_id = ${base} AND h.sub_id = ${base + 1})")
-                hazard_params.extend([hazard_id, sub_id])
-            else:
-                hazard_branches.append(f"(h.hazard_id = ${base})")
-                hazard_params.append(hazard_id)
-        exists_clause = (
+        # An area matches if it touches any chosen hazard, read from the list worked out at rebuild time.
+        conditions.append(
             "EXISTS (SELECT 1 FROM geography_hazards h WHERE h.geoid = v.geoid"
-            f" AND ({' OR '.join(hazard_branches)}))"
+            f" AND ({hazard_branches(hazard, params)}))"
         )
-        params.extend(hazard_params)
-        conditions.append(exists_clause)
 
     for col, threshold in metric_filters:
         # col has been validated against allowed_cols — safe to interpolate.
