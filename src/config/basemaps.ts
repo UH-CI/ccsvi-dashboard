@@ -7,14 +7,11 @@ export interface BaseMapOption {
   maxZoom?: number;
 }
 
-const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY;
-const cartoKeyQuery = cartoApiKey ? `?key=${encodeURIComponent(cartoApiKey)}` : "";
-
 export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_voyager_nolabels",
     label: "CartoDB Voyager (No Labels)",
-    url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png${cartoKeyQuery}`,
+    url: "/api/tiles/carto/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + 
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -23,7 +20,7 @@ export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_positron_nolabels",
     label: "CartoDB Positron (No Labels)",
-    url: `https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png${cartoKeyQuery}`,
+    url: "/api/tiles/carto/light_nolabels/{z}/{x}/{y}{r}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',
