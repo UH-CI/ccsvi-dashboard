@@ -8,7 +8,7 @@ import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
 import styles from "./PointLayers.module.scss";
 import { usePointLayerStore, useFilterStore } from "../../stores";
-import { getPointsInGeoids } from "../../api/client";
+import { getFilteredPoints } from "../../api/client";
 
 interface GenericPointMarkersProps {
   layerId: string;
@@ -21,22 +21,28 @@ function pointId(properties: Feature["properties"], idFields: string[]): string 
   return values.join("|");
 }
 
-// Which of this layer's points are inside the current filter result.
-// null means no filter is running, so every point should show.
+// Which of this layer's points passed the last Filter press.
+// Returns nothing when this layer isn't being filtered, meaning show all its points.
 function useMatchingIds(layerId: string): Set<string> | null {
-  const filteredGeoids = useFilterStore((state) => state.filteredGeoids);
+  const pointFilter = useFilterStore((state) => state.pointFilter);
   const idFields = usePointLayerStore(
     (state) => state.pointLayerConfigs.find((c) => c.id === layerId)!.idFields,
   );
   const [ids, setIds] = useState<Set<string> | null>(null);
 
   useEffect(() => {
-    if (!filteredGeoids) {
+    if (!pointFilter || (pointFilter.layers && !pointFilter.layers.has(layerId))) {
       setIds(null);
       return;
     }
+    // No neighborhoods matched, so show no points. Asking the server with no areas would return every point.
+    if (pointFilter.geoids?.size === 0) {
+      setIds(new Set());
+      return;
+    }
     let cancelled = false;
-    getPointsInGeoids(layerId, Array.from(filteredGeoids)).then((data) => {
+    const geoids = pointFilter.geoids && Array.from(pointFilter.geoids);
+    getFilteredPoints(layerId, geoids, pointFilter.hazards).then((data) => {
       if (cancelled) return;
       setIds(
         new Set(
@@ -49,7 +55,7 @@ function useMatchingIds(layerId: string): Set<string> | null {
     return () => {
       cancelled = true;
     };
-  }, [layerId, filteredGeoids, idFields]);
+  }, [layerId, pointFilter, idFields]);
 
   return ids;
 }

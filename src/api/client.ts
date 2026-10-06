@@ -33,9 +33,10 @@ export const getPointsByGeoid = (layerId: string, homelands: boolean) =>
     `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&homelands=${homelands}`,
   );
 
-// One layer's points that fall inside any of the given areas
-export const getPointsInGeoids = (layerId: string, geoids: string[]) => {
+// Asks for one layer's points, limited to the given areas and hazards. No areas given means no area limit.
+export const getFilteredPoints = (layerId: string, geoids: string[] | null, hazards: string[]) => {
   const params = new URLSearchParams({ layer_id: layerId });
-  for (const geoid of geoids) params.append("geoid", geoid);
+  for (const geoid of geoids ?? []) params.append("geoid", geoid);
+  for (const hazard of hazards) params.append("hazard", hazard);
   return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
 };

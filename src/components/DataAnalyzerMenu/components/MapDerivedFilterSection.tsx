@@ -44,6 +44,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const pointGroupModes = useFilterStore((state) => state.pointGroupModes);
   const setAnyFilters = useFilterStore((state) => state.setAnyFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
+  const applyPointHazardFilter = useFilterStore((state) => state.applyPointHazardFilter);
   const buildExportUrl = useFilterStore((state) => state.buildExportUrl);
   const isLoading = useFilterStore((state) => state.isLoading);
   const error = useFilterStore((state) => state.error);
@@ -85,19 +86,30 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
       ? (datasetCatalog[dataset2]?.columnThresholds[metric2]?.mvColumn ?? null)
       : null;
 
+  // With no SVI on the map, neighborhoods aren't part of the analysis:
+  // Filter just keeps the checked layers' points that sit inside a visible hazard.
+  const sviShown = Boolean(dataset && metric);
+
   const hasMetricThreshold = mvColumn !== null && filterRange !== null;
   const hasMetricThreshold2 = mvColumn2 !== null && filterRange2 !== null;
-  const hasCriteria =
-    derivedHazards.length > 0 ||
-    hasMetricThreshold ||
-    hasMetricThreshold2 ||
-    checkedVisiblePointLayers.length > 0;
+  const hasCriteria = sviShown
+    ? derivedHazards.length > 0 ||
+      hasMetricThreshold ||
+      hasMetricThreshold2 ||
+      checkedVisiblePointLayers.length > 0
+    : derivedHazards.length > 0 && checkedVisiblePointLayers.length > 0;
 
   const handleApply = () => {
+    const hazardIds = derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId));
+    if (!sviShown) {
+      applyPointHazardFilter(hazardIds, new Set(checkedVisiblePointLayers.map((layer) => layer.id)));
+      return;
+    }
+
     setHomelands(
       dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false,
     );
-    setHazards(derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId)));
+    setHazards(hazardIds);
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
@@ -135,9 +147,9 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
         </Button>
         <IconButton
           size="small"
-          disabled={!hasCriteria}
+          disabled={!hasCriteria || !sviShown}
           component="a"
-          href={hasCriteria ? buildExportUrl() : undefined}
+          href={hasCriteria && sviShown ? buildExportUrl() : undefined}
           download
         >
           <DownloadIcon fontSize="small" />

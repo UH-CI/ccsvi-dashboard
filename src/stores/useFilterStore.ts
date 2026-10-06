@@ -12,12 +12,18 @@ interface FilterState {
   pointGroupModes: Record<string, "all" | "any">;
   // Filters for "ANY/OR" conditions
   anyFilters: string[];
-  // True when the filter searches Hawaiian Homelands instead of block groups
   homelands: boolean;
   results: BlockGroupResult[] | null;
   filteredGeoids: Set<string> | null;
+  pointFilter: PointFilter | null;
   isLoading: boolean;
   error: string | null;
+}
+
+interface PointFilter {
+  geoids: Set<string> | null;
+  hazards: string[];
+  layers: Set<string> | null;
 }
 
 interface FilterActions {
@@ -29,6 +35,7 @@ interface FilterActions {
   setPointGroupMode: (groupId: string, mode: "all" | "any") => void;
   setAnyFilters: (entries: string[]) => void;
   applyFilter: () => Promise<void>;
+  applyPointHazardFilter: (hazards: string[], layers: Set<string>) => void;
   buildExportUrl: () => string;
   clearFilter: () => void;
 }
@@ -43,6 +50,7 @@ const initialState: FilterState = {
   homelands: false,
   results: null,
   filteredGeoids: null,
+  pointFilter: null,
   isLoading: false,
   error: null,
 };
@@ -103,7 +111,13 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       const res = await fetch(filterUrl(get(), params));
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as BlockGroupResult[];
-      set({ results: data, filteredGeoids: new Set(data.map((r) => r.geoid)), isLoading: false });
+      const filteredGeoids = new Set(data.map((r) => r.geoid));
+      set({
+        results: data,
+        filteredGeoids,
+        pointFilter: { geoids: filteredGeoids, hazards: get().hazards, layers: null },
+        isLoading: false,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : "Filter failed",
@@ -111,6 +125,16 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       });
     }
   },
+
+  // Used when no SVI is on the map. Skips neighborhoods entirely and checks points against hazards only.
+  applyPointHazardFilter: (hazards, layers) =>
+    set({
+      hazards,
+      results: null,
+      filteredGeoids: null,
+      pointFilter: { geoids: null, hazards, layers },
+      error: null,
+    }),
 
   buildExportUrl: () => {
     const params = buildParams(get());
