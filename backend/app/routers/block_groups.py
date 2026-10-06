@@ -147,8 +147,8 @@ async def get_metric_values(
     summary="Filter block groups by county, hazard, and metric thresholds",
     description=(
         "Returns block groups matching all specified filters. Supports county equality, "
-        "a unioned hazard spatial join (ST_Intersects against the hazards table — a block "
-        "group matches if it intersects ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
+        "a unioned hazard filter (looked up in the pre-computed geography_hazards table — a "
+        "block group matches if it touches ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
         "numeric lower-bound thresholds on any block_group_metrics column via "
         "min_<col>=<value> query params (ANDed together), and grouped OR thresholds via "
         "repeatable ?any=<group>:<col>:<value> params (ORed within a group, ANDed between "
@@ -257,7 +257,8 @@ async def run_filter(
 
     if hazard:
         # One OR-branch per requested hazard/sub-layer, all inside a single
-        # EXISTS — a block group matches if it intersects ANY of them.
+        # EXISTS — a block group matches if it touches ANY of them. Looked up in
+        # geography_hazards (pre-computed per rebuild by ingest/load_hazard_overlaps.py).
         hazard_branches: list[str] = []
         hazard_params: list[Any] = []
         for entry in hazard:
@@ -270,7 +271,7 @@ async def run_filter(
                 hazard_branches.append(f"(h.hazard_id = ${base})")
                 hazard_params.append(hazard_id)
         exists_clause = (
-            "EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(v.geom, h.geom)"
+            "EXISTS (SELECT 1 FROM geography_hazards h WHERE h.geoid = v.geoid"
             f" AND ({' OR '.join(hazard_branches)}))"
         )
         params.extend(hazard_params)
