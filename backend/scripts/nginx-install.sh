@@ -28,6 +28,8 @@ fi
 
 HCDP_API_TOKEN=${HCDP_API_TOKEN:?Need HCDP_API_TOKEN set in $REPO_ROOT/.env}
 HCDP_EMAIL=${HCDP_EMAIL:?Need HCDP_EMAIL set in $REPO_ROOT/.env}
+CARTO_API_KEY=${CARTO_API_KEY:-${VITE_CARTO_API_KEY:-}}
+CARTO_API_KEY=${CARTO_API_KEY:?Need CARTO_API_KEY set in $REPO_ROOT/.env}
 
 sudo mkdir -p "$TILE_CACHE_DIR"
 sudo chown www-data:www-data "$TILE_CACHE_DIR"
@@ -59,6 +61,15 @@ server {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+    }
+
+    location /api/tiles/carto/ {
+        resolver 127.0.0.53 valid=300s ipv6=off;
+        set \$carto_host "basemaps.cartocdn.com";
+        rewrite ^/api/tiles/carto/(.*)\$ /\$1 break;
+        proxy_pass https://\$carto_host\$uri?key=${CARTO_API_KEY};
+        proxy_set_header Host basemaps.cartocdn.com;
+        proxy_ssl_server_name on;
     }
 
     location /data/ {

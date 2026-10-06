@@ -406,7 +406,13 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               onZoomChange={handleZoomChange}
             />
 
-            <TileLayer url={activeBaseMap.url} attribution={activeBaseMap.attribution} />
+            <TileLayer
+              key={activeBaseMap.id}
+              url={activeBaseMap.url}
+              attribution={activeBaseMap.attribution}
+              maxNativeZoom={activeBaseMap.maxNativeZoom}
+              maxZoom={activeBaseMap.maxZoom ?? 18}
+            />
 
             {shouldRenderCountyBoundariesBackground && (
               <CountyBoundariesBackgroundLayer
