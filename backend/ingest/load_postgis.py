@@ -21,7 +21,7 @@ import psycopg2.extras
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
 POINT_DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026/point_data")
-HAZARDS_RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files/Hazards")
+HAZARDS_DIR = Path("/home/exouser/ccsvi-data/archived/processed_files/Hazards")
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
@@ -235,7 +235,7 @@ def load_hazards(cur) -> int:
     total = 0
 
     for filename, hazard_id, sub_id, height_ft in HAZARD_LAYERS:
-        path = HAZARDS_RAW_DIR / filename
+        path = HAZARDS_DIR / filename
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping {hazard_id}/{sub_id}")
             continue
