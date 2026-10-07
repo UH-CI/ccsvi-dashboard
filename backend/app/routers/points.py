@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict
 
 from ..db import ConnDep
+from .block_groups import hazard_branches
 
 router = APIRouter()
 
@@ -38,34 +39,54 @@ class PointFeatureCollection(BaseModel):
     summary="Query point features by layer and/or full-text search",
     description=(
         "Returns a GeoJSON FeatureCollection from the points table. "
-        "Supports filtering by layer_id (exact match) and full-text search on "
-        "feature name via plainto_tsquery (uses the idx_points_name_fts GIN index). "
-        "Both params are optional; omitting both returns all points."
+        "Supports filtering by layer_id (exact match), full-text search on "
+        "feature name via plainto_tsquery (uses the idx_points_name_fts GIN index), "
+        "and geoid (only points inside one of these block group / Hawaiian Homeland "
+        "areas; repeatable, matches any of them), and hazard (only points inside one of these "
+        "hazard layers, looked up in the pre-computed point_hazards table; repeatable, matches "
+        "any of them). All params are optional; omitting them all returns every point."
     ),
 )
 async def get_points(
     conn: ConnDep,
     layer_id: str | None = Query(None, description="Layer ID, e.g. 'hospitals'"),
     q: str | None = Query(None, description="Full-text search term on feature name"),
+    geoid: list[str] | None = Query(None, description="Only points inside any of these geoids' areas"),
+    hazard: list[str] | None = Query(
+        None, description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"
+    ),
 ) -> PointFeatureCollection:
     conditions: list[str] = []
     params: list[Any] = []
+    # Only joined against geographies when a geoid is actually requested
+    join = ""
 
     if layer_id:
         params.append(layer_id)
-        conditions.append(f"layer_id = ${len(params)}")
+        conditions.append(f"points.layer_id = ${len(params)}")
 
     if q:
         params.append(q)
         conditions.append(
-            f"to_tsvector('english', coalesce(name, '')) "
+            f"to_tsvector('english', coalesce(points.name, '')) "
             f"@@ plainto_tsquery('english', ${len(params)})"
+        )
+
+    if geoid:
+        params.append(geoid)
+        join = "JOIN geographies g ON ST_Covers(g.geom, points.geom)"
+        conditions.append(f"g.geoid = ANY(${len(params)})")
+
+    if hazard:
+        conditions.append(
+            "EXISTS (SELECT 1 FROM point_hazards h WHERE h.point_id = points.id"
+            f" AND ({hazard_branches(hazard, params)}))"
         )
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     sql = (
-        f"SELECT id, layer_id, name, props, ST_AsGeoJSON(geom) AS geometry "
-        f"FROM points {where}"
+        f"SELECT points.id, points.layer_id, points.name, points.props, "
+        f"ST_AsGeoJSON(points.geom) AS geometry FROM points {join} {where}"
     )
 
     rows = await conn.fetch(sql, *params)
@@ -73,6 +94,10 @@ async def get_points(
     features = []
     for row in rows:
         props = json.loads(row["props"]) if row["props"] else {}
+        # Drop these so they can't collide with the same keyword args below
+        props.pop("id", None)
+        props.pop("layer_id", None)
+        props.pop("name", None)
         features.append(
             PointFeature(
                 type="Feature",
@@ -87,3 +112,37 @@ async def get_points(
         )
 
     return PointFeatureCollection(type="FeatureCollection", features=features)
+
+
+@router.get(
+    "/api/v1/points/by-geoid",
+    summary="List one layer's point names, grouped by the block group / Hawaiian Homeland area they're in",
+    description=(
+        "Returns every geoid for the chosen area type paired with the names of that "
+        "layer's points inside it (empty list if none). One request covers every "
+        "area at once, for building a names column in a table."
+    ),
+)
+async def get_points_by_geoid(
+    conn: ConnDep,
+    layer_id: str = Query(..., description="Layer ID, e.g. 'hospitals'"),
+    homelands: bool = Query(False, description="Hawaiian Homelands instead of block groups"),
+) -> dict[str, list[str]]:
+    geo_type = "hawaiian_homeland" if homelands else "block_group"
+    rows = await conn.fetch(
+        """
+        SELECT g.geoid, p.name
+        FROM geographies g
+        LEFT JOIN points p ON ST_Covers(g.geom, p.geom) AND p.layer_id = $1
+        WHERE g.type = $2
+        """,
+        layer_id,
+        geo_type,
+    )
+
+    result: dict[str, list[str]] = {}
+    for row in rows:
+        names = result.setdefault(row["geoid"], [])
+        if row["name"] is not None:
+            names.append(row["name"])
+    return result
