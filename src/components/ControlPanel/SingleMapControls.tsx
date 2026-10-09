@@ -32,6 +32,7 @@ import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { ComparisonMetricSelect } from "./components/ComparisonMetricSelect";
 import { BaseMapMenu } from "./components/BaseMapMenu";
+import { DEFAULT_BASE_MAP_ID } from "../../config/basemaps";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -115,7 +116,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
     );
   }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
-  const activeBaseMapId = config?.baseMap ?? "openstreet";
+  const activeBaseMapId = config?.baseMap ?? DEFAULT_BASE_MAP_ID;
 
   if (!config) return null;
 
