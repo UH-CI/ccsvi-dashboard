@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { BlockGroupResult } from "../types";
+import { POINT_LAYERS } from "../config/pointLayers";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -7,12 +8,22 @@ interface FilterState {
   county: string | null;
   hazards: string[];
   metricFilters: Partial<Record<string, number>>;
-  // True when the filter searches Hawaiian Homelands instead of block groups
+  pointLayerFilters: Set<string>;
+  pointGroupModes: Record<string, "all" | "any">;
+  // Filters for "ANY/OR" conditions
+  anyFilters: string[];
   homelands: boolean;
   results: BlockGroupResult[] | null;
   filteredGeoids: Set<string> | null;
+  pointFilter: PointFilter | null;
   isLoading: boolean;
   error: string | null;
+}
+
+interface PointFilter {
+  geoids: Set<string> | null;
+  hazards: string[];
+  layers: Set<string> | null;
 }
 
 interface FilterActions {
@@ -20,7 +31,11 @@ interface FilterActions {
   setHomelands: (homelands: boolean) => void;
   setHazards: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
+  togglePointLayerFilter: (id: string) => void;
+  setPointGroupMode: (groupId: string, mode: "all" | "any") => void;
+  setAnyFilters: (entries: string[]) => void;
   applyFilter: () => Promise<void>;
+  applyPointHazardFilter: (hazards: string[], layers: Set<string>) => void;
   buildExportUrl: () => string;
   clearFilter: () => void;
 }
@@ -29,9 +44,13 @@ const initialState: FilterState = {
   county: null,
   hazards: [],
   metricFilters: {},
+  pointLayerFilters: new Set(POINT_LAYERS.map((layer) => layer.id)),
+  pointGroupModes: {},
+  anyFilters: [],
   homelands: false,
   results: null,
   filteredGeoids: null,
+  pointFilter: null,
   isLoading: false,
   error: null,
 };
@@ -43,6 +62,7 @@ const buildParams = (state: FilterState): URLSearchParams => {
   for (const [col, val] of Object.entries(state.metricFilters)) {
     if (val !== undefined) params.set(`min_${col}`, String(val));
   }
+  for (const entry of state.anyFilters) params.append("any", entry);
   return params;
 };
 
@@ -67,6 +87,22 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       return { metricFilters: next };
     }),
 
+  togglePointLayerFilter: (id) =>
+    set((state) => {
+      const next = new Set(state.pointLayerFilters);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return { pointLayerFilters: next };
+    }),
+
+  setPointGroupMode: (groupId, mode) =>
+    set((state) => ({ pointGroupModes: { ...state.pointGroupModes, [groupId]: mode } })),
+
+  setAnyFilters: (entries) => set({ anyFilters: entries }),
+
   applyFilter: async () => {
     set({ isLoading: true, error: null });
     const params = buildParams(get());
@@ -75,7 +111,13 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       const res = await fetch(filterUrl(get(), params));
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as BlockGroupResult[];
-      set({ results: data, filteredGeoids: new Set(data.map((r) => r.geoid)), isLoading: false });
+      const filteredGeoids = new Set(data.map((r) => r.geoid));
+      set({
+        results: data,
+        filteredGeoids,
+        pointFilter: { geoids: filteredGeoids, hazards: get().hazards, layers: null },
+        isLoading: false,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : "Filter failed",
@@ -83,6 +125,16 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       });
     }
   },
+
+  // Used when no SVI is on the map. Skips neighborhoods entirely and checks points against hazards only.
+  applyPointHazardFilter: (hazards, layers) =>
+    set({
+      hazards,
+      results: null,
+      filteredGeoids: null,
+      pointFilter: { geoids: null, hazards, layers },
+      error: null,
+    }),
 
   buildExportUrl: () => {
     const params = buildParams(get());

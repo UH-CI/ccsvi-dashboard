@@ -52,3 +52,24 @@ CREATE INDEX IF NOT EXISTS idx_hazards_geom      ON hazards USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_hazards_hazard_id ON hazards (hazard_id);
 CREATE INDEX IF NOT EXISTS idx_hazards_sub_id    ON hazards (sub_id);
 CREATE INDEX IF NOT EXISTS idx_hazards_height_ft ON hazards (height_ft);
+
+
+-- ── Hazard overlaps ──────────────────────────────────────────────────────────
+-- Which areas / points touch which hazard layer, worked out once per rebuild by
+-- ingest/load_hazard_overlaps.py so filters only look them up.
+-- No foreign key to points: load_postgis truncates points, which a reference would block.
+
+CREATE TABLE IF NOT EXISTS geography_hazards (
+    geoid     TEXT NOT NULL,
+    hazard_id TEXT NOT NULL,
+    sub_id    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_geography_hazards_geoid  ON geography_hazards (geoid);
+CREATE INDEX IF NOT EXISTS idx_geography_hazards_hazard ON geography_hazards (hazard_id, sub_id);
+
+CREATE TABLE IF NOT EXISTS point_hazards (
+    point_id  INTEGER NOT NULL,
+    hazard_id TEXT    NOT NULL,
+    sub_id    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_point_hazards_hazard ON point_hazards (hazard_id, sub_id);

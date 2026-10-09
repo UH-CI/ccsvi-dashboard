@@ -3,38 +3,43 @@ export interface BaseMapOption {
   label: string;
   url: string;
   attribution?: string;
+  maxNativeZoom?: number;
+  maxZoom?: number;
 }
 
 export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
-    id: "openstreet",
-    label: "OpenStreetMap",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    id: "cartodb_voyager_nolabels",
+    label: "CartoDB Voyager (No Labels)",
+    url: "/api/tiles/carto/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + 
+      '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+    
   },
   {
-    id: "openstreet_bzh",
-    label: "OpenStreetMap BZH",
-    url: "https://tile.openstreetmap.bzh/br/{z}/{x}/{y}.png",
+    id: "cartodb_positron_nolabels",
+    label: "CartoDB Positron (No Labels)",
+    url: "/api/tiles/carto/light_nolabels/{z}/{x}/{y}{r}.png",
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
-      'Tiles courtesy of <a href="https://www.openstreetmap.bzh/" target="_blank">Breton OpenStreetMap Team</a>',
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
+      '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+    
   },
   {
     id: "esri_shaded",
     label: "Esri Shaded Relief",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri &mdash; Source: Esri",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Source: USGS, Esri, TANA, DeLorme, and NPS",
+    maxNativeZoom: 13,
+    maxZoom: 13,
   },
   {
-    id: "stadia_stamen_terrain",
-    label: "Stadia Stamen Terrain",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png",
+    id: "esri_world_imagery",
+    label: "Esri World Imagery",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution:
-      '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> ' +
-      '&copy; <a href="https://www.stamen.com/" target="_blank">Stamen Design</a> ' +
-      '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> ' +
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    
   },
 ];

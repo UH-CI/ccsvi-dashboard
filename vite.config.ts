@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, projectRoot, "");
   const hcdpApiToken = env.HCDP_API_TOKEN;
   const hcdpEmail = env.HCDP_EMAIL;
+  const cartoApiKey = env.CARTO_API_KEY ?? env.VITE_CARTO_API_KEY;
 
   const hcdpProxy: ProxyOptions = {
     target: "https://api.hcdp.ikewai.org",
@@ -40,18 +41,40 @@ export default defineConfig(({ mode }) => {
     },
   };
 
+  const cartoProxy: ProxyOptions = {
+    target: "https://basemaps.cartocdn.com",
+    changeOrigin: true,
+    rewrite: (reqPath) => reqPath.replace(/^\/api\/tiles\/carto/, ""),
+    configure: (proxy) => {
+      proxy.on("proxyReq", (proxyReq) => {
+        if (cartoApiKey) {
+          const separator = proxyReq.path.includes("?") ? "&" : "?";
+          proxyReq.path += `${separator}key=${encodeURIComponent(cartoApiKey)}`;
+        }
+      });
+    },
+  };
+
+  if (!cartoApiKey) {
+    console.warn(
+      "CARTO_API_KEY is missing. Add it to the project .env (without a VITE_ prefix).",
+    );
+  }
+
   return {
     plugins: [react()],
     base: "/ccsvi-dashboard/",
     define: {
       __GIT_BRANCH__: JSON.stringify(gitBranch),
       __GIT_COMMIT__: JSON.stringify(gitCommit),
+      "import.meta.env.VITE_CARTO_API_KEY": "undefined",
     },
     worker: {
       format: "es",
     },
     server: {
       proxy: {
+        "/api/tiles/carto": cartoProxy,
         "/ccsvi-dashboard/api": hcdpProxy,
         "/api": "http://128.171.215.85:8000",
         "/data": "http://128.171.215.85:8000",
@@ -59,6 +82,7 @@ export default defineConfig(({ mode }) => {
     },
     preview: {
       proxy: {
+        "/api/tiles/carto": cartoProxy,
         "/ccsvi-dashboard/api": hcdpProxy,
         "/api": "http://128.171.215.85:8000",
         "/data": "http://128.171.215.85:8000",

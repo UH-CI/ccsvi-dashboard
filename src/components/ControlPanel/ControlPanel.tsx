@@ -31,6 +31,7 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   useHCDPStore,
+  useFilterStore,
 } from "../../stores";
 import { HCDPLoad } from "../HCDP";
 import { SingleMapControls } from "./SingleMapControls";
@@ -72,6 +73,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const setVisibleHazardLayerIds = useHazardLayersStore((state) => state.setVisibleLayerIds);
   const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
   const clearHCDP = useHCDPStore((s) => s.clearRasterOverlay);
+  const clearFilter = useFilterStore((s) => s.clearFilter);
 
   // One anchor per nav button
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
@@ -112,6 +114,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
   const handleResetView = useCallback(() => {
     resetMapStore();
+    clearFilter();
 
     mapConfigs.forEach((map) => {
       setVisiblePointLayerIds(map.id, []);
@@ -122,6 +125,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     setAnchors({});
   }, [
     resetMapStore,
+    clearFilter,
     setVisiblePointLayerIds,
     setVisibleHazardLayerIds,
     setVisibleRasterLayerIds,

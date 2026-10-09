@@ -1,5 +1,10 @@
 import { Feature } from "geojson";
-import { FeaturePopup, type HcdpPopupField, type OverlayPopupField } from "../components/FeaturePopup";
+import {
+  FeaturePopup,
+  type HcdpPopupField,
+  type OverlayPopupField,
+  type PointCountsPopupField,
+} from "../components/FeaturePopup";
 import { GeographiesData } from "../types";
 import { getReliabilityLabel } from "./reliability";
 import type { MetricLookup } from "../components/SingleMapView/hooks/useMetricLookups";
@@ -23,6 +28,7 @@ export function buildPolygonPopupHtml(
   ctx: PolygonPopupContext,
   hcdp?: HcdpPopupField,
   overlay?: OverlayPopupField,
+  pointCounts?: PointCountsPopupField,
 ): string | null {
   const geoid = feature.properties?.[ctx.config.geoidProperty];
   if (!geoid) return null;
@@ -69,6 +75,7 @@ export function buildPolygonPopupHtml(
     metric2: metric2Display,
     hcdp,
     overlay,
+    pointCounts,
   });
 }
 

@@ -3,9 +3,18 @@ import { Feature, FeatureCollection, Geometry } from "geojson";
 import { HawaiianHomelandProperties, GeographiesData } from "../../../types";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
 import { LeafletMouseEvent } from "leaflet";
-import { renderPolygonPopup } from "../../../utils/renderPolygonPopup.ts";
+import {
+  buildPolygonPopupHtml,
+  renderPolygonPopup,
+  type PolygonPopupContext,
+} from "../../../utils/renderPolygonPopup.ts";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
+import type { PointCountsPopupField } from "../../FeaturePopup";
 import { POLYGON_LAYERS } from "../../../config";
+import { POINT_LAYERS } from "../../../config/pointLayers";
+import { fetchPointCounts } from "../../../hooks/usePointCounts";
+import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
+import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
@@ -107,21 +116,53 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
     [onFeatureClick],
   );
 
-  const renderPopup = useMemo(
-    () =>
-      renderPolygonPopup({
-        config: {
-          fields: LAYER_CONFIG.popup.fields,
-          geoidProperty: LAYER_CONFIG.geoidProperty,
-        },
-        activeMetric,
-        metric1,
-        geographiesData,
-        activeMetric2,
-        metric2,
-      }),
+  const popupContext = useMemo<PolygonPopupContext>(
+    () => ({
+      config: {
+        fields: LAYER_CONFIG.popup.fields,
+        geoidProperty: LAYER_CONFIG.geoidProperty,
+      },
+      activeMetric,
+      metric1,
+      geographiesData,
+      activeMetric2,
+      metric2,
+    }),
     [activeMetric, activeMetric2, metric1, metric2, geographiesData],
   );
+
+  const renderPopup = useMemo(() => renderPolygonPopup(popupContext), [popupContext]);
+
+  // Point counts for the currently visible point layers (snapshot at popup-open time)
+  const enrichPopupOnOpen = useMemo(() => {
+    return async (
+      feature: Feature<Geometry, HawaiianHomelandProperties>,
+      setContent: (html: string) => void,
+    ) => {
+      const geoid =
+        feature.properties?.[LAYER_CONFIG.geoidProperty as keyof HawaiianHomelandProperties];
+      if (!geoid) return;
+
+      let pointCountsField: PointCountsPopupField = { loading: true, items: [] };
+      const render = () => {
+        const html = buildPolygonPopupHtml(feature, popupContext, undefined, undefined, pointCountsField);
+        if (html) setContent(html);
+      };
+      render();
+
+      const counts = await fetchPointCounts(String(geoid), true);
+      const visibleIds = usePointLayerStore.getState().visibleLayerIdsByMap[mapId];
+      const items = POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id))
+        .map((layer) => ({
+          label: layer.name,
+          value: counts[layer.id] ?? 0,
+          iconHtml: pointLayerIconHtml(layer),
+        }))
+        .filter((item) => item.value > 0);
+      pointCountsField = { loading: false, items };
+      render();
+    };
+  }, [popupContext, mapId]);
 
   return (
     <GenericPolygonLayer
@@ -135,6 +176,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       activeFeatureGeoid={activeFeatureGeoid}
       onFeatureClick={handleFeatureClick}
       renderPopup={renderPopup}
+      enrichPopupOnOpen={enrichPopupOnOpen}
     />
   );
 };

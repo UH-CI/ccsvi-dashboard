@@ -44,7 +44,8 @@ SQL
 if $FULL; then
     echo "-- dropping spatial tables"
     psql_run <<'SQL'
-DROP TABLE IF EXISTS geographies, counties, hawaiian_homelands, points, hazards CASCADE;
+DROP TABLE IF EXISTS geographies, counties, hawaiian_homelands, points, hazards,
+    geography_hazards, point_hazards CASCADE;
 SQL
 fi
 
@@ -58,6 +59,9 @@ cd "$BACKEND_DIR"
 if $FULL; then
     echo "-- loading geometry, points, hazards"
     "$PYTHON" -m ingest.load_postgis
+
+    echo "-- working out which areas and points touch each hazard layer"
+    "$PYTHON" -m ingest.load_hazard_overlaps
 fi
 
 echo "-- counting points per block group / Homeland area"
@@ -83,6 +87,8 @@ UNION SELECT 'counties',                 count(*) FROM counties
 UNION SELECT 'hawaiian_homelands',       count(*) FROM hawaiian_homelands
 UNION SELECT 'points',                   count(*) FROM points
 UNION SELECT 'hazards',                  count(*) FROM hazards
+UNION SELECT 'geography_hazards',        count(*) FROM geography_hazards
+UNION SELECT 'point_hazards',            count(*) FROM point_hazards
 UNION SELECT 'block_group_metrics',      count(*) FROM block_group_metrics
 UNION SELECT 'hawaiian_homeland_metrics', count(*) FROM hawaiian_homeland_metrics
 ORDER BY 1;

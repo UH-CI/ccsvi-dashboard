@@ -1,3 +1,4 @@
+import { FeatureCollection, Point } from "geojson";
 import { DatasetCatalog, MetricValue } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -25,3 +26,17 @@ export const getMetricValues = (dataset: string, metric: string) =>
 // DEPRECATED: reads from census_metrics table (dropped by migration); not currently used
 // export const getBlockGroup = (geoid: string) =>
 //   get<Record<string, unknown>>(`/api/v1/block-groups/${geoid}`);
+
+// One layer's point names, grouped by the geoid of the area they're in
+export const getPointsByGeoid = (layerId: string, homelands: boolean) =>
+  get<Record<string, string[]>>(
+    `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&homelands=${homelands}`,
+  );
+
+// Asks for one layer's points, limited to the given areas and hazards. No areas given means no area limit.
+export const getFilteredPoints = (layerId: string, geoids: string[] | null, hazards: string[]) => {
+  const params = new URLSearchParams({ layer_id: layerId });
+  for (const geoid of geoids ?? []) params.append("geoid", geoid);
+  for (const hazard of hazards) params.append("hazard", hazard);
+  return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
+};

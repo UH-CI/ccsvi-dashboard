@@ -1,20 +1,43 @@
 import { useMemo, useState } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
-import { useAppStore, useMapStore, useFilterStore, useHazardLayersStore } from "../../stores";
+import {
+  useAppStore,
+  useMapStore,
+  useFilterStore,
+  useHazardLayersStore,
+  usePointLayerStore,
+} from "../../stores";
 import { HistogramSection } from "./components/HistogramSection";
 import { HazardSection } from "./components/HazardSection";
+import { PointSection } from "./components/PointSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
 import { deriveVisibleHazards } from "./deriveHazard";
+import {
+  deriveVisibleCriticalInfrastructure,
+  deriveVisibleLocationsOfEnhancedExposure,
+} from "./derivePoints";
 
 export const DataAnalyzerMenu = () => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
 
   const hasHazard = useMemo(
     () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]).length > 0,
     [visibleLayerIdsByMap, primaryMapId],
+  );
+
+  const hasCriticalInfrastructure = useMemo(
+    () => deriveVisibleCriticalInfrastructure(visiblePointLayerIdsByMap[primaryMapId]).length > 0,
+    [visiblePointLayerIdsByMap, primaryMapId],
+  );
+
+  const hasLocationsOfEnhancedExposure = useMemo(
+    () =>
+      deriveVisibleLocationsOfEnhancedExposure(visiblePointLayerIdsByMap[primaryMapId]).length > 0,
+    [visiblePointLayerIdsByMap, primaryMapId],
   );
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
@@ -49,6 +72,20 @@ export const DataAnalyzerMenu = () => {
         <>
           <Divider />
           <HazardSection />
+        </>
+      )}
+
+      {hasCriticalInfrastructure && (
+        <>
+          <Divider />
+          <PointSection menu="criticalInfrastructure" title="Critical Infrastructure" />
+        </>
+      )}
+
+      {hasLocationsOfEnhancedExposure && (
+        <>
+          <Divider />
+          <PointSection menu="locationsOfEnhancedExposure" title="Locations of Enhanced Exposure" />
         </>
       )}
 

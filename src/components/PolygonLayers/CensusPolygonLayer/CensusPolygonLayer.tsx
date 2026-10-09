@@ -9,12 +9,17 @@ import {
   type PolygonPopupContext,
 } from "../../../utils/renderPolygonPopup.ts";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
+import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
+import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
+import { POINT_LAYERS } from "../../../config/pointLayers";
+import { fetchPointCounts } from "../../../hooks/usePointCounts";
+import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface CensusPolygonLayerProps {
   data: FeatureCollection<Geometry, BlockGroupProperties> | null;
@@ -177,71 +182,83 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const renderPopup = useMemo(() => renderPolygonPopup(popupContext), [popupContext]);
 
   const enrichPopupOnOpen = useMemo(() => {
-    if (!hcdpOverlay && !activeRasterLayerId) return undefined;
-
     return async (
       feature: Feature<Geometry, BlockGroupProperties>,
       setContent: (html: string) => void,
     ) => {
-      if (hcdpOverlay) {
-        const overlay = useHCDPStore.getState().overlaysByMap[mapId];
-        if (!overlay?.arrayBuffer) return;
+      // Tracks the latest known value of each optional field, so every redraw
+      // includes all of them together
+      let hcdpField: HcdpPopupField | undefined;
+      let overlayField: OverlayPopupField | undefined;
+      let pointCountsField: PointCountsPopupField | undefined;
 
-        const loadingHtml = buildPolygonPopupHtml(feature, popupContext, {
-          label: overlay.title,
-          loading: true,
-        });
-        if (loadingHtml) setContent(loadingHtml);
+      const render = () => {
+        const html = buildPolygonPopupHtml(feature, popupContext, hcdpField, overlayField, pointCountsField);
+        if (html) setContent(html);
+      };
 
-        const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+      // Point counts
+      const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
+      if (geoid) {
+        pointCountsField = { loading: true, items: [] };
+        render();
 
-        const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
-        if (!currentOverlay?.arrayBuffer) return;
-
-        const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, {
-          label: currentOverlay.title,
-          value: mean,
-        });
-        if (enrichedHtml) setContent(enrichedHtml);
-        return;
+        const counts = await fetchPointCounts(String(geoid), false);
+        const visibleIds = usePointLayerStore.getState().visibleLayerIdsByMap[mapId];
+        const items = POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id))
+          .map((layer) => ({
+            label: layer.name,
+            value: counts[layer.id] ?? 0,
+            iconHtml: pointLayerIconHtml(layer),
+          }))
+          .filter((item) => item.value > 0);
+        pointCountsField = { loading: false, items };
+        render();
       }
 
-      if (!activeRasterLayerId) return;
+      if (hcdpOverlay) {
+        const overlay = useHCDPStore.getState().overlaysByMap[mapId];
+        if (overlay?.arrayBuffer) {
+          hcdpField = { label: overlay.title, loading: true };
+          render();
 
-      const overlayLabel = activeRasterLayerConfig?.name ?? "Raster layer";
-      const overlaySuffix = activeRasterLayerConfig?.units ? ` ${activeRasterLayerConfig.units}` : "";
-      const loadingHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
-        label: overlayLabel,
-        loading: true,
-        suffix: overlaySuffix,
-      });
-      if (loadingHtml) setContent(loadingHtml);
+          const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
 
-      const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-      if (!currentVisibleIds?.has(activeRasterLayerId)) return;
+          const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
+          if (currentOverlay?.arrayBuffer) {
+            hcdpField = { label: currentOverlay.title, value: mean };
+            render();
+          }
+        }
+      } else if (activeRasterLayerId) {
+        const overlayLabel = activeRasterLayerConfig?.name ?? "Raster layer";
+        const overlaySuffix = activeRasterLayerConfig?.units ? ` ${activeRasterLayerConfig.units}` : "";
+        overlayField = { label: overlayLabel, loading: true, suffix: overlaySuffix };
+        render();
 
-      try {
-        const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
-        if (!res.ok) return;
-        const arrayBuffer = await res.arrayBuffer();
-        const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
+        const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+        if (currentVisibleIds?.has(activeRasterLayerId)) {
+          try {
+            const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
+            if (res.ok) {
+              const arrayBuffer = await res.arrayBuffer();
+              const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
 
-        const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-        if (!currentRasterId?.has(activeRasterLayerId)) return;
-
-        const enrichedHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
-          label: overlayLabel,
-          value: Number.isFinite(value ?? NaN) ? value : null,
-          suffix: overlaySuffix,
-        });
-        if (enrichedHtml) setContent(enrichedHtml);
-      } catch {
-        const fallbackHtml = buildPolygonPopupHtml(feature, popupContext, undefined, {
-          label: overlayLabel,
-          value: null,
-          suffix: overlaySuffix,
-        });
-        if (fallbackHtml) setContent(fallbackHtml);
+              const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+              if (currentRasterId?.has(activeRasterLayerId)) {
+                overlayField = {
+                  label: overlayLabel,
+                  value: Number.isFinite(value ?? NaN) ? value : null,
+                  suffix: overlaySuffix,
+                };
+                render();
+              }
+            }
+          } catch {
+            overlayField = { label: overlayLabel, value: null, suffix: overlaySuffix };
+            render();
+          }
+        }
       }
     };
   }, [activeRasterLayerConfig, activeRasterLayerId, hcdpOverlay, mapId, popupContext]);
