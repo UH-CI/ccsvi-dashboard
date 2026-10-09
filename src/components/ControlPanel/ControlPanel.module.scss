@@ -423,13 +423,3 @@
 .layer-sub-stack {
   padding-left: 48px;
 }
-
-// Raster sub-layer form label ─────────────────────────────────────────────────
-
-.raster-form-label {
-  margin-left: 0;
-
-  :global(.MuiFormControlLabel-label) {
-    margin-left: 7.2px;
-  }
-}
