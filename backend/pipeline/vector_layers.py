@@ -3,10 +3,10 @@
 Turns raw GIS files into cleaned GeoJSONs and map tiles.
 
   1. unzip the source to a temp folder
-  2. ogr2ogr, one SpatiaLite query: keep the layer's columns; reproject to WGS84; repair
+  2. ogr2ogr, one SpatiaLite query: keep the layer's columns (all, unless the entry lists some); reproject to WGS84; repair
      (ST_MakeValid); round to 5 decimals (~1 m) with ReducePrecision, which keeps shapes valid;
      keep only the layer's shape type (ST_CollectionExtract, dropping zero-width leftovers of
-     repair). Written as unsimplified GeoJSON
+     repair) and drop rows left with no shape. Written as unsimplified GeoJSON
   3. tippecanoe: tiles from that GeoJSON into a staging folder, never over the live tiles
   4. checks: feature count, validity, shape type, location; stops on failure
 
@@ -42,18 +42,32 @@ class Layer:
     name: str      # output file name without extension; also the tile layer name the map reads
     zips: list     # zips from outermost in, the first relative to RAW_DIR
     inner: str     # shapefile inside the last zip
-    columns: list  # columns to keep
+    columns: list = None  # columns to keep; None keeps all
     shape: str = "MultiPolygon"  # output shape type, a key of EXTRACT; line layers set "MultiLineString"
 
 
 SLR_EXPOSURE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"]
-SLR_EXPOSURE_COLUMNS = ["ID", "Shape_Leng", "Shape_Area"]
+SLR_PASSIVE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"]
+SLR_EROSION = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"]
+SLR_HIGHWAYS = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
 
 LAYERS = [
-    Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp", SLR_EXPOSURE_COLUMNS),
-    Layer("filtered_slr_exposure_area_1pt1ft", SLR_EXPOSURE, "slr_exposure_area_1_pt_1_ft.shp", SLR_EXPOSURE_COLUMNS),
-    Layer("filtered_slr_exposure_area_2pt0ft", SLR_EXPOSURE, "slr_exposure_area_2_pt_0_ft.shp", SLR_EXPOSURE_COLUMNS),
-    Layer("filtered_slr_exposure_area_3pt2ft", SLR_EXPOSURE, "slr_exposure_area_3_pt_2_ft.shp", SLR_EXPOSURE_COLUMNS),
+    Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
+    Layer("filtered_slr_exposure_area_1pt1ft", SLR_EXPOSURE, "slr_exposure_area_1_pt_1_ft.shp"),
+    Layer("filtered_slr_exposure_area_2pt0ft", SLR_EXPOSURE, "slr_exposure_area_2_pt_0_ft.shp"),
+    Layer("filtered_slr_exposure_area_3pt2ft", SLR_EXPOSURE, "slr_exposure_area_3_pt_2_ft.shp"),
+    Layer("filtered_slr_passive_fld_0pt5ft", SLR_PASSIVE, "slr_passive_fld_0_pt_5_ft.shp"),
+    Layer("filtered_slr_passive_fld_1pt1ft", SLR_PASSIVE, "slr_passive_fld_1_pt_1_ft.shp"),
+    Layer("filtered_slr_passive_fld_2pt0ft", SLR_PASSIVE, "slr_passive_fld_2_pt_0_ft.shp"),
+    Layer("filtered_slr_passive_fld_3pt2ft", SLR_PASSIVE, "slr_passive_fld_3_pt_2_ft.shp"),
+    Layer("filtered_slr_cstl_erosn_0pt5ft", SLR_EROSION, "slr_cstl_erosn_0_pt_5_ft.shp"),
+    Layer("filtered_slr_cstl_erosn_1pt1ft", SLR_EROSION, "slr_cstl_erosn_1_pt_1_ft.shp"),
+    Layer("filtered_slr_cstl_erosn_2pt0ft", SLR_EROSION, "slr_cstl_erosn_2_pt_0_ft.shp"),
+    Layer("filtered_slr_cstl_erosn_3pt2ft", SLR_EROSION, "slr_cstl_erosn_3_pt_2_ft.shp"),
+    Layer("filtered_slr_potent_fld_hwys_0pt5ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_0_pt_5_ft.shp", shape="MultiLineString"),
+    Layer("filtered_slr_potent_fld_hwys_1pt1ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_1_pt_1_ft.shp", shape="MultiLineString"),
+    Layer("filtered_slr_potent_fld_hwys_2pt0ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_2_pt_0_ft.shp", shape="MultiLineString"),
+    Layer("filtered_slr_potent_fld_hwys_3pt2ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_3_pt_2_ft.shp", shape="MultiLineString"),
 ]
 
 
@@ -89,11 +103,13 @@ def unzip(layer, tmp):
     return Path(tmp) / layer.inner
 
 
-# Reproject, repair, then round with ReducePrecision to keep shapes valid on the rounding grid
-def process(layer, source, out):
-    columns = ", ".join(f'"{c}"' for c in layer.columns)
+# Reproject, repair, then round with ReducePrecision to keep shapes valid on the rounding grid;
+# rows left with no shape of the layer's type (e.g. a "line" that was really a dot) are dropped
+def process(layer, source, out, columns):
+    columns = ", ".join(f'"{c}"' for c in columns)
     shapes = f"ReducePrecision(ST_MakeValid(ST_Transform(geometry, 4326)), {10 ** -DECIMALS})"
-    sql = f'SELECT {columns}, ST_CollectionExtract({shapes}, {EXTRACT[layer.shape]}) AS geometry FROM "{source.stem}"'
+    cleaned = f'SELECT {columns}, ST_CollectionExtract({shapes}, {EXTRACT[layer.shape]}) AS geometry FROM "{source.stem}"'
+    sql = f"SELECT * FROM ({cleaned}) WHERE geometry IS NOT NULL"
     out.unlink(missing_ok=True)
     run(["ogr2ogr", "-f", "GeoJSON", out, source, "-dialect", "SQLite", "-sql", sql,
          "-a_srs", "EPSG:4326", "-nlt", layer.shape.upper(), "-nln", layer.name,
@@ -133,8 +149,9 @@ def build(layer):
     start = time.time()
     with tempfile.TemporaryDirectory() as tmp:
         source = unzip(layer, tmp)
-        source_count = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", source]))["layers"][0]["featureCount"]
-        process(layer, source, geojson)
+        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", source]))["layers"][0]
+        source_count = info["featureCount"]
+        process(layer, source, geojson, layer.columns or [f["name"] for f in info["fields"]])
     print(f"  processed: {megabytes(geojson)} in {time.time() - start:.0f} s")
 
     start = time.time()
