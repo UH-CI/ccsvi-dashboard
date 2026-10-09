@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { MapConfig } from "../types";
+import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
 
 interface MapState {
   // Map configurations
@@ -69,7 +70,7 @@ const initialMapConfig: MapConfig = {
   metric: "",
   visible: true,
   colorScheme: "Viridis",
-  baseMap: "openstreet",
+  baseMap: DEFAULT_BASE_MAP_ID,
 };
 
 export const defaultExpandedSections = {
@@ -102,7 +103,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       metric: "",
       visible: true,
       colorScheme: "Viridis",
-      baseMap: "openstreet",
+      baseMap: DEFAULT_BASE_MAP_ID,
     };
     set((state) => ({
       mapConfigs: [...state.mapConfigs, newMap],
