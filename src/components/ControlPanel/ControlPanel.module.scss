@@ -299,13 +299,9 @@
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  //raster specific spacing rule
-  &--raster > div > .layer-label {
-    margin-left: 37px;
-  }
 }
 
-.layer-toggle--sea-level-rise > div {
+.layer-toggle--group > div {
   padding-left: 12px;
   padding-right: 10px;
 
@@ -425,7 +421,7 @@
 // Sub-layer indent stack (Hazards, Rasters) ───────────────────────────────────
 
 .layer-sub-stack {
-  padding-left: 24px;
+  padding-left: 48px;
 }
 
 // Raster sub-layer form label ─────────────────────────────────────────────────

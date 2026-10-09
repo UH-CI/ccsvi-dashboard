@@ -1,15 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  Box,
-  Checkbox,
-  Collapse,
-  FormControlLabel,
-  IconButton,
-  Stack,
-  Tooltip,
-} from "@mui/material";
+import { Box, Stack, Collapse, IconButton } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import * as FaIcons from "react-icons/fa";
 import { useMapStore, useHazardLayersStore, useRasterLayersStore } from "../../../stores";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
@@ -180,11 +171,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
                 label={section.label}
                 icon={section.label === "Sea Level Rise" ? "FaWaveSquare" : undefined}
                 color={section.label === "Sea Level Rise" ? "#1976d2" : undefined}
-                className={
-                  section.label === "Sea Level Rise"
-                    ? styles["layer-toggle--sea-level-rise"]
-                    : undefined
-                }
+                className={styles["layer-toggle--group"]}
                 description={section.layers.find((layer) => layer.description)?.description}
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}
@@ -199,8 +186,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               label="Raster Layers"
               icon="FaMountain"
               color="#6D4C41"
-              //move raster layer header without affecting child layers
-              className={styles["layer-toggle--raster"]}
+              className={styles["layer-toggle--group"]}
               expanded={expandedHazards["raster-group"] ?? false}
               onToggleExpand={() => toggleExpand("raster-group")}
               childrenPl={2}
