@@ -53,6 +53,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
     () => buildHazardMenuSections(hazardLayerConfigs, "hazards"),
     [hazardLayerConfigs],
   );
+  const rasterGroup = HAZARD_MENU_GROUPS.find((g) => g.label === "Raster Layers")!;
 
   const renderHazardParent = (parent: HazardLayerConfig) => {
     const visibleIds = visibleHazardLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
@@ -181,16 +182,15 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
           {menuSections.map((section) => {
             if (section.kind === "layer") return renderHazardParent(section.layer);
             const expandKey = hazardMenuGroupExpandKey(section.label);
+            const group = HAZARD_MENU_GROUPS.find((g) => g.label === section.label);
             return (
               <LayerToggleGroup
                 key={expandKey}
                 label={section.label}
-                icon={section.label === "Sea Level Rise" ? "FaWaveSquare" : undefined}
-                color={section.label === "Sea Level Rise" ? "#1976d2" : undefined}
+                icon={group?.icon}
+                color={group?.color}
                 className={styles["layer-toggle--group"]}
-                description={
-                  HAZARD_MENU_GROUPS.find((group) => group.label === section.label)?.description
-                }
+                description={group?.description}
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}
                 childrenPl={0}
@@ -201,10 +201,11 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
           })}
           {rasterLayerConfigs.length > 0 && (
             <LayerToggleGroup
-              label="Raster Layers"
-              icon="FaMountain"
-              color="#6D4C41"
+              label={rasterGroup.label}
+              icon={rasterGroup.icon}
+              color={rasterGroup.color}
               className={styles["layer-toggle--group"]}
+              description={rasterGroup.description}
               expanded={expandedHazards["raster-group"] ?? false}
               onToggleExpand={() => toggleExpand("raster-group")}
               childrenPl={0}
