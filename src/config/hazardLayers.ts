@@ -513,14 +513,14 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   },
   {
     id: "pcl_landfill",
-    name: "Landfills",
+    name: "Solid Waste Disposal Sites",
     menuPanel: "locations",
     visible: false,
     icon: "FaTrash",
     color: "#000000",
     filePath: "Prev_contaminated_land_landfills.pmtiles",
     popupConfig: {
-      titleField: "Landfills",
+      titleField: "Solid Waste Disposal Sites",
       fields: [
         { key: "city", label: "City" },
         { key: "county", label: "County" },

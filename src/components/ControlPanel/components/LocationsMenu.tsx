@@ -98,7 +98,7 @@ export const LocationsMenu: React.FC<LocationsMenuProps> = ({
       open={open}
       anchorEl={anchorEl}
       onClose={onClose}
-      title="Locations of Enhanced Exposure"
+      title="Secondary Environmental Risk Areas"
       onInfoClick={onInfoClick}
     >
       <MapTabSelector
