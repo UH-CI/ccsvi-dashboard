@@ -34,6 +34,28 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
   children,
 }) => {
   const IconComponent = (icon && FaIcons[icon as keyof typeof FaIcons]) || FaIcons[fallbackIcon];
+  const labelNode = (
+    <Typography
+      className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
+      onClick={hideCheckbox ? selectAll?.onToggle : undefined}
+      sx={hideCheckbox ? { cursor: "pointer" } : undefined}
+    >
+      {icon && (
+        <span className={styles["layer-icon"]} style={{ color }}>
+          <IconComponent size="1rem" />
+        </span>
+      )}
+      <span>{label}</span>
+    </Typography>
+  );
+  const renderedLabel = description ? (
+    <Tooltip title={description} placement="right">
+      {labelNode}
+    </Tooltip>
+  ) : (
+    labelNode
+  );
+
   return (
     //combine base class w/ optional className
     <Box className={[styles["layer-toggle"], className].filter(Boolean).join(" ")}>
@@ -47,35 +69,7 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
             sx={hideCheckbox ? { opacity: 0 } : undefined}
           />
         )}
-        {description ? (
-          <Tooltip title={description} placement="right">
-            <Typography
-              className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
-              onClick={hideCheckbox ? selectAll?.onToggle : undefined}
-              sx={hideCheckbox ? { cursor: "pointer" } : undefined}
-            >
-              {icon && (
-                <span className={styles["layer-icon"]} style={{ color }}>
-                  <IconComponent size="1rem" />
-                </span>
-              )}
-              <span>{label}</span>
-            </Typography>
-          </Tooltip>
-        ) : (
-          <Typography
-            className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
-            onClick={hideCheckbox ? selectAll?.onToggle : undefined}
-            sx={hideCheckbox ? { cursor: "pointer" } : undefined}
-          >
-            {icon && (
-              <span className={styles["layer-icon"]} style={{ color }}>
-                <IconComponent size="1rem" />
-              </span>
-            )}
-            <span>{label}</span>
-          </Typography>
-        )}
+        {renderedLabel}
         <IconButton size="small" onClick={onToggleExpand}>
           {expanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
