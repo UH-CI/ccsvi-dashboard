@@ -112,38 +112,21 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
   const renderRasterParent = (parent: RasterLayerConfig) => {
     const visibleIds = visibleRasterLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
     const hasSubs = Boolean(parent.subLayers?.length);
-    const ParentIcon = FaIcons[parent.icon as keyof typeof FaIcons] || FaIcons.FaMap;
     const rasterExpandKey = `raster:${parent.id}`;
 
     return (
       <Box key={parent.id} className={styles["layer-toggle"]}>
         <Box display="flex" alignItems="center">
-          {!hasSubs && (
-            <Checkbox
-              checked={visibleIds.has(parent.id)}
-              onChange={() => toggleRasterLayerVisibility(resolvedHazardsMapId, parent.id)}
-              size="small"
-            />
-          )}
-          <Box
-            className={`${styles["layer-label"]}${hasSubs ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexGrow: 1,
-            }}
-          >
-            <span className={styles["layer-icon"]} style={{ color: parent.color }}>
-              <ParentIcon size="1rem" />
-            </span>
-            {parent.description ? (
-              <Tooltip title={parent.description} placement="right">
-                <span>{parent.name}</span>
-              </Tooltip>
-            ) : (
-              parent.name
-            )}
-          </Box>
+          <LayerToggleItem
+            label={parent.name}
+            description={parent.description}
+            icon={parent.icon}
+            color={parent.color}
+            fallbackIcon="FaMap"
+            className={styles["hazard-parent-toggle"]}
+            checked={visibleIds.has(parent.id)}
+            onToggle={() => toggleRasterLayerVisibility(resolvedHazardsMapId, parent.id)}
+          />
           {hasSubs && (
             <IconButton size="small" onClick={() => toggleExpand(rasterExpandKey)}>
               {expandedHazards[rasterExpandKey] ? <ExpandLess /> : <ExpandMore />}
@@ -154,30 +137,15 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
           <Collapse in={expandedHazards[rasterExpandKey]}>
             <Stack spacing={1} className={styles["layer-sub-stack"]}>
               {parent.subLayers!.map((sub) => (
-                <FormControlLabel
+                <LayerToggleItem
                   key={sub.id}
-                  className={styles["raster-form-label"]}
-                  control={
-                    <Checkbox
-                      checked={visibleIds.has(`${parent.id}.${sub.id}`)}
-                      onChange={() =>
-                        toggleSubRasterLayerVisibility(
-                          resolvedHazardsMapId,
-                          parent.id,
-                          sub.id,
-                        )
-                      }
-                      size="small"
-                    />
-                  }
-                  label={
-                    sub.description ? (
-                      <Tooltip title={sub.description} placement="right">
-                        <span>{sub.name}</span>
-                      </Tooltip>
-                    ) : (
-                      sub.name
-                    )
+                  label={sub.name}
+                  description={sub.description}
+                  checked={visibleIds.has(`${parent.id}.${sub.id}`)}
+                  indented
+                  labelMl={0}
+                  onToggle={() =>
+                    toggleSubRasterLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
                   }
                 />
               ))}
