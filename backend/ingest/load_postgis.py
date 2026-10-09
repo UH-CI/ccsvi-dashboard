@@ -34,16 +34,20 @@ COUNTY_GEOIDS = {
 
 # (filename, layer_id matching pointLayers.ts, name property key)
 POINT_LAYERS = [
-    ("Fire_Stations_(Statewide).geojson",           "fire_stations",     "name"),
-    ("Hospitals.geojson",                           "hospitals",         "name"),
-    ("Police_Stations_(Statewide).geojson",         "police_stations",   "name"),
-    ("emergency_shelters.geojson",                  "shelters",          "BUSNAME"),
-    ("Preschools.geojson",                          "preschools",        "name"),
-    ("Public_Schools.geojson",                      "public_schools",    "sch_name"),
-    ("Private_Schools.geojson",                     "private_schools",   "school"),
-    ("National_Bridge_Inventory.geojson",           "bridges",           "structure_"),
-    ("HI_Onsite_Sewage_Disposal_Systems.geojson",   "sewage",            "island"),
-    ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",  "wwtp_name"),
+    ("Fire_Stations_(Statewide).geojson",           "fire_stations",      "name"),
+    ("Hospitals.geojson",                           "hospitals",          "name"),
+    ("Police_Stations_(Statewide).geojson",         "police_stations",    "name"),
+    ("emergency_shelters.geojson",                  "shelters",           "BUSNAME"),
+    ("Preschools.geojson",                          "preschools",         "name"),
+    ("Public_Schools.geojson",                      "public_schools",     "sch_name"),
+    ("Private_Schools.geojson",                     "private_schools",    "school"),
+    ("National_Bridge_Inventory.geojson",           "bridges",            "structure_"),
+    ("HI_Onsite_Sewage_Disposal_System.geojson",    "sewage",             "island"), # change to Onsite_Sewage_Disposal_System_v2.geojson when upgrading to larger dataset
+    ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",   "wwtp_name"),
+    ("HI_commercial_harbors_pt.geojson",            "harbors", "harbor_nam"),
+    ("HI_airports_pt.geojson",                      "airports",           "airport_na"),
+    ("HI_small_boat_harbor.geojson",               "harbors", "name"),
+
 ]
 
 # (filename, hazard_id, sub_id, height_ft) — IDs match hazardLayers.ts
@@ -91,6 +95,8 @@ HAZARD_LAYERS = [
     ("Fire_zone_6.geojson",                         "fire_zone",               "Zone_6",        None),
     ("Prev_contaminated_land_landfills.geojson",    "pcl_landfill",            None,            None),
     ("Prev_contaminated_land_filtered.geojson",     "pcl_filtered",            None,            None),
+    ("HI_commercial_harbors_shp.geojson",           "harbors",                 None,            None),
+    ("HI_airports_shp.geojson",                     "airports",                None,            None),
 ]
 
 BATCH_SIZE = 500

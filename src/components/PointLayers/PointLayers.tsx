@@ -193,7 +193,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
 
             return (
               <Marker
-                key={`${config.id}-${featureId}`}
+                key={`${config.id}-${featureId}-${index}`}
                 position={[latitude, longitude]}
                 icon={customIcon}
               >

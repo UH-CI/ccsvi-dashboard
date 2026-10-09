@@ -31,6 +31,29 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
   const [pointsMapId, setPointsMapId] = useState<string>("");
   const resolvedPointsMapId = useResolvedMapId(pointsMapId, visibleMaps, primaryMapId);
   const [expandedPoints, setExpandedPoints] = useState<Record<string, boolean>>({});
+  const sharedLayerGroups = Array.from(
+    new Set([
+      ...pointLayerConfigs.map((layer) => layer.menuGroup),
+      ...hazardLayerConfigs
+        .filter((layer) => layer.menuPanel === "points")
+        .map((layer) => layer.menuGroup),
+    ].filter((group): group is string => Boolean(group))),
+  ).map((group) => {
+    const pointLayers = pointLayerConfigs.filter((layer) => layer.menuGroup === group);
+    const hazardLayers = hazardLayerConfigs.filter(
+      (layer) => layer.menuPanel === "points" && layer.menuGroup === group,
+    );
+    const firstLayer = pointLayers[0] ?? hazardLayers[0];
+
+    return {
+      id: group,
+      name: firstLayer?.name ?? group,
+      icon: firstLayer?.icon,
+      color: firstLayer?.color,
+      pointLayers,
+      hazardLayers,
+    };
+  });
 
   return (
     <MenuShell
@@ -67,7 +90,13 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
           return (
             <Stack spacing={1}>
               {pointLayerConfigs
-                .filter((l) => !SCHOOL_IDS.includes(l.id) && l.id !== "sewage" && l.id !== "wastewater_plant")
+                .filter(
+                  (l) =>
+                    !l.menuGroup &&
+                    !SCHOOL_IDS.includes(l.id) &&
+                    l.id !== "sewage" &&
+                    l.id !== "wastewater_plant",
+                )
                 .map((layer) => (
                   <LayerToggleItem
                     key={layer.id}
@@ -79,67 +108,98 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
                   />
                 ))}
 
-              {/* Sidewalks and Paths (from hazard layers) */}
-              {(() => {
-                const layer = hazardLayerConfigs.find((l) => l.id === "sidewalks_and_paths");
-                if (!layer) return null;
-                const isVisible =
-                  visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(layer.id) ?? false;
+              {hazardLayerConfigs
+                .filter((layer) => layer.menuPanel === "points" && !layer.menuGroup)
+                .map((layer) => {
+                  const visibleLayerIds = visibleHazardLayerIdsByMap[resolvedPointsMapId];
+
+                  if (layer.subLayers?.length) {
+                    const visibleSubCount = layer.subLayers.filter((sub) =>
+                      visibleLayerIds?.has(`${layer.id}.${sub.id}`),
+                    ).length;
+                    const allSubVisible = visibleSubCount === layer.subLayers.length;
+                    const someSubVisible = visibleSubCount > 0 && !allSubVisible;
+
+                    return (
+                      <LayerToggleGroup
+                        key={layer.id}
+                        label={layer.name}
+                        icon={layer.icon}
+                        color={layer.color}
+                        expanded={expandedPoints[layer.id] ?? false}
+                        onToggleExpand={() =>
+                          setExpandedPoints((prev) => ({ ...prev, [layer.id]: !prev[layer.id] }))
+                        }
+                        selectAll={{
+                          checked: allSubVisible,
+                          indeterminate: someSubVisible,
+                          onToggle: () => toggleHazardLayerVisibility(resolvedPointsMapId, layer.id),
+                        }}
+                      >
+                        {layer.subLayers.map((sub) => {
+                          const compositeId = `${layer.id}.${sub.id}`;
+                          return (
+                            <LayerToggleItem
+                              key={sub.id}
+                              label={sub.name}
+                              checked={visibleLayerIds?.has(compositeId) ?? false}
+                              indented
+                              onToggle={() =>
+                                toggleSubLayerVisibility(resolvedPointsMapId, layer.id, sub.id)
+                              }
+                            />
+                          );
+                        })}
+                      </LayerToggleGroup>
+                    );
+                  }
+
+                  return (
+                    <LayerToggleItem
+                      key={layer.id}
+                      label={layer.name}
+                      icon={layer.icon}
+                      color={layer.color}
+                      checked={visibleLayerIds?.has(layer.id) ?? false}
+                      onToggle={() => toggleHazardLayerVisibility(resolvedPointsMapId, layer.id)}
+                    />
+                  );
+                })}
+
+              {sharedLayerGroups.map((group) => {
+                const visiblePointIds = visiblePointLayerIdsByMap[resolvedPointsMapId];
+                const visibleHazardIds = visibleHazardLayerIdsByMap[resolvedPointsMapId];
+                const sourceVisibility = [
+                  ...group.pointLayers.map((layer) => visiblePointIds?.has(layer.id) ?? false),
+                  ...group.hazardLayers.map((layer) => visibleHazardIds?.has(layer.id) ?? false),
+                ];
+                const allVisible = sourceVisibility.length > 0 && sourceVisibility.every(Boolean);
+                const someVisible = sourceVisibility.some(Boolean) && !allVisible;
+
                 return (
                   <LayerToggleItem
-                    label={layer.name}
-                    icon={layer.icon}
-                    color={layer.color}
-                    checked={isVisible}
-                    onToggle={() => toggleHazardLayerVisibility(resolvedPointsMapId, layer.id)}
+                    key={group.id}
+                    label={group.name}
+                    icon={group.icon}
+                    color={group.color}
+                    checked={allVisible}
+                    indeterminate={someVisible}
+                    onToggle={() => {
+                      const shouldShow = !allVisible;
+                      group.pointLayers.forEach((layer) => {
+                        if ((visiblePointIds?.has(layer.id) ?? false) !== shouldShow) {
+                          togglePointLayerVisibility(resolvedPointsMapId, layer.id);
+                        }
+                      });
+                      group.hazardLayers.forEach((layer) => {
+                        if ((visibleHazardIds?.has(layer.id) ?? false) !== shouldShow) {
+                          toggleHazardLayerVisibility(resolvedPointsMapId, layer.id);
+                        }
+                      });
+                    }}
                   />
                 );
-              })()}
-
-              {/* State Roads with island sub-layers */}
-              {(() => {
-                const roadsLayer = hazardLayerConfigs.find((l) => l.id === "state_roads");
-                if (!roadsLayer?.subLayers) return null;
-                const visibleSubCount = roadsLayer.subLayers.filter((sub) =>
-                  visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(`state_roads.${sub.id}`),
-                ).length;
-                const allSubVisible = visibleSubCount === roadsLayer.subLayers.length;
-                const someSubVisible = visibleSubCount > 0 && !allSubVisible;
-                return (
-                  <LayerToggleGroup
-                    label={roadsLayer.name}
-                    icon={roadsLayer.icon}
-                    color={roadsLayer.color}
-                    expanded={expandedPoints.state_roads ?? false}
-                    onToggleExpand={() =>
-                      setExpandedPoints((prev) => ({ ...prev, state_roads: !prev.state_roads }))
-                    }
-                    selectAll={{
-                      checked: allSubVisible,
-                      indeterminate: someSubVisible,
-                      onToggle: () =>
-                        toggleHazardLayerVisibility(resolvedPointsMapId, roadsLayer.id),
-                    }}
-                  >
-                    {roadsLayer.subLayers.map((sub) => {
-                      const compositeId = `state_roads.${sub.id}`;
-                      const isSubVisible =
-                        visibleHazardLayerIdsByMap[resolvedPointsMapId]?.has(compositeId) ?? false;
-                      return (
-                        <LayerToggleItem
-                          key={sub.id}
-                          label={sub.name}
-                          checked={isSubVisible}
-                          indented
-                          onToggle={() =>
-                            toggleSubLayerVisibility(resolvedPointsMapId, roadsLayer.id, sub.id)
-                          }
-                        />
-                      );
-                    })}
-                  </LayerToggleGroup>
-                );
-              })()}
+              })}
 
               {/* Schools group */}
               <LayerToggleGroup

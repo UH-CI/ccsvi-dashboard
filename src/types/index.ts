@@ -86,6 +86,7 @@ export interface PointLayerConfig {
   icon: string;
   color: string;
   filePath: string;
+  menuGroup?: string;
   data?: import("geojson").FeatureCollection<import("geojson").Point>;
   popupConfig: {
     titleField: string;

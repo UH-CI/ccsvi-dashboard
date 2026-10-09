@@ -523,6 +523,45 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       ],
     },
   },
+  {
+    id: "harbors",
+    name: "Harbors",
+    menuPanel: "points",
+    menuGroup: "harbors",
+    visible: false,
+    icon: "FaShip",
+    color: "#002FBF",
+    filePath: "HI_commercial_harbors_shp.pmtiles",
+    popupConfig: {
+      titleField: "harbor_nam",
+      fields: [
+        { key: "berth_leng", label: "Dock Length" },
+        { key: "year_area", label: "Outdoor Storage Area" },
+        { key: "shed_area", label: "Warehouse Area" },
+        { key: "channel_de", label: "Channel Depth" },
+        { key: "turn_basin", label: "Turning Area" },
+        
+      ],
+    },
+  },
+  {
+    id: "airports",
+    name: "Airports",
+    menuPanel: "points",
+    menuGroup: "airports",
+    visible: false,
+    icon: "FaPlane",
+    color: "#F4B41A",
+    filePath: "HI_airports_shp.pmtiles",
+    popupConfig: {
+      titleField: "airport_na",
+      fields: [
+        { key: "airport_co", label: "Airport Code" },
+        
+      ],
+    },
+  },
+
 
   /*
   {
