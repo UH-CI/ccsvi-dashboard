@@ -111,7 +111,6 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
   const renderRasterParent = (parent: RasterLayerConfig) => {
     const visibleIds = visibleRasterLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
     const toggleParent = () => toggleRasterLayerVisibility(resolvedHazardsMapId, parent.id);
-    const rasterExpandKey = `raster:${parent.id}`;
 
     if (!parent.subLayers?.length) {
       return (
@@ -143,8 +142,8 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
           onToggle: toggleParent,
         }}
         hideCheckbox
-        expanded={expandedHazards[rasterExpandKey] ?? false}
-        onToggleExpand={() => toggleExpand(rasterExpandKey)}
+        expanded={expandedHazards[parent.id] ?? false}
+        onToggleExpand={() => toggleExpand(parent.id)}
         childrenPl={7}
       >
         {parent.subLayers.map((sub) => (
@@ -206,8 +205,8 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               color={rasterGroup.color}
               className={styles["layer-toggle--group"]}
               description={rasterGroup.description}
-              expanded={expandedHazards["raster-group"] ?? false}
-              onToggleExpand={() => toggleExpand("raster-group")}
+              expanded={expandedHazards[hazardMenuGroupExpandKey(rasterGroup.label)] ?? false}
+              onToggleExpand={() => toggleExpand(hazardMenuGroupExpandKey(rasterGroup.label))}
               childrenPl={0}
             >
               {rasterLayerConfigs.map(renderRasterParent)}
