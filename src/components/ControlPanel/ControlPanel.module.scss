@@ -179,12 +179,6 @@
   outline: none;
 }
 
-.hazard-parent-toggle {
-  :global(.MuiCheckbox-root) {
-    opacity: 0;
-  }
-}
-
 // Shared dropdown content styles ─────────────────────────────────────────
 
 .popover-title {
@@ -302,11 +296,11 @@
 }
 
 .layer-toggle--group > div {
-  padding-left: 12px;
+  padding-left: 25px;
   padding-right: 10px;
 
   :global(.MuiIconButton-root) {
-    margin-right: 12px;
+    margin-right: 25px;
   }
 }
 
@@ -416,10 +410,4 @@
 
 .opacity-field {
   margin-bottom: 16px;
-}
-
-// Sub-layer indent stack (Hazards, Rasters) ───────────────────────────────────
-
-.layer-sub-stack {
-  padding-left: 48px;
 }

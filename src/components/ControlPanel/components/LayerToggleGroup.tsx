@@ -10,6 +10,7 @@ interface LayerToggleGroupProps {
   onToggleExpand: () => void;
   description?: string; // optional hover text for the group header
   selectAll?: { checked: boolean; indeterminate: boolean; onToggle: () => void };
+  hideCheckbox?: boolean;
   icon?: string;
   color?: string;
   fallbackIcon?: keyof typeof FaIcons;
@@ -24,6 +25,7 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
   onToggleExpand,
   description,
   selectAll,
+  hideCheckbox = false,
   icon,
   color,
   fallbackIcon = "FaCircle",
@@ -42,12 +44,15 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
             indeterminate={selectAll.indeterminate}
             onChange={selectAll.onToggle}
             size="small"
+            sx={hideCheckbox ? { opacity: 0 } : undefined}
           />
         )}
         {description ? (
           <Tooltip title={description} placement="right">
             <Typography
               className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
+              onClick={hideCheckbox ? selectAll?.onToggle : undefined}
+              sx={hideCheckbox ? { cursor: "pointer" } : undefined}
             >
               {icon && (
                 <span className={styles["layer-icon"]} style={{ color }}>
@@ -60,6 +65,8 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
         ) : (
           <Typography
             className={`${styles["layer-label"]}${!selectAll ? ` ${styles["layer-label--no-checkbox"]}` : ""}`}
+            onClick={hideCheckbox ? selectAll?.onToggle : undefined}
+            sx={hideCheckbox ? { cursor: "pointer" } : undefined}
           >
             {icon && (
               <span className={styles["layer-icon"]} style={{ color }}>

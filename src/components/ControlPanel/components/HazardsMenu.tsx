@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Box, Stack, Collapse, IconButton } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Stack } from "@mui/material";
 import { useMapStore, useHazardLayersStore, useRasterLayersStore } from "../../../stores";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
@@ -57,94 +56,110 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
 
   const renderHazardParent = (parent: HazardLayerConfig) => {
     const visibleIds = visibleHazardLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
-    const hasSubs = Boolean(parent.subLayers?.length);
+    const toggleParent = () => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id);
+
+    if (!parent.subLayers?.length) {
+      return (
+        <LayerToggleItem
+          key={parent.id}
+          label={parent.name}
+          description={parent.description}
+          icon={parent.icon}
+          color={parent.color}
+          fallbackIcon="FaExclamationTriangle"
+          checked={visibleIds.has(parent.id)}
+          onToggle={toggleParent}
+          hideCheckbox
+        />
+      );
+    }
 
     return (
-      <Box key={parent.id} className={styles["layer-toggle"]}>
-        <Box display="flex" alignItems="center">
+      <LayerToggleGroup
+        key={parent.id}
+        label={parent.name}
+        description={parent.description}
+        icon={parent.icon}
+        color={parent.color}
+        fallbackIcon="FaExclamationTriangle"
+        selectAll={{
+          checked: visibleIds.has(parent.id),
+          indeterminate: false,
+          onToggle: toggleParent,
+        }}
+        hideCheckbox
+        expanded={expandedHazards[parent.id] ?? false}
+        onToggleExpand={() => toggleExpand(parent.id)}
+        childrenPl={7}
+      >
+        {parent.subLayers.map((sub) => (
           <LayerToggleItem
-            label={parent.name}
-            description={parent.description}
-            icon={parent.icon}
-            color={parent.color}
-            fallbackIcon="FaExclamationTriangle"
-            className={styles["hazard-parent-toggle"]}
-            checked={visibleIds.has(parent.id)}
-            onToggle={() => toggleHazardLayerVisibility(resolvedHazardsMapId, parent.id)}
+            key={sub.id}
+            label={sub.name}
+            description={sub.description}
+            checked={visibleIds.has(`${parent.id}.${sub.id}`)}
+            indented
+            labelMl={0}
+            onToggle={() => toggleSubLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)}
           />
-          {hasSubs && (
-            <IconButton size="small" onClick={() => toggleExpand(parent.id)}>
-              {expandedHazards[parent.id] ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          )}
-        </Box>
-        {hasSubs && (
-          <Collapse in={expandedHazards[parent.id]}>
-            <Stack spacing={1} className={styles["layer-sub-stack"]}>
-              {parent.subLayers!.map((sub) => (
-                <LayerToggleItem
-                  key={sub.id}
-                  label={sub.name}
-                  description={sub.description}
-                  checked={visibleIds.has(`${parent.id}.${sub.id}`)}
-                  indented
-                  labelMl={0}
-                  onToggle={() =>
-                    toggleSubLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
-                  }
-                />
-              ))}
-            </Stack>
-          </Collapse>
-        )}
-      </Box>
+        ))}
+      </LayerToggleGroup>
     );
   };
 
   const renderRasterParent = (parent: RasterLayerConfig) => {
     const visibleIds = visibleRasterLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
-    const hasSubs = Boolean(parent.subLayers?.length);
+    const toggleParent = () => toggleRasterLayerVisibility(resolvedHazardsMapId, parent.id);
     const rasterExpandKey = `raster:${parent.id}`;
 
+    if (!parent.subLayers?.length) {
+      return (
+        <LayerToggleItem
+          key={parent.id}
+          label={parent.name}
+          description={parent.description}
+          icon={parent.icon}
+          color={parent.color}
+          fallbackIcon="FaMap"
+          checked={visibleIds.has(parent.id)}
+          onToggle={toggleParent}
+          hideCheckbox
+        />
+      );
+    }
+
     return (
-      <Box key={parent.id} className={styles["layer-toggle"]}>
-        <Box display="flex" alignItems="center">
+      <LayerToggleGroup
+        key={parent.id}
+        label={parent.name}
+        description={parent.description}
+        icon={parent.icon}
+        color={parent.color}
+        fallbackIcon="FaMap"
+        selectAll={{
+          checked: visibleIds.has(parent.id),
+          indeterminate: false,
+          onToggle: toggleParent,
+        }}
+        hideCheckbox
+        expanded={expandedHazards[rasterExpandKey] ?? false}
+        onToggleExpand={() => toggleExpand(rasterExpandKey)}
+        childrenPl={7}
+      >
+        {parent.subLayers.map((sub) => (
           <LayerToggleItem
-            label={parent.name}
-            description={parent.description}
-            icon={parent.icon}
-            color={parent.color}
-            fallbackIcon="FaMap"
-            className={styles["hazard-parent-toggle"]}
-            checked={visibleIds.has(parent.id)}
-            onToggle={() => toggleRasterLayerVisibility(resolvedHazardsMapId, parent.id)}
+            key={sub.id}
+            label={sub.name}
+            description={sub.description}
+            checked={visibleIds.has(`${parent.id}.${sub.id}`)}
+            indented
+            labelMl={0}
+            onToggle={() =>
+              toggleSubRasterLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
+            }
           />
-          {hasSubs && (
-            <IconButton size="small" onClick={() => toggleExpand(rasterExpandKey)}>
-              {expandedHazards[rasterExpandKey] ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          )}
-        </Box>
-        {hasSubs && (
-          <Collapse in={expandedHazards[rasterExpandKey]}>
-            <Stack spacing={1} className={styles["layer-sub-stack"]}>
-              {parent.subLayers!.map((sub) => (
-                <LayerToggleItem
-                  key={sub.id}
-                  label={sub.name}
-                  description={sub.description}
-                  checked={visibleIds.has(`${parent.id}.${sub.id}`)}
-                  indented
-                  labelMl={0}
-                  onToggle={() =>
-                    toggleSubRasterLayerVisibility(resolvedHazardsMapId, parent.id, sub.id)
-                  }
-                />
-              ))}
-            </Stack>
-          </Collapse>
-        )}
-      </Box>
+        ))}
+      </LayerToggleGroup>
     );
   };
 
@@ -178,7 +193,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
                 }
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}
-                childrenPl={2}
+                childrenPl={0}
               >
                 {section.layers.map(renderHazardParent)}
               </LayerToggleGroup>
@@ -192,7 +207,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               className={styles["layer-toggle--group"]}
               expanded={expandedHazards["raster-group"] ?? false}
               onToggleExpand={() => toggleExpand("raster-group")}
-              childrenPl={2}
+              childrenPl={0}
             >
               {rasterLayerConfigs.map(renderRasterParent)}
             </LayerToggleGroup>
