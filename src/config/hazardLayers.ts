@@ -1,5 +1,18 @@
 import { HazardLayerConfig } from "../types";
 
+export interface HazardMenuGroup {
+  label: string; //matches the layers' menuGroup name
+  description?: string; //group level description for UI
+}
+
+export const HAZARD_MENU_GROUPS: HazardMenuGroup[] = [
+  {
+    label: "Sea Level Rise",
+    description:
+      "Projected changes in sea level identify locations with increasing exposure to coastal inundation and long term flooding.",
+  },
+];
+
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",

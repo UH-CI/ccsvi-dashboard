@@ -8,6 +8,7 @@ import { MapTabSelector } from "./MapTabSelector";
 import { LayerToggleItem } from "./LayerToggleItem";
 import { LayerToggleGroup } from "./LayerToggleGroup";
 import { useResolvedMapId } from "../hooks/useResolvedMapId";
+import { HAZARD_MENU_GROUPS } from "../../../config/hazardLayers";
 import type { HazardLayerConfig, RasterLayerConfig } from "../../../types";
 import {
   buildHazardMenuSections,
@@ -172,7 +173,9 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
                 icon={section.label === "Sea Level Rise" ? "FaWaveSquare" : undefined}
                 color={section.label === "Sea Level Rise" ? "#1976d2" : undefined}
                 className={styles["layer-toggle--group"]}
-                description={section.layers.find((layer) => layer.description)?.description}
+                description={
+                  HAZARD_MENU_GROUPS.find((group) => group.label === section.label)?.description
+                }
                 expanded={expandedHazards[expandKey] ?? false}
                 onToggleExpand={() => toggleExpand(expandKey)}
                 childrenPl={2}
