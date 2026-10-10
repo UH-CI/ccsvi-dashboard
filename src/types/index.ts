@@ -82,11 +82,14 @@ export interface CountyBoundariesProperties {
 export interface PointLayerConfig {
   id: string;
   name: string;
+  menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
   visible: boolean;
   icon: string;
   color: string;
   filePath: string;
   menuGroup?: string;
+  // Properties that together identify one point in this layer's file
+  idFields: string[];
   data?: import("geojson").FeatureCollection<import("geojson").Point>;
   popupConfig: {
     titleField: string;

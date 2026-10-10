@@ -4,37 +4,46 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "fire_stations",
     name: "Fire Stations",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaFireExtinguisher",
     color: "#FF0000",
     filePath: "Fire_Stations_(Statewide).geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
     id: "hospitals",
     name: "Hospitals",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHospital",
     color: "#00BFFF",
     filePath: "Hospitals.geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
     id: "police_stations",
     name: "Police Stations",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaShieldAlt",
     color: "#000080",
     filePath: "Police_Stations_(Statewide).geojson",
+    idFields: ["objectid"],
     popupConfig: { titleField: "name", fields: [] },
   },
   {
     id: "shelters",
     name: "Emergency Shelters",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHouseUser",
     color: "#00CC00",
     filePath: "emergency_shelters.geojson",
+    // OBJECTID is stamped 0 on 28 shelters; the name is unique on all of them
+    idFields: ["BUSNAME"],
     popupConfig: {
       titleField: "BUSNAME",
       fields: [
@@ -46,10 +55,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "preschools",
     name: "Preschools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#FFA500",
     filePath: "Preschools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "name",
       fields: [
@@ -61,10 +72,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "public_schools",
     name: "Public Schools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#8A2BE2",
     filePath: "Public_Schools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "sch_name",
       fields: [
@@ -76,10 +89,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "private_schools",
     name: "Private Schools",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaSchool",
     color: "#DC143C",
     filePath: "Private_Schools.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "school",
       fields: [
@@ -91,10 +106,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "bridges",
     name: "Bridges",
+    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaArchway",
     color: "#6c757d",
     filePath: "National_Bridge_Inventory.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "structure_",
       fields: [
@@ -107,10 +124,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "sewage",
     name: "Sewage Disposal Systems",
+    menu: "locationsOfEnhancedExposure",
     visible: false,
     icon: "FaToilet",
     color: "#964B00",
     filePath: "HI_Onsite_Sewage_Disposal_Systems.geojson",
+    idFields: ["layer", "objectid"],
     popupConfig: {
       titleField: "island",
       fields: [
@@ -123,10 +142,12 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "wastewater_plant",
     name: "Wastewater Treatment Plants",
+    menu: "locationsOfEnhancedExposure",
     visible: false,
     icon: "FaIndustry",
     color: "#2E8B57",
     filePath: "Wastewater_Treatment_Plants.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "wwtp_name",
       fields: [

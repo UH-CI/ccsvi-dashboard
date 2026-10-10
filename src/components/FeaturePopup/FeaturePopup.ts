@@ -29,6 +29,11 @@ export interface OverlayPopupField {
   suffix?: string;
 }
 
+export interface PointCountsPopupField {
+  loading?: boolean;
+  items: { label: string; value: number; iconHtml?: string }[]; // pre-filtered to nonzero counts
+}
+
 export interface MetricDisplay {
   name: string;
   value: number;
@@ -45,6 +50,7 @@ interface FeaturePopupProps {
   metric2?: MetricDisplay;
   hcdp?: HcdpPopupField;
   overlay?: OverlayPopupField;
+  pointCounts?: PointCountsPopupField;
 }
 
 function renderMetricField(metric: MetricDisplay): string {
@@ -72,6 +78,7 @@ export function FeaturePopup({
   metric2,
   hcdp,
   overlay,
+  pointCounts,
 }: FeaturePopupProps): string {
   const properties = feature.properties || {};
 
@@ -132,6 +139,27 @@ export function FeaturePopup({
             }</span>
           </div>
         `
+            : ""
+        }
+        ${
+          pointCounts
+            ? pointCounts.loading
+              ? `
+          <div class="${styles["popup-field"]}">
+            <span class="${styles["popup-field-label"]}">Nearby:</span>
+            <span class="${styles["popup-field-value"]}">Calculating…</span>
+          </div>
+        `
+              : pointCounts.items
+                  .map(
+                    (item) => `
+          <div class="${styles["popup-field"]}">
+            <span class="${styles["popup-field-label"]}">${escapeHtml(item.label)}:</span>
+            <span class="${styles["popup-field-value"]}">${item.value}${item.iconHtml ?? ""}</span>
+          </div>
+        `,
+                  )
+                  .join("")
             : ""
         }
       </div>

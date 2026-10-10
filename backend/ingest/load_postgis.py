@@ -5,7 +5,9 @@ Run on the VM from the backend/ directory:
     export $(sudo cat /etc/ccsvi-api.env | xargs)
     python -m ingest.load_postgis
 
-After this script completes, refresh the materialized views:
+After this script completes, redo the hazard overlaps and refresh the materialized views
+(rebuild.sh --full does all of this):
+    python -m ingest.load_hazard_overlaps
     docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW block_group_metrics;"
     docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 """
@@ -259,7 +261,7 @@ def load_hazards(cur) -> int:
         _batch_insert(
             cur,
             "INSERT INTO hazards (hazard_id, sub_id, height_ft, zone, props, geom) "
-            "VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s))",
+            "VALUES (%s, %s, %s, %s, %s, ST_MakeValid(ST_GeomFromGeoJSON(%s)))",
             rows,
         )
         total += len(rows)

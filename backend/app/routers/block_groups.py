@@ -24,6 +24,7 @@ class MetricValueRecord(BaseModel):
     absolute: float | None
     margin_of_error: float | None
     percentage: float | None
+
     moe_percentage_points: float | None
     cv: float | None
     moe_derived: bool | None
@@ -146,10 +147,12 @@ async def get_metric_values(
     summary="Filter block groups by county, hazard, and metric thresholds",
     description=(
         "Returns block groups matching all specified filters. Supports county equality, "
-        "a unioned hazard spatial join (ST_Intersects against the hazards table — a block "
-        "group matches if it intersects ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
-        "and numeric lower-bound thresholds on any block_group_metrics column via "
-        "min_<col>=<value> query params. Use ?format=csv for a downloadable CSV attachment."
+        "a unioned hazard filter (looked up in the pre-computed geography_hazards table — a "
+        "block group matches if it touches ANY of the repeatable ?hazard=<id>[.<sub_id>] params), "
+        "numeric lower-bound thresholds on any block_group_metrics column via "
+        "min_<col>=<value> query params (ANDed together), and grouped OR thresholds via "
+        "repeatable ?any=<group>:<col>:<value> params (ORed within a group, ANDed between "
+        "groups and with every other filter). Use ?format=csv for a downloadable CSV attachment."
     ),
 )
 async def filter_block_groups(
@@ -160,9 +163,14 @@ async def filter_block_groups(
         None,
         description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
     ),
+    any_group: list[str] | None = Query(
+        None,
+        alias="any",
+        description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
+    ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, False, county, hazard, fmt)
+    return await run_filter(conn, request, False, county, hazard, any_group, fmt)
 
 
 @router.get(
@@ -181,14 +189,39 @@ async def filter_hawaiian_homelands(
         None,
         description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned.",
     ),
+    any_group: list[str] | None = Query(
+        None,
+        alias="any",
+        description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
+    ),
     fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, True, None, hazard, fmt)
+    return await run_filter(conn, request, True, None, hazard, any_group, fmt)
+
+
+# Parses hazard layers and sub-layer requests
+def hazard_branches(entries: list[str], params: list[Any]) -> str:
+    branches: list[str] = []
+    for entry in entries:
+        hazard_id, _, sub_id = entry.partition(".")
+        params.append(hazard_id)
+        if sub_id:
+            params.append(sub_id)
+            branches.append(f"(h.hazard_id = ${len(params) - 1} AND h.sub_id = ${len(params)})")
+        else:
+            branches.append(f"(h.hazard_id = ${len(params)})")
+    return " OR ".join(branches)
 
 
 # Shared by both filter endpoints; homelands picks which view to search
 async def run_filter(
-    conn, request: Request, homelands: bool, county: str | None, hazard: list[str] | None, fmt: str
+    conn,
+    request: Request,
+    homelands: bool,
+    county: str | None,
+    hazard: list[str] | None,
+    any_group: list[str] | None,
+    fmt: str,
 ) -> Any:
     if homelands:
         view, id_cols, filename = "hawaiian_homeland_metrics", _HHM_ID_COLS, "hawaiian_homelands_filtered.csv"
@@ -210,6 +243,21 @@ async def run_filter(
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid numeric value for {key!r}: {val!r}")
 
+    # Boxes checked in the same section can OR together, only when that section's
+    # own switch is set to Any. Different sections always AND
+    any_groups: dict[str, list[tuple[str, float]]] = {}
+    for entry in any_group or []:
+        group_id, _, rest = entry.partition(":")
+        col, _, raw_val = rest.partition(":")
+        if not group_id or not col or not raw_val:
+            raise HTTPException(status_code=400, detail=f"Malformed any param: {entry!r}")
+        if col not in allowed_cols:
+            raise HTTPException(status_code=400, detail=f"Unknown metric column: {col!r}")
+        try:
+            any_groups.setdefault(group_id, []).append((col, float(raw_val)))
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid numeric value in any param: {entry!r}")
+
     # Build dynamic WHERE clause with asyncpg positional params ($1, $2, ...).
     conditions: list[str] = []
     params: list[Any] = []
@@ -222,29 +270,24 @@ async def run_filter(
         add_cond("v.county = ?", county)
 
     if hazard:
-        # One OR-branch per requested hazard/sub-layer, all inside a single
-        # EXISTS — a block group matches if it intersects ANY of them.
-        hazard_branches: list[str] = []
-        hazard_params: list[Any] = []
-        for entry in hazard:
-            hazard_id, _, sub_id = entry.partition(".")
-            base = len(params) + len(hazard_params) + 1
-            if sub_id:
-                hazard_branches.append(f"(h.hazard_id = ${base} AND h.sub_id = ${base + 1})")
-                hazard_params.extend([hazard_id, sub_id])
-            else:
-                hazard_branches.append(f"(h.hazard_id = ${base})")
-                hazard_params.append(hazard_id)
-        exists_clause = (
-            "EXISTS (SELECT 1 FROM hazards h WHERE ST_Intersects(v.geom, h.geom)"
-            f" AND ({' OR '.join(hazard_branches)}))"
+        # An area matches if it touches any chosen hazard, read from the list worked out at rebuild time.
+        conditions.append(
+            "EXISTS (SELECT 1 FROM geography_hazards h WHERE h.geoid = v.geoid"
+            f" AND ({hazard_branches(hazard, params)}))"
         )
-        params.extend(hazard_params)
-        conditions.append(exists_clause)
 
     for col, threshold in metric_filters:
         # col has been validated against allowed_cols — safe to interpolate.
         add_cond(f"v.{col} >= ?", threshold)
+
+    for group_entries in any_groups.values():
+        # Turn one group into one OR bracket, then add it to the same list as
+        # hazards and metric filters
+        branches: list[str] = []
+        for col, threshold in group_entries:
+            params.append(threshold)
+            branches.append(f"v.{col} >= ${len(params)}")
+        conditions.append(f"({' OR '.join(branches)})")
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     id_select = ", ".join(f"v.{c}" for c in id_cols)

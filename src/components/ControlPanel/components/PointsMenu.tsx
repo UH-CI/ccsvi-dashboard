@@ -94,8 +94,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
                   (l) =>
                     !l.menuGroup &&
                     !SCHOOL_IDS.includes(l.id) &&
-                    l.id !== "sewage" &&
-                    l.id !== "wastewater_plant",
+                    l.menu === "criticalInfrastructure",
                 )
                 .map((layer) => (
                   <LayerToggleItem
