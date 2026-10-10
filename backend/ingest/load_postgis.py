@@ -21,7 +21,7 @@ import psycopg2.extras
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
 POINT_DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026/point_data")
-HAZARDS_DIR = Path("/home/exouser/ccsvi-data/archived/processed_files/Hazards")
+HAZARDS_DIR = Path("/home/exouser/ccsvi-data/v05-2026/hazards_geojson")
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
@@ -84,7 +84,6 @@ HAZARD_LAYERS = [
     ("Solar_Insolation_500-550.geojson",            "solar_insolation",        "500_550",       None),
     ("Solar_Insolation_550-600.geojson",            "solar_insolation",        "550_600",       None),
     ("Solar_Insolation_600-650.geojson",            "solar_insolation",        "600_650",       None),
-    ("Fire_zone_0.geojson",                         "fire_zone",               "Zone_0",        None),
     ("Fire_zone_1.geojson",                         "fire_zone",               "Zone_1",        None),
     ("Fire_zone_2.geojson",                         "fire_zone",               "Zone_2",        None),
     ("Fire_zone_3.geojson",                         "fire_zone",               "Zone_3",        None),
@@ -255,7 +254,7 @@ def load_hazards(cur) -> int:
         _batch_insert(
             cur,
             "INSERT INTO hazards (hazard_id, sub_id, height_ft, zone, props, geom) "
-            "VALUES (%s, %s, %s, %s, %s, ST_MakeValid(ST_GeomFromGeoJSON(%s)))",
+            "VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s))",
             rows,
         )
         total += len(rows)
