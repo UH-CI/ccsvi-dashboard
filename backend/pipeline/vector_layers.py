@@ -3,7 +3,8 @@
 Turns raw GIS files into cleaned GeoJSONs and map tiles.
 
   1. unzip the source to a temp folder
-  2. ogr2ogr, one SpatiaLite query: keep the layer's columns (all, unless the entry lists some); reproject to WGS84; repair
+  2. ogr2ogr, one SpatiaLite query: keep the layer's rows (all, unless the entry has a filter)
+     and columns (all, unless the entry lists some); reproject to WGS84; repair
      (ST_MakeValid); round to 5 decimals (~1 m) with ReducePrecision, which keeps shapes valid;
      keep only the layer's shape type (ST_CollectionExtract, dropping zero-width leftovers of
      repair) and drop rows left with no shape. Written as unsimplified GeoJSON
@@ -43,6 +44,7 @@ class Layer:
     zips: list     # zips from outermost in, the first relative to RAW_DIR
     inner: str     # shapefile inside the last zip
     columns: list = None  # columns to keep; None keeps all
+    row_filter: str = None  # rows to keep, as a SQL condition, e.g. "zone = 1"; None keeps all rows
     shape: str = "MultiPolygon"  # output shape type, a key of EXTRACT; line layers set "MultiLineString"
 
 
@@ -50,6 +52,7 @@ SLR_EXPOSURE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_expo
 SLR_PASSIVE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"]
 SLR_EROSION = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"]
 SLR_HIGHWAYS = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
+FIRE = ["hazards/Fire_Risk_Areas.zip"]
 
 LAYERS = [
     Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
@@ -68,6 +71,13 @@ LAYERS = [
     Layer("filtered_slr_potent_fld_hwys_1pt1ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_1_pt_1_ft.shp", shape="MultiLineString"),
     Layer("filtered_slr_potent_fld_hwys_2pt0ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_2_pt_0_ft.shp", shape="MultiLineString"),
     Layer("filtered_slr_potent_fld_hwys_3pt2ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_3_pt_2_ft.shp", shape="MultiLineString"),
+    # Zone 0 left out: removed by the team ("null location"), hidden on the map
+    Layer("Fire_zone_1", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 1"),
+    Layer("Fire_zone_2", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 2"),
+    Layer("Fire_zone_3", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 3"),
+    Layer("Fire_zone_4", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 4"),
+    Layer("Fire_zone_5", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 5"),
+    Layer("Fire_zone_6", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 6"),
 ]
 
 
@@ -109,6 +119,8 @@ def process(layer, source, out, columns):
     columns = ", ".join(f'"{c}"' for c in columns)
     shapes = f"ReducePrecision(ST_MakeValid(ST_Transform(geometry, 4326)), {10 ** -DECIMALS})"
     cleaned = f'SELECT {columns}, ST_CollectionExtract({shapes}, {EXTRACT[layer.shape]}) AS geometry FROM "{source.stem}"'
+    if layer.row_filter:
+        cleaned += f" WHERE {layer.row_filter}"
     sql = f"SELECT * FROM ({cleaned}) WHERE geometry IS NOT NULL"
     out.unlink(missing_ok=True)
     run(["ogr2ogr", "-f", "GeoJSON", out, source, "-dialect", "SQLite", "-sql", sql,
@@ -149,7 +161,8 @@ def build(layer):
     start = time.time()
     with tempfile.TemporaryDirectory() as tmp:
         source = unzip(layer, tmp)
-        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", source]))["layers"][0]
+        filter_args = ["-where", layer.row_filter] if layer.row_filter else []
+        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", *filter_args, source]))["layers"][0]
         source_count = info["featureCount"]
         process(layer, source, geojson, layer.columns or [f["name"] for f in info["fields"]])
     print(f"  processed: {megabytes(geojson)} in {time.time() - start:.0f} s")
