@@ -54,6 +54,7 @@ SLR_EROSION = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_
 SLR_HIGHWAYS = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
 FIRE = ["hazards/Fire_Risk_Areas.zip"]
 SOLAR = ["hazards/Solar_Insolation_Ranges.zip"]
+BRIGHTFIELDS = ["hazards/Hawaii_Brightfields_Initiative_Data.zip"]
 
 LAYERS = [
     Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
@@ -88,6 +89,9 @@ LAYERS = [
     Layer("Solar_Insolation_500-550", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '500-550'"),
     Layer("Solar_Insolation_550-600", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '550-600'"),
     Layer("Solar_Insolation_600-650", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '600-650'"),
+    # "filtered" in today's name meant trimmed columns, not fewer rows: all parcels are kept
+    Layer("Prev_contaminated_land_filtered", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp"),
+    Layer("Prev_contaminated_land_landfills", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp", row_filter="known_land = 'Y'"),
 ]
 
 
