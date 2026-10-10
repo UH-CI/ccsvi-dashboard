@@ -158,11 +158,13 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "commercial_harbors_points",
     name: "Commercial Harbors",
+    menu: "criticalInfrastructure",
     menuGroup: "harbors",
     visible: false,
     icon: "FaShip",
-    color: "#002FBF",
+    color: "#021f74",
     filePath: "HI_commercial_harbors_pt.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "harbor_nam",
       fields: [
@@ -177,11 +179,13 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "small_boat_harbors_points",
     name: "Small Boat Harbors",
+    menu: "criticalInfrastructure",
     menuGroup: "harbors",
     visible: false,
     icon: "FaShip",
-    color: "#002FBF",
+    color: "#021f74",
     filePath: "HI_small_boat_harbor.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "name",
       fields: [
@@ -209,11 +213,13 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "airports",
     name: "Airports",
+    menu: "criticalInfrastructure",
     menuGroup: "airports",
     visible: false,
     icon: "FaPlane",
-    color: "#F4B41A",
+    color: "#e4870e",
     filePath: "HI_airports_pt.geojson",
+    idFields: ["objectid"],
     popupConfig: {
       titleField: "airport_na",
       fields: [

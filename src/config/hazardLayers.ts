@@ -530,7 +530,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     menuGroup: "harbors",
     visible: false,
     icon: "FaShip",
-    color: "#002FBF",
+    color: "#254bbc",
     filePath: "HI_commercial_harbors_shp.pmtiles",
     popupConfig: {
       titleField: "harbor_nam",
@@ -551,7 +551,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     menuGroup: "airports",
     visible: false,
     icon: "FaPlane",
-    color: "#F4B41A",
+    color: "#f3c863",
     filePath: "HI_airports_shp.pmtiles",
     popupConfig: {
       titleField: "airport_na",
