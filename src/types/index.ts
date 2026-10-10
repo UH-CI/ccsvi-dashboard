@@ -83,6 +83,8 @@ export interface PointLayerConfig {
   id: string;
   name: string;
   menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
+  menuGroup?: string;
+  description?: string;
   visible: boolean;
   icon: string;
   color: string;
@@ -105,6 +107,7 @@ export interface SubHazardLayerConfig {
   color?: string;
   visible: boolean;
   filePath?: string;
+  description?: string; // human-readable description for UI
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];
@@ -127,6 +130,7 @@ export interface HazardLayerConfig {
   color?: string;
   visible: boolean;
   filePath?: string;
+  description?: string; // human-readable description for UI
   popupConfig?: {
     titleField?: string;
     fields?: { key: string; label: string }[];
@@ -139,6 +143,7 @@ export interface HazardLayerConfig {
 export interface SubRasterLayerConfig {
   id: string;
   name: string;
+  description?: string;
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.
   sourceFileName?: string;
@@ -171,6 +176,7 @@ export interface SubRasterLayerConfig {
 export interface RasterLayerConfig {
   id: string;
   name: string;
+  description?: string;
   icon?: string;
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.
