@@ -83,6 +83,7 @@ export interface PointLayerConfig {
   id: string;
   name: string;
   menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
+  menuGroup?: string;
   description?: string;
   visible: boolean;
   icon: string;
