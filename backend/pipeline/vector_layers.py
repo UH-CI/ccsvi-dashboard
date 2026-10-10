@@ -8,7 +8,8 @@ Turns raw GIS files into cleaned GeoJSONs and map tiles.
      (ST_MakeValid); round to 5 decimals (~1 m) with ReducePrecision, which keeps shapes valid;
      keep only the layer's shape type (ST_CollectionExtract, dropping zero-width leftovers of
      repair) and drop rows left with no shape. Written as unsimplified GeoJSON
-  3. tippecanoe: tiles from that GeoJSON into a staging folder, never over the live tiles
+  3. tippecanoe: tiles from that GeoJSON (standard zoom range plus any extra settings the entry
+     lists) into a staging folder, never over the live tiles
   4. checks: feature count, validity, shape type, location; stops on failure
 
 python -m pipeline.vector_layers [--only <name>]
@@ -46,6 +47,7 @@ class Layer:
     columns: list = None  # columns to keep; None keeps all
     row_filter: str = None  # rows to keep, as a SQL condition, e.g. "zone = 1"; None keeps all rows
     shape: str = "MultiPolygon"  # output shape type, a key of EXTRACT; line layers set "MultiLineString"
+    tile_flags: tuple = ()  # extra tippecanoe settings
 
 
 SLR_EXPOSURE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"]
@@ -60,6 +62,8 @@ PCL_COLUMNS = ["objectid", "tmk_txt", "county", "island", "site___fac", "site_ow
                "epa_site_i", "doh_brownf", "heer_facil", "ehmp__y_n_", "potential", "heer_asses", "heer_respo",
                "nature_of", "nature_o_1", "st_areasha", "st_perimet"]
 LANDFILL_COLUMNS = PCL_COLUMNS + ["heer_res_1", "landfill_s", "landfill_y", "landfill_o", "landfill_1"]
+ROADS = "line/HI_All_Counties_Roads.zip"
+ROAD_TILE_FLAGS = ("--drop-rate=0", "--no-feature-limit", "--no-tile-size-limit")
 
 LAYERS = [
     Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
@@ -98,6 +102,16 @@ LAYERS = [
     Layer("Prev_contaminated_land_filtered", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp", columns=PCL_COLUMNS),
     Layer("Prev_contaminated_land_landfills", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp", columns=LANDFILL_COLUMNS,
           row_filter="known_land = 'Y'"),
+    Layer("filtered_road_Hawaii_island", [ROADS, "centerlines_haw.shp.zip"], "centerlines_haw.shp",
+          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
+    Layer("filtered_road_Kauai", [ROADS, "centerlines_kau.shp.zip"], "centerlines_kau.shp",
+          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
+    Layer("filtered_road_Maui", [ROADS, "roads_mau.shp.zip"], "roads_mau.shp",
+          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
+    Layer("filtered_road_Oahu", [ROADS, "streets_oah.shp.zip"], "streets_oah.shp",
+          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
+    Layer("filtered_sidewalks_and_paths", [ROADS, "sidewalks_and_paths_state.shp.zip"],
+          "sidewalks_and_paths_state_existing.shp", shape="MultiLineString"),
 ]
 
 
@@ -149,7 +163,8 @@ def process(layer, source, out, columns):
 
 
 def make_tiles(layer, geojson, tiles):
-    run(["tippecanoe", "-o", tiles, "-l", layer.name, *TILE_FLAGS, "--force", "--no-progress-indicator", geojson])
+    run(["tippecanoe", "-o", tiles, "-l", layer.name, *TILE_FLAGS, *layer.tile_flags, "--force",
+         "--no-progress-indicator", geojson])
 
 
 def check_outputs(layer, source_count, geojson):
