@@ -44,7 +44,7 @@ export const LayerToggleItem: React.FC<LayerToggleItemProps> = ({
   );
   const renderedLabel = description ? (
     //build label, optional icon & styling
-    <Tooltip title={description} placement="right">
+    <Tooltip title={description} placement="right" disableInteractive>
       {labelNode}
     </Tooltip>
   ) : (

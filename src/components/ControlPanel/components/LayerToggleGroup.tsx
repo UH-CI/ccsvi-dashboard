@@ -49,7 +49,7 @@ export const LayerToggleGroup: React.FC<LayerToggleGroupProps> = ({
     </Typography>
   );
   const renderedLabel = description ? (
-    <Tooltip title={description} placement="right">
+    <Tooltip title={description} placement="right" disableInteractive>
       {labelNode}
     </Tooltip>
   ) : (
