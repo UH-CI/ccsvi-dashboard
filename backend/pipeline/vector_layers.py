@@ -53,6 +53,7 @@ SLR_PASSIVE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passi
 SLR_EROSION = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"]
 SLR_HIGHWAYS = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
 FIRE = ["hazards/Fire_Risk_Areas.zip"]
+SOLAR = ["hazards/Solar_Insolation_Ranges.zip"]
 
 LAYERS = [
     Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
@@ -78,6 +79,15 @@ LAYERS = [
     Layer("Fire_zone_4", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 4"),
     Layer("Fire_zone_5", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 5"),
     Layer("Fire_zone_6", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 6"),
+    Layer("Solar_Insolation_200-250", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '200-250'"),
+    Layer("Solar_Insolation_250-300", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '250-300'"),
+    Layer("Solar_Insolation_300-350", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '300-350'"),
+    Layer("Solar_Insolation_350-400", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '350-400'"),
+    Layer("Solar_Insolation_400-450", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '400-450'"),
+    Layer("Solar_Insolation_450-500", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '450-500'"),
+    Layer("Solar_Insolation_500-550", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '500-550'"),
+    Layer("Solar_Insolation_550-600", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '550-600'"),
+    Layer("Solar_Insolation_600-650", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '600-650'"),
 ]
 
 
