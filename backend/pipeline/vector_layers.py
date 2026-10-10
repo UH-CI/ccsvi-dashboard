@@ -63,6 +63,8 @@ PCL_COLUMNS = ["objectid", "tmk_txt", "county", "island", "site___fac", "site_ow
                "nature_of", "nature_o_1", "st_areasha", "st_perimet"]
 LANDFILL_COLUMNS = PCL_COLUMNS + ["heer_res_1", "landfill_s", "landfill_y", "landfill_o", "landfill_1"]
 ROADS = "line/HI_All_Counties_Roads.zip"
+FLOOD = ["hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"]
+FLOOD_COLUMNS = ["fld_zone", "sfha_tf", "static_bfe", "depth"]
 ROAD_TILE_FLAGS = ("--drop-rate=0", "--no-feature-limit", "--no-tile-size-limit")
 
 LAYERS = [
@@ -112,6 +114,11 @@ LAYERS = [
           shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
     Layer("filtered_sidewalks_and_paths", [ROADS, "sidewalks_and_paths_state.shp.zip"],
           "sidewalks_and_paths_state_existing.shp", shape="MultiLineString"),
+    # Every row of each zone, incl. those with no single flood height (static_bfe -9999)
+    Layer("Flood_Hazard_VE", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'VE'"),
+    Layer("Flood_Hazard_AE", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AE'"),
+    Layer("Flood_Hazard_AO", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AO'"),
+    Layer("Flood_Hazard_AH", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AH'"),
 ]
 
 
