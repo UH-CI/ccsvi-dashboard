@@ -1,9 +1,32 @@
 import { HazardLayerConfig } from "../types";
 
+export interface HazardMenuGroup {
+  label: string; //matches the layers' menuGroup name
+  description?: string; //group level description for UI
+  icon?: string;
+  color?: string;
+}
+
+export const HAZARD_MENU_GROUPS: HazardMenuGroup[] = [
+  {
+    label: "Sea Level Rise",
+    description:
+      "Projected changes in sea level identify locations with increasing exposure to coastal inundation and long term flooding.",
+    icon: "FaWaveSquare",
+    color: "#1976d2",
+  },
+  {
+    label: "Raster Layers",
+    icon: "FaMountain",
+    color: "#6D4C41",
+  },
+];
+
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
     name: "Flooding",
+    description: "Regulatory flood zones designate locations with established flood risk and indicate potential flood exposure.",
     visible: false,
     icon: "FaWater",
     color: "#0000FF",
@@ -11,6 +34,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_VE",
         name: "Coastal High Risk",
+        description: "Elevated coastal flood risk can increase exposure to flooding and inundation.",
         color: "#0000FF",
         visible: false,
         filePath: "Flood_Hazard_VE.pmtiles",
@@ -25,6 +49,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AE",
         name: "Base Flood Area",
+        description: "The estimated base floodplain represents locations with a 1% annual chance of flooding and greater potential for flood exposure.",
         color: "#1313c2",
         visible: false,
         filePath: "Flood_Hazard_AE.pmtiles",
@@ -39,6 +64,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AO",
         name: "Shallow Sheet Flow",
+        description: "Shallow, flowing water during flood events can increase exposure to localized flooding.",
         color: "#161691",
         visible: false,
         filePath: "Flood_Hazard_AO.pmtiles",
@@ -53,6 +79,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
       {
         id: "Zone_AH",
         name: "Shallow Ponding",
+        description: "Low lying areas where water may collect during flood events can experience increased localized flood exposure.",
         color: "#12126e",
         visible: false,
         filePath: "Flood_Hazard_AH.pmtiles",
@@ -73,6 +100,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "erosion",
     name: "Coastal Erosion",
+    description: "Projected shoreline erosion under sea level rise scenarios can increase long term exposure along the coast.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
@@ -115,6 +143,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
+    description: "Highway sections at risk of flooding under sea level rise scenarios can reduce transportation access during hazard events.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
@@ -157,6 +186,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "exposure_area",
     name: "Exposure Area",
+    description: "Frequent inundation under sea level rise scenarios indicates locations with greater exposure to repeated flooding.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
@@ -200,6 +230,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "passive_flood",
     name: "Passive Flood",
+    description: "Low lying areas projected to experience inundation as sea levels rise may face increasing long-term exposure.",
     menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
@@ -301,6 +332,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "solar_insolation",
     name: "Solar Insolation",
+    description: "Surface solar radiation intensity indicates potential exposure to higher levels of heat.",
     visible: false,
     icon: "FaSun",
     color: "#FFD700",
@@ -382,6 +414,7 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "fire_zone",
     name: "Fire Zone",
+    description: "Mapped wildfire risk indicates locations with greater potential for fire exposure.",
     visible: false,
     icon: "FaFire",
     color: "#D73502",
@@ -502,14 +535,14 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   },
   {
     id: "pcl_landfill",
-    name: "Landfills",
+    name: "Solid Waste Disposal Sites",
     menuPanel: "locations",
     visible: false,
     icon: "FaTrash",
     color: "#000000",
     filePath: "Prev_contaminated_land_landfills.pmtiles",
     popupConfig: {
-      titleField: "Landfills",
+      titleField: "Solid Waste Disposal Sites",
       fields: [
         { key: "city", label: "City" },
         { key: "county", label: "County" },

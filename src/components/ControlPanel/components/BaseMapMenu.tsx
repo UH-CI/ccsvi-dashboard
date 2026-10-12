@@ -18,7 +18,6 @@ interface BaseMapMenuProps {
   activeBaseMapId: string;
   updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
 }
-
 // Base map (tile provider) picker for a single map
 export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
   anchorEl,

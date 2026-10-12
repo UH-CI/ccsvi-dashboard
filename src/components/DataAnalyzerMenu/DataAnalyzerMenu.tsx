@@ -85,7 +85,7 @@ export const DataAnalyzerMenu = () => {
       {hasLocationsOfEnhancedExposure && (
         <>
           <Divider />
-          <PointSection menu="locationsOfEnhancedExposure" title="Locations of Enhanced Exposure" />
+          <PointSection menu="locationsOfEnhancedExposure" title="Secondary Environmental Risk Areas" />
         </>
       )}
 

@@ -60,6 +60,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
               <LayerToggleGroup
                 key={category.id}
                 label={category.label}
+                description={category.description}
                 expanded={isExpanded}
                 onToggleExpand={() => toggleExpandSvi(category.id)}
               >
@@ -73,6 +74,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
                       label={indicator.label}
                       checked={isSelected}
                       indented
+                      description={indicator.description}
                       onToggle={() =>
                         updateMapConfig(resolvedSviMapId, {
                           dataset: isSelected ? "" : indicator.dataset,
