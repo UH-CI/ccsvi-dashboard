@@ -13,7 +13,7 @@ import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from ".
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { meanHcdpForFeature } from "../../../utils/zonalStats.ts";
-import { useAppStore } from "../../../stores/useAppStore.ts";
+import { getActiveRaster, savedRasterAverage } from "../../../utils/savedRaster.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -66,18 +66,12 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const shouldShowPolygonPopup = Boolean(hcdpOverlay || hasSocialDataActive);
   const shouldConsumePolygonClicks = shouldShowPolygonPopup;
 
-  const activeRasterLayerId = useMemo(() => {
-    const ids = Array.from(visibleRasterLayerIds ?? []);
-    return ids.find((id) => id.includes(".")) ?? ids[0] ?? null;
-  }, [visibleRasterLayerIds]);
-
-  const activeRasterLayerConfig = useMemo(() => {
-    if (!activeRasterLayerId) return null;
-    const [parentId, subId] = activeRasterLayerId.split(".");
-    const parent = rasterLayerConfigs.find((layer) => layer.id === parentId);
-    if (!parent) return null;
-    return subId ? parent.subLayers?.find((layer) => layer.id === subId) ?? parent : parent;
-  }, [activeRasterLayerId, rasterLayerConfigs]);
+  const activeRaster = useMemo(
+    () => getActiveRaster(visibleRasterLayerIds, rasterLayerConfigs),
+    [visibleRasterLayerIds, rasterLayerConfigs],
+  );
+  const activeRasterLayerId = activeRaster?.id ?? null;
+  const activeRasterLayerConfig = activeRaster?.config ?? null;
 
   const popupContext = useMemo<PolygonPopupContext>(
     () => ({
@@ -240,10 +234,8 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (currentVisibleIds?.has(activeRasterLayerId)) {
           try {
-            const { dataset, metric } = activeRasterLayerConfig?.savedMetric as { dataset: string; metric: string };
-            await useAppStore.getState().fetchMetricValues(dataset, metric);
-            const saved = useAppStore.getState().metricValuesCache[`${dataset}::${metric}`];
-            const value = saved?.[String(geoid)]?.absolute ?? null;
+            const savedMetric = activeRasterLayerConfig?.savedMetric as { dataset: string; metric: string };
+            const value = await savedRasterAverage(savedMetric, String(geoid), false);
 
             const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
             if (currentRasterId?.has(activeRasterLayerId)) {
