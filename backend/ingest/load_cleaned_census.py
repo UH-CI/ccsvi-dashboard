@@ -158,11 +158,12 @@ async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, se
 
     await conn.execute(
         """
-        INSERT INTO datasets (id, label, hawaiian_homelands)
-        VALUES ($1, $2, $3)
+        INSERT INTO datasets (id, label, hawaiian_homelands, source_type)
+        VALUES ($1, $2, $3, 'census')
         ON CONFLICT (id) DO UPDATE SET
             label              = EXCLUDED.label,
-            hawaiian_homelands = EXCLUDED.hawaiian_homelands
+            hawaiian_homelands = EXCLUDED.hawaiian_homelands,
+            source_type        = EXCLUDED.source_type
         """,
         dataset_id,
         output["label"],

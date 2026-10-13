@@ -28,6 +28,7 @@ class MetricConfig(BaseModel):
 class DatasetRecord(BaseModel):
     metricLabel: str
     hawaiianHomelands: bool
+    sourceType: str
     columnThresholds: dict[str, MetricConfig]
 
 
@@ -42,7 +43,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
         f"""
-        SELECT d.id, d.label, d.hawaiian_homelands, m.name, m.classification_mode, m.mv_column
+        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, m.name, m.classification_mode, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, {_CATALOG_ORDER_SQL[CATALOG_METRIC_ORDER]}
@@ -55,6 +56,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
             result[dataset_id] = {
                 "metricLabel": row["label"],
                 "hawaiianHomelands": row["hawaiian_homelands"],
+                "sourceType": row["source_type"],
                 "columnThresholds": {},
             }
         result[dataset_id]["columnThresholds"][row["name"]] = {
