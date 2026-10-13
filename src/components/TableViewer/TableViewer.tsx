@@ -7,6 +7,7 @@ import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { usePrimaryMapState, useFilterStore, useMapStore } from "../../stores";
 import { usePointCountsForTable, usePointNamesForTable } from "../../hooks/usePointCounts";
+import { useSavedRasterForTable } from "../../utils/savedRaster";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
 import { useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
@@ -141,13 +142,35 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     [pointLayers],
   );
 
+  // Raster average: one extra column for the raster currently visible on the map
+  const savedRaster = useSavedRasterForTable(isHomelands, primaryMapId);
+
+  const rasterColumns = useMemo(
+    () =>
+      savedRaster
+        ? [
+            {
+              field: "raster_avg",
+              headerName: `${savedRaster.name} (avg${savedRaster.units ? `, ${savedRaster.units}` : ""})`,
+              type: "number" as const,
+              flex: 1,
+              minWidth: 160,
+              sortable: true,
+              filterable: true,
+              hideable: true,
+            },
+          ]
+        : [],
+    [savedRaster?.name, savedRaster?.units],
+  );
+
   const mergedColumns = useMemo(
-    () => [...columns, ...pointCountColumns, ...pointNameColumns],
-    [columns, pointCountColumns, pointNameColumns],
+    () => [...columns, ...pointCountColumns, ...pointNameColumns, ...rasterColumns],
+    [columns, pointCountColumns, pointNameColumns, rasterColumns],
   );
 
   const mergedRows = useMemo(() => {
-    if (pointLayers.length === 0) return rows;
+    if (pointLayers.length === 0 && !savedRaster) return rows;
     return rows.map((row) => {
       const geoid = geoidFromRow(row);
       const extra: Record<string, number | string> = {};
@@ -155,10 +178,11 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid);
         extra[`pointnames_${layer.id}`] = getNames(layer.id, geoid).join(", ") || "—";
       }
+      if (savedRaster) extra.raster_avg = savedRaster.getValue(geoid) ?? "";
       return { ...row, ...extra };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, pointLayers, getCount, getNames, geoidColIndex]);
+  }, [rows, pointLayers, getCount, getNames, savedRaster, geoidColIndex]);
 
   const displayRows = useMemo(() => {
     if (!filteredGeoidsSet || geoidColIndex < 0) return mergedRows;
