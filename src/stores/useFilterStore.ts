@@ -7,6 +7,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 interface FilterState {
   county: string | null;
   hazards: string[];
+  rasters: string[];
   metricFilters: Partial<Record<string, number>>;
   pointLayerFilters: Set<string>;
   pointGroupModes: Record<string, "all" | "any">;
@@ -23,6 +24,7 @@ interface FilterState {
 interface PointFilter {
   geoids: Set<string> | null;
   hazards: string[];
+  rasters: string[];
   layers: Set<string> | null;
 }
 
@@ -30,12 +32,13 @@ interface FilterActions {
   setCounty: (county: string | null) => void;
   setHomelands: (homelands: boolean) => void;
   setHazards: (ids: string[]) => void;
+  setRasters: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
   togglePointLayerFilter: (id: string) => void;
   setPointGroupMode: (groupId: string, mode: "all" | "any") => void;
   setAnyFilters: (entries: string[]) => void;
   applyFilter: () => Promise<void>;
-  applyPointHazardFilter: (hazards: string[], layers: Set<string>) => void;
+  applyPointHazardFilter: (hazards: string[], rasters: string[], layers: Set<string>) => void;
   buildExportUrl: () => string;
   clearFilter: () => void;
 }
@@ -43,6 +46,7 @@ interface FilterActions {
 const initialState: FilterState = {
   county: null,
   hazards: [],
+  rasters: [],
   metricFilters: {},
   pointLayerFilters: new Set(POINT_LAYERS.map((layer) => layer.id)),
   pointGroupModes: {},
@@ -75,6 +79,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
   setCounty: (county) => set({ county }),
   setHomelands: (homelands) => set({ homelands }),
   setHazards: (ids) => set({ hazards: ids }),
+  setRasters: (ids) => set({ rasters: ids }),
 
   setMetricFilter: (col, value) =>
     set((state) => {
@@ -115,7 +120,12 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       set({
         results: data,
         filteredGeoids,
-        pointFilter: { geoids: filteredGeoids, hazards: get().hazards, layers: null },
+        pointFilter: {
+          geoids: filteredGeoids,
+          hazards: get().hazards,
+          rasters: get().rasters,
+          layers: null,
+        },
         isLoading: false,
       });
     } catch (err) {
@@ -126,13 +136,14 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     }
   },
 
-  // Used when no SVI is on the map. Skips neighborhoods entirely and checks points against hazards only.
-  applyPointHazardFilter: (hazards, layers) =>
+  // Used when no SVI is on the map. Skips neighborhoods entirely and checks points against hazards and rasters only.
+  applyPointHazardFilter: (hazards, rasters, layers) =>
     set({
       hazards,
+      rasters,
       results: null,
       filteredGeoids: null,
-      pointFilter: { geoids: null, hazards, layers },
+      pointFilter: { geoids: null, hazards, rasters, layers },
       error: null,
     }),
 

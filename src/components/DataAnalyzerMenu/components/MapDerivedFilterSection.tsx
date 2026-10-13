@@ -7,8 +7,10 @@ import {
   useMapStore,
   useHazardLayersStore,
   usePointLayerStore,
+  useRasterLayersStore,
 } from "../../../stores";
 import { deriveVisibleHazards } from "../deriveHazard";
+import { deriveVisibleRasters } from "../deriveRaster";
 import {
   deriveVisibleCriticalInfrastructure,
   deriveVisibleLocationsOfEnhancedExposure,
@@ -32,11 +34,14 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
   const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
+  const visibleRasterIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
+  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
   const datasetCatalog = useAppStore((state) => state.datasetCatalog);
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
 
   const setHazards = useFilterStore((state) => state.setHazards);
+  const setRasters = useFilterStore((state) => state.setRasters);
   const setHomelands = useFilterStore((state) => state.setHomelands);
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
   const metricFilters = useFilterStore((state) => state.metricFilters);
@@ -53,6 +58,11 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const derivedHazards = useMemo(
     () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]),
     [visibleLayerIdsByMap, primaryMapId],
+  );
+
+  const derivedRasters = useMemo(
+    () => deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs),
+    [visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
   );
 
   // Checked layers that are still visible on the map, kept separate per section so
@@ -87,7 +97,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
       : null;
 
   // With no SVI on the map, neighborhoods aren't part of the analysis:
-  // Filter just keeps the checked layers' points that sit inside a visible hazard.
+  // Filter just keeps the checked layers' points that sit inside a visible hazard or raster area.
   const sviShown = Boolean(dataset && metric);
 
   const hasMetricThreshold = mvColumn !== null && filterRange !== null;
@@ -97,12 +107,13 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
       hasMetricThreshold ||
       hasMetricThreshold2 ||
       checkedVisiblePointLayers.length > 0
-    : derivedHazards.length > 0 && checkedVisiblePointLayers.length > 0;
+    : (derivedHazards.length > 0 || derivedRasters.length > 0) && checkedVisiblePointLayers.length > 0;
 
   const handleApply = () => {
     const hazardIds = derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId));
+    const rasterIds = derivedRasters.map((r) => r.rasterId);
     if (!sviShown) {
-      applyPointHazardFilter(hazardIds, new Set(checkedVisiblePointLayers.map((layer) => layer.id)));
+      applyPointHazardFilter(hazardIds, rasterIds, new Set(checkedVisiblePointLayers.map((layer) => layer.id)));
       return;
     }
 
@@ -110,6 +121,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
       dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false,
     );
     setHazards(hazardIds);
+    setRasters(rasterIds);
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);

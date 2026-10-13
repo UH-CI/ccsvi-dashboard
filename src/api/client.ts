@@ -40,10 +40,16 @@ export const getHazardAreas = (hazards: string[]) => {
   return get<Record<string, string[]>>(`/api/v1/hazard-areas?${params}`);
 };
 
-// Asks for one layer's points, limited to the given areas and hazards. No areas given means no area limit.
-export const getFilteredPoints = (layerId: string, geoids: string[] | null, hazards: string[]) => {
+// Asks for one layer's points, limited to the given areas, hazards and rasters. No areas given means no area limit.
+export const getFilteredPoints = (
+  layerId: string,
+  geoids: string[] | null,
+  hazards: string[],
+  rasters: string[],
+) => {
   const params = new URLSearchParams({ layer_id: layerId });
   for (const geoid of geoids ?? []) params.append("geoid", geoid);
   for (const hazard of hazards) params.append("hazard", hazard);
+  for (const raster of rasters) params.append("raster", raster);
   return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
 };

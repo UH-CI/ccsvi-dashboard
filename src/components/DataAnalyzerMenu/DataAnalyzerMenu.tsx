@@ -6,12 +6,15 @@ import {
   useFilterStore,
   useHazardLayersStore,
   usePointLayerStore,
+  useRasterLayersStore,
 } from "../../stores";
 import { HistogramSection } from "./components/HistogramSection";
 import { HazardSection } from "./components/HazardSection";
+import { RasterSection } from "./components/RasterSection";
 import { PointSection } from "./components/PointSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
 import { deriveVisibleHazards } from "./deriveHazard";
+import { deriveVisibleRasters } from "./deriveRaster";
 import {
   deriveVisibleCriticalInfrastructure,
   deriveVisibleLocationsOfEnhancedExposure,
@@ -23,10 +26,17 @@ export const DataAnalyzerMenu = () => {
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
   const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
+  const visibleRasterIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
+  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
 
   const hasHazard = useMemo(
     () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]).length > 0,
     [visibleLayerIdsByMap, primaryMapId],
+  );
+
+  const hasRaster = useMemo(
+    () => deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs).length > 0,
+    [visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
   );
 
   const hasCriticalInfrastructure = useMemo(
@@ -72,6 +82,13 @@ export const DataAnalyzerMenu = () => {
         <>
           <Divider />
           <HazardSection />
+        </>
+      )}
+
+      {hasRaster && (
+        <>
+          <Divider />
+          <RasterSection />
         </>
       )}
 
