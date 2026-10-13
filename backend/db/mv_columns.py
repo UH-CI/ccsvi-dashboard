@@ -112,6 +112,18 @@ BLOCK_GROUP_COLUMNS: list[tuple[str, str, str, str]] = [
      'Count', 'absolute'),
     ('wastewater_plant_count_abs', 'wastewater_plant_points',
      'Count', 'absolute'),
+
+    # Raster means per area.
+    ('storm_surge_cat1_mean_abs', 'storm_surge',
+     'Inundation Category 1 (mean, m)', 'absolute'),
+    ('storm_surge_cat2_mean_abs', 'storm_surge',
+     'Inundation Category 2 (mean, m)', 'absolute'),
+    ('storm_surge_cat3_mean_abs', 'storm_surge',
+     'Inundation Category 3 (mean, m)', 'absolute'),
+    ('storm_surge_cat4_mean_abs', 'storm_surge',
+     'Inundation Category 4 (mean, m)', 'absolute'),
+    ('landslide_mean_abs', 'landslide',
+     'Susceptibility (mean index)', 'absolute'),
 ]
 
 HAWAIIAN_HOMELAND_COLUMNS: list[tuple[str, str, str, str]] = [
@@ -173,4 +185,16 @@ HAWAIIAN_HOMELAND_COLUMNS: list[tuple[str, str, str, str]] = [
      'Count', 'absolute'),
     ('wastewater_plant_count_abs', 'wastewater_plant_points_homelands',
      'Count', 'absolute'),
+
+    # Raster means per area.
+    ('storm_surge_cat1_mean_abs', 'storm_surge_homelands',
+     'Inundation Category 1 (mean, m)', 'absolute'),
+    ('storm_surge_cat2_mean_abs', 'storm_surge_homelands',
+     'Inundation Category 2 (mean, m)', 'absolute'),
+    ('storm_surge_cat3_mean_abs', 'storm_surge_homelands',
+     'Inundation Category 3 (mean, m)', 'absolute'),
+    ('storm_surge_cat4_mean_abs', 'storm_surge_homelands',
+     'Inundation Category 4 (mean, m)', 'absolute'),
+    ('landslide_mean_abs', 'landslide_homelands',
+     'Susceptibility (mean index)', 'absolute'),
 ]

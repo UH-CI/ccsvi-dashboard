@@ -67,6 +67,9 @@ fi
 echo "-- counting points per block group / Homeland area"
 "$PYTHON" -m ingest.load_point_counts
 
+echo "-- averaging rasters per block group / Homeland area"
+"$PYTHON" -m ingest.load_raster_means
+
 "$PYTHON" -m ingest.add_mv_column
 
 # The schema step recreates the views while the tables are still empty, so refresh last.
