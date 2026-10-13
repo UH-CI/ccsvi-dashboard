@@ -142,6 +142,8 @@ export interface SubRasterLayerConfig {
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.
   sourceFileName?: string;
+  // Dataset and metric of this raster's saved per-area average, which the popup reads
+  savedMetric?: { dataset: string; metric: string };
   // Use TiTiler built-in colormap names
   colormapName?: string;
   // Shown on the map legend and click-to-query popup
@@ -175,6 +177,8 @@ export interface RasterLayerConfig {
   color?: string;
   // The underlying COG file name, used by the popup zonal stats flow.
   sourceFileName?: string;
+  // Dataset and metric of this raster's saved per-area average, which the popup reads
+  savedMetric?: { dataset: string; metric: string };
   // Use TiTiler built-in colormap names
   colormapName?: string;
   // Shown on the map legend and click-to-query popup
@@ -223,6 +227,8 @@ export interface CatalogMetric {
 export interface CatalogDataset {
   metricLabel: string;
   hawaiianHomelands: boolean;
+  // 'census', 'point' or 'raster'
+  sourceType: string;
   columnThresholds: Record<string, CatalogMetric>;
 }
 

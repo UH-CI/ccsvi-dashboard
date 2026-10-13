@@ -12,7 +12,8 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
+import { meanHcdpForFeature } from "../../../utils/zonalStats.ts";
+import { useAppStore } from "../../../stores/useAppStore.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -239,20 +240,15 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (currentVisibleIds?.has(activeRasterLayerId)) {
           try {
-            const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
-            if (res.ok) {
-              const arrayBuffer = await res.arrayBuffer();
-              const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
+            const { dataset, metric } = activeRasterLayerConfig?.savedMetric as { dataset: string; metric: string };
+            await useAppStore.getState().fetchMetricValues(dataset, metric);
+            const saved = useAppStore.getState().metricValuesCache[`${dataset}::${metric}`];
+            const value = saved?.[String(geoid)]?.absolute ?? null;
 
-              const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-              if (currentRasterId?.has(activeRasterLayerId)) {
-                overlayField = {
-                  label: overlayLabel,
-                  value: Number.isFinite(value ?? NaN) ? value : null,
-                  suffix: overlaySuffix,
-                };
-                render();
-              }
+            const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+            if (currentRasterId?.has(activeRasterLayerId)) {
+              overlayField = { label: overlayLabel, value, suffix: overlaySuffix };
+              render();
             }
           } catch {
             overlayField = { label: overlayLabel, value: null, suffix: overlaySuffix };

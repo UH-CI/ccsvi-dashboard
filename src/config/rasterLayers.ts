@@ -16,6 +16,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         units: "m",
         opacity: 0.7,
         sourceFileName: "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
+        savedMetric: { dataset: "storm_surge", metric: "Inundation Category 1 (mean, m)" },
         colormapName: "blues",
       },
       {
@@ -25,6 +26,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         units: "m",
         opacity: 0.7,
         sourceFileName: "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
+        savedMetric: { dataset: "storm_surge", metric: "Inundation Category 2 (mean, m)" },
         colormapName: "blues",
       },
       {
@@ -34,6 +36,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         units: "m",
         opacity: 0.7,
         sourceFileName: "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
+        savedMetric: { dataset: "storm_surge", metric: "Inundation Category 3 (mean, m)" },
         colormapName: "blues",
       },
       {
@@ -43,6 +46,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         units: "m",
         opacity: 0.7,
         sourceFileName: "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
+        savedMetric: { dataset: "storm_surge", metric: "Inundation Category 4 (mean, m)" },
         colormapName: "blues",
       },
     ],
@@ -55,6 +59,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
     units: "Susceptibility Index",
     opacity: 0.7,
     sourceFileName: "lw_hi.cog.tif",
+    savedMetric: { dataset: "landslide", metric: "Susceptibility (mean index)" },
     colormapName: "ylorrd",
   },
 ];
