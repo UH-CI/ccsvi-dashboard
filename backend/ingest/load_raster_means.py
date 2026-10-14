@@ -1,5 +1,5 @@
-"""Averages each raster over every block group / Hawaiian Homeland area and loads
-it as a metric.
+"""Averages each raster over every block group / Hawaiian Homeland area, and takes
+its highest value there, and loads both as metrics.
 
 Run after ingest.load_postgis, before the view refresh, in both rebuild.sh
 modes:
@@ -30,13 +30,13 @@ AREA_TYPES = [
     ("hawaiian_homeland", True),
 ]
 
-# Per RASTER_CATALOG id: (dataset id, dataset label, metric name)
+# Per RASTER_CATALOG id: (dataset id, dataset label, mean metric name, max metric name)
 RASTER_METRICS = {
-    "stormSurge.inundation_category1": ("storm_surge", "Storm Surge", "Inundation Category 1 (mean, m)"),
-    "stormSurge.inundation_category2": ("storm_surge", "Storm Surge", "Inundation Category 2 (mean, m)"),
-    "stormSurge.inundation_category3": ("storm_surge", "Storm Surge", "Inundation Category 3 (mean, m)"),
-    "stormSurge.inundation_category4": ("storm_surge", "Storm Surge", "Inundation Category 4 (mean, m)"),
-    "Landslide": ("landslide", "Landslide", "Susceptibility (mean index)"),
+    "stormSurge.inundation_category1": ("storm_surge", "Storm Surge", "Inundation Category 1 (mean, m)", "Inundation Category 1 (max, m)"),
+    "stormSurge.inundation_category2": ("storm_surge", "Storm Surge", "Inundation Category 2 (mean, m)", "Inundation Category 2 (max, m)"),
+    "stormSurge.inundation_category3": ("storm_surge", "Storm Surge", "Inundation Category 3 (mean, m)", "Inundation Category 3 (max, m)"),
+    "stormSurge.inundation_category4": ("storm_surge", "Storm Surge", "Inundation Category 4 (mean, m)", "Inundation Category 4 (max, m)"),
+    "Landslide": ("landslide", "Landslide", "Susceptibility (mean index)", "Susceptibility (max index)"),
 }
 
 
@@ -44,9 +44,11 @@ def dataset_id_for(dataset_id: str, homelands: bool) -> str:
     return f"{dataset_id}_homelands" if homelands else dataset_id
 
 
-# Mean of the data pixels inside the shape, or None if it has none or lies
-# outside the raster (e.g. Niihau, which the storm surge files don't cover)
-def mean_over(src: rasterio.DatasetReader, geometry: dict) -> float | None:
+# Mean and max of the data pixels inside the shape, or None if it has none or
+# lies outside the raster (e.g. Niihau, which the storm surge files don't cover)
+def stats_over(
+    src: rasterio.DatasetReader, geometry: dict
+) -> tuple[float, float] | None:
     try:
         data, _ = mask(src, [geometry], crop=True, filled=False)
     except ValueError as err:
@@ -54,7 +56,7 @@ def mean_over(src: rasterio.DatasetReader, geometry: dict) -> float | None:
             raise
         return None
     band = data[0]
-    return None if band.count() == 0 else float(band.mean())
+    return None if band.count() == 0 else (float(band.mean()), float(band.max()))
 
 
 async def load_track(
@@ -70,7 +72,7 @@ async def load_track(
     ]
 
     for order, (raster_id, filename) in enumerate(RASTER_CATALOG.items()):
-        base_id, label, name = RASTER_METRICS[raster_id]
+        base_id, label, mean_name, max_name = RASTER_METRICS[raster_id]
         dataset_id = dataset_id_for(base_id, homelands)
 
         await conn.execute(
@@ -87,38 +89,43 @@ async def load_track(
             homelands,
         )
 
-        # classification_mode/mv_column are set elsewhere
-        await conn.execute(
-            """
-            INSERT INTO metrics (dataset_id, name, classification_mode, display_order,
-                                  has_moe, has_percentage, has_moe_pp)
-            VALUES ($1, $2, 'q', $3, false, false, false)
-            ON CONFLICT (dataset_id, name) DO NOTHING
-            """,
-            dataset_id,
-            name,
-            order,
-        )
-        metric_id = await conn.fetchval(
-            "SELECT id FROM metrics WHERE dataset_id = $1 AND name = $2",
-            dataset_id,
-            name,
-        )
-
         with rasterio.open(RASTER_DIR / filename) as src:
-            means = [(geoid, mean_over(src, geom)) for geoid, geom in shapes]
-        rows = [(geoid, metric_id, mean) for geoid, mean in means if mean is not None]
+            stats = [(geoid, stats_over(src, geom)) for geoid, geom in shapes]
 
-        await conn.executemany(
-            """
-            INSERT INTO metric_values (geoid, metric_id, absolute)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (geoid, metric_id) DO UPDATE SET absolute = EXCLUDED.absolute
-            """,
-            rows,
-        )
+        # classification_mode/mv_column are set elsewhere
+        for stat_index, name in enumerate((mean_name, max_name)):
+            await conn.execute(
+                """
+                INSERT INTO metrics (dataset_id, name, classification_mode, display_order,
+                                      has_moe, has_percentage, has_moe_pp)
+                VALUES ($1, $2, 'q', $3, false, false, false)
+                ON CONFLICT (dataset_id, name) DO NOTHING
+                """,
+                dataset_id,
+                name,
+                order * 2 + stat_index,
+            )
+            metric_id = await conn.fetchval(
+                "SELECT id FROM metrics WHERE dataset_id = $1 AND name = $2",
+                dataset_id,
+                name,
+            )
+            rows = [
+                (geoid, metric_id, values[stat_index])
+                for geoid, values in stats
+                if values is not None
+            ]
 
-        print(f"  {dataset_id} / {name}: {len(rows)} of {len(shapes)} areas have data")
+            await conn.executemany(
+                """
+                INSERT INTO metric_values (geoid, metric_id, absolute)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (geoid, metric_id) DO UPDATE SET absolute = EXCLUDED.absolute
+                """,
+                rows,
+            )
+
+            print(f"  {dataset_id} / {name}: {len(rows)} of {len(shapes)} areas have data")
 
 
 async def main() -> None:

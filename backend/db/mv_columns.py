@@ -124,6 +124,16 @@ BLOCK_GROUP_COLUMNS: list[tuple[str, str, str, str]] = [
      'Inundation Category 4 (mean, m)', 'absolute'),
     ('landslide_mean_abs', 'landslide',
      'Susceptibility (mean index)', 'absolute'),
+    ('storm_surge_cat1_max_abs', 'storm_surge',
+     'Inundation Category 1 (max, m)', 'absolute'),
+    ('storm_surge_cat2_max_abs', 'storm_surge',
+     'Inundation Category 2 (max, m)', 'absolute'),
+    ('storm_surge_cat3_max_abs', 'storm_surge',
+     'Inundation Category 3 (max, m)', 'absolute'),
+    ('storm_surge_cat4_max_abs', 'storm_surge',
+     'Inundation Category 4 (max, m)', 'absolute'),
+    ('landslide_max_abs', 'landslide',
+     'Susceptibility (max index)', 'absolute'),
 ]
 
 HAWAIIAN_HOMELAND_COLUMNS: list[tuple[str, str, str, str]] = [
@@ -197,4 +207,14 @@ HAWAIIAN_HOMELAND_COLUMNS: list[tuple[str, str, str, str]] = [
      'Inundation Category 4 (mean, m)', 'absolute'),
     ('landslide_mean_abs', 'landslide_homelands',
      'Susceptibility (mean index)', 'absolute'),
+    ('storm_surge_cat1_max_abs', 'storm_surge_homelands',
+     'Inundation Category 1 (max, m)', 'absolute'),
+    ('storm_surge_cat2_max_abs', 'storm_surge_homelands',
+     'Inundation Category 2 (max, m)', 'absolute'),
+    ('storm_surge_cat3_max_abs', 'storm_surge_homelands',
+     'Inundation Category 3 (max, m)', 'absolute'),
+    ('storm_surge_cat4_max_abs', 'storm_surge_homelands',
+     'Inundation Category 4 (max, m)', 'absolute'),
+    ('landslide_max_abs', 'landslide_homelands',
+     'Susceptibility (max index)', 'absolute'),
 ]

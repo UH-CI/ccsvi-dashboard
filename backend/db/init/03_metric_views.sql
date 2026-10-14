@@ -116,7 +116,17 @@ SELECT
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
         AND m.name = 'Inundation Category 4 (mean, m)') AS storm_surge_cat4_mean_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'landslide'
-        AND m.name = 'Susceptibility (mean index)') AS landslide_mean_abs
+        AND m.name = 'Susceptibility (mean index)') AS landslide_mean_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
+        AND m.name = 'Inundation Category 1 (max, m)') AS storm_surge_cat1_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
+        AND m.name = 'Inundation Category 2 (max, m)') AS storm_surge_cat2_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
+        AND m.name = 'Inundation Category 3 (max, m)') AS storm_surge_cat3_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
+        AND m.name = 'Inundation Category 4 (max, m)') AS storm_surge_cat4_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'landslide'
+        AND m.name = 'Susceptibility (max index)') AS landslide_max_abs
 
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
@@ -211,7 +221,17 @@ SELECT
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
         AND m.name = 'Inundation Category 4 (mean, m)') AS storm_surge_cat4_mean_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'landslide_homelands'
-        AND m.name = 'Susceptibility (mean index)') AS landslide_mean_abs
+        AND m.name = 'Susceptibility (mean index)') AS landslide_mean_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
+        AND m.name = 'Inundation Category 1 (max, m)') AS storm_surge_cat1_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
+        AND m.name = 'Inundation Category 2 (max, m)') AS storm_surge_cat2_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
+        AND m.name = 'Inundation Category 3 (max, m)') AS storm_surge_cat3_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
+        AND m.name = 'Inundation Category 4 (max, m)') AS storm_surge_cat4_max_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'landslide_homelands'
+        AND m.name = 'Susceptibility (max index)') AS landslide_max_abs
 
 FROM geographies g
 JOIN metric_values mv ON mv.geoid = g.geoid
