@@ -31,7 +31,7 @@ interface AppState {
   metricValuesCache: Record<string, Record<string, MetricValue>>;
   datasetCatalog: DatasetCatalog | null;
   // Primary metric's threshold slider (Data Analyzer)
-    filterRange: [number, number] | null;
+  filterRange: [number, number] | null;
   setFilterRange: (range: [number, number] | null) => void;
   // Comparison metric's threshold slider (Data Analyzer)
   filterRange2: [number, number] | null;
@@ -82,7 +82,7 @@ const initialLoadingState: LoadingState = {
 
 const initialErrorState: ErrorState = {};
 
-const fetchingMetrics = new Set<string>();
+const fetchingMetrics = new Map<string, Promise<void>>();
 let fetchingDatasetCatalog = false;
 
 export const useAppStore = create<AppState>((set, get) => {
@@ -157,18 +157,22 @@ export const useAppStore = create<AppState>((set, get) => {
     fetchMetricValues: async (dataset: string, metric: string) => {
       const cacheKey = `${dataset}::${metric}`;
       if (get().metricValuesCache[cacheKey] !== undefined) return;
-      if (fetchingMetrics.has(cacheKey)) return;
-      fetchingMetrics.add(cacheKey);
-      try {
-        const data = await getMetricValues(dataset, metric);
-        set((state) => ({
-          metricValuesCache: { ...state.metricValuesCache, [cacheKey]: data },
-        }));
-      } catch (err) {
-        console.error(`Failed to fetch metric values for ${dataset}::${metric}:`, err);
-      } finally {
-        fetchingMetrics.delete(cacheKey);
-      }
+      const inFlight = fetchingMetrics.get(cacheKey);
+      if (inFlight) return inFlight;
+      const request = (async () => {
+        try {
+          const data = await getMetricValues(dataset, metric);
+          set((state) => ({
+            metricValuesCache: { ...state.metricValuesCache, [cacheKey]: data },
+          }));
+        } catch (err) {
+          console.error(`Failed to fetch metric values for ${dataset}::${metric}:`, err);
+        } finally {
+          fetchingMetrics.delete(cacheKey);
+        }
+      })();
+      fetchingMetrics.set(cacheKey, request);
+      return request;
     },
     fetchDatasetCatalog: async () => {
       if (get().datasetCatalog !== null) return;
