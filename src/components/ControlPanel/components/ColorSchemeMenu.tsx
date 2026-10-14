@@ -24,19 +24,35 @@ interface ColorSchemeMenuProps {
   ) => void;
 }
 
+const NAME_MAPPING = [
+  { value: "Viridis", label: "Viridis" },
+  { value: "YlOrRd", label: "Yellow-Orange-Red" },
+  { value: "Blues", label: "Blues" },
+  { value: "Spectral", label: "Spectral" },
+  { value: "RdBu", label: "Red-Blue" },
+  { value: "RdYlBu", label: "Red-Yellow-Blue" },
+];
+
+// const SEQUENTIAL_SCHEMES = [
+//   "Viridis",
+//   "YlOrRd",
+//   "YlGnBu",
+//   "Blues",
+//   "Reds",
+//   "Greens",
+//   "Purples",
+//   "Oranges",
+//   "GnBu",
+//   "BuPu",
+// ];
 const SEQUENTIAL_SCHEMES = [
   "Viridis",
   "YlOrRd",
-  "YlGnBu",
   "Blues",
-  "Reds",
-  "Greens",
-  "Purples",
-  "Oranges",
-  "GnBu",
-  "BuPu",
 ];
-const DIVERGING_SCHEMES = ["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"];
+//const DIVERGING_SCHEMES = ["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"];
+const DIVERGING_SCHEMES = ["Spectral", "RdBu", "RdYlBu", ];
+
 const BIVARIATE_SCHEMES = ["PurpleBlue", "OrangePurple", "GreenBlue"];
 
 // Color-scheme picker (sequential/diverging/bivariate) plus per-layer opacity sliders.
@@ -52,56 +68,6 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
 }) => {
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
-      <ListSubheader>Sequential</ListSubheader>
-      {SEQUENTIAL_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme || (!config.colorScheme && scheme === "Viridis")}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {scheme}
-        </MenuItem>
-      ))}
-      <ListSubheader>Diverging</ListSubheader>
-      {DIVERGING_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {scheme}
-        </MenuItem>
-      ))}
-
-      {config.metric2 && (
-        <>
-          <Divider />
-          <ListSubheader>Bivariate Palette</ListSubheader>
-          {BIVARIATE_SCHEMES.map((scheme) => (
-            <MenuItem
-              key={scheme}
-              selected={
-                config.bivariateColorScheme === scheme ||
-                (!config.bivariateColorScheme && scheme === "PurpleBlue")
-              }
-              onClick={() => {
-                updateMapConfig(config.id, { bivariateColorScheme: scheme });
-                onClose();
-              }}
-            >
-              {scheme}
-            </MenuItem>
-          ))}
-        </>
-      )}
-
-      <Divider />
 
       <Box className={styles["opacity-section"]}>
         <Typography variant="caption" className={styles["opacity-section-label"]}>
@@ -167,6 +133,59 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
           </>
         )}
       </Box>
+
+      
+      <Divider />
+
+
+      <ListSubheader>Sequential</ListSubheader>
+      {SEQUENTIAL_SCHEMES.map((scheme) => (
+        <MenuItem
+          key={scheme}
+          selected={config.colorScheme === scheme || (!config.colorScheme && scheme === "Viridis")}
+          onClick={() => {
+            updateMapConfig(config.id, { colorScheme: scheme });
+            onClose();
+          }}
+        >
+          {NAME_MAPPING.find(({ value }) => value === scheme)?.label ?? scheme}
+        </MenuItem>
+      ))}
+      <ListSubheader>Diverging</ListSubheader>
+      {DIVERGING_SCHEMES.map((scheme) => (
+        <MenuItem
+          key={scheme}
+          selected={config.colorScheme === scheme}
+          onClick={() => {
+            updateMapConfig(config.id, { colorScheme: scheme });
+            onClose();
+          }}
+        >
+          {NAME_MAPPING.find(({ value }) => value === scheme)?.label ?? scheme}
+        </MenuItem>
+      ))}
+
+      {config.metric2 && (
+        <>
+          <Divider />
+          <ListSubheader>Bivariate Palette</ListSubheader>
+          {BIVARIATE_SCHEMES.map((scheme) => (
+            <MenuItem
+              key={scheme}
+              selected={
+                config.bivariateColorScheme === scheme ||
+                (!config.bivariateColorScheme && scheme === "PurpleBlue")
+              }
+              onClick={() => {
+                updateMapConfig(config.id, { bivariateColorScheme: scheme });
+                onClose();
+              }}
+            >
+              {scheme}
+            </MenuItem>
+          ))}
+        </>
+      )}
     </Menu>
   );
 };
