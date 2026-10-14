@@ -12,8 +12,8 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { meanHcdpForFeature } from "../../../utils/zonalStats.ts";
-import { getActiveRaster, savedRasterAverage } from "../../../utils/savedRaster.ts";
+import { hcdpStatsForFeature } from "../../../utils/zonalStats.ts";
+import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -217,11 +217,11 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
           hcdpField = { label: overlay.title, loading: true };
           render();
 
-          const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+          const stats = await hcdpStatsForFeature(overlay.arrayBuffer, overlay.loadId, feature);
 
           const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
           if (currentOverlay?.arrayBuffer) {
-            hcdpField = { label: currentOverlay.title, value: mean };
+            hcdpField = { label: currentOverlay.title, meanValue: stats.mean, maxValue: stats.max };
             render();
           }
         }
@@ -234,16 +234,20 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (currentVisibleIds?.has(activeRasterLayerId)) {
           try {
-            const savedMetric = activeRasterLayerConfig?.savedMetric as { dataset: string; metric: string };
-            const value = await savedRasterAverage(savedMetric, String(geoid), false);
+            const savedMetrics = activeRasterLayerConfig?.savedMetrics as {
+              dataset: string;
+              mean: string;
+              max: string;
+            };
+            const stats = await savedRasterStats(savedMetrics, String(geoid), false);
 
             const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
             if (currentRasterId?.has(activeRasterLayerId)) {
-              overlayField = { label: overlayLabel, value, suffix: overlaySuffix };
+              overlayField = { label: overlayLabel, meanValue: stats.mean, maxValue: stats.max, suffix: overlaySuffix };
               render();
             }
           } catch {
-            overlayField = { label: overlayLabel, value: null, suffix: overlaySuffix };
+            overlayField = { label: overlayLabel, meanValue: null, maxValue: null, suffix: overlaySuffix };
             render();
           }
         }

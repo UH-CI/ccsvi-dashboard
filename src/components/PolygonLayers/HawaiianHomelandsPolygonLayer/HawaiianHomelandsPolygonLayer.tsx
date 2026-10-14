@@ -15,7 +15,7 @@ import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../hooks/usePointCounts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
-import { getActiveRaster, savedRasterAverage } from "../../../utils/savedRaster.ts";
+import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface HawaiianHomelandsPolygonLayerProps {
@@ -179,18 +179,19 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         overlayField = { label, loading: true, suffix };
         render();
 
-        let value: number | null = null;
+        let stats: { mean: number | null; max: number | null } = { mean: null, max: null };
         try {
-          const savedMetric = activeRaster.config?.savedMetric as {
+          const savedMetrics = activeRaster.config?.savedMetrics as {
             dataset: string;
-            metric: string;
+            mean: string;
+            max: string;
           };
-          value = await savedRasterAverage(savedMetric, String(geoid), true);
+          stats = await savedRasterStats(savedMetrics, String(geoid), true);
         } catch {
-          value = null;
+          // keep the empty stats
         }
         if (useRasterLayersStore.getState().visibleLayerIdsByMap[mapId]?.has(activeRaster.id)) {
-          overlayField = { label, value, suffix };
+          overlayField = { label, meanValue: stats.mean, maxValue: stats.max, suffix };
           render();
         }
       }

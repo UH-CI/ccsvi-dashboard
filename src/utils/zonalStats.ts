@@ -43,33 +43,30 @@ function isNoDataValue(v: number, georaster: ParsedGeoraster): boolean {
   return false;
 }
 
-export async function meanRasterForFeature(
-  arrayBuffer: ArrayBuffer,
-  cacheKey: string,
-  feature: Feature<Geometry>,
-): Promise<number | null> {
-  const georaster = await getGeoraster(arrayBuffer, cacheKey);
-
-  try {
-    const means = await geoblaze.mean(georaster, feature.geometry);
-    const mean = Array.isArray(means) ? means[0] : means;
-
-    if (mean == null || typeof mean !== "number" || isNoDataValue(mean, georaster)) {
-      return null;
-    }
-
-    return mean;
-  } catch (err) {
-    console.warn("Raster zonal mean failed:", err);
-    return null;
-  }
-}
-
-// Mean raster value for pixels intersecting the feature geometry.
-export async function meanHcdpForFeature(
+// Mean and max raster value for pixels intersecting the feature geometry.
+export async function hcdpStatsForFeature(
   arrayBuffer: ArrayBuffer,
   loadId: number,
   feature: Feature<Geometry>,
-): Promise<number | null> {
-  return meanRasterForFeature(arrayBuffer, `hcdp:${loadId}`, feature);
+): Promise<{ mean: number | null; max: number | null }> {
+  const georaster = await getGeoraster(arrayBuffer, `hcdp:${loadId}`);
+
+  const stat = async (
+    name: "mean" | "max",
+    calc: typeof geoblaze.mean,
+  ): Promise<number | null> => {
+    try {
+      const results = await calc(georaster, feature.geometry);
+      const value = Array.isArray(results) ? results[0] : results;
+      if (value == null || typeof value !== "number" || isNoDataValue(value, georaster)) {
+        return null;
+      }
+      return value;
+    } catch (err) {
+      console.warn(`Raster zonal ${name} failed:`, err);
+      return null;
+    }
+  };
+
+  return { mean: await stat("mean", geoblaze.mean), max: await stat("max", geoblaze.max) };
 }

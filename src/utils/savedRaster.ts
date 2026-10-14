@@ -19,19 +19,25 @@ export function getActiveRaster(
   return { id, config };
 }
 
-// A raster's saved average for one area.
-export async function savedRasterAverage(
-  saved: { dataset: string; metric: string },
+// A raster's saved mean and max for one area.
+export async function savedRasterStats(
+  saved: { dataset: string; mean: string; max: string },
   geoid: string,
   homelands: boolean,
-): Promise<number | null> {
+): Promise<{ mean: number | null; max: number | null }> {
   const dataset = homelands ? `${saved.dataset}_homelands` : saved.dataset;
-  await useAppStore.getState().fetchMetricValues(dataset, saved.metric);
-  const values = useAppStore.getState().metricValuesCache[`${dataset}::${saved.metric}`];
-  return values?.[geoid]?.absolute ?? null;
+  await Promise.all([
+    useAppStore.getState().fetchMetricValues(dataset, saved.mean),
+    useAppStore.getState().fetchMetricValues(dataset, saved.max),
+  ]);
+  const cache = useAppStore.getState().metricValuesCache;
+  return {
+    mean: cache[`${dataset}::${saved.mean}`]?.[geoid]?.absolute ?? null,
+    max: cache[`${dataset}::${saved.max}`]?.[geoid]?.absolute ?? null,
+  };
 }
 
-// The visible raster's saved averages for the table: its name and a lookup of one area's value
+// The visible raster's saved means and maxes for the table: its name and lookups of one area's values
 export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
   const visibleIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
   const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
@@ -39,17 +45,24 @@ export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
   const fetchMetricValues = useAppStore((s) => s.fetchMetricValues);
 
   const config = useMemo(() => getActiveRaster(visibleIds, configs)?.config ?? null, [visibleIds, configs]);
-  const saved = config?.savedMetric ?? null;
+  const saved = config?.savedMetrics ?? null;
   const dataset = saved ? (isHomelands ? `${saved.dataset}_homelands` : saved.dataset) : null;
 
   useEffect(() => {
-    if (saved && dataset) fetchMetricValues(dataset, saved.metric);
+    if (!saved || !dataset) return;
+    fetchMetricValues(dataset, saved.mean);
+    fetchMetricValues(dataset, saved.max);
   }, [saved, dataset, fetchMetricValues]);
 
   return useMemo(() => {
     if (!config || !saved || !dataset) return null;
-    const values = metricValuesCache[`${dataset}::${saved.metric}`];
-    const getValue = (geoid: string): number | null => values?.[geoid]?.absolute ?? null;
-    return { name: config.name, units: config.units, getValue };
+    const lookup = (metric: string) => (geoid: string): number | null =>
+      metricValuesCache[`${dataset}::${metric}`]?.[geoid]?.absolute ?? null;
+    return {
+      name: config.name,
+      units: config.units,
+      getMean: lookup(saved.mean),
+      getMax: lookup(saved.max),
+    };
   }, [config, saved, dataset, metricValuesCache]);
 }

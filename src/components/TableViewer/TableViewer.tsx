@@ -143,24 +143,25 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     [pointLayers],
   );
 
-  // Raster average: one extra column for the raster currently visible on the map
+  // Raster mean and max: two extra columns for the raster currently visible on the map
   const savedRaster = useSavedRasterForTable(isHomelands, primaryMapId);
 
   const rasterColumns = useMemo(
     () =>
       savedRaster
         ? [
-            {
-              field: "raster_avg",
-              headerName: `${savedRaster.name} (avg${savedRaster.units ? `, ${savedRaster.units}` : ""})`,
-              type: "number" as const,
-              flex: 1,
-              minWidth: 160,
-              sortable: true,
-              filterable: true,
-              hideable: true,
-            },
-          ]
+            ["raster_mean", "mean"],
+            ["raster_max", "max"],
+          ].map(([field, stat]) => ({
+            field,
+            headerName: `${savedRaster.name} (${stat}${savedRaster.units ? `, ${savedRaster.units}` : ""})`,
+            type: "number" as const,
+            flex: 1,
+            minWidth: 160,
+            sortable: true,
+            filterable: true,
+            hideable: true,
+          }))
         : [],
     [savedRaster?.name, savedRaster?.units],
   );
@@ -196,7 +197,10 @@ export const TableViewer: React.FC<TableViewerProps> = ({
         extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid);
         extra[`pointnames_${layer.id}`] = getNames(layer.id, geoid).join(", ") || "—";
       }
-      if (savedRaster) extra.raster_avg = savedRaster.getValue(geoid) ?? "";
+      if (savedRaster) {
+        extra.raster_mean = savedRaster.getMean(geoid) ?? "";
+        extra.raster_max = savedRaster.getMax(geoid) ?? "";
+      }
       for (const hazard of hazards) {
         extra[`hazard_${hazard.key}`] = touches(hazard.key, geoid) ? "Yes" : "No";
       }
