@@ -199,6 +199,36 @@ async def filter_hawaiian_homelands(
     return await run_filter(conn, request, True, None, hazard, any_group, fmt)
 
 
+@router.get(
+    "/api/v1/hazard-areas",
+    response_model=dict[str, list[str]],
+    summary="Which block groups and Hawaiian Homelands touch each hazard layer",
+    description=(
+        "For each repeatable ?hazard=<id>[.<sub_id>], returns the geoids (block groups and "
+        "Homelands together) that touch it, read from the pre-computed geography_hazards table. "
+        "A hazard with no shapes loaded in the database is left out of the result, so an empty "
+        "list means the layer is loaded but touches no area."
+    ),
+)
+async def hazard_areas(
+    conn: ConnDep,
+    hazard: list[str] = Query(
+        ...,
+        description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable.",
+    ),
+) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = {}
+    for entry in hazard:
+        params: list[Any] = []
+        branches = hazard_branches([entry], params)
+        loaded = await conn.fetchval(f"SELECT EXISTS (SELECT 1 FROM hazards h WHERE {branches})", *params)
+        if not loaded:
+            continue
+        rows = await conn.fetch(f"SELECT DISTINCT geoid FROM geography_hazards h WHERE {branches}", *params)
+        result[entry] = [row["geoid"] for row in rows]
+    return result
+
+
 # Parses hazard layers and sub-layer requests
 def hazard_branches(entries: list[str], params: list[Any]) -> str:
     branches: list[str] = []

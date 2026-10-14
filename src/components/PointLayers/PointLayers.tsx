@@ -42,7 +42,7 @@ function useMatchingIds(layerId: string): Set<string> | null {
     }
     let cancelled = false;
     const geoids = pointFilter.geoids && Array.from(pointFilter.geoids);
-    getFilteredPoints(layerId, geoids, pointFilter.hazards).then((data) => {
+    getFilteredPoints(layerId, geoids, pointFilter.hazards, pointFilter.rasters).then((data) => {
       if (cancelled) return;
       setIds(
         new Set(

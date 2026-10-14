@@ -44,7 +44,10 @@ class PointFeatureCollection(BaseModel):
         "and geoid (only points inside one of these block group / Hawaiian Homeland "
         "areas; repeatable, matches any of them), and hazard (only points inside one of these "
         "hazard layers, looked up in the pre-computed point_hazards table; repeatable, matches "
-        "any of them). All params are optional; omitting them all returns every point."
+        "any of them), and raster (only points with a real value in one of these rasters, looked "
+        "up in the pre-computed point_raster_values table; repeatable, matches any of them; "
+        "combined with hazard, a point must match both). All params are optional; omitting "
+        "them all returns every point."
     ),
 )
 async def get_points(
@@ -54,6 +57,10 @@ async def get_points(
     geoid: list[str] | None = Query(None, description="Only points inside any of these geoids' areas"),
     hazard: list[str] | None = Query(
         None, description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"
+    ),
+    raster: list[str] | None = Query(
+        None,
+        description="Raster layer IDs, e.g. 'stormSurge.inundation_category1'. Only points with a value in any of them",
     ),
 ) -> PointFeatureCollection:
     conditions: list[str] = []
@@ -81,6 +88,13 @@ async def get_points(
         conditions.append(
             "EXISTS (SELECT 1 FROM point_hazards h WHERE h.point_id = points.id"
             f" AND ({hazard_branches(hazard, params)}))"
+        )
+
+    if raster:
+        params.append(raster)
+        conditions.append(
+            "EXISTS (SELECT 1 FROM point_raster_values r WHERE r.point_id = points.id"
+            f" AND r.raster_id = ANY(${len(params)}))"
         )
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
