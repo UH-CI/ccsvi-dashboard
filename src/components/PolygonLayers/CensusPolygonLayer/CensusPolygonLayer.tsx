@@ -12,7 +12,7 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
+import { meanHcdpForFeature, maxHcdpForFeature, meanRasterForFeature, maxRasterForFeature } from "../../../utils/zonalStats.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -223,10 +223,11 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
           render();
 
           const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+          const max = await maxHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
 
           const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
           if (currentOverlay?.arrayBuffer) {
-            hcdpField = { label: currentOverlay.title, value: mean };
+            hcdpField = { label: currentOverlay.title, meanValue: mean, maxValue: max };
             render();
           }
         }
@@ -242,20 +243,22 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
             const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
             if (res.ok) {
               const arrayBuffer = await res.arrayBuffer();
-              const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
+              const meanValue = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
+              const maxValue = await maxRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
 
-              const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-              if (currentRasterId?.has(activeRasterLayerId)) {
+              const currentRasterIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+              if (currentRasterIds?.has(activeRasterLayerId)) {
                 overlayField = {
                   label: overlayLabel,
-                  value: Number.isFinite(value ?? NaN) ? value : null,
+                  meanValue: Number.isFinite(meanValue ?? NaN) ? meanValue : null,
+                  maxValue: Number.isFinite(maxValue ?? NaN) ? maxValue : null,
                   suffix: overlaySuffix,
                 };
                 render();
               }
             }
           } catch {
-            overlayField = { label: overlayLabel, value: null, suffix: overlaySuffix };
+            overlayField = { label: overlayLabel, meanValue: null, maxValue: null, suffix: overlaySuffix };
             render();
           }
         }

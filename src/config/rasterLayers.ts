@@ -53,7 +53,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
     description: "Locations with greater potential for slope failure and related exposure.",
     icon: "FaMountain",
     color: "#6D4C41",
-    units: "Susceptibility Index",
+    units: "%",
     opacity: 0.7,
     sourceFileName: "lw_hi.cog.tif",
     colormapName: "ylorrd",
