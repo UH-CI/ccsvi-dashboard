@@ -69,7 +69,7 @@ const initialMapConfig: MapConfig = {
   dataset: "",
   metric: "",
   visible: true,
-  colorScheme: "Viridis",
+  colorScheme: "RdBu",
   baseMap: DEFAULT_BASE_MAP_ID,
 };
 
@@ -102,7 +102,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       dataset: "",
       metric: "",
       visible: true,
-      colorScheme: "Viridis",
+      colorScheme: "RdBu",
       baseMap: DEFAULT_BASE_MAP_ID,
     };
     set((state) => ({

@@ -49,7 +49,7 @@ function initializeMapStore(
       ...(config.metric2 ? { metric2: config.metric2 } : {}),
     ...(config.bivariateColorScheme ? { bivariateColorScheme: config.bivariateColorScheme } : {}),
     visible: config.visible ?? true,
-    colorScheme: "Viridis",
+    colorScheme: "RdBu",
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
   }));
 

@@ -84,17 +84,28 @@ export function computeColorScale(
   const limits = rawLimits.filter((limit, i) => i === 0 || limit !== rawLimits[i - 1]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const scale = chroma.scale(scaleName as any).classes(limits);
+  const reverse = scaleName === "RdBu" || scaleName === "RdYlBu";
+  const legendColors = Array.from({ length: limits.length - 1 }, (_, index) => {
+    const mid = (limits[index] + limits[index + 1]) / 2;
+    return scale(mid).hex();
+  });
+
+  if (reverse) legendColors.reverse();
 
   return {
     limits,
-    getColor: (value: number) => scale(value).hex(),
-    getLegendColors: () => {
-      const colors: string[] = [];
-      for (let i = 0; i < limits.length - 1; i++) {
-        const mid = (limits[i] + limits[i + 1]) / 2;
-        colors.push(scale(mid).hex());
+    getColor: (value: number) => {
+      if (!reverse || legendColors.length === 0) return scale(value).hex();
+
+      let classIndex = 0;
+      for (let index = limits.length - 2; index >= 1; index--) {
+        if (value >= limits[index]) {
+          classIndex = index;
+          break;
+        }
       }
-      return colors;
+      return legendColors[classIndex];
     },
+    getLegendColors: () => [...legendColors],
   };
 }
