@@ -4,13 +4,18 @@ import { deriveVisibleHazards } from "../components/DataAnalyzerMenu/deriveHazar
 import { getHazardAreas } from "../api/client";
 
 // Resolves to the touching areas, or null if the database has no data for that hazard.
+// A failed request is forgotten, so toggling the layer again asks again.
 const areasCache: Record<string, Promise<Set<string> | null>> = {};
 
 function fetchAreasOnce(entry: string): Promise<Set<string> | null> {
   if (!areasCache[entry]) {
-    areasCache[entry] = getHazardAreas([entry]).then((result) =>
-      result[entry] ? new Set(result[entry]) : null,
-    );
+    areasCache[entry] = getHazardAreas([entry])
+      .then((result) => (result[entry] ? new Set(result[entry]) : null))
+      .catch((err) => {
+        console.error(`Failed to fetch hazard areas for ${entry}:`, err);
+        delete areasCache[entry];
+        return null;
+      });
   }
   return areasCache[entry];
 }
