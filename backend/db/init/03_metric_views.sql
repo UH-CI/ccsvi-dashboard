@@ -107,6 +107,12 @@ SELECT
         AND m.name = 'Count') AS sewage_count_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'wastewater_plant_points'
         AND m.name = 'Count') AS wastewater_plant_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'airports_points'
+        AND m.name = 'Count') AS airports_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'commercial_harbors_points'
+        AND m.name = 'Count') AS commercial_harbors_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'small_boat_harbors_points'
+        AND m.name = 'Count') AS small_boat_harbors_count_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
         AND m.name = 'Inundation Category 1 (mean, m)') AS storm_surge_cat1_mean_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge'
@@ -212,6 +218,12 @@ SELECT
         AND m.name = 'Count') AS sewage_count_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'wastewater_plant_points_homelands'
         AND m.name = 'Count') AS wastewater_plant_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'airports_points_homelands'
+        AND m.name = 'Count') AS airports_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'commercial_harbors_points_homelands'
+        AND m.name = 'Count') AS commercial_harbors_count_abs,
+    MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'small_boat_harbors_points_homelands'
+        AND m.name = 'Count') AS small_boat_harbors_count_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'
         AND m.name = 'Inundation Category 1 (mean, m)') AS storm_surge_cat1_mean_abs,
     MAX(mv.absolute) FILTER (WHERE m.dataset_id = 'storm_surge_homelands'

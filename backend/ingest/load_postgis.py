@@ -46,6 +46,9 @@ POINT_LAYERS = [
     ("National_Bridge_Inventory.geojson",           "bridges",           "structure_"),
     ("HI_Onsite_Sewage_Disposal_Systems.geojson",   "sewage",            "island"),
     ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",  "wwtp_name"),
+    ("Airports_points.geojson",                     "airports",          "airport_na"),
+    ("Commercial_Harbors_points.geojson",           "commercial_harbors", "harbor_nam"),
+    ("Small_Boat_Harbors_Ramps.geojson",            "small_boat_harbors", "name"),
 ]
 
 # (filename, hazard_id, sub_id, height_ft) — IDs match hazardLayers.ts
@@ -92,6 +95,8 @@ HAZARD_LAYERS = [
     ("Fire_zone_6.geojson",                         "fire_zone",               "Zone_6",        None),
     ("Prev_contaminated_land_landfills.geojson",    "pcl_landfill",            None,            None),
     ("Prev_contaminated_land_filtered.geojson",     "pcl_filtered",            None,            None),
+    ("Airports.geojson",                            "airport_areas",           None,            None),
+    ("Commercial_Harbors.geojson",                  "commercial_harbor_areas", None,            None),
 ]
 
 BATCH_SIZE = 500

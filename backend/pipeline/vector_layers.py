@@ -11,6 +11,8 @@ Turns raw GIS files into cleaned GeoJSONs and map tiles.
   3. tippecanoe: tiles from that GeoJSON (standard zoom range plus any extra settings the entry
      lists) into a staging folder, never over the live tiles
   4. checks: feature count, validity, shape type, location; stops on failure
+  5. markers, for entries that ask for them: one point per shape, placed inside it
+     (ST_PointOnSurface), written to the point layer folder; checked for one marker per shape
 
 python -m pipeline.vector_layers [--only <name>]
 """
@@ -28,6 +30,7 @@ RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files")
 DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026")
 GEOJSON_DIR = DATA_DIR / "hazards_geojson"
 STAGING_DIR = DATA_DIR / "hazards_staging"
+POINT_DIR = DATA_DIR / "point_data"
 
 # Coordinate decimals in the processed GeoJSON
 DECIMALS = 5
@@ -48,24 +51,27 @@ class Layer:
     row_filter: str = None  # rows to keep, as a SQL condition, e.g. "zone = 1"; None keeps all rows
     shape: str = "MultiPolygon"  # output shape type, a key of EXTRACT; line layers set "MultiLineString"
     tile_flags: tuple = ()  # extra tippecanoe settings
+    markers: bool = False  # also write <name>_points.geojson to POINT_DIR, one marker per shape
 
 
-SLR_EXPOSURE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"]
-SLR_PASSIVE = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"]
-SLR_EROSION = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"]
-SLR_HIGHWAYS = ["hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
-FIRE = ["hazards/Fire_Risk_Areas.zip"]
-SOLAR = ["hazards/Solar_Insolation_Ranges.zip"]
-BRIGHTFIELDS = ["hazards/Hawaii_Brightfields_Initiative_Data.zip"]
+SLR_EXPOSURE = ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"]
+SLR_PASSIVE = ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"]
+SLR_EROSION = ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"]
+SLR_HIGHWAYS = ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"]
+FIRE = ["polygon/hazards/Fire_Risk_Areas.zip"]
+SOLAR = ["polygon/hazards/Solar_Insolation_Ranges.zip"]
+BRIGHTFIELDS = ["polygon/hazards/Hawaii_Brightfields_Initiative_Data.zip"]
 PCL_COLUMNS = ["objectid", "tmk_txt", "county", "island", "site___fac", "site_owner", "site_addre", "city",
                "zip_code", "pcsf_land", "historic_u", "current_de", "proposed_u", "urban_area", "distance_t",
                "epa_site_i", "doh_brownf", "heer_facil", "ehmp__y_n_", "potential", "heer_asses", "heer_respo",
                "nature_of", "nature_o_1", "st_areasha", "st_perimet"]
 LANDFILL_COLUMNS = PCL_COLUMNS + ["heer_res_1", "landfill_s", "landfill_y", "landfill_o", "landfill_1"]
 ROADS = "line/HI_All_Counties_Roads.zip"
-FLOOD = ["hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"]
+FLOOD = ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"]
 FLOOD_COLUMNS = ["fld_zone", "sfha_tf", "static_bfe", "depth"]
 ROAD_TILE_FLAGS = ("--drop-rate=0", "--no-feature-limit", "--no-tile-size-limit")
+AIRPORT_COLUMNS = ["objectid", "airport_co", "airport_na"]
+HARBOR_COLUMNS = ["objectid", "harbor_nam", "berth_leng", "yard_area", "shed_area", "channel_de", "turn_basin"]
 
 LAYERS = [
     Layer("filtered_slr_exposure_area_0pt5ft", SLR_EXPOSURE, "slr_exposure_area_0_pt_5_ft.shp"),
@@ -119,6 +125,9 @@ LAYERS = [
     Layer("Flood_Hazard_AE", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AE'"),
     Layer("Flood_Hazard_AO", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AO'"),
     Layer("Flood_Hazard_AH", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AH'"),
+    Layer("Airports", ["polygon/Airports.zip"], "Airports.shp", columns=AIRPORT_COLUMNS, markers=True),
+    Layer("Commercial_Harbors", ["polygon/Commercial_Harbors.zip"], "Commercial_Harbors.shp",
+          columns=HARBOR_COLUMNS, markers=True),
 ]
 
 
@@ -169,6 +178,25 @@ def process(layer, source, out, columns):
          "-lco", f"COORDINATE_PRECISION={DECIMALS}"])
 
 
+# One point per shape, from the processed GeoJSON so markers and shapes always match;
+# ST_PointOnSurface lands inside the shape, which a plain centroid of a multi-part harbor may not
+def make_markers(layer, geojson, markers, columns):
+    columns = ", ".join(f'"{c}"' for c in columns)
+    sql = f'SELECT {columns}, ST_PointOnSurface(geometry) AS geometry FROM "{layer.name}"'
+    markers.unlink(missing_ok=True)
+    run(["ogr2ogr", "-f", "GeoJSON", markers, geojson, "-dialect", "SQLite", "-sql", sql,
+         "-a_srs", "EPSG:4326", "-nlt", "POINT", "-nln", markers.stem,
+         "-lco", f"COORDINATE_PRECISION={DECIMALS}"])
+
+
+def check_markers(geojson, markers):
+    shapes = len(json.loads(geojson.read_text())["features"])
+    points = json.loads(markers.read_text())["features"]
+    check(len(points) == shapes, f"markers: {len(points)} (shapes {shapes})")
+    types = {f["geometry"]["type"] for f in points}
+    check(types == {"Point"}, f"marker types: {', '.join(sorted(types))}")
+
+
 def make_tiles(layer, geojson, tiles):
     run(["tippecanoe", "-o", tiles, "-l", layer.name, *TILE_FLAGS, *layer.tile_flags, "--force",
          "--no-progress-indicator", geojson])
@@ -206,7 +234,8 @@ def build(layer):
         filter_args = ["-where", layer.row_filter] if layer.row_filter else []
         info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", *filter_args, source]))["layers"][0]
         source_count = info["featureCount"]
-        process(layer, source, geojson, layer.columns or [f["name"] for f in info["fields"]])
+        columns = layer.columns or [f["name"] for f in info["fields"]]
+        process(layer, source, geojson, columns)
     print(f"  processed: {megabytes(geojson)} in {time.time() - start:.0f} s")
 
     start = time.time()
@@ -214,6 +243,11 @@ def build(layer):
     print(f"  tiled: {megabytes(tiles)} in {time.time() - start:.0f} s")
 
     check_outputs(layer, source_count, geojson)
+
+    if layer.markers:
+        markers = POINT_DIR / f"{layer.name}_points.geojson"
+        make_markers(layer, geojson, markers, columns)
+        check_markers(geojson, markers)
 
 
 def main():

@@ -552,7 +552,41 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
         { key: "landfill_s", label: "Start year" },
         { key: "landfill_y", label: "Currently Active" },
         { key: "landfill_o", label: "Owner" },
-        
+
+      ],
+    },
+  },
+  {
+    id: "airport_areas",
+    name: "Airport Grounds",
+    menuPanel: "points",
+    menuGroup: "Airports",
+    visible: false,
+    icon: "FaPlane",
+    color: "#f3c863",
+    filePath: "Airports.pmtiles",
+    popupConfig: {
+      titleField: "airport_na",
+      fields: [{ key: "airport_co", label: "Airport Code" }],
+    },
+  },
+  {
+    id: "commercial_harbor_areas",
+    name: "Commercial Harbor Grounds",
+    menuPanel: "points",
+    menuGroup: "Harbors",
+    visible: false,
+    icon: "FaShip",
+    color: "#254bbc",
+    filePath: "Commercial_Harbors.pmtiles",
+    popupConfig: {
+      titleField: "harbor_nam",
+      fields: [
+        { key: "berth_leng", label: "Dock Length" },
+        { key: "yard_area", label: "Outdoor Storage Area" },
+        { key: "shed_area", label: "Warehouse Area" },
+        { key: "channel_de", label: "Channel Depth" },
+        { key: "turn_basin", label: "Turning Area" },
       ],
     },
   },

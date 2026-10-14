@@ -43,6 +43,9 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
     () => hazardLayerConfigs.filter((l) => l.menuPanel === "points"),
     [hazardLayerConfigs],
   );
+  const pointGroupLabels = new Set(
+    pointSections.flatMap((s) => (s.kind === "group" ? [s.label] : [])),
+  );
 
   const visiblePointIds = visiblePointLayerIdsByMap[resolvedPointsMapId] ?? new Set<string>();
   const visibleHazardIds = visibleHazardLayerIdsByMap[resolvedPointsMapId] ?? new Set<string>();
@@ -60,9 +63,13 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
     />
   );
 
+  // A point group also holds the shape layers that share its menuGroup (e.g. airport grounds)
   const renderPointGroup = (section: Extract<MenuSection<PointLayerConfig>, { kind: "group" }>) => {
-    const visibleCount = section.layers.filter((l) => visiblePointIds.has(l.id)).length;
-    const allVisible = visibleCount === section.layers.length;
+    const groupHazards = hazardLayers.filter((l) => l.menuGroup === section.label);
+    const visibleCount =
+      section.layers.filter((l) => visiblePointIds.has(l.id)).length +
+      groupHazards.filter((l) => visibleHazardIds.has(l.id)).length;
+    const allVisible = visibleCount === section.layers.length + groupHazards.length;
     const expandKey = hazardMenuGroupExpandKey(section.label);
     return (
       <LayerToggleGroup
@@ -74,18 +81,23 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
           checked: allVisible,
           indeterminate: visibleCount > 0 && !allVisible,
           // All on: turn them all off. Otherwise: turn the rest on.
-          onToggle: () =>
+          onToggle: () => {
             section.layers
               .filter((l) => visiblePointIds.has(l.id) === allVisible)
-              .forEach((l) => togglePointLayerVisibility(resolvedPointsMapId, l.id)),
+              .forEach((l) => togglePointLayerVisibility(resolvedPointsMapId, l.id));
+            groupHazards
+              .filter((l) => visibleHazardIds.has(l.id) === allVisible)
+              .forEach((l) => toggleHazardLayerVisibility(resolvedPointsMapId, l.id));
+          },
         }}
       >
         {section.layers.map((layer) => renderPointLayer(layer, true))}
+        {groupHazards.map((layer) => renderHazardLayer(layer, true))}
       </LayerToggleGroup>
     );
   };
 
-  const renderHazardLayer = (layer: HazardLayerConfig) => {
+  const renderHazardLayer = (layer: HazardLayerConfig, indented = false) => {
     const toggleLayer = () => toggleHazardLayerVisibility(resolvedPointsMapId, layer.id);
 
     if (!layer.subLayers?.length) {
@@ -96,6 +108,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
           description={layer.description}
           icon={layer.icon}
           color={layer.color}
+          indented={indented}
           checked={visibleHazardIds.has(layer.id)}
           onToggle={toggleLayer}
         />
@@ -151,7 +164,9 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
       {resolvedPointsMapId && (
         <Stack spacing={1}>
           {pointSections.map((s) => s.kind === "layer" && renderPointLayer(s.layer))}
-          {hazardLayers.map(renderHazardLayer)}
+          {hazardLayers
+            .filter((l) => !pointGroupLabels.has(l.menuGroup ?? ""))
+            .map((l) => renderHazardLayer(l))}
           {pointSections.map((s) => s.kind === "group" && renderPointGroup(s))}
         </Stack>
       )}
