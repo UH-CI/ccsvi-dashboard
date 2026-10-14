@@ -65,6 +65,28 @@ export async function meanRasterForFeature(
   }
 }
 
+export async function maxRasterForFeature(
+  arrayBuffer: ArrayBuffer,
+  cacheKey: string,
+  feature: Feature<Geometry>,
+): Promise<number | null> {
+  const georaster = await getGeoraster(arrayBuffer, cacheKey);
+
+  try {
+    const maxes = await geoblaze.max(georaster, feature.geometry);
+    const max = Array.isArray(maxes) ? maxes[0] : maxes;
+
+    if (max == null || typeof max !== "number" || isNoDataValue(max, georaster)) {
+      return null;
+    }
+
+    return max;
+  } catch (err) {
+    console.warn("Raster zonal max failed:", err);
+    return null;
+  }
+}
+
 // Mean raster value for pixels intersecting the feature geometry.
 export async function meanHcdpForFeature(
   arrayBuffer: ArrayBuffer,
@@ -72,4 +94,12 @@ export async function meanHcdpForFeature(
   feature: Feature<Geometry>,
 ): Promise<number | null> {
   return meanRasterForFeature(arrayBuffer, `hcdp:${loadId}`, feature);
+}
+
+export async function maxHcdpForFeature(
+  arrayBuffer: ArrayBuffer,
+  loadId: number,
+  feature: Feature<Geometry>,
+): Promise<number | null> {
+  return maxRasterForFeature(arrayBuffer, `hcdp:${loadId}`, feature);
 }

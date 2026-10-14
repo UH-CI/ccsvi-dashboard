@@ -18,13 +18,15 @@ interface PopupField {
 
 export interface HcdpPopupField {
   label: string;
-  value?: number | null;
+  meanValue?: number | null;
+  maxValue?: number | null;
   loading?: boolean;
 }
 
 export interface OverlayPopupField {
   label: string;
-  value?: number | null;
+  meanValue?: number | null;
+  maxValue?: number | null;
   loading?: boolean;
   suffix?: string;
 }
@@ -112,32 +114,42 @@ export function FeaturePopup({
         ${
           hcdp
             ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)} (mean):</span>
-            <span class="${styles["popup-field-value"]}">${
-              hcdp.loading
-                ? "Calculating…"
-                : hcdp.value != null
-                  ? hcdp.value.toFixed(2)
-                  : "N/A"
-            }</span>
-          </div>
+          ${hcdp.loading
+            ? `<div class="${styles["popup-field"]}">
+              <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)}:</span>
+              <span class="${styles["popup-field-value"]}">Calculating…</span>
+            </div>`
+          : `
+            <div class="${styles["popup-field"]}">
+              <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)} (mean):</span>
+              <span class="${styles["popup-field-value"]}">${hcdp.meanValue != null ? hcdp.meanValue.toFixed(2) : "N/A"}</span>
+            </div>
+            <div class="${styles["popup-field"]}">
+              <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)} (max):</span>
+              <span class="${styles["popup-field-value"]}">${hcdp.maxValue != null ? hcdp.maxValue.toFixed(2) : "N/A"}</span>
+            </div>
+          `}
         `
             : ""
         }
         ${
           overlay
             ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)}:</span>
-            <span class="${styles["popup-field-value"]}">${
-              overlay.loading
-                ? "Calculating…"
-                : overlay.value != null
-                  ? `${overlay.value.toFixed(2)}${overlay.suffix ?? ""}`
-                  : "N/A"
-            }</span>
-          </div>
+          ${overlay.loading
+            ? `<div class="${styles["popup-field"]}">
+                <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)}:</span>
+                <span class="${styles["popup-field-value"]}">Calculating…</span>
+              </div>`
+            : `
+              <div class="${styles["popup-field"]}">
+                <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)} (mean):</span>
+                <span class="${styles["popup-field-value"]}">${overlay.meanValue != null ? `${overlay.meanValue.toFixed(2)}${overlay.suffix ?? ""}` : "N/A"}</span>
+              </div>
+              <div class="${styles["popup-field"]}">
+                <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)} (max):</span>
+                <span class="${styles["popup-field-value"]}">${overlay.maxValue != null ? `${overlay.maxValue.toFixed(2)}${overlay.suffix ?? ""}` : "N/A"}</span>
+              </div>
+            `}
         `
             : ""
         }
