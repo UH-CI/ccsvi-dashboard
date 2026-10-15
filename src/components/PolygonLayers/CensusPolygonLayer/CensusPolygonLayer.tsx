@@ -12,7 +12,8 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { meanHcdpForFeature, meanRasterForFeature } from "../../../utils/zonalStats.ts";
+import { hcdpStatsForFeature } from "../../../utils/zonalStats.ts";
+import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -65,18 +66,12 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const shouldShowPolygonPopup = Boolean(hcdpOverlay || hasSocialDataActive);
   const shouldConsumePolygonClicks = shouldShowPolygonPopup;
 
-  const activeRasterLayerId = useMemo(() => {
-    const ids = Array.from(visibleRasterLayerIds ?? []);
-    return ids.find((id) => id.includes(".")) ?? ids[0] ?? null;
-  }, [visibleRasterLayerIds]);
-
-  const activeRasterLayerConfig = useMemo(() => {
-    if (!activeRasterLayerId) return null;
-    const [parentId, subId] = activeRasterLayerId.split(".");
-    const parent = rasterLayerConfigs.find((layer) => layer.id === parentId);
-    if (!parent) return null;
-    return subId ? parent.subLayers?.find((layer) => layer.id === subId) ?? parent : parent;
-  }, [activeRasterLayerId, rasterLayerConfigs]);
+  const activeRaster = useMemo(
+    () => getActiveRaster(visibleRasterLayerIds, rasterLayerConfigs),
+    [visibleRasterLayerIds, rasterLayerConfigs],
+  );
+  const activeRasterLayerId = activeRaster?.id ?? null;
+  const activeRasterLayerConfig = activeRaster?.config ?? null;
 
   const popupContext = useMemo<PolygonPopupContext>(
     () => ({
@@ -222,11 +217,11 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
           hcdpField = { label: overlay.title, loading: true };
           render();
 
-          const mean = await meanHcdpForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+          const stats = await hcdpStatsForFeature(overlay.arrayBuffer, overlay.loadId, feature);
 
           const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
           if (currentOverlay?.arrayBuffer) {
-            hcdpField = { label: currentOverlay.title, value: mean };
+            hcdpField = { label: currentOverlay.title, meanValue: stats.mean, maxValue: stats.max };
             render();
           }
         }
@@ -239,23 +234,20 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (currentVisibleIds?.has(activeRasterLayerId)) {
           try {
-            const res = await fetch(`/api/tiles/cog/file?raster_id=${encodeURIComponent(activeRasterLayerId)}`);
-            if (res.ok) {
-              const arrayBuffer = await res.arrayBuffer();
-              const value = await meanRasterForFeature(arrayBuffer, activeRasterLayerId, feature);
+            const savedMetrics = activeRasterLayerConfig?.savedMetrics as {
+              dataset: string;
+              mean: string;
+              max: string;
+            };
+            const stats = await savedRasterStats(savedMetrics, String(geoid), false);
 
-              const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-              if (currentRasterId?.has(activeRasterLayerId)) {
-                overlayField = {
-                  label: overlayLabel,
-                  value: Number.isFinite(value ?? NaN) ? value : null,
-                  suffix: overlaySuffix,
-                };
-                render();
-              }
+            const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
+            if (currentRasterId?.has(activeRasterLayerId)) {
+              overlayField = { label: overlayLabel, meanValue: stats.mean, maxValue: stats.max, suffix: overlaySuffix };
+              render();
             }
           } catch {
-            overlayField = { label: overlayLabel, value: null, suffix: overlaySuffix };
+            overlayField = { label: overlayLabel, meanValue: null, maxValue: null, suffix: overlaySuffix };
             render();
           }
         }

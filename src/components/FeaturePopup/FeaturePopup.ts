@@ -18,13 +18,15 @@ interface PopupField {
 
 export interface HcdpPopupField {
   label: string;
-  value?: number | null;
+  meanValue?: number | null;
+  maxValue?: number | null;
   loading?: boolean;
 }
 
 export interface OverlayPopupField {
   label: string;
-  value?: number | null;
+  meanValue?: number | null;
+  maxValue?: number | null;
   loading?: boolean;
   suffix?: string;
 }
@@ -51,6 +53,21 @@ interface FeaturePopupProps {
   hcdp?: HcdpPopupField;
   overlay?: OverlayPopupField;
   pointCounts?: PointCountsPopupField;
+}
+
+function renderRasterStats(field: HcdpPopupField | OverlayPopupField): string {
+  const suffix = "suffix" in field ? (field.suffix ?? "") : "";
+  const row = (name: string, text: string) => `
+    <div class="${styles["popup-field"]}">
+      <span class="${styles["popup-field-label"]}">${escapeHtml(field.label)}${name}:</span>
+      <span class="${styles["popup-field-value"]}">${text}</span>
+    </div>
+  `;
+  const show = (value: number | null | undefined) =>
+    value != null ? `${value.toFixed(2)}${suffix}` : "N/A";
+  return field.loading
+    ? row("", "Calculating…")
+    : row(" (mean)", show(field.meanValue)) + row(" (max)", show(field.maxValue));
 }
 
 function renderMetricField(metric: MetricDisplay): string {
@@ -109,38 +126,8 @@ export function FeaturePopup({
           .join("")}
         ${metric1 ? renderMetricField(metric1) : ""}
         ${metric2 ? renderMetricField(metric2) : ""}
-        ${
-          hcdp
-            ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(hcdp.label)} (mean):</span>
-            <span class="${styles["popup-field-value"]}">${
-              hcdp.loading
-                ? "Calculating…"
-                : hcdp.value != null
-                  ? hcdp.value.toFixed(2)
-                  : "N/A"
-            }</span>
-          </div>
-        `
-            : ""
-        }
-        ${
-          overlay
-            ? `
-          <div class="${styles["popup-field"]}">
-            <span class="${styles["popup-field-label"]}">${escapeHtml(overlay.label)}:</span>
-            <span class="${styles["popup-field-value"]}">${
-              overlay.loading
-                ? "Calculating…"
-                : overlay.value != null
-                  ? `${overlay.value.toFixed(2)}${overlay.suffix ?? ""}`
-                  : "N/A"
-            }</span>
-          </div>
-        `
-            : ""
-        }
+        ${hcdp ? renderRasterStats(hcdp) : ""}
+        ${overlay ? renderRasterStats(overlay) : ""}
         ${
           pointCounts
             ? pointCounts.loading

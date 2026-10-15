@@ -45,7 +45,7 @@ if $FULL; then
     echo "-- dropping spatial tables"
     psql_run <<'SQL'
 DROP TABLE IF EXISTS geographies, counties, hawaiian_homelands, points, hazards,
-    geography_hazards, point_hazards CASCADE;
+    geography_hazards, point_hazards, point_raster_values CASCADE;
 SQL
 fi
 
@@ -62,10 +62,16 @@ if $FULL; then
 
     echo "-- working out which areas and points touch each hazard layer"
     "$PYTHON" -m ingest.load_hazard_overlaps
+
+    echo "-- reading each raster's value at every point"
+    "$PYTHON" -m ingest.load_point_raster_values
 fi
 
 echo "-- counting points per block group / Homeland area"
 "$PYTHON" -m ingest.load_point_counts
+
+echo "-- averaging rasters per block group / Homeland area"
+"$PYTHON" -m ingest.load_raster_means
 
 "$PYTHON" -m ingest.add_mv_column
 
@@ -89,6 +95,7 @@ UNION SELECT 'points',                   count(*) FROM points
 UNION SELECT 'hazards',                  count(*) FROM hazards
 UNION SELECT 'geography_hazards',        count(*) FROM geography_hazards
 UNION SELECT 'point_hazards',            count(*) FROM point_hazards
+UNION SELECT 'point_raster_values',      count(*) FROM point_raster_values
 UNION SELECT 'block_group_metrics',      count(*) FROM block_group_metrics
 UNION SELECT 'hawaiian_homeland_metrics', count(*) FROM hawaiian_homeland_metrics
 ORDER BY 1;

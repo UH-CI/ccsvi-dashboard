@@ -73,3 +73,15 @@ CREATE TABLE IF NOT EXISTS point_hazards (
     sub_id    TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_point_hazards_hazard ON point_hazards (hazard_id, sub_id);
+
+-- ── Raster values at points ──────────────────────────────────────────────────
+-- The value of each raster at each point. A point with no real value there (no-data
+-- pixel, or off the raster) has no row.
+-- No foreign key to points, for the same reason as point_hazards.
+
+CREATE TABLE IF NOT EXISTS point_raster_values (
+    point_id  INTEGER          NOT NULL,
+    raster_id TEXT             NOT NULL,
+    value     DOUBLE PRECISION NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_point_raster_values_point ON point_raster_values (point_id, raster_id);

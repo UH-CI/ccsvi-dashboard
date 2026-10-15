@@ -9,11 +9,13 @@ import {
   type PolygonPopupContext,
 } from "../../../utils/renderPolygonPopup.ts";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
-import type { PointCountsPopupField } from "../../FeaturePopup";
+import type { OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 import { POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../hooks/usePointCounts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
+import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
+import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface HawaiianHomelandsPolygonLayerProps {
@@ -50,6 +52,13 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   filteredGeoids,
   onFeatureClick,
 }) => {
+  const visibleRasterLayerIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
+  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const activeRaster = useMemo(
+    () => getActiveRaster(visibleRasterLayerIds, rasterLayerConfigs),
+    [visibleRasterLayerIds, rasterLayerConfigs],
+  );
+
   const getStyle = useCallback(
     (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined): StyleConfig => {
       if (!feature) {
@@ -133,7 +142,8 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
 
   const renderPopup = useMemo(() => renderPolygonPopup(popupContext), [popupContext]);
 
-  // Point counts for the currently visible point layers (snapshot at popup-open time)
+  // Point counts for the currently visible point layers and the visible raster's saved average
+  // (snapshot at popup-open time)
   const enrichPopupOnOpen = useMemo(() => {
     return async (
       feature: Feature<Geometry, HawaiianHomelandProperties>,
@@ -144,8 +154,9 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       if (!geoid) return;
 
       let pointCountsField: PointCountsPopupField = { loading: true, items: [] };
+      let overlayField: OverlayPopupField | undefined;
       const render = () => {
-        const html = buildPolygonPopupHtml(feature, popupContext, undefined, undefined, pointCountsField);
+        const html = buildPolygonPopupHtml(feature, popupContext, undefined, overlayField, pointCountsField);
         if (html) setContent(html);
       };
       render();
@@ -161,8 +172,31 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
         .filter((item) => item.value > 0);
       pointCountsField = { loading: false, items };
       render();
+
+      if (activeRaster) {
+        const label = activeRaster.config?.name ?? "Raster layer";
+        const suffix = activeRaster.config?.units ? ` ${activeRaster.config.units}` : "";
+        overlayField = { label, loading: true, suffix };
+        render();
+
+        let stats: { mean: number | null; max: number | null } = { mean: null, max: null };
+        try {
+          const savedMetrics = activeRaster.config?.savedMetrics as {
+            dataset: string;
+            mean: string;
+            max: string;
+          };
+          stats = await savedRasterStats(savedMetrics, String(geoid), true);
+        } catch {
+          // keep the empty stats
+        }
+        if (useRasterLayersStore.getState().visibleLayerIdsByMap[mapId]?.has(activeRaster.id)) {
+          overlayField = { label, meanValue: stats.mean, maxValue: stats.max, suffix };
+          render();
+        }
+      }
     };
-  }, [popupContext, mapId]);
+  }, [popupContext, mapId, activeRaster]);
 
   return (
     <GenericPolygonLayer

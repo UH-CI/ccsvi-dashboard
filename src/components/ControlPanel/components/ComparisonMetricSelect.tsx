@@ -1,7 +1,7 @@
 import React from "react";
 import { FormControl, InputLabel, Select, MenuItem, ListSubheader } from "@mui/material";
 import { Dataset } from "../../../types";
-import { sviLabel } from "../../../config";
+import { SVI_CATEGORIES } from "../../../config";
 
 interface ComparisonMetricSelectProps {
   blockGroupData: Dataset | null;
@@ -13,8 +13,8 @@ interface ComparisonMetricSelectProps {
   label?: string;
 }
 
-// Reusable bivariate "Compare with" selection. Lists every metric whose
-// dataset matches the primary's Hawaiian-homelands flag, grouped by dataset
+// Reusable bivariate "Compare with" selection. Lists the SVI menu's indicators
+// whose dataset matches the primary's Hawaiian-homelands flag, grouped by menu category
 export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
   blockGroupData,
   dataset,
@@ -50,20 +50,22 @@ export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
             const primaryIsHawaiian = dataset
               ? (blockGroupData[dataset]?.hawaiianHomelands ?? false)
               : false;
-            return Object.entries(blockGroupData)
-              .filter(([, dsObj]) => (dsObj.hawaiianHomelands ?? false) === primaryIsHawaiian)
-              .map(([dsId, dsObj]) => [
-                <ListSubheader key={`hdr-${dsId}`}>
-                  {dsObj.metricLabel || dsId.replace(/_/g, " ")}
-                </ListSubheader>,
-                ...Object.keys(dsObj.columnThresholds || {})
-                  .filter((m) => !(dsId === dataset && m === metric))
-                  .map((metricName) => (
-                    <MenuItem key={`${dsId}::${metricName}`} value={`${dsId}::${metricName}`}>
-                      {sviLabel(dsId, metricName)}
-                    </MenuItem>
-                  )),
-              ]);
+            return SVI_CATEGORIES.map((category) => {
+              const indicators = category.indicators.filter(
+                (ind) =>
+                  (blockGroupData[ind.dataset]?.hawaiianHomelands ?? false) === primaryIsHawaiian &&
+                  !(ind.dataset === dataset && ind.metric === metric),
+              );
+              if (indicators.length === 0) return [];
+              return [
+                <ListSubheader key={`hdr-${category.id}`}>{category.label}</ListSubheader>,
+                ...indicators.map((ind) => (
+                  <MenuItem key={`${ind.dataset}::${ind.metric}`} value={`${ind.dataset}::${ind.metric}`}>
+                    {ind.label}
+                  </MenuItem>
+                )),
+              ];
+            });
           })()}
       </Select>
     </FormControl>

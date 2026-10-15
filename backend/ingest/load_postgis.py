@@ -21,7 +21,7 @@ import psycopg2.extras
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
 POINT_DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026/point_data")
-HAZARDS_RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files/Hazards")
+HAZARDS_DIR = Path("/home/exouser/ccsvi-data/v05-2026/hazards_geojson")
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
@@ -46,6 +46,9 @@ POINT_LAYERS = [
     ("National_Bridge_Inventory.geojson",           "bridges",           "structure_"),
     ("HI_Onsite_Sewage_Disposal_Systems.geojson",   "sewage",            "island"),
     ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",  "wwtp_name"),
+    ("Airports_points.geojson",                     "airports",          "airport_na"),
+    ("Commercial_Harbors_points.geojson",           "commercial_harbors", "harbor_nam"),
+    ("Small_Boat_Harbors_Ramps.geojson",            "small_boat_harbors", "name"),
 ]
 
 # (filename, hazard_id, sub_id, height_ft) — IDs match hazardLayers.ts
@@ -84,7 +87,6 @@ HAZARD_LAYERS = [
     ("Solar_Insolation_500-550.geojson",            "solar_insolation",        "500_550",       None),
     ("Solar_Insolation_550-600.geojson",            "solar_insolation",        "550_600",       None),
     ("Solar_Insolation_600-650.geojson",            "solar_insolation",        "600_650",       None),
-    ("Fire_zone_0.geojson",                         "fire_zone",               "Zone_0",        None),
     ("Fire_zone_1.geojson",                         "fire_zone",               "Zone_1",        None),
     ("Fire_zone_2.geojson",                         "fire_zone",               "Zone_2",        None),
     ("Fire_zone_3.geojson",                         "fire_zone",               "Zone_3",        None),
@@ -93,6 +95,8 @@ HAZARD_LAYERS = [
     ("Fire_zone_6.geojson",                         "fire_zone",               "Zone_6",        None),
     ("Prev_contaminated_land_landfills.geojson",    "pcl_landfill",            None,            None),
     ("Prev_contaminated_land_filtered.geojson",     "pcl_filtered",            None,            None),
+    ("Airports.geojson",                            "airport_areas",           None,            None),
+    ("Commercial_Harbors.geojson",                  "commercial_harbor_areas", None,            None),
 ]
 
 BATCH_SIZE = 500
@@ -235,7 +239,7 @@ def load_hazards(cur) -> int:
     total = 0
 
     for filename, hazard_id, sub_id, height_ft in HAZARD_LAYERS:
-        path = HAZARDS_RAW_DIR / filename
+        path = HAZARDS_DIR / filename
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping {hazard_id}/{sub_id}")
             continue
@@ -255,7 +259,7 @@ def load_hazards(cur) -> int:
         _batch_insert(
             cur,
             "INSERT INTO hazards (hazard_id, sub_id, height_ft, zone, props, geom) "
-            "VALUES (%s, %s, %s, %s, %s, ST_MakeValid(ST_GeomFromGeoJSON(%s)))",
+            "VALUES (%s, %s, %s, %s, %s, ST_GeomFromGeoJSON(%s))",
             rows,
         )
         total += len(rows)
