@@ -53,7 +53,6 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
     () => buildHazardMenuSections(hazardLayerConfigs, "hazards"),
     [hazardLayerConfigs],
   );
-  const rasterGroup = HAZARD_MENU_GROUPS.find((g) => g.label === "Raster Layers")!;
 
   const renderHazardParent = (parent: HazardLayerConfig) => {
     const visibleIds = visibleHazardLayerIdsByMap[resolvedHazardsMapId] ?? new Set<string>();
@@ -198,20 +197,7 @@ export const HazardsMenu: React.FC<HazardsMenuProps> = ({
               </LayerToggleGroup>
             );
           })}
-          {rasterLayerConfigs.length > 0 && (
-            <LayerToggleGroup
-              label={rasterGroup.label}
-              icon={rasterGroup.icon}
-              color={rasterGroup.color}
-              className={styles["layer-toggle--group"]}
-              description={rasterGroup.description}
-              expanded={expandedHazards[hazardMenuGroupExpandKey(rasterGroup.label)] ?? false}
-              onToggleExpand={() => toggleExpand(hazardMenuGroupExpandKey(rasterGroup.label))}
-              childrenPl={0}
-            >
-              {rasterLayerConfigs.map(renderRasterParent)}
-            </LayerToggleGroup>
-          )}
+          {rasterLayerConfigs.map(renderRasterParent)}
         </Stack>
       )}
     </MenuShell>
