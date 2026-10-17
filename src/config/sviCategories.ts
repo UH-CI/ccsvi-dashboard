@@ -3,6 +3,7 @@ export interface SviIndicator {
   metric: string;
   label: string;
   description?: string; //description for UI
+  calculationDescription?: string;
   mvColumn?: string; //column name if applicable
 }
 
@@ -23,29 +24,39 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "age_of_structure",
         metric: "Total Housing Built Before 1990 (calc.)",
         label: "Houses Built Before 1990",
+        calculationDescription: "Percentage of occupied housing units built before 1990.",
         description: "Older housing can increase displacement risk and recovery cost.",
       },
       {
         dataset: "age_of_structure",
         metric: "Total Housing Built Before 1970 (calc.)",
         label: "Houses Built Before 1970",
+        calculationDescription: "Percentage of occupied housing units built before 1970.",
         description: "Older housing can increase displacement risk and recovery cost.",
       },
       {
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
         label: "Population in Group Quarters",
+        calculationDescription: "Percentage of population living in group quarters.",
         description: "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs.",
       },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Correctional facilities for adults", label: "Group quarters: Correctional facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Juvenile facilities", label: "Group quarters: Juvenile facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Nursing facilities/Skilled-nursing facilities", label: "Group quarters: Nursing/skilled-nursing facilities" },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Other institutional facilities", label: "Group quarters: Other institutional facilities" },
-      { dataset: "tenure", metric: "Renter occupied", label: "Renter Occupied Units", description: "Renters may have less control over mitigation measures and face greater displacement risk after events." },
+      {
+        dataset: "tenure",
+        metric: "Renter occupied",
+        label: "Renter Occupied Units",
+        calculationDescription: "Percentage of occupied housing units that are renter-occupied.",
+        description: "Renters may have less control over mitigation measures and face greater displacement risk after events.",
+      },
       {
         dataset: "tenure_by_occupants_per_room",
         metric: "Total Overcrowded Housing Units (calc.)",
         label: "Overcrowded Units",
+        calculationDescription: "Percentage of occupied housing units with more than one person per room.",
         description: "Crowded housing can make it harder to shelter safely during hazards and to find suitable alternative housing.",
       },
     ],
@@ -59,6 +70,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "income_share_of_fpl",
         metric: "Total Under 100% FPL (calc.)",
         label: "Below 100% Federal Poverty Line",
+        calculationDescription: "Percentage of population with income below 100% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
         mvColumn: "fpl_under_100_pct_calc",
       },
@@ -66,12 +78,14 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "income_share_of_fpl",
         metric: "Total Under 150% FPL (calc.)",
         label: "Below 150% Federal Poverty Line",
+        calculationDescription: "Percentage of population with income below 150% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
         dataset: "income_share_of_fpl",
         metric: "Total Under 200% FPL (calc.)",
         label: "Below 200% Federal Poverty Line",
+        calculationDescription: "Percentage of population with income below 200% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
@@ -79,18 +93,21 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric:
           "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level",
         label: "Hawaiian Homelands - Below 100% Federal Poverty Line",
+        calculationDescription: "Population on Hawaiian homelands with income below 100% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Under 150% FPL (calc.)",
         label: "Hawaiian Homelands - Below 150% Federal Poverty Line",
+        calculationDescription: "Population on Hawaiian homelands with income below 150% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
         dataset: "health_insurance",
         metric: "No Health Insurance Coverage (calc.)",
         label: "Without Health Insurance",
+        calculationDescription: "Percentage of civilian noninstitutionalized population without health insurance.",
         description: "Uninsured individuals may have reduced access to medical care during and after hazards.",
         mvColumn: "no_health_insurance_pct_calc",
       },
@@ -139,6 +156,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "person_under_5_65_total",
         metric: "Total Under 5 (calc.)",
         label: "Aged 5 Years and Under",
+        calculationDescription: "Percentage of population under the age of 5.",
         description:
           "Young children have specific caregiving and evacuation needs that increase household vulnerability.",
       },
@@ -146,6 +164,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "person_under_5_65_total",
         metric: "Total Under 18 (calc.)",
         label: "Aged 17 Years and Under",
+        calculationDescription: "Percentage of population under the age of 18.",
         description:
           "Children and adolescents may require additional support during evacuation, sheltering, and recovery, which can increase household vulnerability.",
       },
@@ -153,6 +172,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "person_under_5_65_total",
         metric: "Total Over 65 (calc.)",
         label: "Aged 65 Years and Older",
+        calculationDescription: "Percentage of population aged 65 and over.",
         description:
           "Older adults can have mobility, health, and social care needs that affect hazard preparedness, evacuation, and recovery.",
       },
@@ -160,6 +180,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "living_arrangements",
         metric: "Total Living alone (calc.)",
         label: "Living Alone",
+        calculationDescription: "Percentage of population living alone.",
         description:
           "Single-occupant households may have reduced social support and face higher isolation during hazards.",
       },
@@ -167,24 +188,28 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "family_type_by_children",
         metric: "Total Single-Parent Households With Children (calc.)",
         label: "Single Parent Households",
+        calculationDescription: "Percentage of households with one parent and children.",
         description: "Single caregivers may face additional challenges managing evacuation, childcare, and recovery.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Under 5 (calc.)",
         label: "Hawaiian Homelands - Aged 5 Years and Under",
+        calculationDescription: "Percentage of children under the age of 5 living on Hawaiian homelands.",
         description: "Young children have specific caregiving and evacuation needs that increase household vulnerability.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Under 18 (calc.)",
         label: "Hawaiian Homelands - Aged 17 Years and Under",
+        calculationDescription: "Percentage of population under the age of 18 living on Hawaiian homelands.",
         description: "Children and adolescents may require additional support during evacuation, sheltering, and recovery, which can increase household vulnerability.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Over 65 (calc.)",
         label: "Hawaiian Homelands - Aged 65 Years and Older",
+        calculationDescription: "Percentage of population aged 65 or above living on Hawaiian homelands.",
         description: "Older adults can have mobility, health, and social care needs that affect hazard preparedness, evacuation, and recovery.",
       },
     ],
@@ -198,36 +223,42 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "race_origin",
         metric: "Native Hawaiian and Other Pacific Islander alone",
         label: "Native Hawaiian and Other Pacific Islander Population",
+        calculationDescription: "Percentage of population identifying as Native Hawaiian or Other Pacific Islander.",
         description: "Historical and structural inequities can contribute to differences in exposure to hazards and access to resources needed for preparedness and recovery.",
       },
       {
         dataset: "race_origin",
         metric: "Asian alone",
         label: "Asian Population",
+        calculationDescription: "Percentage of population identifying as Asian.",
         description: "Historical and structural inequities can contribute to differences in exposure to hazards and access to resources needed for preparedness and recovery.",
       },
       {
         dataset: "race_origin",
         metric: "Black or African American alone",
         label: "Black or African American Population",
+        calculationDescription: "Percentage of population identifying as Black or African American.",
         description: "Historical and structural inequities can contribute to differences in exposure to hazards and access to resources needed for preparedness and recovery.",
       },
       {
         dataset: "race_origin",
         metric: "White alone",
         label: "White Population",
+        calculationDescription: "Percentage of population identifying as White.",
         description: "Historical and structural inequities can contribute to differences in exposure to hazards and access to resources needed for preparedness and recovery.",
       },
       {
         dataset: "race_origin",
         metric: "Two or More Races",
         label: "Two or More Races",
+        calculationDescription: "Percentage of population identifying with two or more races.",
         description: "Historical and structural inequities can contribute to differences in exposure to hazards and access to resources needed for preparedness and recovery.",
       },
       {
         dataset: "limited_english_speaking",
         metric: "Total Limited English Speaking Households (calc.)",
         label: "Limited English Proficiency",
+        calculationDescription: "Percentage of households with limited English proficiency.",
         description: "Language barriers can reduce access to warnings, assistance, and recovery information.",
       },
       {
@@ -235,6 +266,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric:
           "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
         label: "Hawaiian Homelands: Limited English Proficiency",
+        calculationDescription: "Percentage of households with limited English proficiency.",
         description: "Language barriers can reduce access to warnings, assistance, and recovery information.",
       },
     ],
@@ -248,6 +280,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "internet_subscription",
         metric: "No Internet access",
         label: "Households Without Internet Access",
+        calculationDescription: "Percentage of households without internet access.",
         description: "Lack of internet access can reduce access to information and resources for hazard preparedness, response, and recovery.",
         mvColumn: "no_internet_pct",
       },
@@ -255,12 +288,14 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "households_w_computer",
         metric: "No Computer",
         label: "Households Without a Computer or Smartphone",
+        calculationDescription: "Percentage of households without a computer or smartphone.",
         description: "Limited access to digital devices can reduce access to information and resources for hazard preparedness, response, and recovery.",
       },
       {
         dataset: "aggregate_vehicles",
         metric: "Aggregate number of vehicles available",
         label: "Households Without a Vehicle",
+        calculationDescription: "Percentage of households without a vehicle.",
         description: "Lack of vehicle access can create barriers to preparedness, evacuation, access to essential services, and recovery during hazards.",
       },
     ],
@@ -272,3 +307,11 @@ export const sviLabel = (dataset: string | undefined, metric: string): string =>
   SVI_CATEGORIES.flatMap((c) => c.indicators).find(
     (i) => i.dataset === dataset && i.metric === metric,
   )?.label ?? metric;
+
+export const sviCalculationDescription = (
+  dataset: string | undefined,
+  metric: string,
+): string | undefined =>
+  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
+    (i) => i.dataset === dataset && i.metric === metric,
+  )?.calculationDescription;
