@@ -10,7 +10,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { useAppStore } from "../../../stores";
-import { sviLabel } from "../../../config";
+import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { ComparisonSection } from "./ComparisonSection";
@@ -135,6 +135,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   const metricTitle = metric2
     ? `${sviLabel(dataset, metric)} vs ${sviLabel(dataset2, metric2)}`
     : sviLabel(dataset, metric);
+  const metricDescription = sviCalculationDescription(dataset, metric);
 
   return (
     <Stack spacing={2}>
@@ -149,6 +150,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
         <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metricTitle}>
           {metricTitle}
         </Typography>
+        {metricDescription && (
+          <Typography variant="caption" color="text.secondary" display="block">
+            {metricDescription}
+          </Typography>
+        )}
       </Box>
 
       <Divider />
@@ -209,7 +215,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           {activeValue != null && (
             <Box textAlign="center">
               <Typography variant="caption" color="text.secondary" display="block">
-                Selected
+                Selected area
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 700, color: "#e53935" }}>
                 {formatValue(activeValue, isPercentage, dataMax)}
