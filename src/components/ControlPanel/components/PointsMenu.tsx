@@ -65,6 +65,7 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
 
   // A point group also holds the shape layers that share its menuGroup (e.g. airport grounds)
   const renderPointGroup = (section: Extract<MenuSection<PointLayerConfig>, { kind: "group" }>) => {
+    const representativeLayer = section.layers[0];
     const groupHazards = hazardLayers.filter((l) => l.menuGroup === section.label);
     const visibleCount =
       section.layers.filter((l) => visiblePointIds.has(l.id)).length +
@@ -75,6 +76,8 @@ export const PointsMenu: React.FC<PointsMenuProps> = ({ open, anchorEl, onClose,
       <LayerToggleGroup
         key={expandKey}
         label={section.label}
+        icon={representativeLayer?.icon}
+        color={representativeLayer?.color}
         expanded={expandedPoints[expandKey] ?? false}
         onToggleExpand={() => toggleExpand(expandKey)}
         selectAll={{

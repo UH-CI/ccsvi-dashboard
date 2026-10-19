@@ -15,11 +15,6 @@ export const HAZARD_MENU_GROUPS: HazardMenuGroup[] = [
     icon: "FaWaveSquare",
     color: "#1976d2",
   },
-  {
-    label: "Raster Layers",
-    icon: "FaMountain",
-    color: "#6D4C41",
-  },
 ];
 
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
@@ -514,8 +509,9 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "pcl_filtered",
     name: "Previously Contaminated Land",
+    menuPanel: "locations",
     visible: false,
-    icon: "FaBarrel",
+    icon: "FaOilCan",
     color: "#000000",
     filePath: "Prev_contaminated_land_filtered.pmtiles",
     popupConfig: {
