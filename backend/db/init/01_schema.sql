@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS datasets (
     id                 TEXT    PRIMARY KEY,
     label              TEXT    NOT NULL DEFAULT '',
+    universe           TEXT,
     hawaiian_homelands BOOLEAN NOT NULL DEFAULT false,
     -- 'census', 'point' or 'raster'
     source_type        TEXT    NOT NULL DEFAULT 'census'

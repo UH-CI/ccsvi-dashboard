@@ -78,18 +78,25 @@ async def get_dataset_table(
 
     metric_rows = await conn.fetch(
         """
-        SELECT id, name, has_moe, has_percentage, has_moe_pp
-        FROM metrics
-        WHERE dataset_id = $1
-        ORDER BY display_order NULLS LAST, id
+        SELECT m.id, m.name, m.has_moe, m.has_percentage, m.has_moe_pp, d.universe
+        FROM metrics m
+        JOIN datasets d ON d.id = m.dataset_id
+        WHERE m.dataset_id = $1
+        ORDER BY m.display_order NULLS LAST, m.id
         """,
         dataset_id,
     )
     if not metric_rows:
         raise HTTPException(status_code=404, detail=f"Dataset '{dataset_id}' not found")
 
-    # "(calc.)" stays in the stored name as a pipeline label but isn't shown to users
-    metric_id_to_name = {r["id"]: r["name"].replace(" (calc.)", "") for r in metric_rows}
+    # Names as users see them. "(calc.)" stays in the stored name as a pipeline label but isn't
+    # shown, and "Total" says what it counts, e.g. "Total (Occupied housing units)"
+    def display_name(r) -> str:
+        if r["name"] == "Total":
+            return f"Total ({r['universe']})"
+        return r["name"].replace(" (calc.)", "")
+
+    metric_id_to_name = {r["id"]: display_name(r) for r in metric_rows}
     metric_id_has_moe = {r["id"]: r["has_moe"] for r in metric_rows}
 
     column_template: dict[str, Any] = {

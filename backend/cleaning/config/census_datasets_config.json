@@ -5,6 +5,7 @@
       "alias": "age_of_structure",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Age of Structure/Age of Structure/ACSDT5Y2022.B25034-Data.csv",
       "label": "Housing units by year structure was built",
+      "universe": "Housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -13,6 +14,7 @@
       "alias": "aggregate_vehicles",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Mobility constraints/Aggregate number of vehicles available by tenure/ACSDT5Y2022.B25046-Data.csv",
       "label": "Aggregate number of vehicles available by tenure",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -21,6 +23,7 @@
       "alias": "health_insurance",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
       "label": "Health insurance coverage status by age",
+      "universe": "Civilian noninstitutionalized population",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -29,6 +32,7 @@
       "alias": "households_w_computer",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/households_w_computer/ACSDT5Y2022.B28010-Data.csv",
       "label": "Households with computer and internet access",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -37,6 +41,7 @@
       "alias": "internet_subscription",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/internet_subscription/ACSDT5Y2022.B28011-Data.csv",
       "label": "Types of internet subscriptions in household",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -45,6 +50,7 @@
       "alias": "limited_english_speaking",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/limited_english_speaking/ACSDT5Y2022.C16002-Data.csv",
       "label": "Households with limited English speaking ability",
+      "universe": "Households",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -53,6 +59,7 @@
       "alias": "living_arrangements",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/Living arragements, including living alone, by sex and relationship/ACSDT5Y2022.B09019-Data.csv",
       "label": "Living arrangements including living alone by sex and relationship",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -61,6 +68,7 @@
       "alias": "income_share_of_fpl",
       "original_file_path": "All Exposures/Other/Ratio of Income to Poverty Level in the Past 12 Months (2022)/ACSDT5Y2022.C17002_2025-03-17T172135/ACSDT5Y2022.C17002-Data.csv",
       "label": "Ratio of income to poverty level",
+      "universe": "Population for whom poverty status has been determined",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -72,18 +80,21 @@
         {
           "name": "genders",
           "label": "Population by sex",
+          "universe": "Total population",
           "hawaiian_homelands": false,
           "percent_denominator": "Estimate!!Total:"
         },
         {
           "name": "person_under_5_65_total",
           "label": "Total population by age group (under 5, under 18, over 65)",
+          "universe": "Total population",
           "hawaiian_homelands": false,
           "percent_denominator": "Estimate!!Total:"
         },
         {
           "name": "person_under_5_65_males",
           "label": "Male population by age group (under 5, under 18, over 65)",
+          "universe": "Total population",
           "hawaiian_homelands": false,
           "percent_denominator": "Estimate!!Total:",
           "skip_metric_column": "Estimate!!Total:"
@@ -91,6 +102,7 @@
         {
           "name": "person_under_5_65_females",
           "label": "Female population by age group (under 5, under 18, over 65)",
+          "universe": "Total population",
           "hawaiian_homelands": false,
           "percent_denominator": "Estimate!!Total:",
           "skip_metric_column": "Estimate!!Total:"
@@ -102,6 +114,7 @@
       "alias": "population_group_quarters",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Population in group quarters/DECENNIALPL2020.P5-Data.csv",
       "label": "Population in group quarters",
+      "universe": "Total population",
       "hawaiian_homelands": false,
       "percent_denominator": null
     },
@@ -110,6 +123,7 @@
       "alias": "race_origin",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/race_origin/ACSDT5Y2022.B02001-Data.csv",
       "label": "Race and Hispanic or Latino origin",
+      "universe": "Total population",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -118,6 +132,7 @@
       "alias": "tenure",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Tenure/ACSDT5Y2022.B25003-Data.csv",
       "label": "Tenure (owner vs. renter occupied housing)",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -126,6 +141,7 @@
       "alias": "tenure_by_occupants_per_room",
       "original_file_path": "All Exposures/Other/Tenure by Occupants per Room (2024)/ACSDT5Y2024.B25014_2026-09-15T214051/ACSDT5Y2024.B25014-Data.csv",
       "label": "Tenure by occupants per room (overcrowding)",
+      "universe": "Occupied housing units",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -134,6 +150,7 @@
       "alias": "family_type_by_children",
       "original_file_path": "All Exposures/Other/Family Type by Presence and Age of Own Children Under 18 Years (2024)/ACSDT5Y2024.B11003_2026-09-16T173856/ACSDT5Y2024.B11003-Data.csv",
       "label": "Family type by presence and age of own children (single-parent households)",
+      "universe": "Families",
       "hawaiian_homelands": false,
       "percent_denominator": "Estimate!!Total:"
     },
@@ -142,6 +159,7 @@
       "alias": "2022_census_hawaiian_homelands",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/2022 Census Hawaiian Homelands /ACSST5Y2022.S0601-Data.csv",
       "label": "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
+      "universe": "Total population",
       "hawaiian_homelands": true,
       "percent_denominator": "Estimate!!Total!!Total population"
     }
