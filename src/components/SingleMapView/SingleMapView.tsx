@@ -288,7 +288,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
         if (config?.activeFeature?.geoid === geoid) {
           updateMapActiveFeature(mapId, undefined);
-          queueMicrotask(() => layer.closePopup());
           return;
         }
 

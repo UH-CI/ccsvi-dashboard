@@ -71,16 +71,18 @@ export const GenericPolygonLayer = memo(
 
     const prevActiveGeoidRef = useRef<string | null | undefined>(undefined);
     const popupEnrichTokenRef = useRef(0);
+    const activeFeatureGeoidRef = useRef(activeFeatureGeoid);
 
     const renderPopupRef = useRef(renderPopup);
     const onFeatureClickRef = useRef(onFeatureClick);
     const enrichPopupOnOpenRef = useRef(enrichPopupOnOpen);
 
     useEffect(() => {
+      activeFeatureGeoidRef.current = activeFeatureGeoid;
       renderPopupRef.current = renderPopup;
       onFeatureClickRef.current = onFeatureClick;
       enrichPopupOnOpenRef.current = enrichPopupOnOpen;
-    }, [renderPopup, onFeatureClick, enrichPopupOnOpen]);
+    }, [activeFeatureGeoid, renderPopup, onFeatureClick, enrichPopupOnOpen]);
 
     const runPopupEnrichment = useCallback(
       async (layer: PopupLayer<T>, feature: Feature<Geometry, T>) => {
@@ -147,6 +149,11 @@ export const GenericPolygonLayer = memo(
 
         if (onFeatureClick) {
           layer.on("click", (e: LeafletMouseEvent) => {
+            if (activeFeatureGeoidRef.current === geoid) {
+              queueMicrotask(() => {
+                if (typedLayer.isPopupOpen?.()) typedLayer.closePopup();
+              });
+            }
             onFeatureClickRef.current?.(feature, e);
           });
         }
