@@ -6,7 +6,6 @@ import {
   type PointCountsPopupField,
 } from "../components/FeaturePopup";
 import { GeographiesData } from "../types";
-import { getReliabilityLabel } from "./reliability";
 import type { MetricLookup } from "../components/SingleMapView/hooks/useMetricLookups";
 
 interface PopupConfig {
@@ -43,7 +42,7 @@ export function buildPolygonPopupHtml(
           name: ctx.activeMetric,
           value: data1.value,
           moePp: data1.moePp,
-          reliability: getReliabilityLabel(data1.absolute, data1.moe, data1.cv, !ctx.metric1.hasMoE),
+          reliability: data1.reliability,
         }
       : undefined;
 
@@ -54,7 +53,7 @@ export function buildPolygonPopupHtml(
           name: ctx.activeMetric2,
           value: data2.value,
           moePp: data2.moePp,
-          reliability: getReliabilityLabel(data2.absolute, data2.moe, data2.cv, !ctx.metric2.hasMoE),
+          reliability: data2.reliability,
         }
       : undefined;
 

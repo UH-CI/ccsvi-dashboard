@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
 from ..db import ConnDep
+from ..reliability import reliability
 
 router = APIRouter()
 
@@ -88,6 +89,7 @@ async def get_dataset_table(
         raise HTTPException(status_code=404, detail=f"Dataset '{dataset_id}' not found")
 
     metric_id_to_name = {r["id"]: r["name"] for r in metric_rows}
+    metric_id_has_moe = {r["id"]: r["has_moe"] for r in metric_rows}
 
     column_template: dict[str, Any] = {
         "Geography": None,
@@ -99,6 +101,7 @@ async def get_dataset_table(
         column_template[f"Estimate!!{name}"] = None
         if r["has_moe"]:
             column_template[f"Margin of Error!!{name}"] = None
+            column_template[f"Reliability!!{name}"] = None
         if r["has_percentage"]:
             column_template[f"{name} (%)"] = None
         if r["has_moe_pp"]:
@@ -111,7 +114,8 @@ async def get_dataset_table(
                mv.absolute::float,
                mv.margin_of_error::float,
                mv.percentage::float,
-               mv.moe_percentage_points::float
+               mv.moe_percentage_points::float,
+               mv.cv::float
         FROM geographies g
         JOIN metric_values mv ON mv.geoid = g.geoid
         WHERE mv.metric_id = ANY($1::int[])
@@ -143,5 +147,9 @@ async def get_dataset_table(
         ):
             if label in column_template or value is not None:
                 geoid_data[geoid][label] = value
+        if metric_id_has_moe[row["metric_id"]]:
+            geoid_data[geoid][f"Reliability!!{metric_name}"] = reliability(
+                row["absolute"], row["margin_of_error"], row["cv"], True
+            )["label"]
 
     return list(geoid_data.values())

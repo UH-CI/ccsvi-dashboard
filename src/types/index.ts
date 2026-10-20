@@ -20,12 +20,19 @@ export interface MapConfig {
   };
 }
 
+export type ReliabilityTier = "reliable" | "usable" | "caution" | "severe" | "unreliable" | "neutral";
+
+export interface Reliability {
+  label: string;
+  tier: ReliabilityTier;
+}
+
 export interface MetricValue {
   absolute: number | null;
   margin_of_error: number | null;
   percentage: number | null;
   moe_percentage_points: number | null;
-  cv: number | null;
+  reliability: Reliability;
   moe_derived: boolean | null;
 }
 
