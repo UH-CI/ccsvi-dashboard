@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict
 
 from ..db import ConnDep
+from ..reliability import reliability
 
 router = APIRouter()
 
@@ -20,13 +21,18 @@ class GeographyRecord(BaseModel):
     county: str | None
 
 
+class ReliabilityRecord(BaseModel):
+    label: str
+    tier: str
+
+
 class MetricValueRecord(BaseModel):
     absolute: float | None
     margin_of_error: float | None
     percentage: float | None
 
     moe_percentage_points: float | None
-    cv: float | None
+    reliability: ReliabilityRecord
     moe_derived: bool | None
 
 
@@ -115,7 +121,8 @@ async def get_metric_values(
                mv.percentage::float,
                mv.moe_percentage_points::float,
                mv.cv::float,
-               mv.moe_derived
+               mv.moe_derived,
+               m.has_moe
         FROM metric_values mv
         JOIN metrics m ON m.id = mv.metric_id
         WHERE m.dataset_id = $1 AND m.name = $2
@@ -134,7 +141,7 @@ async def get_metric_values(
             "margin_of_error": row["margin_of_error"],
             "percentage": row["percentage"],
             "moe_percentage_points": row["moe_percentage_points"],
-            "cv": row["cv"],
+            "reliability": reliability(row["absolute"], row["margin_of_error"], row["cv"], row["has_moe"]),
             "moe_derived": row["moe_derived"],
         }
         for row in rows

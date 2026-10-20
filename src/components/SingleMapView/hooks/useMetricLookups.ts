@@ -1,18 +1,15 @@
 import { useMemo } from "react";
-import { MetricValue } from "../../../types";
+import { MetricValue, Reliability } from "../../../types";
 
 type MetricCache = Record<string, MetricValue>;
 
 export interface MetricData {
   value: number | null;
-  moe: number | null;
   moePp: number | null;
-  cv: number | null;
-  absolute: number | null;
+  reliability: Reliability | null;
 }
 
 export interface MetricLookup {
-  hasMoE: boolean;
   getData: (geoid: string) => MetricData;
 }
 
@@ -23,7 +20,7 @@ export interface MetricLookups {
   metric2: MetricLookup | null;
 }
 
-const EMPTY_DATA: MetricData = { value: null, moe: null, moePp: null, cv: null, absolute: null };
+const EMPTY_DATA: MetricData = { value: null, moePp: null, reliability: null };
 
 function buildNumericLookup(cache: MetricCache, field: keyof MetricValue): Map<string, number> {
   const lookup = new Map<string, number>();
@@ -45,7 +42,7 @@ export function useMetricLookups(
   return useMemo(() => {
     const noData: MetricLookups = {
       allMetricValues: [],
-      metric1: { hasMoE: false, getData: () => EMPTY_DATA },
+      metric1: { getData: () => EMPTY_DATA },
       allMetricValues2: [],
       metric2: null,
     };
@@ -77,21 +74,15 @@ export function useMetricLookups(
         }
       }
 
-      const moe = buildNumericLookup(cache, "margin_of_error");
       const moePp = buildNumericLookup(cache, "moe_percentage_points");
-      const cv = buildNumericLookup(cache, "cv");
-      const absolute = buildNumericLookup(cache, "absolute");
 
       return {
         values,
         lookup: {
-          hasMoE: moe.size > 0,
           getData: (geoid: string): MetricData => ({
             value: value.get(geoid) ?? null,
-            moe: moe.get(geoid) ?? null,
             moePp: moePp.get(geoid) ?? null,
-            cv: cv.get(geoid) ?? null,
-            absolute: absolute.get(geoid) ?? null,
+            reliability: cache[geoid]?.reliability ?? null,
           }),
         },
       };

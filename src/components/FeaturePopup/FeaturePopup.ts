@@ -1,6 +1,6 @@
 import { Feature } from "geojson";
 import styles from "./FeaturePopup.module.scss";
-import type { Reliability, ReliabilityTier } from "../../utils/reliability";
+import type { Reliability, ReliabilityTier } from "../../types";
 
 const RELIABILITY_TIER_CLASS: Record<ReliabilityTier, string> = {
   reliable: styles["popup-reliability-reliable"],

@@ -111,6 +111,7 @@ def dataset_outputs(dataset_configs: list) -> list:
                 {
                     "name": output["name"],
                     "label": output["label"],
+                    "universe": output["universe"],
                     "hawaiian_homelands": output["hawaiian_homelands"],
                     "percent_denominator": output["percent_denominator"],
                     "skip_metric_column": output.get("skip_metric_column"),

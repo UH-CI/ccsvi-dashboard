@@ -155,10 +155,16 @@ def add_percentages_to_csv(
             radicand = radicand.where(radicand >= 0, moe_values**2 + (p**2) * (denominator_moe**2))
             moe_pp_cols[col] = ((100 / denominator) * radicand.pow(0.5)).round(1)
 
-        cv_cols[col] = _coefficient_of_variation(values, moe_values).round(1)
-
         # metrics we calculate
         moe_derived_cols[col] = col.endswith("(calc.)")
+
+    # CV needs only a column's own estimate and MOE, so every column with an MOE gets one
+    for col in df.columns:
+        moe_col = moe_column_name(col)
+        if col.startswith("Margin of Error") or moe_col not in df.columns or not pd.api.types.is_numeric_dtype(df[col]):
+            continue
+        moe_values = pd.to_numeric(df[moe_col], errors="coerce")
+        cv_cols[col] = _coefficient_of_variation(df[col], moe_values).round(1)
 
     # Insert each derived column immediately after its absolute value column, in a
     # fixed order: (%), (MOE pp), (CV), (MOE derived)
