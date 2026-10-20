@@ -1,4 +1,5 @@
 import chroma from "chroma-js";
+import { COLOR_SCHEMES } from "../config";
 
 export interface ComputedColorScale {
   limits: number[];
@@ -82,30 +83,18 @@ export function computeColorScale(
   // Skewed data (e.g. mostly zeros) can produce repeated quantile cut
   // points; collapse those so the legend doesn't show empty bins.
   const limits = rawLimits.filter((limit, i) => i === 0 || limit !== rawLimits[i - 1]);
+  const scheme = COLOR_SCHEMES.find(({ name }) => name === scaleName);
+  const colors = scheme?.flip ? [...chroma.brewer[scheme.name]].reverse() : null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const scale = chroma.scale(scaleName as any).classes(limits);
-  const reverse = scaleName === "RdBu" || scaleName === "RdYlBu";
+  const scale = (colors ? chroma.scale(colors) : chroma.scale(scaleName as any)).classes(limits);
   const legendColors = Array.from({ length: limits.length - 1 }, (_, index) => {
     const mid = (limits[index] + limits[index + 1]) / 2;
     return scale(mid).hex();
   });
 
-  if (reverse) legendColors.reverse();
-
   return {
     limits,
-    getColor: (value: number) => {
-      if (!reverse || legendColors.length === 0) return scale(value).hex();
-
-      let classIndex = 0;
-      for (let index = limits.length - 2; index >= 1; index--) {
-        if (value >= limits[index]) {
-          classIndex = index;
-          break;
-        }
-      }
-      return legendColors[classIndex];
-    },
+    getColor: (value: number) => scale(value).hex(),
     getLegendColors: () => [...legendColors],
   };
 }

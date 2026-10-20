@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { MapConfig } from "../types";
 import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
+import { DEFAULT_COLOR_SCHEME } from "../config";
 
 interface MapState {
   // Map configurations
@@ -69,7 +70,7 @@ const initialMapConfig: MapConfig = {
   dataset: "",
   metric: "",
   visible: true,
-  colorScheme: "RdBu",
+  colorScheme: DEFAULT_COLOR_SCHEME,
   baseMap: DEFAULT_BASE_MAP_ID,
 };
 
@@ -102,7 +103,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       dataset: "",
       metric: "",
       visible: true,
-      colorScheme: "RdBu",
+      colorScheme: DEFAULT_COLOR_SCHEME,
       baseMap: DEFAULT_BASE_MAP_ID,
     };
     set((state) => ({

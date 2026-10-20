@@ -1,6 +1,7 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapConfig, Dataset } from "../../../types";
+import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME } from "../../../config";
 import styles from "../ControlPanel.module.scss";
 
 interface LayerOpacities {
@@ -23,35 +24,6 @@ interface ColorSchemeMenuProps {
     opacity: number,
   ) => void;
 }
-
-const NAME_MAPPING = [
-  { value: "Viridis", label: "Viridis" },
-  { value: "YlOrRd", label: "Yellow-Orange-Red" },
-  { value: "Blues", label: "Blues" },
-  { value: "Spectral", label: "Spectral" },
-  { value: "RdBu", label: "Red-Blue" },
-  { value: "RdYlBu", label: "Red-Yellow-Blue" },
-];
-
-// const SEQUENTIAL_SCHEMES = [
-//   "Viridis",
-//   "YlOrRd",
-//   "YlGnBu",
-//   "Blues",
-//   "Reds",
-//   "Greens",
-//   "Purples",
-//   "Oranges",
-//   "GnBu",
-//   "BuPu",
-// ];
-const SEQUENTIAL_SCHEMES = [
-  "Viridis",
-  "YlOrRd",
-  "Blues",
-];
-//const DIVERGING_SCHEMES = ["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"];
-const DIVERGING_SCHEMES = ["Spectral", "RdBu", "RdYlBu", ];
 
 const BIVARIATE_SCHEMES = ["PurpleBlue", "OrangePurple", "GreenBlue"];
 
@@ -138,31 +110,27 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
       <Divider />
 
 
-      <ListSubheader>Sequential</ListSubheader>
-      {SEQUENTIAL_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme || (!config.colorScheme && scheme === "Viridis")}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {NAME_MAPPING.find(({ value }) => value === scheme)?.label ?? scheme}
-        </MenuItem>
-      ))}
-      <ListSubheader>Diverging</ListSubheader>
-      {DIVERGING_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {NAME_MAPPING.find(({ value }) => value === scheme)?.label ?? scheme}
-        </MenuItem>
+      {(["Sequential", "Diverging"] as const).map((section) => (
+        <React.Fragment key={section}>
+          <ListSubheader>{section}</ListSubheader>
+          {COLOR_SCHEMES.filter((scheme) => scheme.section === section).map(
+            ({ name, label }) => (
+              <MenuItem
+                key={name}
+                selected={
+                  config.colorScheme === name ||
+                  (!config.colorScheme && name === DEFAULT_COLOR_SCHEME)
+                }
+                onClick={() => {
+                  updateMapConfig(config.id, { colorScheme: name });
+                  onClose();
+                }}
+              >
+                {label}
+              </MenuItem>
+            ),
+          )}
+        </React.Fragment>
       ))}
 
       {config.metric2 && (
