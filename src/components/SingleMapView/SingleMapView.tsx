@@ -286,6 +286,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           (feature.properties as HawaiianHomelandProperties)?.GEOID10;
         if (!geoid) return;
 
+        if (config?.activeFeature?.geoid === geoid) {
+          updateMapActiveFeature(mapId, undefined);
+          return;
+        }
+
         const map = mapRef.current;
         if (!map) return;
 
@@ -304,7 +309,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           map.fitBounds(bounds, { padding: [20, 20] });
         }
       },
-      [mapId, updateMapActiveFeature, mapRef],
+      [mapId, config?.activeFeature?.geoid, updateMapActiveFeature, mapRef],
     );
 
     const filterResults = useFilterStore((s) => s.results);

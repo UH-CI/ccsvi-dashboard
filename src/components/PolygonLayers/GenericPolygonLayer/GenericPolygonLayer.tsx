@@ -193,6 +193,7 @@ export const GenericPolygonLayer = memo(
         if (prevGeoid) {
           const prevLayer = layersRef.get(prevGeoid);
           if (prevLayer) applyStyle(prevLayer, prevGeoid, false);
+          if (prevLayer && !activeFeatureGeoid) prevLayer.closePopup();
         }
 
         if (activeFeatureGeoid) {
