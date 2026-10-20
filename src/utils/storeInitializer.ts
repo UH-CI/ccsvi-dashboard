@@ -6,6 +6,7 @@ import {
   defaultExpandedSections,
   DEFAULT_LAYER_OPACITIES,
 } from "../stores";
+import { DEFAULT_COLOR_SCHEME } from "../config";
 import { DeserializedState } from "./urlSerializer";
 
 /**
@@ -49,7 +50,7 @@ function initializeMapStore(
       ...(config.metric2 ? { metric2: config.metric2 } : {}),
     ...(config.bivariateColorScheme ? { bivariateColorScheme: config.bivariateColorScheme } : {}),
     visible: config.visible ?? true,
-    colorScheme: "Viridis",
+    colorScheme: DEFAULT_COLOR_SCHEME,
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
   }));
 

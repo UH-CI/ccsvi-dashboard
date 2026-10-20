@@ -1,6 +1,7 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapConfig, Dataset } from "../../../types";
+import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME } from "../../../config";
 import styles from "../ControlPanel.module.scss";
 
 interface LayerOpacities {
@@ -24,19 +25,6 @@ interface ColorSchemeMenuProps {
   ) => void;
 }
 
-const SEQUENTIAL_SCHEMES = [
-  "Viridis",
-  "YlOrRd",
-  "YlGnBu",
-  "Blues",
-  "Reds",
-  "Greens",
-  "Purples",
-  "Oranges",
-  "GnBu",
-  "BuPu",
-];
-const DIVERGING_SCHEMES = ["Spectral", "RdYlGn", "RdBu", "RdYlBu", "PRGn"];
 const BIVARIATE_SCHEMES = ["PurpleBlue", "OrangePurple", "GreenBlue"];
 
 // Color-scheme picker (sequential/diverging/bivariate) plus per-layer opacity sliders.
@@ -52,56 +40,6 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
 }) => {
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
-      <ListSubheader>Sequential</ListSubheader>
-      {SEQUENTIAL_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme || (!config.colorScheme && scheme === "Viridis")}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {scheme}
-        </MenuItem>
-      ))}
-      <ListSubheader>Diverging</ListSubheader>
-      {DIVERGING_SCHEMES.map((scheme) => (
-        <MenuItem
-          key={scheme}
-          selected={config.colorScheme === scheme}
-          onClick={() => {
-            updateMapConfig(config.id, { colorScheme: scheme });
-            onClose();
-          }}
-        >
-          {scheme}
-        </MenuItem>
-      ))}
-
-      {config.metric2 && (
-        <>
-          <Divider />
-          <ListSubheader>Bivariate Palette</ListSubheader>
-          {BIVARIATE_SCHEMES.map((scheme) => (
-            <MenuItem
-              key={scheme}
-              selected={
-                config.bivariateColorScheme === scheme ||
-                (!config.bivariateColorScheme && scheme === "PurpleBlue")
-              }
-              onClick={() => {
-                updateMapConfig(config.id, { bivariateColorScheme: scheme });
-                onClose();
-              }}
-            >
-              {scheme}
-            </MenuItem>
-          ))}
-        </>
-      )}
-
-      <Divider />
 
       <Box className={styles["opacity-section"]}>
         <Typography variant="caption" className={styles["opacity-section-label"]}>
@@ -167,6 +105,55 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
           </>
         )}
       </Box>
+
+      
+      <Divider />
+
+
+      {(["Sequential", "Diverging"] as const).map((section) => (
+        <React.Fragment key={section}>
+          <ListSubheader>{section}</ListSubheader>
+          {COLOR_SCHEMES.filter((scheme) => scheme.section === section).map(
+            ({ name, label }) => (
+              <MenuItem
+                key={name}
+                selected={
+                  config.colorScheme === name ||
+                  (!config.colorScheme && name === DEFAULT_COLOR_SCHEME)
+                }
+                onClick={() => {
+                  updateMapConfig(config.id, { colorScheme: name });
+                  onClose();
+                }}
+              >
+                {label}
+              </MenuItem>
+            ),
+          )}
+        </React.Fragment>
+      ))}
+
+      {config.metric2 && (
+        <>
+          <Divider />
+          <ListSubheader>Bivariate Palette</ListSubheader>
+          {BIVARIATE_SCHEMES.map((scheme) => (
+            <MenuItem
+              key={scheme}
+              selected={
+                config.bivariateColorScheme === scheme ||
+                (!config.bivariateColorScheme && scheme === "PurpleBlue")
+              }
+              onClick={() => {
+                updateMapConfig(config.id, { bivariateColorScheme: scheme });
+                onClose();
+              }}
+            >
+              {scheme}
+            </MenuItem>
+          ))}
+        </>
+      )}
     </Menu>
   );
 };
