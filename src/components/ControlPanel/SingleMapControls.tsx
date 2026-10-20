@@ -314,7 +314,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
                   dataset[config.dataset] &&
                   Object.keys(dataset[config.dataset].columnThresholds || {}).map((metricName) => (
                     <MenuItem key={metricName} value={metricName}>
-                      {metricName}
+                      {metricName.replace(" (calc.)", "")}
                     </MenuItem>
                   ))}
               </Select>

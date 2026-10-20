@@ -88,7 +88,8 @@ async def get_dataset_table(
     if not metric_rows:
         raise HTTPException(status_code=404, detail=f"Dataset '{dataset_id}' not found")
 
-    metric_id_to_name = {r["id"]: r["name"] for r in metric_rows}
+    # "(calc.)" stays in the stored name as a pipeline label but isn't shown to users
+    metric_id_to_name = {r["id"]: r["name"].replace(" (calc.)", "") for r in metric_rows}
     metric_id_has_moe = {r["id"]: r["has_moe"] for r in metric_rows}
 
     column_template: dict[str, Any] = {
@@ -97,7 +98,7 @@ async def get_dataset_table(
         "Census Population": None,
     }
     for r in metric_rows:
-        name = r["name"]
+        name = metric_id_to_name[r["id"]]
         column_template[f"Estimate!!{name}"] = None
         if r["has_moe"]:
             column_template[f"Margin of Error!!{name}"] = None
@@ -105,7 +106,7 @@ async def get_dataset_table(
         if r["has_percentage"]:
             column_template[f"{name} (%)"] = None
         if r["has_moe_pp"]:
-            column_template[f"Margin of Error!!{name} (%)"] = None
+            column_template[f"Margin of Error!!{name} (pp)"] = None
 
     value_rows = await conn.fetch(
         """
@@ -143,7 +144,7 @@ async def get_dataset_table(
             (f"Estimate!!{metric_name}", row["absolute"]),
             (f"Margin of Error!!{metric_name}", row["margin_of_error"]),
             (f"{metric_name} (%)", row["percentage"]),
-            (f"Margin of Error!!{metric_name} (%)", row["moe_percentage_points"]),
+            (f"Margin of Error!!{metric_name} (pp)", row["moe_percentage_points"]),
         ):
             if label in column_template or value is not None:
                 geoid_data[geoid][label] = value
