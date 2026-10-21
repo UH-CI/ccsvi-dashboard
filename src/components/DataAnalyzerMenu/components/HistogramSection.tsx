@@ -9,13 +9,22 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { useAppStore } from "../../../stores";
+import { useAppStore, useFilteredGeoids } from "../../../stores";
 import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { ComparisonSection } from "./ComparisonSection";
 
 const NUM_BINS = 20;
+
+function meanMedian(values: number[]): { mean: number; median: number } | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+  return { mean, median };
+}
 
 interface HistogramSectionProps {
   metric: string | undefined;
@@ -65,6 +74,20 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     return { allValues: vals, isPercentage: usePct };
   }, [cachedValues]);
 
+  // Values of the areas the map currently shows as matching
+  const filteredGeoids = useFilteredGeoids();
+  const filterRange = useAppStore((state) => state.filterRange);
+  const matchedValues = useMemo(() => {
+    if (!cachedValues) return [];
+    return Object.entries(cachedValues)
+      .filter(([geoid]) => !filteredGeoids || filteredGeoids.has(geoid))
+      .map(([, entry]) => pickValue(entry))
+      .filter(
+        (v): v is number =>
+          v !== null && (!filterRange || (v >= filterRange[0] && v <= filterRange[1])),
+      );
+  }, [filteredGeoids, filterRange, cachedValues]);
+
   const { bins, dataMin, dataMax } = useMemo(() => {
     if (allValues.length === 0) return { bins: [], dataMin: 0, dataMax: 1 };
     const dataMin = Math.min(...allValues);
@@ -75,13 +98,15 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       start: dataMin + i * step,
       end: dataMin + (i + 1) * step,
       count: 0,
+      matched: 0,
+      rest: 0,
     }));
-    for (const v of allValues) {
-      const idx = Math.min(Math.floor((v - dataMin) / step), NUM_BINS - 1);
-      bins[idx].count++;
-    }
+    const binIndex = (v: number) => Math.min(Math.floor((v - dataMin) / step), NUM_BINS - 1);
+    for (const v of allValues) bins[binIndex(v)].count++;
+    for (const v of matchedValues ?? []) bins[binIndex(v)].matched++;
+    for (const bin of bins) bin.rest = bin.count - bin.matched;
     return { bins, dataMin, dataMax };
-  }, [allValues, isPercentage]);
+  }, [allValues, matchedValues, isPercentage]);
 
   const activeValue = useMemo(
     () => (activeGeoid && cachedValues ? pickValue(cachedValues[activeGeoid]) : null),
@@ -95,14 +120,8 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     return bins[idx]?.label ?? null;
   }, [activeValue, bins, dataMin, dataMax]);
 
-  const stats = useMemo(() => {
-    if (allValues.length === 0) return null;
-    const sorted = [...allValues].sort((a, b) => a - b);
-    const mean = allValues.reduce((sum, v) => sum + v, 0) / allValues.length;
-    const mid = Math.floor(sorted.length / 2);
-    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-    return { mean, median };
-  }, [allValues]);
+  const stats = useMemo(() => meanMedian(allValues), [allValues]);
+  const matchedStats = useMemo(() => meanMedian(matchedValues), [matchedValues]);
 
   const [range, setRange] = useState<[number, number]>([0, 1]);
 
@@ -110,11 +129,6 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     setRange([dataMin, dataMax]);
     setFilterRange(null);
   }, [dataMin, dataMax, setFilterRange]);
-
-  const filteredCount = useMemo(
-    () => allValues.filter((v) => v >= range[0] && v <= range[1]).length,
-    [allValues, range],
-  );
 
   if (!metric) {
     return (
@@ -177,26 +191,17 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
             <YAxis hide />
             <RechartsTooltip
               cursor={{ fill: "rgba(0,0,0,0.05)" }}
-              formatter={(v) => [v != null ? `${v} block groups` : "–", "Count"]}
+              formatter={(v, name) => [v != null ? `${v} block groups` : "–", name]}
               labelFormatter={(label) => (label != null ? String(label) : "")}
               contentStyle={{ fontSize: "0.75rem", borderRadius: 8 }}
             />
+            <Bar dataKey="matched" name="Matching" stackId="bin" fill="#1976d2" />
             <Bar
-              dataKey="count"
-              shape={(props: any) => {
-                const { x, y, width, height, start, end } = props;
-                const inRange = start <= range[1] && end >= range[0];
-                return (
-                  <rect
-                    x={x}
-                    y={y}
-                    width={Math.max(width, 0)}
-                    height={Math.max(height, 0)}
-                    fill={inRange ? "#1976d2" : "#d0d0d0"}
-                    rx={2}
-                  />
-                );
-              }}
+              dataKey="rest"
+              name="Not matching"
+              stackId="bin"
+              fill="#d0d0d0"
+              radius={[2, 2, 0, 0]}
             />
             {activeBinLabel && (
               <ReferenceLine
@@ -227,16 +232,26 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
               Mean
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {formatValue(stats.mean, isPercentage, dataMax)}
+              {matchedStats ? formatValue(matchedStats.mean, isPercentage, dataMax) : "–"}
             </Typography>
+            {matchedValues.length !== allValues.length && (
+              <Typography variant="caption" color="text.secondary" display="block">
+                all {formatValue(stats.mean, isPercentage, dataMax)}
+              </Typography>
+            )}
           </Box>
           <Box textAlign="center">
             <Typography variant="caption" color="text.secondary" display="block">
               Median
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {formatValue(stats.median, isPercentage, dataMax)}
+              {matchedStats ? formatValue(matchedStats.median, isPercentage, dataMax) : "–"}
             </Typography>
+            {matchedValues.length !== allValues.length && (
+              <Typography variant="caption" color="text.secondary" display="block">
+                all {formatValue(stats.median, isPercentage, dataMax)}
+              </Typography>
+            )}
           </Box>
         </Box>
       )}
@@ -313,10 +328,10 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="body2" color="text.secondary">
-          Block groups in range
+          {filteredGeoids ? "Block groups matching filter" : "Block groups in range"}
         </Typography>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {filteredCount} / {allValues.length}
+          {matchedValues.length} / {allValues.length}
         </Typography>
       </Box>
 
