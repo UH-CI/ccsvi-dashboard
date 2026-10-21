@@ -17,6 +17,14 @@
   gap: 8px;
 }
 
+.popup-reliability {
+  margin-top: -5px;
+
+  .popup-field-value {
+    font-style: italic;
+  }
+}
+
 .popup-reliability-reliable {
   color: #2e7d32;
 }

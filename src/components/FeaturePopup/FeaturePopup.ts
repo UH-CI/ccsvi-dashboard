@@ -79,7 +79,7 @@ function renderMetricField(metric: MetricDisplay): string {
     ${
       metric.reliability
         ? `
-    <div class="${styles["popup-field"]}">
+    <div class="${styles["popup-field"]} ${styles["popup-reliability"]}">
       <span class="${styles["popup-field-label"]}">Data Reliability:</span>
       <span class="${styles["popup-field-value"]} ${RELIABILITY_TIER_CLASS[metric.reliability.tier]}">${escapeHtml(metric.reliability.label)}</span>
     </div>
