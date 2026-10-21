@@ -28,6 +28,8 @@ interface HawaiianHomelandsPolygonLayerProps {
   activeMetric2?: string | null;
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
+  filterRange?: [number, number] | null;
+  filterRange2?: [number, number] | null;
   getColor: (value: number | null, value2?: number | null) => string;
   filteredGeoids?: Set<string> | null;
   onFeatureClick?: (
@@ -48,6 +50,8 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   activeMetric2,
   activeFeatureGeoid,
   layerOpacity,
+  filterRange,
+  filterRange2,
   getColor,
   filteredGeoids,
   onFeatureClick,
@@ -75,7 +79,16 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       const geoidStr = String(geoid);
       const metricValue = metric1.getData(geoidStr).value;
       const metricValue2 = metric2?.getData(geoidStr).value ?? undefined;
-      const fillColor = getColor(metricValue, metricValue2);
+
+      const outOfRange =
+        (filterRange != null &&
+          metricValue != null &&
+          (metricValue < filterRange[0] || metricValue > filterRange[1])) ||
+        (filterRange2 != null &&
+          metricValue2 != null &&
+          (metricValue2 < filterRange2[0] || metricValue2 > filterRange2[1]));
+
+      const fillColor = outOfRange ? "#e0e0e0" : getColor(metricValue, metricValue2);
 
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoidStr)) {
@@ -91,9 +104,10 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
+        color: outOfRange ? "#cccccc" : LAYER_CONFIG.styles.default.color,
       };
     },
-    [metric1, metric2, getColor, filteredGeoids],
+    [metric1, metric2, getColor, filteredGeoids, filterRange, filterRange2],
   );
 
   const getHighlightStyle = useCallback(

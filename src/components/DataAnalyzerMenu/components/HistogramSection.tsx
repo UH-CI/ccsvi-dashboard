@@ -17,6 +17,10 @@ import { ComparisonSection } from "./ComparisonSection";
 
 const NUM_BINS = 20;
 
+function inRange(value: number | null, range: [number, number] | null): boolean {
+  return range === null || value === null || (value >= range[0] && value <= range[1]);
+}
+
 function meanMedian(values: number[]): { mean: number; median: number } | null {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
@@ -77,16 +81,18 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   // Values of the areas the map currently shows as matching
   const filteredGeoids = useFilteredGeoids();
   const filterRange = useAppStore((state) => state.filterRange);
+  const filterRange2 = useAppStore((state) => state.filterRange2);
   const matchedValues = useMemo(() => {
     if (!cachedValues) return [];
     return Object.entries(cachedValues)
-      .filter(([geoid]) => !filteredGeoids || filteredGeoids.has(geoid))
-      .map(([, entry]) => pickValue(entry))
       .filter(
-        (v): v is number =>
-          v !== null && (!filterRange || (v >= filterRange[0] && v <= filterRange[1])),
-      );
-  }, [filteredGeoids, filterRange, cachedValues]);
+        ([geoid]) =>
+          (!filteredGeoids || filteredGeoids.has(geoid)) &&
+          inRange(pickValue(cachedValues2?.[geoid]), filterRange2),
+      )
+      .map(([, entry]) => pickValue(entry))
+      .filter((v): v is number => v !== null && inRange(v, filterRange));
+  }, [filteredGeoids, filterRange, filterRange2, cachedValues, cachedValues2]);
 
   const { bins, dataMin, dataMax } = useMemo(() => {
     if (allValues.length === 0) return { bins: [], dataMin: 0, dataMax: 1 };

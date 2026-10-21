@@ -33,6 +33,7 @@ interface CensusPolygonLayerProps {
   activeFeatureGeoid?: string | null;
   layerOpacity?: number;
   filterRange?: [number, number] | null;
+  filterRange2?: [number, number] | null;
   getColor: (value: number | null, value2?: number | null) => string;
   filteredGeoids?: Set<string> | null;
   onFeatureClick?: (feature: Feature<Geometry, BlockGroupProperties>, e: LeafletMouseEvent) => void;
@@ -51,6 +52,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   activeFeatureGeoid,
   layerOpacity,
   filterRange,
+  filterRange2,
   getColor,
   filteredGeoids,
   onFeatureClick,
@@ -116,9 +118,12 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       const metricValue2 = metric2?.getData(geoidStr).value ?? undefined;
 
       const outOfRange =
-        filterRange != null &&
-        metricValue != null &&
-        (metricValue < filterRange[0] || metricValue > filterRange[1]);
+        (filterRange != null &&
+          metricValue != null &&
+          (metricValue < filterRange[0] || metricValue > filterRange[1])) ||
+        (filterRange2 != null &&
+          metricValue2 != null &&
+          (metricValue2 < filterRange2[0] || metricValue2 > filterRange2[1]));
 
       const fillColor = outOfRange ? "#e0e0e0" : getColor(metricValue, metricValue2);
 
@@ -144,7 +149,15 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         color: outOfRange ? "#cccccc" : LAYER_CONFIG.styles.default.color,
       };
     },
-    [metric1, metric2, getColor, filteredGeoids, shouldUseBackgroundStyle, filterRange],
+    [
+      metric1,
+      metric2,
+      getColor,
+      filteredGeoids,
+      shouldUseBackgroundStyle,
+      filterRange,
+      filterRange2,
+    ],
   );
 
   const getHighlightStyle = useCallback(
