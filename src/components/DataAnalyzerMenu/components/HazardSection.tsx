@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
+import * as FaIcons from "react-icons/fa";
 import { useMapStore, useHazardLayersStore, useRasterLayersStore } from "../../../stores";
 import { deriveVisibleHazards } from "../deriveHazard";
 import { deriveVisibleRasters } from "../deriveRaster";
@@ -16,10 +17,16 @@ export const HazardSection: React.FC = () => {
       ...deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "hazards").map((h) => ({
         key: `${h.hazardId}.${h.subId ?? ""}`,
         label: h.label,
+        icon: h.icon,
+        color: h.color,
+        fallbackIcon: "FaExclamationTriangle" as const,
       })),
       ...deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs).map((r) => ({
         key: r.rasterId,
         label: r.label,
+        icon: r.icon,
+        color: r.color,
+        fallbackIcon: "FaMap" as const,
       })),
     ],
     [visibleLayerIdsByMap, visibleRasterIdsByMap, rasterLayerConfigs, primaryMapId],
@@ -39,11 +46,20 @@ export const HazardSection: React.FC = () => {
         Hazards
       </Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 1, mt: 0.5 }}>
-        {items.map((item) => (
-          <Typography key={item.key} variant="body2" sx={{ fontWeight: 500, mt: 0.25 }}>
-            {item.label}
-          </Typography>
-        ))}
+        {items.map((item) => {
+          const Icon =
+            (item.icon && FaIcons[item.icon as keyof typeof FaIcons]) || FaIcons[item.fallbackIcon];
+          return (
+            <Box key={item.key} sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25 }}>
+              <Box component="span" sx={{ display: "flex", flex: "none", color: item.color }}>
+                <Icon size="0.875rem" />
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {item.label}
+              </Typography>
+            </Box>
+          );
+        })}
       </Box>
     </Box>
   );

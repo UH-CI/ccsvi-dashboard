@@ -3,6 +3,8 @@ import type { RasterLayerConfig } from "../../types";
 export interface DerivedRaster {
   rasterId: string; // the id the server knows it by, e.g. "stormSurge.inundation_category1"
   label: string;
+  icon?: string;
+  color?: string;
 }
 
 // Collects every visible raster layer that has saved values, in the order the config lists them.
@@ -16,11 +18,21 @@ export function deriveVisibleRasters(
   for (const parent of configs) {
     for (const sub of parent.subLayers ?? []) {
       if (visibleIds.has(`${parent.id}.${sub.id}`)) {
-        derived.push({ rasterId: `${parent.id}.${sub.id}`, label: `${parent.name} — ${sub.name}` });
+        derived.push({
+          rasterId: `${parent.id}.${sub.id}`,
+          label: `${parent.name} — ${sub.name}`,
+          icon: parent.icon,
+          color: parent.color,
+        });
       }
     }
     if (!parent.subLayers?.length && visibleIds.has(parent.id)) {
-      derived.push({ rasterId: parent.id, label: parent.name });
+      derived.push({
+        rasterId: parent.id,
+        label: parent.name,
+        icon: parent.icon,
+        color: parent.color,
+      });
     }
   }
   return derived;

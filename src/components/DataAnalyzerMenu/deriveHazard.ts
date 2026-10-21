@@ -5,6 +5,8 @@ export interface DerivedHazard {
   hazardId: string;
   subId: string | null;
   label: string;
+  icon?: string;
+  color?: string;
 }
 
 // Collects every visible hazard/sub-layer, in HAZARD_LAYERS config order.
@@ -23,14 +25,26 @@ export function deriveVisibleHazards(
   for (const parent of layers) {
     for (const sub of parent.subLayers ?? []) {
       if (visibleIds.has(`${parent.id}.${sub.id}`)) {
-        derived.push({ hazardId: parent.id, subId: sub.id, label: `${parent.name} — ${sub.name}` });
+        derived.push({
+          hazardId: parent.id,
+          subId: sub.id,
+          label: `${parent.name} — ${sub.name}`,
+          icon: parent.icon,
+          color: parent.color,
+        });
       }
     }
   }
 
   for (const parent of layers) {
     if (visibleIds.has(parent.id)) {
-      derived.push({ hazardId: parent.id, subId: null, label: parent.name });
+      derived.push({
+        hazardId: parent.id,
+        subId: null,
+        label: parent.name,
+        icon: parent.icon,
+        color: parent.color,
+      });
     }
   }
 
