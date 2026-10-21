@@ -1,10 +1,16 @@
 import { useMemo } from "react";
 import { Box, Typography, FormControlLabel, Checkbox, ButtonGroup, Button } from "@mui/material";
-import { useMapStore, usePointLayerStore, useFilterStore } from "../../../stores";
+import {
+  useMapStore,
+  usePointLayerStore,
+  useFilterStore,
+  useHazardLayersStore,
+} from "../../../stores";
 import {
   deriveVisibleCriticalInfrastructure,
   deriveVisibleLocationsOfEnhancedExposure,
 } from "../derivePoints";
+import { deriveVisibleHazards } from "../deriveHazard";
 
 interface PointSectionProps {
   menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
@@ -30,7 +36,18 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
     [visibleLayerIdsByMap, primaryMapId, deriveFn],
   );
 
-  if (layers.length === 0) return null;
+  // Shape layers that the control panel shows in this menu
+  const visibleHazardIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+  const shapeLayers = useMemo(
+    () =>
+      deriveVisibleHazards(
+        visibleHazardIdsByMap[primaryMapId],
+        menu === "criticalInfrastructure" ? "points" : "locations",
+      ),
+    [visibleHazardIdsByMap, primaryMapId, menu],
+  );
+
+  if (layers.length === 0 && shapeLayers.length === 0) return null;
 
   return (
     <Box>
@@ -59,7 +76,7 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
       {/*    </Button>*/}
       {/*  </ButtonGroup>*/}
       {/*</Box>*/}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", mt: 0.5 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 1, mt: 0.5 }}>
         {layers.map((layer) => (
           <FormControlLabel
             key={layer.id}
@@ -75,6 +92,15 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
             slotProps={{ typography: { variant: "body2", sx: { fontWeight: 500 } } }}
             sx={{ display: "flex", m: 0 }}
           />
+        ))}
+        {shapeLayers.map((shape) => (
+          <Typography
+            key={`${shape.hazardId}.${shape.subId ?? ""}`}
+            variant="body2"
+            sx={{ fontWeight: 500, mt: 0.25 }}
+          >
+            {shape.label}
+          </Typography>
         ))}
       </Box>
     </Box>

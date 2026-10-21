@@ -10,7 +10,6 @@ import {
 } from "../../stores";
 import { HistogramSection } from "./components/HistogramSection";
 import { HazardSection } from "./components/HazardSection";
-import { RasterSection } from "./components/RasterSection";
 import { PointSection } from "./components/PointSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
 import { deriveVisibleHazards } from "./deriveHazard";
@@ -29,25 +28,26 @@ export const DataAnalyzerMenu = () => {
   const visibleRasterIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
   const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
 
+  // Each section mirrors one control panel menu, so it counts that menu's points, shapes and rasters
   const hasHazard = useMemo(
-    () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]).length > 0,
-    [visibleLayerIdsByMap, primaryMapId],
-  );
-
-  const hasRaster = useMemo(
-    () => deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs).length > 0,
-    [visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
+    () =>
+      deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "hazards").length > 0 ||
+      deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs).length > 0,
+    [visibleLayerIdsByMap, visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
   );
 
   const hasCriticalInfrastructure = useMemo(
-    () => deriveVisibleCriticalInfrastructure(visiblePointLayerIdsByMap[primaryMapId]).length > 0,
-    [visiblePointLayerIdsByMap, primaryMapId],
+    () =>
+      deriveVisibleCriticalInfrastructure(visiblePointLayerIdsByMap[primaryMapId]).length > 0 ||
+      deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "points").length > 0,
+    [visiblePointLayerIdsByMap, visibleLayerIdsByMap, primaryMapId],
   );
 
   const hasLocationsOfEnhancedExposure = useMemo(
     () =>
-      deriveVisibleLocationsOfEnhancedExposure(visiblePointLayerIdsByMap[primaryMapId]).length > 0,
-    [visiblePointLayerIdsByMap, primaryMapId],
+      deriveVisibleLocationsOfEnhancedExposure(visiblePointLayerIdsByMap[primaryMapId]).length >
+        0 || deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "locations").length > 0,
+    [visiblePointLayerIdsByMap, visibleLayerIdsByMap, primaryMapId],
   );
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
@@ -78,20 +78,6 @@ export const DataAnalyzerMenu = () => {
         metric2={metric2}
       />
 
-      {hasHazard && (
-        <>
-          <Divider />
-          <HazardSection />
-        </>
-      )}
-
-      {hasRaster && (
-        <>
-          <Divider />
-          <RasterSection />
-        </>
-      )}
-
       {hasCriticalInfrastructure && (
         <>
           <Divider />
@@ -103,6 +89,13 @@ export const DataAnalyzerMenu = () => {
         <>
           <Divider />
           <PointSection menu="locationsOfEnhancedExposure" title="Secondary Environmental Risk Areas" />
+        </>
+      )}
+
+      {hasHazard && (
+        <>
+          <Divider />
+          <HazardSection />
         </>
       )}
 
