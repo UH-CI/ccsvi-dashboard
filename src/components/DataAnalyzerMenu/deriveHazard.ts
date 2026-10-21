@@ -37,7 +37,7 @@ export function deriveVisibleHazards(
   }
 
   for (const parent of layers) {
-    if (visibleIds.has(parent.id)) {
+    if (!parent.subLayers?.length && visibleIds.has(parent.id)) {
       derived.push({
         hazardId: parent.id,
         subId: null,
