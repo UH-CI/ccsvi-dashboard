@@ -69,7 +69,7 @@ export const DataAnalyzerMenu = () => {
   return (
     <Stack spacing={2}>
       <HistogramSection
-        key={resetKey}
+        key={`histogram-${resetKey}`}
         metric={metric}
         cachedValues={cachedValues}
         activeGeoid={activeGeoid}
@@ -112,7 +112,7 @@ export const DataAnalyzerMenu = () => {
       </Typography>
 
       <MapDerivedFilterSection
-        key={resetKey}
+        key={`filter-${resetKey}`}
         dataset={dataset}
         metric={metric}
         dataset2={dataset2}
