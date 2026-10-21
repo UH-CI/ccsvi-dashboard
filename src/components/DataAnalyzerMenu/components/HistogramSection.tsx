@@ -165,7 +165,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           color="text.secondary"
           sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
         >
-          Metric
+          Selected Social Vulnerability Indicator
         </Typography>
         <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metricTitle}>
           {metricTitle}

@@ -25,15 +25,17 @@ export const HazardSection: React.FC = () => {
       >
         Hazard
       </Typography>
-      {derivedHazards.map((hazard) => (
-        <Typography
-          key={`${hazard.hazardId}.${hazard.subId ?? ""}`}
-          variant="body2"
-          sx={{ fontWeight: 500, mt: 0.25 }}
-        >
-          {hazard.label}
-        </Typography>
-      ))}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 1, mt: 0.5 }}>
+        {derivedHazards.map((hazard) => (
+          <Typography
+            key={`${hazard.hazardId}.${hazard.subId ?? ""}`}
+            variant="body2"
+            sx={{ fontWeight: 500, mt: 0.25 }}
+          >
+            {hazard.label}
+          </Typography>
+        ))}
+      </Box>
     </Box>
   );
 };

@@ -66,11 +66,13 @@ export const PointSection: React.FC<PointSectionProps> = ({ menu, title }) => {
             control={
               <Checkbox
                 size="small"
+                sx={{ p: 0.25, mr: 0.5 }}
                 checked={pointLayerFilters.has(layer.id)}
                 onChange={() => togglePointLayerFilter(layer.id)}
               />
             }
             label={layer.name}
+            slotProps={{ typography: { variant: "body2", sx: { fontWeight: 500 } } }}
             sx={{ display: "flex", m: 0 }}
           />
         ))}

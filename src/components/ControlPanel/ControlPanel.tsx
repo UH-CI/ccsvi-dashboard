@@ -51,15 +51,7 @@ interface IntegratedControlPanelProps {
   onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey =
-  | "maps"
-  | "svi"
-  | "points"
-  | "locations"
-  | "hazards"
-  | "HCDP"
-  | "analyzer"
-  | null;
+type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "HCDP" | "analyzer" | null;
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   maxMaps,
@@ -169,7 +161,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       label: "Social Vulnerability Indicators",
       icon: <Assessment fontSize="small" />,
       description:
-        "Select social vulnerability metrics to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariatly using the Compare with selector.",
+        "Select social vulnerability indicators to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariately using the Compare with selector.",
     },
     {
       key: "points",
