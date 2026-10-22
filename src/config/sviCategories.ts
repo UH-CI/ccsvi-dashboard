@@ -5,6 +5,7 @@ export interface SviIndicator {
   description?: string; //description for UI
   calculationDescription?: string;
   mvColumn?: string; //column name if applicable
+  isCount?: boolean; //raw counts, mostly 0s: legend shows whole numbers and 0 gets its own bin
 }
 
 export interface SviCategory {
@@ -39,6 +40,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric: "Institutionalized population",
         label: "Population in Group Quarters",
         calculationDescription: "Number of people living in institutional group quarters.",
+        isCount: true,
         description: "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs.",
       },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Correctional facilities for adults", label: "Group quarters: Correctional facilities" },
@@ -315,3 +317,8 @@ export const sviCalculationDescription = (
   SVI_CATEGORIES.flatMap((c) => c.indicators).find(
     (i) => i.dataset === dataset && i.metric === metric,
   )?.calculationDescription;
+
+export const sviIsCount = (dataset: string | undefined, metric: string): boolean =>
+  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
+    (i) => i.dataset === dataset && i.metric === metric,
+  )?.isCount ?? false;

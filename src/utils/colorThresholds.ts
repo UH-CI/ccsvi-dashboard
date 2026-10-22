@@ -74,12 +74,21 @@ export function computeColorScale(
   values: number[],
   scaleName: string,
   mode = "q",
+  isCount = false,
   numClasses = 10,
 ): ComputedColorScale | null {
   if (values.length === 0) return null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawLimits = chroma.limits(values, mode as any, numClasses);
+  let rawLimits: number[];
+  if (isCount) {
+    // Mostly-0 counts would fill most bins with 0s, so 0 gets its own bin and
+    // only the non-zero values are split into the rest.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rawLimits = [0, ...chroma.limits(values.filter((v) => v !== 0), mode as any, numClasses - 1)];
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rawLimits = chroma.limits(values, mode as any, numClasses);
+  }
   // Skewed data (e.g. mostly zeros) can produce repeated quantile cut
   // points; collapse those so the legend doesn't show empty bins.
   const limits = rawLimits.filter((limit, i) => i === 0 || limit !== rawLimits[i - 1]);
