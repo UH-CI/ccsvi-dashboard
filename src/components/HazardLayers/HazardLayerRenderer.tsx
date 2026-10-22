@@ -109,6 +109,8 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       if (popupConfig) {
         domClickHandler = (e: MouseEvent) => {
           if (!proLayer) return;
+          // Points are drawn above hazards, so a click on a point or cluster icon is theirs
+          if ((e.target as HTMLElement).closest(".leaflet-marker-icon")) return;
           const latlng = map.mouseEventToLatLng(e);
           const results = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5);
           const features = results.get(stem) ?? [];
