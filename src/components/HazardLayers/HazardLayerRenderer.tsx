@@ -37,6 +37,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
   const filePath = activeLayer?.filePath;
   const popupConfig = activeLayer?.popupConfig;
   const color = activeLayer?.color || "#cc0000";
+  const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
 
   useEffect(() => {
     if (!map) return;
@@ -113,7 +114,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
           const features = results.get(stem) ?? [];
           if (features.length === 0) return;
           e.stopImmediatePropagation();
-          const content = createPopupContent(features[0].feature.props, popupConfig!);
+          const content = createPopupContent(features[0].feature.props, popupConfig!, layerName);
           currentPopup = L.popup().setLatLng(latlng).setContent(content).openOn(map);
         };
         map.getContainer().addEventListener("click", domClickHandler, true);
@@ -153,7 +154,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       isMounted = false;
       clearLayer();
     };
-  }, [map, filePath, isVisible, popupConfig, color]);
+  }, [map, filePath, isVisible, popupConfig, color, layerName]);
 
   return null;
 };
@@ -161,18 +162,14 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 const createPopupContent = (
   props: Record<string, unknown>,
   popupConfig: { titleField?: string; fields?: Array<{ key: string; label: string }> },
+  layerName: string | undefined,
 ) => {
-  const title = (props?.[popupConfig.titleField ?? ""] as string) || "Hazard Info";
+  const title = (props?.[popupConfig.titleField ?? ""] as string) || layerName;
   let html = `<h3>${title}</h3>`;
-  if (popupConfig.fields && popupConfig.fields.length > 0) {
-    html += "<ul>";
-    popupConfig.fields.forEach((f) => {
-      const value = props?.[f.key];
-      if (value !== undefined && value !== null) {
-        html += `<li><strong>${f.label}:</strong> ${value}</li>`;
-      }
-    });
-    html += "</ul>";
-  }
+  Object.entries(props).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      html += `<strong>${key}:</strong> ${value}<br/>`;
+    }
+  });
   return html;
 };

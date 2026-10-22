@@ -126,16 +126,15 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
 
   const renderPopupContent = (feature: Feature<Point>) => {
     const title = feature.properties?.[config.popupConfig.titleField] || "";
-    const fields = config.popupConfig.fields
-      .map((field) => {
-        const value = feature.properties?.[field.key];
+    const fields = Object.entries(feature.properties ?? {})
+      .map(([key, value]) => {
         if (value === null || value === undefined || value === "") return null;
-        return `<b>${field.label}:</b> ${value}<br/>`;
+        return `<strong>${key}:</strong> ${value}<br/>`;
       })
       .filter(Boolean)
       .join("");
 
-    return `<div class="${styles.popupContent}"><b>${title}</b><br/>${fields}</div>`;
+    return `<h3>${title}</h3>${fields}`;
   };
 
   // const createClusterIcon = (cluster: L.MarkerCluster) =>
