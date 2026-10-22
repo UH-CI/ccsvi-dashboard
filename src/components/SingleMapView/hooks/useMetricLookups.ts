@@ -5,6 +5,7 @@ type MetricCache = Record<string, MetricValue>;
 
 export interface MetricData {
   value: number | null;
+  isPercentage: boolean;
   moePp: number | null;
   reliability: Reliability | null;
 }
@@ -20,7 +21,7 @@ export interface MetricLookups {
   metric2: MetricLookup | null;
 }
 
-const EMPTY_DATA: MetricData = { value: null, moePp: null, reliability: null };
+const EMPTY_DATA: MetricData = { value: null, isPercentage: false, moePp: null, reliability: null };
 
 function buildNumericLookup(cache: MetricCache, field: keyof MetricValue): Map<string, number> {
   const lookup = new Map<string, number>();
@@ -81,6 +82,7 @@ export function useMetricLookups(
         lookup: {
           getData: (geoid: string): MetricData => ({
             value: value.get(geoid) ?? null,
+            isPercentage: cache[geoid]?.percentage != null,
             moePp: moePp.get(geoid) ?? null,
             reliability: cache[geoid]?.reliability ?? null,
           }),
