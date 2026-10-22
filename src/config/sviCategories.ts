@@ -38,7 +38,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
         label: "Population in Group Quarters",
-        calculationDescription: "Percentage of population living in group quarters.",
+        calculationDescription: "Number of people living in institutional group quarters.",
         description: "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs.",
       },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Correctional facilities for adults", label: "Group quarters: Correctional facilities" },
