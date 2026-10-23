@@ -322,7 +322,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       label: "Data Analyzer",
       icon: <BarChart fontSize="small" />,
       description:
-        "Explore the distribution of the selected Social Vulnerability Indicator across block groups and filter by value range.",
+        "Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap.",
     },
   ];
 
