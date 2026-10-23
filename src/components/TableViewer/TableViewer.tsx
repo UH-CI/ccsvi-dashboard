@@ -3,6 +3,7 @@ import { Paper, Typography, Box, Collapse, Alert, IconButton } from "@mui/materi
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { ParsedCSVData } from "../../utils/csvParser";
+import { DatasetMetadata } from "../../types";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { usePrimaryMapState, useFilterStore, useMapStore } from "../../stores";
@@ -18,6 +19,7 @@ interface DatasetInfo {
   metricName?: string;
   metricLabel?: string;
   hawaiianHomelands?: boolean;
+  metadata?: DatasetMetadata | null;
   columnThresholds?: Record<string, unknown>;
 }
 
@@ -229,6 +231,11 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     return datasetInfo.metricLabel || activeDataset.replace(/_/g, " ").toUpperCase();
   }, [activeDataset, datasetInfo]);
 
+  const metadata = datasetInfo?.metadata;
+  const metadataText = metadata
+    ? `Source: ${metadata.citation}, Table ${metadata.table_id.split(".")[1]}`
+    : null;
+
   if (!activeDataset) {
     return null;
   }
@@ -248,6 +255,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
           <Typography variant="subtitle2" className={styles["header-title"]}>
             {datasetLabel}
           </Typography>
+          {metadataText && <span className={styles["metadata-line"]}>{metadataText}</span>}
           <IconButton size="small" className={styles["header-icon-btn"]} title="Expand table">
             <KeyboardArrowUp />
           </IconButton>
@@ -280,7 +288,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 slotProps={{
                   toolbar: {
                     datasetLabel,
-                    rowCount: displayRows.length,
+                    metadataText,
                     isFullHeight,
                     activeDataset,
                     toggleCollapse,

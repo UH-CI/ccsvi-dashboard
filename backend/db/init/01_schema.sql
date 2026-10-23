@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS datasets (
     universe           TEXT,
     hawaiian_homelands BOOLEAN NOT NULL DEFAULT false,
     -- 'census', 'point' or 'raster'
-    source_type        TEXT    NOT NULL DEFAULT 'census'
+    source_type        TEXT    NOT NULL DEFAULT 'census',
+    -- Census metadata (table_id, program, period, citation); null for point and raster datasets
+    metadata           JSONB
 );
 
 CREATE TABLE IF NOT EXISTS metrics (

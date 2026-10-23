@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
@@ -26,10 +27,18 @@ class MetricConfig(BaseModel):
     mvColumn: str | None = None
 
 
+class DatasetMetadata(BaseModel):
+    table_id: str
+    program: str
+    period: str
+    citation: str
+
+
 class DatasetRecord(BaseModel):
     metricLabel: str
     hawaiianHomelands: bool
     sourceType: str
+    metadata: DatasetMetadata | None
     columnThresholds: dict[str, MetricConfig]
 
 
@@ -44,7 +53,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     response.headers["Cache-Control"] = "public, max-age=86400"
     rows = await conn.fetch(
         f"""
-        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, m.name, m.classification_mode, m.mv_column
+        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.metadata, m.name, m.classification_mode, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, {_CATALOG_ORDER_SQL[CATALOG_METRIC_ORDER]}
@@ -58,6 +67,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
                 "metricLabel": row["label"],
                 "hawaiianHomelands": row["hawaiian_homelands"],
                 "sourceType": row["source_type"],
+                "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
                 "columnThresholds": {},
             }
         result[dataset_id]["columnThresholds"][row["name"]] = {
