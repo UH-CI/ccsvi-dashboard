@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Typography,
   Button,
@@ -24,6 +24,8 @@ import {
   Assessment,
   Factory,
   BarChart,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
 } from "@mui/icons-material";
 import {
   useMapStore,
@@ -71,6 +73,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
   const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
   const [infoKey, setInfoKey] = useState<NonNullable<PopoverKey> | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const indicatorTrackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ active: false, grabOffset: 0 });
+  const [scrollIndicator, setScrollIndicator] = useState({
+    isOverflowing: false,
+    canScrollLeft: false,
+    canScrollRight: false,
+    thumbWidth: 0,
+    thumbOffset: 0,
+  });
 
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
 
@@ -141,6 +153,120 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const handleInfoClose = useCallback(() => {
     setInfoAnchor(null);
     setInfoKey(null);
+  }, []);
+
+  const updateScrollIndicator = useCallback(() => {
+    const nav = navRef.current;
+    const track = indicatorTrackRef.current;
+    if (!nav) return;
+
+    const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+    const isOverflowing = maxScroll > 1;
+    if (!isOverflowing) {
+      setScrollIndicator((previous) => ({
+        ...previous,
+        isOverflowing: false,
+        canScrollLeft: false,
+        canScrollRight: false,
+        thumbWidth: 0,
+        thumbOffset: 0,
+      }));
+      return;
+    }
+
+    const trackWidth = track?.clientWidth ?? nav.clientWidth;
+    const thumbWidth = Math.max(24, (nav.clientWidth / nav.scrollWidth) * trackWidth);
+    const availableTravel = Math.max(0, trackWidth - thumbWidth);
+    const thumbOffset = (nav.scrollLeft / maxScroll) * availableTravel;
+    setScrollIndicator({
+      isOverflowing: true,
+      canScrollLeft: nav.scrollLeft > 1,
+      canScrollRight: nav.scrollLeft < maxScroll - 1,
+      thumbWidth,
+      thumbOffset,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const handleScroll = () => updateScrollIndicator();
+    nav.addEventListener("scroll", handleScroll, { passive: true });
+
+    const resizeObserver = new ResizeObserver(updateScrollIndicator);
+    resizeObserver.observe(nav);
+    if (nav.firstElementChild) resizeObserver.observe(nav.firstElementChild);
+    window.addEventListener("resize", updateScrollIndicator);
+    updateScrollIndicator();
+
+    return () => {
+      nav.removeEventListener("scroll", handleScroll);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScrollIndicator);
+    };
+  }, [updateScrollIndicator]);
+
+  useLayoutEffect(() => {
+    if (scrollIndicator.isOverflowing) updateScrollIndicator();
+  }, [scrollIndicator.isOverflowing, updateScrollIndicator]);
+
+  const scrollNav = useCallback((direction: number) => {
+    navRef.current?.scrollBy({ left: direction * 160, behavior: "smooth" });
+  }, []);
+
+  const scrollToTrackPosition = useCallback((clientX: number, grabOffset = 0) => {
+    const nav = navRef.current;
+    const track = indicatorTrackRef.current;
+    if (!nav || !track) return;
+
+    const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+    const thumbWidth = Math.max(24, (nav.clientWidth / nav.scrollWidth) * track.clientWidth);
+    const availableTravel = Math.max(0, track.clientWidth - thumbWidth);
+    if (maxScroll === 0 || availableTravel === 0) return;
+
+    const trackRect = track.getBoundingClientRect();
+    const offset = Math.min(availableTravel, Math.max(0, clientX - trackRect.left - grabOffset));
+    nav.scrollLeft = (offset / availableTravel) * maxScroll;
+  }, []);
+
+  const handleTrackPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget) return;
+      scrollToTrackPosition(event.clientX);
+    },
+    [scrollToTrackPosition],
+  );
+
+  const handleThumbPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const track = indicatorTrackRef.current;
+      if (!track) return;
+
+      const trackRect = track.getBoundingClientRect();
+      dragRef.current = {
+        active: true,
+        grabOffset: event.clientX - trackRect.left - scrollIndicator.thumbOffset,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    },
+    [scrollIndicator.thumbOffset],
+  );
+
+  const handleThumbPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!dragRef.current.active) return;
+      scrollToTrackPosition(event.clientX, dragRef.current.grabOffset);
+    },
+    [scrollToTrackPosition],
+  );
+
+  const stopThumbDragging = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    dragRef.current.active = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }, []);
 
   const navItems: {
@@ -217,25 +343,66 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
       <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />
 
-      {/* Nav Buttons */}
-      <Box className={styles["top-bar-nav"]}>
-        {navItems.map(({ key, label, icon }) => (
-          <Button
-            key={key}
-            className={`${styles["nav-btn"]} ${anchors[key] ? styles["nav-btn--active"] : ""}`}
-            onClick={(e) => handleButtonClick(key, e)}
-            startIcon={icon}
-            endIcon={
-              <ExpandMore
-                fontSize="small"
-                className={anchors[key] ? styles["chevron-open"] : styles["chevron"]}
+      {/* Nav Buttons and horizontal overflow indicator */}
+      <Box className={styles["top-bar-nav-container"]}>
+        <Box className={styles["top-bar-nav"]} ref={navRef}>
+          {navItems.map(({ key, label, icon }) => (
+            <Button
+              key={key}
+              className={`${styles["nav-btn"]} ${anchors[key] ? styles["nav-btn--active"] : ""}`}
+              onClick={(e) => handleButtonClick(key, e)}
+              startIcon={icon}
+              endIcon={
+                <ExpandMore
+                  fontSize="small"
+                  className={anchors[key] ? styles["chevron-open"] : styles["chevron"]}
+                />
+              }
+              size="small"
+            >
+              {label}
+            </Button>
+          ))}
+        </Box>
+        {scrollIndicator.isOverflowing && (
+          <Box className={styles["scroll-indicator"]} aria-label="Toolbar scroll position">
+            <IconButton
+              size="small"
+              className={styles["scroll-arrow"]}
+              onClick={() => scrollNav(-1)}
+              disabled={!scrollIndicator.canScrollLeft}
+              aria-label="Scroll toolbar left"
+            >
+              <KeyboardArrowLeft fontSize="small" />
+            </IconButton>
+            <Box
+              className={styles["scroll-track"]}
+              ref={indicatorTrackRef}
+              onPointerDown={handleTrackPointerDown}
+            >
+              <Box
+                className={styles["scroll-thumb"]}
+                onPointerDown={handleThumbPointerDown}
+                onPointerMove={handleThumbPointerMove}
+                onPointerUp={stopThumbDragging}
+                onPointerCancel={stopThumbDragging}
+                style={{
+                  width: `${scrollIndicator.thumbWidth}px`,
+                  transform: `translateX(${scrollIndicator.thumbOffset}px)`,
+                }}
               />
-            }
-            size="small"
-          >
-            {label}
-          </Button>
-        ))}
+            </Box>
+            <IconButton
+              size="small"
+              className={styles["scroll-arrow"]}
+              onClick={() => scrollNav(1)}
+              disabled={!scrollIndicator.canScrollRight}
+              aria-label="Scroll toolbar right"
+            >
+              <KeyboardArrowRight fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />
