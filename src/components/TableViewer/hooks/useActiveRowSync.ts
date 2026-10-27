@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useGridApiRef } from "@mui/x-data-grid";
+import { gridExpandedSortedRowIdsSelector, useGridApiRef } from "@mui/x-data-grid";
 import { useMapStore, usePrimaryMapState } from "../../../stores";
 
 interface PaginationModel {
@@ -56,18 +56,23 @@ export const useActiveRowSync = ({
       return;
     }
 
-    setActiveRowId(rowIndex);
+    const rowId = rows[rowIndex].id as number;
+    setActiveRowId(rowId);
     setCollapsed(false);
 
-    const targetPage = Math.floor(rowIndex / paginationModel.pageSize);
-    const rowIndexInPage = rowIndex % paginationModel.pageSize;
+    // Position in the grid's own sorted + filtered order; a row hidden by a column filter isn't jumped to
+    const visibleIndex = gridExpandedSortedRowIdsSelector(apiRef).indexOf(rowId);
+    if (visibleIndex < 0) return;
 
+    const targetPage = Math.floor(visibleIndex / paginationModel.pageSize);
+
+    // scrollToIndexes takes the index across all pages and subtracts the page offset itself
     if (targetPage !== paginationModel.page) {
-      pendingScrollRowRef.current = rowIndexInPage;
+      pendingScrollRowRef.current = visibleIndex;
       setPaginationModel((prev) => ({ ...prev, page: targetPage }));
     } else {
       requestAnimationFrame(() => {
-        apiRef.current?.scrollToIndexes({ rowIndex: rowIndexInPage });
+        apiRef.current?.scrollToIndexes({ rowIndex: visibleIndex });
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

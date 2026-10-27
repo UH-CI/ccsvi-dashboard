@@ -219,7 +219,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
   const { activeRowId, handleRowClick } = useActiveRowSync({
     apiRef,
-    rows: mergedRows,
+    rows: displayRows,
     geoidColIndex,
     paginationModel,
     setPaginationModel,
@@ -284,6 +284,8 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 loading={loading}
                 showToolbar
                 density="compact"
+                // Header min-height the stylesheet forces and keeps scroll-to-row from stopping a row short
+                columnHeaderHeight={86}
                 slots={{ toolbar: CustomTableToolbar }}
                 slotProps={{
                   toolbar: {
