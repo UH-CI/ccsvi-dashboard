@@ -39,6 +39,7 @@ export interface PointCountsPopupField {
 export interface MetricDisplay {
   name: string;
   value: number;
+  isPercentage: boolean;
   moePp: number | null;
   reliability: Reliability | null;
 }
@@ -74,7 +75,7 @@ function renderMetricField(metric: MetricDisplay): string {
   return `
     <div class="${styles["popup-field"]}">
       <span class="${styles["popup-field-label"]}">${escapeHtml(metric.name)}:</span>
-      <span class="${styles["popup-field-value"]}">${metric.value.toFixed(1)}%${metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}</span>
+      <span class="${styles["popup-field-value"]}">${metric.isPercentage ? `${metric.value.toFixed(1)}%` : metric.value.toFixed(0)}${metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}</span>
     </div>
     ${
       metric.reliability

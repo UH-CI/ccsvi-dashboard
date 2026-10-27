@@ -116,7 +116,8 @@
       "label": "Population in group quarters",
       "universe": "Total population",
       "hawaiian_homelands": false,
-      "percent_denominator": null
+      "percent_denominator": null,
+      "counts_only": true
     },
     {
       "key": "race_origin",

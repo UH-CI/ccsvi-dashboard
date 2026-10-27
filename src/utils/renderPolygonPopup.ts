@@ -41,6 +41,7 @@ export function buildPolygonPopupHtml(
       ? {
           name: ctx.activeMetric,
           value: data1.value,
+          isPercentage: data1.isPercentage,
           moePp: data1.moePp,
           reliability: data1.reliability,
         }
@@ -52,6 +53,7 @@ export function buildPolygonPopupHtml(
       ? {
           name: ctx.activeMetric2,
           value: data2.value,
+          isPercentage: data2.isPercentage,
           moePp: data2.moePp,
           reliability: data2.reliability,
         }

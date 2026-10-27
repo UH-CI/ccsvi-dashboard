@@ -138,6 +138,7 @@ def dataset_outputs(dataset_configs: list) -> list:
                     "percent_denominator": output["percent_denominator"],
                     "skip_metric_column": output.get("skip_metric_column"),
                     "metadata": census_metadata(os.path.basename(config["original_file_path"])),
+                    "counts_only": output.get("counts_only", False),
                 }
             )
     return outputs
@@ -224,5 +225,6 @@ def add_percentages_to_directory(
             hawaiian_homelands_populations,
             output["hawaiian_homelands"],
             denominator_column=output["percent_denominator"],
+            counts_only=output["counts_only"],
         )
         df_with_props.to_csv(csv_file, index=False)
