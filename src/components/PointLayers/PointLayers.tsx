@@ -6,9 +6,11 @@ import * as FaIcons from "react-icons/fa";
 import L from "leaflet";
 import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
+import Supercluster from "supercluster";
 import styles from "./PointLayers.module.scss";
 import { usePointLayerStore, useFilterStore } from "../../stores";
 import { getFilteredPoints } from "../../api/client";
+import { PointLayerConfig } from "../../types";
 
 interface GenericPointMarkersProps {
   layerId: string;
@@ -20,6 +22,135 @@ function pointId(properties: Feature["properties"], idFields: string[]): string 
   if (values.some((value) => value == null)) return undefined;
   return values.join("|");
 }
+
+interface SuperclusterPointMarkersProps {
+  config: PointLayerConfig;
+  features: Feature<Point>[];
+  matchingIds: Set<string> | null;
+  customIcon: L.DivIcon;
+  createClusterIcon: (count: number) => L.DivIcon;
+  renderPopupContent: (feature: Feature<Point>) => string;
+}
+
+const SuperclusterPointMarkers: React.FC<SuperclusterPointMarkersProps> = ({
+  config,
+  features,
+  matchingIds,
+  customIcon,
+  createClusterIcon,
+  renderPopupContent,
+}) => {
+  const map = useMap() as L.Map;
+  const clusterIndex = useMemo(
+    () => {
+      const validFeatures = features.filter(
+        (
+          feature,
+        ): feature is Feature<Point, NonNullable<Feature<Point>["properties"]>> => {
+          if (
+            feature.geometry?.type !== "Point" ||
+            !feature.properties ||
+            feature.geometry.coordinates.length < 2
+          ) {
+            return false;
+          }
+
+          const [longitude, latitude] = feature.geometry.coordinates;
+          if (
+            !Number.isFinite(longitude) ||
+            !Number.isFinite(latitude) ||
+            longitude < -180 ||
+            longitude > 180 ||
+            latitude < -90 ||
+            latitude > 90
+          ) {
+            return false;
+          }
+
+          const featureId = pointId(feature.properties, config.idFields);
+          return !matchingIds || (featureId !== undefined && matchingIds.has(featureId));
+        },
+      );
+
+      return new Supercluster<NonNullable<Feature<Point>["properties"]>>({
+        radius: 50,
+        maxZoom: 18,
+      }).load(validFeatures);
+    },
+    [config.idFields, features, matchingIds],
+  );
+  const [visibleFeatures, setVisibleFeatures] =
+    useState<ReturnType<typeof clusterIndex.getClusters>>([]);
+
+  useEffect(() => {
+    const updateVisibleFeatures = () => {
+      const bounds = map.getBounds();
+      const clusters = clusterIndex.getClusters(
+        [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth(),
+        ],
+        Math.floor(map.getZoom()),
+      );
+      setVisibleFeatures(clusters);
+    };
+
+    updateVisibleFeatures();
+    map.on("moveend", updateVisibleFeatures);
+    map.on("zoomend", updateVisibleFeatures);
+    return () => {
+      map.off("moveend", updateVisibleFeatures);
+      map.off("zoomend", updateVisibleFeatures);
+    };
+  }, [clusterIndex, map]);
+
+  return (
+    <>
+      {visibleFeatures.map((feature, index) => {
+        const [longitude, latitude] = feature.geometry.coordinates;
+        const isCluster = feature.properties?.cluster === true;
+
+        if (isCluster) {
+          const clusterId = feature.properties?.cluster_id;
+          const childCount = feature.properties?.point_count;
+          if (typeof clusterId !== "number" || typeof childCount !== "number") return null;
+
+          return (
+            <Marker
+              key={`cluster-${clusterId}`}
+              position={[latitude, longitude]}
+              icon={createClusterIcon(childCount)}
+              eventHandlers={{
+                click: () => {
+                  const expansionZoom = clusterIndex.getClusterExpansionZoom(clusterId);
+                  map.setView([latitude, longitude], expansionZoom);
+                },
+              }}
+            />
+          );
+        }
+
+        return (
+          <Marker
+            key={`${config.id}-${pointId(feature.properties, config.idFields) ?? index}`}
+            position={[latitude, longitude]}
+            icon={customIcon}
+          >
+            <Popup>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: renderPopupContent(feature),
+                }}
+              />
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
+};
 
 // Which of this layer's points passed the last Filter press.
 // Returns nothing when this layer isn't being filtered, meaning show all its points.
@@ -157,7 +288,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
   //         className: "",
   //         iconSize: [40, 40],
   //     });
-  const createClusterIcon = (cluster: L.MarkerCluster) =>
+  const createClusterIcon = (childCount: number) =>
     L.divIcon({
       html: renderToString(
         <div
@@ -172,12 +303,10 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
             color: config.color,
           }}
         >
-          {/* POI icon */}
           <div style={{ zIndex: 1 }}>
             <IconComponent size={22} />
           </div>
 
-          {/* Count text ON TOP */}
           <span
             style={{
               position: "absolute",
@@ -188,8 +317,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
               fontSize: "11px",
               fontWeight: 700,
               pointerEvents: "none",
-              zIndex: 2, // 👈 critical
-
+              zIndex: 2,
               textShadow: `
                                 -1px -1px 0 #000,
                                  1px -1px 0 #000,
@@ -199,7 +327,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
                             `,
             }}
           >
-            {cluster.getChildCount()}
+            {childCount}
           </span>
         </div>,
       ),
@@ -208,10 +336,23 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
       iconAnchor: [16, 16],
     });
 
+  if (config.clusterStrategy === "supercluster") {
+    return (
+      <SuperclusterPointMarkers
+        config={config}
+        features={data.features}
+        matchingIds={matchingIds}
+        customIcon={customIcon}
+        createClusterIcon={createClusterIcon}
+        renderPopupContent={renderPopupContent}
+      />
+    );
+  }
+
   return (
     <>
       <MarkerClusterGroup
-        iconCreateFunction={createClusterIcon}
+        iconCreateFunction={(cluster) => createClusterIcon(cluster.getChildCount())}
         chunkedLoading
         spiderfyOnMaxZoom
         showCoverageOnHover={false}

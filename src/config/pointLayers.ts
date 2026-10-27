@@ -124,26 +124,27 @@ export const POINT_LAYERS: PointLayerConfig[] = [
       ],
     },
   },
-  // {
-  //   id: "sewage",
-  //   name: "Sewage Disposal Systems",
-  //   menu: "locationsOfEnhancedExposure",
-  //   description:
-  //     "Areas reliant on on site wastewater treatment, which may be vulnerable to flooding and other hazards.",
-  //   visible: false,
-  //   icon: "FaToilet",
-  //   color: "#964B00",
-  //   filePath: "HI_Onsite_Sewage_Disposal_Systems.geojson",
-  //   idFields: ["layer", "objectid"],
-  //   popupConfig: {
-  //     titleField: "island",
-  //     fields: [
-  //       { key: "osds_qty", label: "OSDS Quantity" },
-  //       { key: "ttl_osds", label: "Total OSDS" },
-  //       { key: "rsk_score", label: "Risk Score" },
-  //     ],
-  //   },
-  // },
+  {
+    id: "sewage",
+    name: "Sewage Disposal Systems",
+    menu: "locationsOfEnhancedExposure",
+    description:
+      "Areas reliant on on site wastewater treatment, which may be vulnerable to flooding and other hazards.",
+    visible: false,
+    icon: "FaToilet",
+    color: "#964B00",
+    filePath: "Onsite_Sewage_Disposal_System_v2.geojson",
+    clusterStrategy: "supercluster",
+    idFields: ["layer", "objectid"],
+    popupConfig: {
+      titleField: "island",
+      fields: [
+        { key: "osds_qty", label: "OSDS Quantity" },
+        { key: "ttl_osds", label: "Total OSDS" },
+        { key: "rsk_score", label: "Risk Score" },
+      ],
+    },
+  },
   {
     id: "wastewater_plant",
     name: "Wastewater Treatment Plants",
