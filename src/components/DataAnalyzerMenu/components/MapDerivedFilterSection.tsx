@@ -145,23 +145,23 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} alignItems="center">
-      <Tooltip
-        title="Limits the map to areas within the selected range of the chosen vulnerability indicator."
-        enterTouchDelay={0}
-        leaveTouchDelay={5000}
-      >
-        <span>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleApply}
-            disabled={!hasCriteria || isLoading}
-            startIcon={isLoading ? <CircularProgress size={14} color="inherit" /> : undefined}
-          >
-            Filter
-          </Button>
-        </span>
-      </Tooltip>
+        <Tooltip
+          title="Limits the map to areas within the selected range of the chosen vulnerability indicator."
+          enterTouchDelay={0}
+          leaveTouchDelay={5000}
+        >
+          <span>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleApply}
+              disabled={!hasCriteria || isLoading}
+              startIcon={isLoading ? <CircularProgress size={14} color="inherit" /> : undefined}
+            >
+              Filter
+            </Button>
+          </span>
+        </Tooltip>
         <Button size="small" onClick={onClearAll}>
           Clear
         </Button>

@@ -155,12 +155,23 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     setInfoKey(null);
   }, []);
 
-  const updateScrollIndicator = useCallback(() => {
+  const getScrollMetrics = useCallback(() => {
     const nav = navRef.current;
-    const track = indicatorTrackRef.current;
-    if (!nav) return;
+    if (!nav) return null;
 
     const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+    const trackWidth = indicatorTrackRef.current?.clientWidth ?? nav.clientWidth;
+    const thumbWidth = Math.max(24, (nav.clientWidth / nav.scrollWidth) * trackWidth);
+    const availableTravel = Math.max(0, trackWidth - thumbWidth);
+
+    return { maxScroll, thumbWidth, availableTravel, scrollLeft: nav.scrollLeft };
+  }, []);
+
+  const updateScrollIndicator = useCallback(() => {
+    const metrics = getScrollMetrics();
+    if (!metrics) return;
+
+    const { maxScroll, thumbWidth, availableTravel, scrollLeft } = metrics;
     const isOverflowing = maxScroll > 1;
     if (!isOverflowing) {
       setScrollIndicator((previous) => ({
@@ -174,18 +185,15 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       return;
     }
 
-    const trackWidth = track?.clientWidth ?? nav.clientWidth;
-    const thumbWidth = Math.max(24, (nav.clientWidth / nav.scrollWidth) * trackWidth);
-    const availableTravel = Math.max(0, trackWidth - thumbWidth);
-    const thumbOffset = (nav.scrollLeft / maxScroll) * availableTravel;
+    const thumbOffset = (scrollLeft / maxScroll) * availableTravel;
     setScrollIndicator({
       isOverflowing: true,
-      canScrollLeft: nav.scrollLeft > 1,
-      canScrollRight: nav.scrollLeft < maxScroll - 1,
+      canScrollLeft: scrollLeft > 1,
+      canScrollRight: scrollLeft < maxScroll - 1,
       thumbWidth,
       thumbOffset,
     });
-  }, []);
+  }, [getScrollMetrics]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -215,20 +223,24 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     navRef.current?.scrollBy({ left: direction * 160, behavior: "smooth" });
   }, []);
 
-  const scrollToTrackPosition = useCallback((clientX: number, grabOffset = 0) => {
-    const nav = navRef.current;
-    const track = indicatorTrackRef.current;
-    if (!nav || !track) return;
+  const scrollToTrackPosition = useCallback(
+    (clientX: number, grabOffset = 0) => {
+      const nav = navRef.current;
+      const track = indicatorTrackRef.current;
+      if (!nav || !track) return;
 
-    const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
-    const thumbWidth = Math.max(24, (nav.clientWidth / nav.scrollWidth) * track.clientWidth);
-    const availableTravel = Math.max(0, track.clientWidth - thumbWidth);
-    if (maxScroll === 0 || availableTravel === 0) return;
+      const metrics = getScrollMetrics();
+      if (!metrics || metrics.maxScroll === 0 || metrics.availableTravel === 0) return;
 
-    const trackRect = track.getBoundingClientRect();
-    const offset = Math.min(availableTravel, Math.max(0, clientX - trackRect.left - grabOffset));
-    nav.scrollLeft = (offset / availableTravel) * maxScroll;
-  }, []);
+      const trackRect = track.getBoundingClientRect();
+      const offset = Math.min(
+        metrics.availableTravel,
+        Math.max(0, clientX - trackRect.left - grabOffset),
+      );
+      nav.scrollLeft = (offset / metrics.availableTravel) * metrics.maxScroll;
+    },
+    [getScrollMetrics],
+  );
 
   const handleTrackPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
