@@ -39,7 +39,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "population_group_quarters",
         metric: "Institutionalized population",
         label: "Population in Group Quarters",
-        calculationDescription: "Number of people living in institutional group quarters.",
+        calculationDescription: "Percentage of population living in group quarters.",
         isCount: true,
         description: "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs.",
       },
@@ -95,14 +95,14 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric:
           "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level",
         label: "Hawaiian Homelands - Below 100% Federal Poverty Line",
-        calculationDescription: "Population on Hawaiian homelands with income below 100% of the federal poverty level.",
+        calculationDescription: "Percentage of population on Hawaiian homelands with income below 100% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Under 150% FPL (calc.)",
         label: "Hawaiian Homelands - Below 150% Federal Poverty Line",
-        calculationDescription: "Population on Hawaiian homelands with income below 150% of the federal poverty level.",
+        calculationDescription: "Percentage of population on Hawaiian homelands with income below 150% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
       },
       {
@@ -197,7 +197,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Under 5 (calc.)",
         label: "Hawaiian Homelands - Aged 5 Years and Under",
-        calculationDescription: "Percentage of children under the age of 5 living on Hawaiian homelands.",
+        calculationDescription: "Percentage of population under the age of 5 living on Hawaiian homelands.",
         description: "Young children have specific caregiving and evacuation needs that increase household vulnerability.",
       },
       {
@@ -211,7 +211,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "2022_census_hawaiian_homelands",
         metric: "Total Population Over 65 (calc.)",
         label: "Hawaiian Homelands - Aged 65 Years and Older",
-        calculationDescription: "Percentage of population aged 65 or above living on Hawaiian homelands.",
+        calculationDescription: "Percentage of population aged 65 and over living on Hawaiian homelands.",
         description: "Older adults can have mobility, health, and social care needs that affect hazard preparedness, evacuation, and recovery.",
       },
     ],
@@ -268,7 +268,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         metric:
           "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
         label: "Hawaiian Homelands: Limited English Proficiency",
-        calculationDescription: "Percentage of households with limited English proficiency.",
+        calculationDescription: "Percentage of households on Hawaiian homelands with limited English proficiency.",
         description: "Language barriers can reduce access to warnings, assistance, and recovery information.",
       },
     ],
