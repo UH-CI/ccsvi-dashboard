@@ -20,18 +20,6 @@ def load_block_group_populations(geojson_path: str) -> dict:
     return populations
 
 
-def load_hawaiian_homelands_populations(geojson_path: str) -> dict:
-    with open(os.path.expanduser(geojson_path), "r") as f:
-        data = json.load(f)
-
-    populations = {}
-    for feature in data["features"]:
-        geoid = str(feature["properties"]["GEOID10"])
-        populations[geoid] = feature["properties"]["POP10"]
-
-    return populations
-
-
 def moe_column_name(col: str) -> str:
     if col.startswith("Estimate!!"):
         return "Margin of Error!!" + col[len("Estimate!!"):]
@@ -46,11 +34,11 @@ def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
 # Adds Census_Population and, per numeric metric column, "(%)" / "(MOE pp)" / "(CV)" /
 # "(MOE derived)". denominator_column, if given, replaces population as the divisor.
 # counts_only skips "(%)" and "(MOE pp)" so the app shows the raw counts instead.
+# Hawaiian Homelands take Census_Population from their own data file's 2022 total, since
+# the only boundary file with populations is from 2010.
 def add_percentages_to_csv(
     csv_path: str,
-    total_population: int,
     block_group_populations: dict,
-    hawaiian_homelands_populations: dict,
     is_hawaiian_homelands: bool,
     denominator_column: str | None = None,
     counts_only: bool = False,
@@ -60,22 +48,7 @@ def add_percentages_to_csv(
     filename = os.path.basename(csv_path)
 
     if is_hawaiian_homelands:
-        def get_hh_population(geo_id):
-            geo_id_str = str(geo_id) if not pd.isna(geo_id) else None
-            if geo_id_str is None:
-                return None
-            if "US" in geo_id_str:
-                geo_id_str = geo_id_str.split("US")[1]
-            return hawaiian_homelands_populations.get(geo_id_str, None)
-
-        block_populations = df["Geography"].apply(get_hh_population)
-
-        found_count = block_populations.notna().sum()
-        total_count = len(block_populations)
-        print(f"  - Found {found_count}/{total_count} Hawaiian Homelands populations")
-        if found_count == 0:
-            print(f"  WARNING: No populations found! Sample Geography IDs: {df['Geography'].head(3).tolist()}")
-            print(f"  Available population keys: {list(hawaiian_homelands_populations.keys())[:5]}")
+        block_populations = df["Estimate!!Total!!Total population"]
     else:
         block_populations = df["Geography"].map(block_group_populations)
 
