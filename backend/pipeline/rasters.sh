@@ -28,11 +28,7 @@ for entry in "${RASTERS[@]}"; do
         -co OVERVIEWS=IGNORE_EXISTING \
         -co OVERVIEW_RESAMPLING=AVERAGE \
         "$src" "$STAGING_DIR/$out"
-done
 
-# Check every file before moving any, so a bad build never reaches the map
-for entry in "${RASTERS[@]}"; do
-    IFS='|' read -r out src nodata <<< "$entry"
     info=$(gdalinfo "$STAGING_DIR/$out")
     if ! grep -q "LAYOUT=COG" <<< "$info"; then
         echo "$out is not a COG" >&2; exit 1
