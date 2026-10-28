@@ -17,7 +17,6 @@ import {
   LocationOn,
   Warning,
   Refresh,
-  Terrain,
   ExpandMore,
   GridView,
   CalendarViewWeek,
@@ -35,8 +34,6 @@ import {
   useHCDPStore,
   useFilterStore,
 } from "../../stores";
-import { HCDPLoad } from "../HCDP";
-import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";
