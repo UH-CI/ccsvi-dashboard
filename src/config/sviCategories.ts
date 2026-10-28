@@ -182,7 +182,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         dataset: "living_arrangements",
         metric: "Total Living alone (calc.)",
         label: "Living Alone",
-        calculationDescription: "Percentage of population living alone.",
+        calculationDescription: "Percentage of households where householder lives alone.",
         description:
           "Single-occupant households may have reduced social support and face higher isolation during hazards.",
       },

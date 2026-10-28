@@ -204,7 +204,7 @@ def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
 # Inserts a 'Total "Living alone"' column after the first two columns
 def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
-    cols_to_sum = _estimate_total_cols(df)
+    cols_to_sum = [col for col in _estimate_total_cols(df) if col[1].endswith("!!Living alone")]
     cleaned_df.insert(2, ("CALCULATED", 'Total "Living alone"'), _sum_estimates(df, cols_to_sum))
     cleaned_df.insert(3, ("CALCULATED", 'Margin of Error!!Total "Living alone"'), _sum_moe(df, cols_to_sum))
     return cleaned_df

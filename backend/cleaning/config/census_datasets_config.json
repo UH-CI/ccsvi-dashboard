@@ -59,9 +59,9 @@
       "alias": "living_arrangements",
       "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/Living arragements, including living alone, by sex and relationship/ACSDT5Y2022.B09019-Data.csv",
       "label": "Living arrangements including living alone by sex and relationship",
-      "universe": "Occupied housing units",
+      "universe": "Households",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:!!In households:!!Householder:"
     },
     {
       "key": "income_share_of_fpl",
