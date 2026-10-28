@@ -9,10 +9,12 @@ Turns raw GIS files into cleaned GeoJSONs and map tiles.
      keep only the layer's shape type (ST_CollectionExtract, dropping zero-width leftovers of
      repair) and drop rows left with no shape. Written as unsimplified GeoJSON
   3. tippecanoe: tiles from that GeoJSON (standard zoom range plus any extra settings the entry
-     lists) into a staging folder, never over the live tiles
+     lists)
   4. checks: feature count, validity, shape type, location; stops on failure
   5. markers, for entries that ask for them: one point per shape, placed inside it
-     (ST_PointOnSurface), written to the point layer folder; checked for one marker per shape
+     (ST_PointOnSurface); checked for one marker per shape
+  6. once every layer has passed, move all files to their live folders (GeoJSON, tiles,
+     markers) and remove the empty staging folder
 
 python -m pipeline.vector_layers [--only <name>]
 """
@@ -29,6 +31,7 @@ from pathlib import Path
 RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files")
 DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026")
 GEOJSON_DIR = DATA_DIR / "hazards_geojson"
+TILES_DIR = DATA_DIR / "hazards"
 STAGING_DIR = DATA_DIR / "hazards_staging"
 POINT_DIR = DATA_DIR / "point_data"
 
@@ -225,7 +228,7 @@ def check_outputs(layer, source_count, geojson):
 
 def build(layer):
     print(layer.name)
-    geojson = GEOJSON_DIR / f"{layer.name}.geojson"
+    geojson = STAGING_DIR / f"{layer.name}.geojson"
     tiles = STAGING_DIR / f"{layer.name}.pmtiles"
 
     start = time.time()
@@ -243,11 +246,15 @@ def build(layer):
     print(f"  tiled: {megabytes(tiles)} in {time.time() - start:.0f} s")
 
     check_outputs(layer, source_count, geojson)
+    moves = [(geojson, GEOJSON_DIR / geojson.name), (tiles, TILES_DIR / tiles.name)]
 
     if layer.markers:
-        markers = POINT_DIR / f"{layer.name}_points.geojson"
+        markers = STAGING_DIR / f"{layer.name}_points.geojson"
         make_markers(layer, geojson, markers, columns)
         check_markers(geojson, markers)
+        moves.append((markers, POINT_DIR / markers.name))
+
+    return moves
 
 
 def main():
@@ -257,9 +264,12 @@ def main():
 
     GEOJSON_DIR.mkdir(exist_ok=True)
     STAGING_DIR.mkdir(exist_ok=True)
-    for layer in LAYERS:
-        if args.only in (None, layer.name):
-            build(layer)
+    moves = [move for layer in LAYERS if args.only in (None, layer.name) for move in build(layer)]
+
+    for staged, live in moves:
+        staged.replace(live)
+        print(f"Installed {live.name}")
+    STAGING_DIR.rmdir()
 
 
 if __name__ == "__main__":
