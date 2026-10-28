@@ -10,6 +10,7 @@ Pass --dir instead to skip cleaning and load CSVs you already have.
 
 import argparse
 import asyncio
+import json
 import os
 import tempfile
 
@@ -158,18 +159,20 @@ async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, se
 
     await conn.execute(
         """
-        INSERT INTO datasets (id, label, universe, hawaiian_homelands, source_type)
-        VALUES ($1, $2, $3, $4, 'census')
+        INSERT INTO datasets (id, label, universe, hawaiian_homelands, source_type, metadata)
+        VALUES ($1, $2, $3, $4, 'census', $5::jsonb)
         ON CONFLICT (id) DO UPDATE SET
             label              = EXCLUDED.label,
             universe           = EXCLUDED.universe,
             hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-            source_type        = EXCLUDED.source_type
+            source_type        = EXCLUDED.source_type,
+            metadata           = EXCLUDED.metadata
         """,
         dataset_id,
         output["label"],
         output["universe"],
         output["hawaiian_homelands"],
+        json.dumps(output["metadata"]),
     )
 
     metric_specs, rows, geo_rows = read_dataset_rows(csv_path, skip_column=output["skip_metric_column"])

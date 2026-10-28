@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Box, IconButton, Chip, Divider, Button } from "@mui/material";
+import { Typography, Box, IconButton, Divider, Button } from "@mui/material";
 import {
   Toolbar,
   ColumnsPanelTrigger,
@@ -22,7 +22,7 @@ import styles from "../TableViewer.module.scss";
 
 interface CustomToolbarProps {
   datasetLabel: string;
-  rowCount: number;
+  metadataText: string | null;
   isFullHeight: boolean;
   activeDataset: string;
   toggleCollapse: () => void;
@@ -32,7 +32,7 @@ interface CustomToolbarProps {
 declare module "@mui/x-data-grid" {
   interface ToolbarPropsOverrides {
     datasetLabel: string;
-    rowCount: number;
+    metadataText: string | null;
     isFullHeight: boolean;
     activeDataset: string;
     toggleCollapse: () => void;
@@ -42,7 +42,7 @@ declare module "@mui/x-data-grid" {
 
 export const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
   datasetLabel,
-  rowCount,
+  metadataText,
   isFullHeight,
   activeDataset,
   toggleCollapse,
@@ -59,7 +59,7 @@ export const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
     <Typography variant="subtitle2" className={styles["toolbar-title"]}>
       {datasetLabel}
     </Typography>
-    <Chip label={`${rowCount} rows`} size="small" className={styles.chip} />
+    {metadataText && <span className={styles["metadata-line"]}>{metadataText}</span>}
     <Box className={styles["toolbar-spacer"]} />
     <ColumnsPanelTrigger
       size="small"

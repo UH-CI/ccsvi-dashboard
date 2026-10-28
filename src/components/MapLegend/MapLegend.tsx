@@ -11,6 +11,7 @@ interface MapLegendProps {
   bivariate?: ComputedBivariateColorScale;
   metric1Label?: string;
   metric2Label?: string;
+  isCount?: boolean;
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({
@@ -19,6 +20,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   bivariate,
   metric1Label,
   metric2Label,
+  isCount,
 }) => {
   const [labelsHovered, setLabelsHovered] = useState(false);
 
@@ -27,12 +29,14 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
     const items = [];
     for (let i = limits.length - 2; i >= 0; i--) {
-      const fmt = (n: number) => n.toFixed(1);
+      const fmt = (n: number) => n.toFixed(isCount ? 0 : 1);
       const label =
         i === limits.length - 2
           ? `> ${fmt(limits[i])}`
           : i === 0
-            ? `≤ ${fmt(limits[i + 1])}`
+            ? isCount
+              ? "0"
+              : `≤ ${fmt(limits[i + 1])}`
             : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
       items.push(
         <div key={i} className={styles.legend__item}>
@@ -42,7 +46,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
       );
     }
     return items;
-  }, [bivariate, limits, colors]);
+  }, [bivariate, limits, colors, isCount]);
 
   if (!bivariate && (!limits || !colors)) return null;
 

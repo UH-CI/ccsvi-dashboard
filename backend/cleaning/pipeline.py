@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 
 from openpyxl import load_workbook
 
@@ -100,6 +101,27 @@ def build_file_blocks(notes_wb_path: str) -> dict:
     return file_blocks
 
 
+def census_metadata(file_name: str) -> dict:
+    match = re.fullmatch(r"((ACSDT5Y|ACSST5Y|DECENNIALPL)(\d{4})\.\w+)-Data\.csv", file_name)
+    if not match:
+        raise ValueError(f"Can't read the Census product and year from raw file name {file_name!r}")
+    table_id, product, year = match.group(1), match.group(2), int(match.group(3))
+
+    if product == "DECENNIALPL":
+        return {
+            "table_id": table_id,
+            "program": f"{year} Census",
+            "period": str(year),
+            "citation": f"U.S. Census Bureau, {year} Census Redistricting Data (Public Law 94-171)",
+        }
+    return {
+        "table_id": table_id,
+        "program": "ACS 5-Year",
+        "period": f"{year - 4}–{year}",
+        "citation": f"U.S. Census Bureau, {year - 4}-{year} American Community Survey 5-Year Estimates",
+    }
+
+
 # One record per output file, from the config
 # A normal entry is one file named after its alias
 # An entry with "outputs" lists its files. 
@@ -115,6 +137,8 @@ def dataset_outputs(dataset_configs: list) -> list:
                     "hawaiian_homelands": output["hawaiian_homelands"],
                     "percent_denominator": output["percent_denominator"],
                     "skip_metric_column": output.get("skip_metric_column"),
+                    "metadata": census_metadata(os.path.basename(config["original_file_path"])),
+                    "counts_only": output.get("counts_only", False),
                 }
             )
     return outputs
@@ -201,5 +225,6 @@ def add_percentages_to_directory(
             hawaiian_homelands_populations,
             output["hawaiian_homelands"],
             denominator_column=output["percent_denominator"],
+            counts_only=output["counts_only"],
         )
         df_with_props.to_csv(csv_file, index=False)

@@ -49,11 +49,19 @@ export interface MetricConfig {
   classificationMode?: string;
 }
 
+export interface DatasetMetadata {
+  table_id: string;
+  program: string;
+  period: string;
+  citation: string;
+}
+
 export interface Dataset {
   [key: string]: {
     metricName: string;
     metricLabel: string;
     hawaiianHomelands?: boolean;
+    metadata?: DatasetMetadata | null;
     columnThresholds: {
       [columnName: string]: MetricConfig;
     };
@@ -242,6 +250,7 @@ export interface CatalogDataset {
   hawaiianHomelands: boolean;
   // 'census', 'point' or 'raster'
   sourceType: string;
+  metadata?: DatasetMetadata | null;
   columnThresholds: Record<string, CatalogMetric>;
 }
 

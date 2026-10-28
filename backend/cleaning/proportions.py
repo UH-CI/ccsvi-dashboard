@@ -45,6 +45,7 @@ def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
 
 # Adds Census_Population and, per numeric metric column, "(%)" / "(MOE pp)" / "(CV)" /
 # "(MOE derived)". denominator_column, if given, replaces population as the divisor.
+# counts_only skips "(%)" and "(MOE pp)" so the app shows the raw counts instead.
 def add_percentages_to_csv(
     csv_path: str,
     total_population: int,
@@ -52,6 +53,7 @@ def add_percentages_to_csv(
     hawaiian_homelands_populations: dict,
     is_hawaiian_homelands: bool,
     denominator_column: str | None = None,
+    counts_only: bool = False,
 ) -> pd.DataFrame:
     df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
 
@@ -157,6 +159,9 @@ def add_percentages_to_csv(
 
         # metrics we calculate
         moe_derived_cols[col] = col.endswith("(calc.)")
+
+    if counts_only:
+        pct_cols, moe_pp_cols = {}, {}
 
     # CV needs only a column's own estimate and MOE, so every column with an MOE gets one
     for col in df.columns:
