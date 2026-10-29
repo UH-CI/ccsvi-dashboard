@@ -17,7 +17,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         opacity: 0.7,
         sourceFileName: "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
         savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 1 (mean, m)", max: "Inundation Category 1 (max, m)" },
-        colormapName: "blues",
+        colormapName: "plasma",
       },
       {
         id: "inundation_category2",
@@ -27,7 +27,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         opacity: 0.7,
         sourceFileName: "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
         savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 2 (mean, m)", max: "Inundation Category 2 (max, m)" },
-        colormapName: "blues",
+        colormapName: "plasma",
       },
       {
         id: "inundation_category3",
@@ -37,7 +37,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         opacity: 0.7,
         sourceFileName: "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
         savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 3 (mean, m)", max: "Inundation Category 3 (max, m)" },
-        colormapName: "blues",
+        colormapName: "plasma",
       },
       {
         id: "inundation_category4",
@@ -47,7 +47,7 @@ export const RASTER_LAYERS: RasterLayerConfig[] = [
         opacity: 0.7,
         sourceFileName: "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
         savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 4 (mean, m)", max: "Inundation Category 4 (max, m)" },
-        colormapName: "blues",
+        colormapName: "plasma",
       },
     ],
   },
