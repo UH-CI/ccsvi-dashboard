@@ -12,7 +12,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  height: 64px;
+  height: 52px;
   box-sizing: border-box;
 
   background: #ffffff;
@@ -23,10 +23,9 @@
 .top-bar-nav-container {
   display: flex;
   flex: 1;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
   min-width: 0;
-  gap: 1px;
+  gap: 2px;
 }
 
 // Brand ──────────────────────────────────────────────────────────────────
@@ -62,60 +61,72 @@
   flex-direction: row;
   align-items: center;
   gap: 2px;
+  flex: 1;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
 
   &::-webkit-scrollbar {
-    display: none;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
   }
 }
 
-.scroll-indicator {
+.top-bar-nav-viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  width: 100%;
-  height: 9px;
-  gap: 2px;
+
+  &::before,
+  &::after {
+    position: absolute;
+    top: 0;
+    bottom: 2px;
+    z-index: 1;
+    width: 18px;
+    pointer-events: none;
+    content: "";
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0));
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, #fff, rgba(255, 255, 255, 0));
+  }
+}
+
+.top-bar-nav-container--left .top-bar-nav-viewport::before,
+.top-bar-nav-container--right .top-bar-nav-viewport::after {
+  opacity: 1;
 }
 
 .scroll-arrow {
-  width: 16px !important;
-  height: 12px !important;
+  flex-shrink: 0;
+  width: 26px !important;
+  height: 28px !important;
   padding: 0 !important;
   color: #333 !important;
-
-  &:disabled {
-    color: #c2c2c2 !important;
-  }
 }
 
-.scroll-track {
-  position: relative;
-  flex: 1;
-  height: 5px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 1px solid #d6dbe1;
-  border-radius: 4px;
-  background: #f3f5f7;
-}
-
-.scroll-thumb {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  min-width: 24px;
-  cursor: grab;
-  border-radius: 4px;
-  background: #1976d2;
-  touch-action: none;
-  user-select: none;
-
-  &:active {
-    cursor: grabbing;
-  }
+.scroll-arrow--hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .nav-btn {
