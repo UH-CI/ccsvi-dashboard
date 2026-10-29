@@ -6,6 +6,7 @@ export interface SviIndicator {
   calculationDescription?: string;
   mvColumn?: string; //column name if applicable
   isCount?: boolean; //raw counts, mostly 0s: legend shows whole numbers and 0 gets its own bin
+  isPercentage?: boolean; // legend values are proportions displayed as percentages
 }
 
 export interface SviCategory {
@@ -41,6 +42,7 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Population in Group Quarters",
         calculationDescription: "Number of people living in institutional group quarters.",
         isCount: true,
+        isPercentage: true,
         description: "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs.",
       },
       // { dataset: "population_group_quarters", metric: "Institutionalized population: Correctional facilities for adults", label: "Group quarters: Correctional facilities" },
@@ -322,3 +324,8 @@ export const sviIsCount = (dataset: string | undefined, metric: string): boolean
   SVI_CATEGORIES.flatMap((c) => c.indicators).find(
     (i) => i.dataset === dataset && i.metric === metric,
   )?.isCount ?? false;
+
+export const sviIsPercentage = (dataset: string | undefined, metric: string): boolean =>
+  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
+    (i) => i.dataset === dataset && i.metric === metric,
+  )?.isPercentage ?? false;

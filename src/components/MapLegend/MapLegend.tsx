@@ -4,6 +4,7 @@ import { Tooltip } from "@mui/material";
 import styles from "./MapLegend.module.scss";
 import { ComputedBivariateColorScale } from "../../utils/colorThresholds";
 import { CollapsibleLegend } from "./CollapsibleLegend";
+import { formatValue } from "../DataAnalyzerMenu/metricValueHelpers";
 
 interface MapLegendProps {
   limits: number[] | null;
@@ -12,6 +13,7 @@ interface MapLegendProps {
   metric1Label?: string;
   metric2Label?: string;
   isCount?: boolean;
+  isPercentage?: boolean;
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({
@@ -21,6 +23,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   metric1Label,
   metric2Label,
   isCount,
+  isPercentage,
 }) => {
   const [labelsHovered, setLabelsHovered] = useState(false);
 
@@ -29,15 +32,20 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
     const items = [];
     for (let i = limits.length - 2; i >= 0; i--) {
-      const fmt = (n: number) => n.toFixed(isCount ? 0 : 1);
+      const fmt = (n: number) =>
+        isPercentage
+          ? formatValue(n, true, 1)
+          : isCount
+            ? n.toFixed(1)
+            : formatValue(n, true, limits[limits.length - 1]);
       const label =
         i === limits.length - 2
           ? `> ${fmt(limits[i])}`
           : i === 0
-            ? isCount
-              ? "0"
-              : `≤ ${fmt(limits[i + 1])}`
-            : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
+          ? isCount && !isPercentage
+            ? "0"
+            : `≤ ${fmt(limits[i + 1])}`
+          : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
       items.push(
         <div key={i} className={styles.legend__item}>
           <div className={styles["legend__item-color"]} style={{ backgroundColor: colors[i] }} />
@@ -46,7 +54,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
       );
     }
     return items;
-  }, [bivariate, limits, colors, isCount]);
+  }, [bivariate, limits, colors, isCount, isPercentage]);
 
   if (!bivariate && (!limits || !colors)) return null;
 

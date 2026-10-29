@@ -11,7 +11,7 @@ import {
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
 import { MapLegend, RasterMapLegend, HcdpMapLegend, LegendContainer } from "../MapLegend";
-import { DEFAULT_COLOR_SCHEME, MAP_CONFIG, sviIsCount, sviLabel } from "../../config";
+import { DEFAULT_COLOR_SCHEME, MAP_CONFIG, sviIsCount, sviIsPercentage, sviLabel } from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
@@ -161,6 +161,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const effectiveMetric2 = config?.metric2;
     const metricLabel = effectiveMetric ? sviLabel(effectiveDataset, effectiveMetric) : undefined;
     const metricIsCount = effectiveMetric ? sviIsCount(effectiveDataset, effectiveMetric) : false;
+    const metricIsPercentage = effectiveMetric
+      ? sviIsPercentage(effectiveDataset, effectiveMetric)
+      : false;
     const metricLabel2 = effectiveMetric2
       ? sviLabel(effectiveDataset2, effectiveMetric2)
       : undefined;
@@ -271,7 +274,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       bivariateColorScheme: activeBivariateColorScheme,
       hasSecondMetric: Boolean(effectiveMetric2),
       datasetMetricObject: activeDatasetMetricObject,
-      isCount: metricIsCount,
     });
 
     const handleFeatureClick = useCallback(
@@ -540,6 +542,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               metric1Label={metricLabel}
               metric2Label={metricLabel2}
               isCount={metricIsCount}
+              isPercentage={metricIsPercentage}
             />
           </LegendContainer>
         </div>

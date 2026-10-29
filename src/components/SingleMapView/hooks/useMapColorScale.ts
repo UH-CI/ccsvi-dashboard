@@ -14,7 +14,6 @@ interface UseMapColorScaleArgs {
   bivariateColorScheme: string;
   hasSecondMetric: boolean;
   datasetMetricObject: MetricConfig | null;
-  isCount: boolean;
 }
 
 interface MapColorScale {
@@ -31,7 +30,6 @@ export function useMapColorScale({
   bivariateColorScheme,
   hasSecondMetric,
   datasetMetricObject,
-  isCount,
 }: UseMapColorScaleArgs): MapColorScale {
   const colorScale = useMemo(() => {
     if (!datasetMetricObject) return null;
@@ -39,9 +37,8 @@ export function useMapColorScale({
       allMetricValues,
       colorScheme,
       datasetMetricObject.classificationMode ?? "q",
-      isCount,
     );
-  }, [allMetricValues, colorScheme, datasetMetricObject, isCount]);
+  }, [allMetricValues, colorScheme, datasetMetricObject]);
 
   const bivariateColorScale = useMemo(() => {
     if (!hasSecondMetric || allMetricValues2.length === 0) return null;

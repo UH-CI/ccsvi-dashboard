@@ -12,9 +12,13 @@ import {
 } from "./rasterLegendDefaults";
 import styles from "./MapLegend.module.scss";
 import { CollapsibleLegend } from "./CollapsibleLegend";
+import { formatValue as formatPercentageValue } from "../DataAnalyzerMenu/metricValueHelpers";
 
-function formatValue(v: number): string {
+function formatValue(v: number, units?: string, maxValue?: number): string {
   if (!Number.isFinite(v)) return "";
+  if (units?.trim() === "%") {
+    return formatPercentageValue(v, true, maxValue);
+  }
   const a = Math.abs(v);
   if (a >= 10000 || (a > 0 && a < 0.001)) return v.toExponential(2);
   return a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(2) : v.toFixed(3);
@@ -75,6 +79,9 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
 
   const widthPx = RASTER_LEGEND_DEFAULT_WIDTH_PX;
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
+  const units = info.units?.trim();
+  const isPercentage = units === "%";
+  const unitSuffix = isPercentage ? "" : units;
 
   return (
     <CollapsibleLegend title={info.title} icon={<TerrainIcon className={styles["legend-icon"]} />} order={0}>
@@ -84,14 +91,14 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
           style={{ background: gradientCss, height: gradientHeightPx }}
           aria-hidden
         />
-        {info.units?.trim() ? (
+        {units && !isPercentage ? (
           <div
             className={styles["raster-legend__unit-col"]}
             style={{ minHeight: gradientHeightPx }}
             aria-hidden
           >
-            <span>{info.units.trim()}</span>
-            <span>{info.units.trim()}</span>
+            <span>{units}</span>
+            <span>{units}</span>
           </div>
         ) : null}
         <div
@@ -101,20 +108,20 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
           <span
             title={
               info.units?.trim()
-                ? `${formatValue(info.max)}\u00a0${info.units.trim()}`
+                ? `${formatValue(info.max, units, info.max)}${unitSuffix ? `\u00a0${unitSuffix}` : ""}`
                 : undefined
             }
           >
-            {formatValue(info.max)}
+            {formatValue(info.max, units, info.max)}
           </span>
           <span
             title={
               info.units?.trim()
-                ? `${formatValue(info.min)}\u00a0${info.units.trim()}`
+                ? `${formatValue(info.min, units, info.max)}${unitSuffix ? `\u00a0${unitSuffix}` : ""}`
                 : undefined
             }
           >
-            {formatValue(info.min)}
+            {formatValue(info.min, units, info.max)}
           </span>
         </div>
       </div>

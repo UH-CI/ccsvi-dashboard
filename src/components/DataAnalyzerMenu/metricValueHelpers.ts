@@ -17,5 +17,5 @@ export function formatValue(v: number, isPercentage: boolean, maxVal?: number): 
   if (!isPercentage) return v.toFixed(0);
   // If max value is already > 1 the backend stored percentages in 0–100 form
   const alreadyScaled = maxVal != null && maxVal > 1;
-  return alreadyScaled ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`;
+  return alreadyScaled ? `${Math.round(v)}%` : `${Math.round(v * 100)}%`;
 }

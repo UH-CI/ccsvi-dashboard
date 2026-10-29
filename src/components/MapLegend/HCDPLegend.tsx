@@ -9,9 +9,13 @@ import {
 } from "./rasterLegendDefaults";
 import styles from "./MapLegend.module.scss";
 import { CollapsibleLegend } from "./CollapsibleLegend";
+import { formatValue as formatPercentageValue } from "../DataAnalyzerMenu/metricValueHelpers";
 
-function formatValue(v: number): string {
+function formatValue(v: number, units?: string, maxValue?: number): string {
   if (!Number.isFinite(v)) return "";
+  if (units?.trim() === "%") {
+    return formatPercentageValue(v, true, maxValue);
+  }
   const a = Math.abs(v);
   if (a >= 10000 || (a > 0 && a < 0.001)) return v.toExponential(2);
   return a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(2) : v.toFixed(3);
@@ -96,6 +100,8 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
 
   // Safely grab units from the row payload if they exist
   const units = (overlay.row as any)?.units?.trim() || (overlay.row as any)?.unit?.trim() || "";
+  const isPercentage = units === "%";
+  const unitSuffix = isPercentage ? "" : units;
 
   return (
     <CollapsibleLegend title={overlay.title} icon={<CloudQueueIcon className={styles["legend-icon"]} />} order={0}>
@@ -105,7 +111,7 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
           style={{ background: gradient, height: gradientHeightPx }}
           aria-hidden
         />
-        {units ? (
+        {units && !isPercentage ? (
           <div
             className={styles["raster-legend__unit-col"]}
             style={{ minHeight: gradientHeightPx }}
@@ -119,11 +125,11 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
           className={styles["raster-legend__nums"]}
           style={{ minHeight: gradientHeightPx }}
         >
-          <span title={units ? `${formatValue(stats.max)}\u00a0${units}` : undefined}>
-            {formatValue(stats.max)}
+          <span title={units ? `${formatValue(stats.max, units, stats.max)}${unitSuffix ? `\u00a0${unitSuffix}` : ""}` : undefined}>
+            {formatValue(stats.max, units, stats.max)}
           </span>
-          <span title={units ? `${formatValue(stats.min)}\u00a0${units}` : undefined}>
-            {formatValue(stats.min)}
+          <span title={units ? `${formatValue(stats.min, units, stats.max)}${unitSuffix ? `\u00a0${unitSuffix}` : ""}` : undefined}>
+            {formatValue(stats.min, units, stats.max)}
           </span>
         </div>
       </div>
