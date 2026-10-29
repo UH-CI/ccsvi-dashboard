@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Typography,
   Button,
@@ -17,13 +17,14 @@ import {
   LocationOn,
   Warning,
   Refresh,
-  Terrain,
   ExpandMore,
   GridView,
   CalendarViewWeek,
   Assessment,
   Factory,
   BarChart,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
 } from "@mui/icons-material";
 import {
   useMapStore,
@@ -33,8 +34,6 @@ import {
   useHCDPStore,
   useFilterStore,
 } from "../../stores";
-import { HCDPLoad } from "../HCDP";
-import { SingleMapControls } from "./SingleMapControls";
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";
@@ -71,6 +70,11 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
   const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
   const [infoKey, setInfoKey] = useState<NonNullable<PopoverKey> | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
 
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
 
@@ -143,6 +147,51 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     setInfoKey(null);
   }, []);
 
+  const updateScrollState = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const maxScroll = Math.max(0, nav.scrollWidth - nav.clientWidth);
+    const nextState = {
+      canScrollLeft: nav.scrollLeft > 1,
+      canScrollRight: nav.scrollLeft < maxScroll - 1,
+    };
+    setScrollState((previous) =>
+      previous.canScrollLeft === nextState.canScrollLeft &&
+      previous.canScrollRight === nextState.canScrollRight
+        ? previous
+        : nextState,
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const handleScroll = () => updateScrollState();
+    nav.addEventListener("scroll", handleScroll, { passive: true });
+
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(nav);
+    if (nav.firstElementChild) resizeObserver.observe(nav.firstElementChild);
+    updateScrollState();
+
+    return () => {
+      nav.removeEventListener("scroll", handleScroll);
+      resizeObserver.disconnect();
+    };
+  }, [updateScrollState]);
+
+  const scrollNav = useCallback((direction: -1 | 1) => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    nav.scrollBy({
+      left: direction * Math.max(160, nav.clientWidth * 0.8),
+      behavior: "smooth",
+    });
+  }, []);
+
   const navItems: {
     key: NonNullable<PopoverKey>;
     label: string;
@@ -196,7 +245,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       label: "Data Analyzer",
       icon: <BarChart fontSize="small" />,
       description:
-        "Explore the distribution of the selected Social Vulnerability Indicator across block groups and filter by value range.",
+        "Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap.",
     },
   ];
 
@@ -217,25 +266,55 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
       <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />
 
-      {/* Nav Buttons */}
-      <Box className={styles["top-bar-nav"]}>
-        {navItems.map(({ key, label, icon }) => (
-          <Button
-            key={key}
-            className={`${styles["nav-btn"]} ${anchors[key] ? styles["nav-btn--active"] : ""}`}
-            onClick={(e) => handleButtonClick(key, e)}
-            startIcon={icon}
-            endIcon={
-              <ExpandMore
-                fontSize="small"
-                className={anchors[key] ? styles["chevron-open"] : styles["chevron"]}
-              />
-            }
-            size="small"
-          >
-            {label}
-          </Button>
-        ))}
+      {/* Nav Buttons and horizontal overflow controls */}
+      <Box
+        className={`${styles["top-bar-nav-container"]} ${
+          scrollState.canScrollLeft ? styles["top-bar-nav-container--left"] : ""
+        } ${scrollState.canScrollRight ? styles["top-bar-nav-container--right"] : ""}`}
+      >
+        <IconButton
+          size="small"
+          className={`${styles["scroll-arrow"]} ${
+            !scrollState.canScrollLeft ? styles["scroll-arrow--hidden"] : ""
+          }`}
+          onClick={() => scrollNav(-1)}
+          disabled={!scrollState.canScrollLeft}
+          aria-label="Scroll toolbar left"
+        >
+          <KeyboardArrowLeft fontSize="small" />
+        </IconButton>
+        <Box className={styles["top-bar-nav-viewport"]}>
+          <Box className={styles["top-bar-nav"]} ref={navRef}>
+            {navItems.map(({ key, label, icon }) => (
+              <Button
+                key={key}
+                className={`${styles["nav-btn"]} ${anchors[key] ? styles["nav-btn--active"] : ""}`}
+                onClick={(e) => handleButtonClick(key, e)}
+                startIcon={icon}
+                endIcon={
+                  <ExpandMore
+                    fontSize="small"
+                    className={anchors[key] ? styles["chevron-open"] : styles["chevron"]}
+                  />
+                }
+                size="small"
+              >
+                {label}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+        <IconButton
+          size="small"
+          className={`${styles["scroll-arrow"]} ${
+            !scrollState.canScrollRight ? styles["scroll-arrow--hidden"] : ""
+          }`}
+          onClick={() => scrollNav(1)}
+          disabled={!scrollState.canScrollRight}
+          aria-label="Scroll toolbar right"
+        >
+          <KeyboardArrowRight fontSize="small" />
+        </IconButton>
       </Box>
 
       <Divider orientation="vertical" flexItem className={styles["bar-divider"]} />

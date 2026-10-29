@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
-import { Box, Slider, Typography, Stack, Divider } from "@mui/material";
+import { Box, Slider, Typography, Stack, Divider, Tooltip, IconButton } from "@mui/material";
+import { InfoOutlined } from "@mui/icons-material";
 import {
   BarChart,
   Bar,
@@ -222,44 +223,68 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       </Box>
 
       {stats && (
-        <Box display="flex" justifyContent="space-around">
-          {activeValue != null && (
+        <>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
+            >
+              Summary for Matching Areas
+            </Typography>
+            <Tooltip
+              title="Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap."
+              placement="top"
+              disableInteractive
+            >
+              <IconButton
+                size="small"
+                aria-label="About summary statistics"
+                sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
+              >
+                <InfoOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box display="flex" justifyContent="space-around">
+            {activeValue != null && (
+              <Box textAlign="center">
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Selected area
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#e53935" }}>
+                  {formatValue(activeValue, isPercentage, dataMax)}
+                </Typography>
+              </Box>
+            )}
             <Box textAlign="center">
               <Typography variant="caption" color="text.secondary" display="block">
-                Selected area
+                Mean
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: "#e53935" }}>
-                {formatValue(activeValue, isPercentage, dataMax)}
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {matchedStats ? formatValue(matchedStats.mean, isPercentage, dataMax) : "–"}
               </Typography>
+              {matchedValues.length !== allValues.length && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  all {formatValue(stats.mean, isPercentage, dataMax)}
+                </Typography>
+              )}
             </Box>
-          )}
-          <Box textAlign="center">
-            <Typography variant="caption" color="text.secondary" display="block">
-              Mean
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {matchedStats ? formatValue(matchedStats.mean, isPercentage, dataMax) : "–"}
-            </Typography>
-            {matchedValues.length !== allValues.length && (
+            <Box textAlign="center">
               <Typography variant="caption" color="text.secondary" display="block">
-                all {formatValue(stats.mean, isPercentage, dataMax)}
+                Median
               </Typography>
-            )}
-          </Box>
-          <Box textAlign="center">
-            <Typography variant="caption" color="text.secondary" display="block">
-              Median
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {matchedStats ? formatValue(matchedStats.median, isPercentage, dataMax) : "–"}
-            </Typography>
-            {matchedValues.length !== allValues.length && (
-              <Typography variant="caption" color="text.secondary" display="block">
-                all {formatValue(stats.median, isPercentage, dataMax)}
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {matchedStats ? formatValue(matchedStats.median, isPercentage, dataMax) : "–"}
               </Typography>
-            )}
+              {matchedValues.length !== allValues.length && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  all {formatValue(stats.median, isPercentage, dataMax)}
+                </Typography>
+              )}
+            </Box>
           </Box>
-        </Box>
+        </>
       )}
 
       <Box>
@@ -268,7 +293,22 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           color="text.secondary"
           sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
         >
-          Filter range
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
+            Filter range
+            <Tooltip
+              title="Limits the primary vulnerability indicator to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count."
+              placement="top"
+              disableInteractive
+            >
+              <IconButton
+                size="small"
+                aria-label="About indicator value range"
+                sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
+              >
+                <InfoOutlined sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Typography>
         <Box sx={{ px: 1, mt: 1 }}>
           <Slider

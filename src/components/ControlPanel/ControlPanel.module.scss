@@ -20,6 +20,14 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.top-bar-nav-container {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  gap: 2px;
+}
+
 // Brand ──────────────────────────────────────────────────────────────────
 
 .top-bar-brand {
@@ -61,13 +69,64 @@
   &::-webkit-scrollbar {
     height: 4px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 2px;
   }
+}
+
+.top-bar-nav-viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+
+  &::before,
+  &::after {
+    position: absolute;
+    top: 0;
+    bottom: 2px;
+    z-index: 1;
+    width: 18px;
+    pointer-events: none;
+    content: "";
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0));
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, #fff, rgba(255, 255, 255, 0));
+  }
+}
+
+.top-bar-nav-container--left .top-bar-nav-viewport::before,
+.top-bar-nav-container--right .top-bar-nav-viewport::after {
+  opacity: 1;
+}
+
+.scroll-arrow {
+  flex-shrink: 0;
+  width: 26px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  color: #333 !important;
+}
+
+.scroll-arrow--hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .nav-btn {
