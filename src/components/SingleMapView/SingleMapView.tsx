@@ -231,6 +231,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       if (!blockGroupData || !effectiveDataset) return null;
       return blockGroupData[effectiveDataset];
     }, [blockGroupData, effectiveDataset]);
+    const legendDatasetName = activeDatasetObject?.hawaiianHomelands
+      ? "Hawaiian homelands population characteristics"
+      : activeDatasetObject?.metricLabel;
 
     const shouldShowHawaiianHomelands = useMemo(() => {
       return activeDatasetObject?.hawaiianHomelands || false;
@@ -543,6 +546,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               metric2Label={metricLabel2}
               isCount={metricIsCount}
               isPercentage={metricIsPercentage}
+              datasetName={legendDatasetName}
             />
           </LegendContainer>
         </div>
