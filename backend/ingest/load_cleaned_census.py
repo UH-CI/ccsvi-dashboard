@@ -17,12 +17,12 @@ import tempfile
 import asyncpg
 import pandas as pd
 
-from cleaning import pipeline, proportions
-from cleaning.census_transform import clean_column_name
-from cleaning.proportions import moe_column_name
+from pipeline.census import clean, proportions
+from pipeline.census.census_transform import clean_column_name
+from pipeline.census.proportions import moe_column_name
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
-DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "cleaning", "config", "census_datasets_config.json")
+DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
 
 # Where the raw-cleaning pipeline reads its inputs from on the VM. Edit if
 # VM's directory layout changes.
@@ -150,7 +150,7 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
     return list(metric_specs.values()), rows, geo_rows
 
 
-# output is one record from pipeline.dataset_outputs; its name is the dataset id and the CSV file name
+# output is one record from clean.dataset_outputs; its name is the dataset id and the CSV file name
 async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, seen_geoids: set[str]) -> None:
     dataset_id = output["name"]
 
@@ -282,7 +282,7 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     cleaned_dir = args.output_dir or tempfile.mkdtemp(prefix="ccsvi-cleaned-")
 
     print(f"Cleaning raw datasets into {cleaned_dir} ...")
-    pipeline.run_full_cleaning(
+    clean.run_full_cleaning(
         args.config,
         args.raw_base_path,
         args.notes_xlsx,
@@ -291,7 +291,7 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     )
 
     block_group_populations = proportions.load_block_group_populations(args.boundaries_geojson)
-    pipeline.add_percentages_to_directory(
+    clean.add_percentages_to_directory(
         cleaned_dir,
         args.config,
         args.raw_base_path,
@@ -303,7 +303,7 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
 
 # Loads one CSV per config output from cleaned_dir, in name order
 async def main(cleaned_dir: str, config_path: str) -> None:
-    outputs = sorted(pipeline.dataset_outputs(pipeline.load_dataset_config(config_path)), key=lambda output: output["name"])
+    outputs = sorted(clean.dataset_outputs(clean.load_dataset_config(config_path)), key=lambda output: output["name"])
     print(f"Loading {len(outputs)} CSV file(s) from {cleaned_dir}")
 
     conn = await asyncpg.connect(DATABASE_URL)

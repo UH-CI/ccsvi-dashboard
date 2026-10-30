@@ -1,18 +1,9 @@
-"""Vector layer stage of the data pipeline
+"""Vector layer pipeline: turns original GIS downloads into the GeoJSON the database loads and the
+map tiles the website draws.
 
-Turns raw GIS files into cleaned GeoJSONs and map tiles.
-
-  1. unzip the source to a temp folder
-  2. ogr2ogr, one SpatiaLite query: keep the layer's rows (all, unless the entry has a filter)
-     and columns (all, unless the entry lists some); reproject to WGS84; repair
-     (ST_MakeValid); round to 5 decimals (~1 m) with ReducePrecision, which keeps shapes valid;
-     keep only the layer's shape type (ST_CollectionExtract, dropping zero-width leftovers of
-     repair) and drop rows left with no shape. Written as unsimplified GeoJSON
-  3. tippecanoe: tiles from that GeoJSON (standard zoom range plus any extra settings the entry
-     lists) into a staging folder, never over the live tiles
-  4. checks: feature count, validity, shape type, location; stops on failure
-  5. markers, for entries that ask for them: one point per shape, placed inside it
-     (ST_PointOnSurface), written to the point layer folder; checked for one marker per shape
+Each layer is unzipped, cleaned (reprojected, repaired, rounded to about 1 m), tiled and checked.
+Files are built in a staging folder and only moved live once every layer passes. Each run writes
+a report to reports/.
 
 python -m pipeline.vector_layers [--only <name>]
 """
@@ -24,19 +15,25 @@ import tempfile
 import time
 import zipfile
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files")
 DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026")
 GEOJSON_DIR = DATA_DIR / "hazards_geojson"
+TILES_DIR = DATA_DIR / "hazards"
 STAGING_DIR = DATA_DIR / "hazards_staging"
 POINT_DIR = DATA_DIR / "point_data"
+REPORT_DIR = DATA_DIR / "reports"
 
-# Coordinate decimals in the processed GeoJSON
+# Coordinate decimals; 5 is about 1 m
 DECIMALS = 5
-# Tile settings
-TILE_FLAGS = ["--minimum-zoom=5", "--maximum-zoom=14"]
-# ST_CollectionExtract's number for each output shape type
+# Tile settings for every layer
+MAX_ZOOM = 14
+TILE_FLAGS = ["--minimum-zoom=6", f"--maximum-zoom={MAX_ZOOM}", "--generate-ids", "--drop-densest-as-needed"]
+# Projection in metres, for measuring length and area
+METRIC_SRID = 32604
+# SpatiaLite's number for each shape type
 EXTRACT = {"MultiPolygon": 3, "MultiLineString": 2}
 # min lon, min lat, max lon, max lat
 HAWAII = (-161, 18, -154, 23)
@@ -44,14 +41,14 @@ HAWAII = (-161, 18, -154, 23)
 
 @dataclass
 class Layer:
-    name: str      # output file name without extension; also the tile layer name the map reads
-    zips: list     # zips from outermost in, the first relative to RAW_DIR
+    name: str      # output file name; also the name the map looks up
+    zips: list     # zips, outermost first, starting inside RAW_DIR
     inner: str     # shapefile inside the last zip
     columns: list = None  # columns to keep; None keeps all
-    row_filter: str = None  # rows to keep, as a SQL condition, e.g. "zone = 1"; None keeps all rows
-    shape: str = "MultiPolygon"  # output shape type, a key of EXTRACT; line layers set "MultiLineString"
+    row_filter: str = None  # SQL condition for rows to keep; None keeps all
+    shape: str = "MultiPolygon"  # "MultiLineString" for lines
     tile_flags: tuple = ()  # extra tippecanoe settings
-    markers: bool = False  # also write <name>_points.geojson to POINT_DIR, one marker per shape
+    markers: bool = False  # also make one map pin per shape
 
 
 SLR_EXPOSURE = ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"]
@@ -69,7 +66,6 @@ LANDFILL_COLUMNS = PCL_COLUMNS + ["heer_res_1", "landfill_s", "landfill_y", "lan
 ROADS = "line/HI_All_Counties_Roads.zip"
 FLOOD = ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"]
 FLOOD_COLUMNS = ["fld_zone", "sfha_tf", "static_bfe", "depth"]
-ROAD_TILE_FLAGS = ("--drop-rate=0", "--no-feature-limit", "--no-tile-size-limit")
 AIRPORT_COLUMNS = ["objectid", "airport_co", "airport_na"]
 HARBOR_COLUMNS = ["objectid", "harbor_nam", "berth_leng", "yard_area", "shed_area", "channel_de", "turn_basin"]
 
@@ -90,7 +86,6 @@ LAYERS = [
     Layer("filtered_slr_potent_fld_hwys_1pt1ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_1_pt_1_ft.shp", shape="MultiLineString"),
     Layer("filtered_slr_potent_fld_hwys_2pt0ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_2_pt_0_ft.shp", shape="MultiLineString"),
     Layer("filtered_slr_potent_fld_hwys_3pt2ft", SLR_HIGHWAYS, "slr_potent_fld_hwys_3_pt_2_ft.shp", shape="MultiLineString"),
-    # Zone 0 left out: removed by the team ("null location"), hidden on the map
     Layer("Fire_zone_1", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 1"),
     Layer("Fire_zone_2", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 2"),
     Layer("Fire_zone_3", FIRE, "Fire_Risk_Areas.shp", row_filter="zone = 3"),
@@ -106,21 +101,17 @@ LAYERS = [
     Layer("Solar_Insolation_500-550", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '500-550'"),
     Layer("Solar_Insolation_550-600", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '550-600'"),
     Layer("Solar_Insolation_600-650", SOLAR, "Solar_Insolation_Ranges.shp", row_filter="solar_cal = '600-650'"),
-    # "filtered" means trimmed columns, not fewer rows: all parcels are kept
+    # "filtered" means fewer columns, not fewer rows
     Layer("Prev_contaminated_land_filtered", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp", columns=PCL_COLUMNS),
     Layer("Prev_contaminated_land_landfills", BRIGHTFIELDS, "Hawaii_Brightfields_Initiative_Data.shp", columns=LANDFILL_COLUMNS,
           row_filter="known_land = 'Y'"),
-    Layer("filtered_road_Hawaii_island", [ROADS, "centerlines_haw.shp.zip"], "centerlines_haw.shp",
-          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
-    Layer("filtered_road_Kauai", [ROADS, "centerlines_kau.shp.zip"], "centerlines_kau.shp",
-          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
-    Layer("filtered_road_Maui", [ROADS, "roads_mau.shp.zip"], "roads_mau.shp",
-          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
-    Layer("filtered_road_Oahu", [ROADS, "streets_oah.shp.zip"], "streets_oah.shp",
-          shape="MultiLineString", tile_flags=ROAD_TILE_FLAGS),
+    Layer("filtered_road_Hawaii_island", [ROADS, "centerlines_haw.shp.zip"], "centerlines_haw.shp", shape="MultiLineString"),
+    Layer("filtered_road_Kauai", [ROADS, "centerlines_kau.shp.zip"], "centerlines_kau.shp", shape="MultiLineString"),
+    Layer("filtered_road_Maui", [ROADS, "roads_mau.shp.zip"], "roads_mau.shp", shape="MultiLineString"),
+    Layer("filtered_road_Oahu", [ROADS, "streets_oah.shp.zip"], "streets_oah.shp", shape="MultiLineString"),
     Layer("filtered_sidewalks_and_paths", [ROADS, "sidewalks_and_paths_state.shp.zip"],
           "sidewalks_and_paths_state_existing.shp", shape="MultiLineString"),
-    # Every row of each zone, incl. those with no single flood height (static_bfe -9999)
+    # All rows of each zone, including those with no flood height (static_bfe -9999)
     Layer("Flood_Hazard_VE", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'VE'"),
     Layer("Flood_Hazard_AE", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AE'"),
     Layer("Flood_Hazard_AO", FLOOD, "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp", columns=FLOOD_COLUMNS, row_filter="fld_zone = 'AO'"),
@@ -135,11 +126,13 @@ def run(cmd):
     return subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE, text=True, check=True).stdout
 
 
-def megabytes(path):
-    return f"{path.stat().st_size / 1e6:.1f} MB"
+# Total size, in KB under 1 MB
+def file_size(*paths):
+    size = sum(path.stat().st_size for path in paths)
+    return f"{size / 1e6:.1f} MB" if size >= 1e6 else f"{size / 1e3:.0f} KB"
 
 
-# Every corner in a GeoJSON coordinates array, however deeply nested
+# Every corner in nested GeoJSON coordinates
 def corners(coords):
     if isinstance(coords[0], list):
         for c in coords:
@@ -154,7 +147,17 @@ def check(ok, message):
         raise SystemExit(f"Check failed: {message}")
 
 
-# Extracts the layer's source through its nested zips into tmp; returns the shapefile's path
+# Row count and total length or area, in metres
+def measure(path, table, shape, row_filter=None):
+    size = "ST_Length" if shape == "MultiLineString" else "ST_Area"
+    sql = f'SELECT count(*) AS n, sum({size}(ST_Transform(geometry, {METRIC_SRID}))) AS size FROM "{table}"'
+    if row_filter:
+        sql += f" WHERE {row_filter}"
+    result = json.loads(run(["ogrinfo", "-json", "-features", "-ro", "-dialect", "SQLite", "-sql", sql, path]))
+    return result["layers"][0]["features"][0]["properties"]
+
+
+# Unzips through any nested zips; returns the shapefile's path
 def unzip(layer, tmp):
     path = RAW_DIR / layer.zips[0]
     for member in layer.zips[1:]:
@@ -163,8 +166,7 @@ def unzip(layer, tmp):
     return Path(tmp) / layer.inner
 
 
-# Reproject, repair, then round with ReducePrecision to keep shapes valid on the rounding grid;
-# rows left with no shape of the layer's type (e.g. a "line" that was really a dot) are dropped
+# Reproject, repair and round; drop rows left with no shape
 def process(layer, source, out, columns):
     columns = ", ".join(f'"{c}"' for c in columns)
     shapes = f"ReducePrecision(ST_MakeValid(ST_Transform(geometry, 4326)), {10 ** -DECIMALS})"
@@ -178,8 +180,7 @@ def process(layer, source, out, columns):
          "-lco", f"COORDINATE_PRECISION={DECIMALS}"])
 
 
-# One point per shape, from the processed GeoJSON so markers and shapes always match;
-# ST_PointOnSurface lands inside the shape, which a plain centroid of a multi-part harbor may not
+# One map pin inside each shape
 def make_markers(layer, geojson, markers, columns):
     columns = ", ".join(f'"{c}"' for c in columns)
     sql = f'SELECT {columns}, ST_PointOnSurface(geometry) AS geometry FROM "{layer.name}"'
@@ -189,31 +190,48 @@ def make_markers(layer, geojson, markers, columns):
          "-lco", f"COORDINATE_PRECISION={DECIMALS}"])
 
 
-def check_markers(geojson, markers):
-    shapes = len(json.loads(geojson.read_text())["features"])
-    points = json.loads(markers.read_text())["features"]
-    check(len(points) == shapes, f"markers: {len(points)} (shapes {shapes})")
-    types = {f["geometry"]["type"] for f in points}
-    check(types == {"Point"}, f"marker types: {', '.join(sorted(types))}")
-
-
 def make_tiles(layer, geojson, tiles):
     run(["tippecanoe", "-o", tiles, "-l", layer.name, *TILE_FLAGS, *layer.tile_flags, "--force",
          "--no-progress-indicator", geojson])
 
 
-def check_outputs(layer, source_count, geojson):
-    features = json.loads(geojson.read_text())["features"]
-    check(0 < len(features) <= source_count, f"features: {len(features)} (source {source_count})")
+# Notes shapes missing from the closest-zoom tiles. tippecanoe ids start at 1, in file order
+def check_tiles(layer, geojson, tiles, count, row):
+    decoded = json.loads(run(["tippecanoe-decode", "-z", MAX_ZOOM, "-Z", MAX_ZOOM, tiles]))
+    ids = {f["id"] for tile in decoded["features"] for tile_layer in tile["features"] for f in tile_layer["features"]}
+    missing = [n - 1 for n in range(1, count + 1) if n not in ids]
+    if not missing:
+        print(f"  ok   features in zoom {MAX_ZOOM} tiles: {count}")
+        return
+    size, unit = ("ST_Length", "m") if layer.shape == "MultiLineString" else ("ST_Area", "m²")
+    sql = (f"SELECT max({size}(ST_Transform(geometry, {METRIC_SRID}))) AS largest FROM \"{layer.name}\" "
+           f"WHERE rowid IN ({', '.join(map(str, missing))})")
+    result = json.loads(run(["ogrinfo", "-json", "-features", "-ro", "-dialect", "SQLite", "-sql", sql, geojson]))
+    largest = result["layers"][0]["features"][0]["properties"]["largest"]
+    note = f"{len(missing)} of {count} shapes not in the zoom {MAX_ZOOM} map tiles (largest {largest:.1f} {unit})"
+    row["notes"].append(note)
+    print(f"  note {note}")
+
+
+def largest_tile(tiles):
+    stats = json.loads(run(["tippecanoe-decode", "--stats", tiles]))
+    return max(stats, key=lambda tile: tile["bytes"])
+
+
+# Fills in the report row and runs the checks that stop the run; returns the shape count
+def check_outputs(layer, source, geojson, row):
+    output = measure(geojson, layer.name, layer.shape)
+    check(output["n"] > 0, f"shapes: {output['n']} (source {source['n']})")
+    row["shapes"] = f"{source['n']:,} -> {output['n']:,} ({output['n'] / source['n']:.1%})"
+    row["kept"] = f"{output['size'] / source['size']:.2%}"
+    print(f"       shapes kept: {row['shapes']}; length or area kept: {row['kept']}")
 
     sql = f'SELECT count(*) AS n FROM "{layer.name}" WHERE NOT ST_IsValid(geometry)'
     result = json.loads(run(["ogrinfo", "-json", "-features", "-ro", "-dialect", "SQLite", "-sql", sql, geojson]))
     invalid = result["layers"][0]["features"][0]["properties"]["n"]
     check(invalid == 0, f"invalid shapes: {invalid}")
 
-    types = {f["geometry"]["type"] for f in features}
-    check(types == {layer.shape}, f"shape types: {', '.join(sorted(types))}")
-
+    features = json.loads(geojson.read_text())["features"]
     points = [p for f in features for p in corners(f["geometry"]["coordinates"])]
 
     lons = [p[0] for p in points]
@@ -221,33 +239,66 @@ def check_outputs(layer, source_count, geojson):
     box = (min(lons), min(lats), max(lons), max(lats))
     inside = HAWAII[0] <= box[0] and HAWAII[1] <= box[1] and box[2] <= HAWAII[2] and box[3] <= HAWAII[3]
     check(inside, "bounds: {:.2f}, {:.2f} to {:.2f}, {:.2f}".format(*box))
+    return output["n"]
 
 
-def build(layer):
+# Builds one layer in the staging folder; returns the files to move live
+def build(layer, row):
     print(layer.name)
-    geojson = GEOJSON_DIR / f"{layer.name}.geojson"
+    geojson = STAGING_DIR / f"{layer.name}.geojson"
     tiles = STAGING_DIR / f"{layer.name}.pmtiles"
 
-    start = time.time()
+    began = start = time.time()
     with tempfile.TemporaryDirectory() as tmp:
         source = unzip(layer, tmp)
-        filter_args = ["-where", layer.row_filter] if layer.row_filter else []
-        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", *filter_args, source]))["layers"][0]
-        source_count = info["featureCount"]
+        source_measure = measure(source, source.stem, layer.shape, layer.row_filter)
+        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", source]))["layers"][0]
         columns = layer.columns or [f["name"] for f in info["fields"]]
         process(layer, source, geojson, columns)
-    print(f"  processed: {megabytes(geojson)} in {time.time() - start:.0f} s")
+    print(f"  processed: {file_size(geojson)} in {time.time() - start:.0f} s")
 
     start = time.time()
     make_tiles(layer, geojson, tiles)
-    print(f"  tiled: {megabytes(tiles)} in {time.time() - start:.0f} s")
+    row["largest"] = f"{largest_tile(tiles)['bytes'] / 1e3:.0f} KB"
+    row["map_files"] = file_size(tiles)
+    print(f"  tiled: {row['map_files']} in {time.time() - start:.0f} s, largest tile {row['largest']}")
 
-    check_outputs(layer, source_count, geojson)
+    count = check_outputs(layer, source_measure, geojson, row)
+    check_tiles(layer, geojson, tiles, count, row)
+    moves = [(geojson, GEOJSON_DIR / geojson.name), (tiles, TILES_DIR / tiles.name)]
 
     if layer.markers:
-        markers = POINT_DIR / f"{layer.name}_points.geojson"
+        markers = STAGING_DIR / f"{layer.name}_points.geojson"
         make_markers(layer, geojson, markers, columns)
-        check_markers(geojson, markers)
+        row["map_files"] = file_size(tiles, markers)
+        moves.append((markers, POINT_DIR / markers.name))
+
+    row["time"] = f"{time.time() - began:.0f} s"
+    return moves
+
+
+REPORT_COLUMNS = [("Layer", "layer"), ("Shapes in source -> kept", "shapes"), ("Length or area kept", "kept"),
+                  ("Map files", "map_files"), ("Largest tile", "largest"), ("Time", "time")]
+
+
+def write_report(rows):
+    notes = [f"  {row['layer']}: {note}" for row in rows for note in row["notes"]]
+    table = [[heading for heading, _ in REPORT_COLUMNS]]
+    table += [[row.get(key, "-") for _, key in REPORT_COLUMNS] for row in rows]
+    widths = [max(len(line[i]) for line in table) for i in range(len(REPORT_COLUMNS))]
+    lines = [
+        "Vector layers pipeline report",
+        "",
+        "---------- Notes ----------",
+        *(notes or ["  none"]),
+        "---------------------------",
+        "",
+        *("  ".join(cell.ljust(width) for cell, width in zip(line, widths)).rstrip() for line in table),
+    ]
+    REPORT_DIR.mkdir(exist_ok=True)
+    path = REPORT_DIR / f"vector_layers_{datetime.now():%Y-%m-%d_%H%M%S}.txt"
+    path.write_text("\n".join(lines) + "\n")
+    print(f"Report: {path}")
 
 
 def main():
@@ -257,9 +308,23 @@ def main():
 
     GEOJSON_DIR.mkdir(exist_ok=True)
     STAGING_DIR.mkdir(exist_ok=True)
-    for layer in LAYERS:
-        if args.only in (None, layer.name):
-            build(layer)
+    rows, moves = [], []
+    try:
+        for layer in LAYERS:
+            if args.only in (None, layer.name):
+                row = {"layer": layer.name, "notes": []}
+                rows.append(row)
+                moves += build(layer, row)
+    except (SystemExit, subprocess.CalledProcessError) as failure:
+        row["notes"].append(f"{failure}; run stopped, nothing installed")
+        write_report(rows)
+        raise
+
+    for staged, live in moves:
+        staged.replace(live)
+        print(f"Installed {live.name}")
+    STAGING_DIR.rmdir()
+    write_report(rows)
 
 
 if __name__ == "__main__":
