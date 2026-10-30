@@ -533,9 +533,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           <LegendContainer>
             <RasterMapLegend mapId={mapId} />
             <HcdpMapLegend mapId={mapId} />
-            {activeDatasetObject && (
+            {metricLabel && (
               <MapLegend
-                title={activeDatasetObject.metricLabel}
+                title={metricLabel}
                 limits={colorScale?.limits ?? null}
                 colors={colorScale?.getLegendColors() ?? null}
                 bivariate={bivariateColorScale ?? undefined}

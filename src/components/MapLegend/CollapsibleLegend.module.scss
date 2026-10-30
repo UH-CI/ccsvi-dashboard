@@ -35,6 +35,7 @@
   flex-direction: column;
   gap: 6px;
   width: fit-content;
+  max-width: 110px;
   white-space: nowrap;
 }
 
@@ -43,4 +44,6 @@
   font-weight: 600;
   color: #333;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useState } from "react";
 import { createPortal } from "react-dom";
 import LegendToggleIcon from "@mui/icons-material/LegendToggle";
+import { Tooltip } from "@mui/material";
 import { LegendPanelSlot } from "./LegendContainer";
 import styles from "./CollapsibleLegend.module.scss";
 
@@ -31,7 +32,9 @@ export const CollapsibleLegend: React.FC<CollapsibleLegendProps> = ({
 
   const panel = isOpen ? (
     <div className={styles.panel} style={order !== undefined ? { order } : undefined}>
-      <span className={styles.header__label}>{title}</span>
+      <Tooltip title={title} placement="top">
+        <span className={styles.header__label}>{title}</span>
+      </Tooltip>
       {children}
     </div>
   ) : null;
@@ -41,7 +44,6 @@ export const CollapsibleLegend: React.FC<CollapsibleLegendProps> = ({
       <button
         className={`${styles.iconButton} ${isOpen ? styles["iconButton--active"] : ""}`}
         onClick={toggle}
-        title={title}
       >
         {icon ?? <LegendToggleIcon className={styles.iconButton__icon} />}
       </button>
