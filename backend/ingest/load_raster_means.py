@@ -32,10 +32,10 @@ AREA_TYPES = [
 
 # Per RASTER_CATALOG id: (dataset id, dataset label, mean metric name, max metric name)
 RASTER_METRICS = {
-    "stormSurge.inundation_category1": ("storm_surge", "Storm Surge", "Inundation Category 1 (mean, m)", "Inundation Category 1 (max, m)"),
-    "stormSurge.inundation_category2": ("storm_surge", "Storm Surge", "Inundation Category 2 (mean, m)", "Inundation Category 2 (max, m)"),
-    "stormSurge.inundation_category3": ("storm_surge", "Storm Surge", "Inundation Category 3 (mean, m)", "Inundation Category 3 (max, m)"),
-    "stormSurge.inundation_category4": ("storm_surge", "Storm Surge", "Inundation Category 4 (mean, m)", "Inundation Category 4 (max, m)"),
+    "stormSurge.inundation_category1": ("storm_surge", "Storm Surge", "Inundation Category 1 (mean, ft)", "Inundation Category 1 (max, ft)"),
+    "stormSurge.inundation_category2": ("storm_surge", "Storm Surge", "Inundation Category 2 (mean, ft)", "Inundation Category 2 (max, ft)"),
+    "stormSurge.inundation_category3": ("storm_surge", "Storm Surge", "Inundation Category 3 (mean, ft)", "Inundation Category 3 (max, ft)"),
+    "stormSurge.inundation_category4": ("storm_surge", "Storm Surge", "Inundation Category 4 (mean, ft)", "Inundation Category 4 (max, ft)"),
     "Landslide": ("landslide", "Landslide", "Susceptibility (mean index)", "Susceptibility (max index)"),
 }
 
