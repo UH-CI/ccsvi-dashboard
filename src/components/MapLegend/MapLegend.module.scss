@@ -145,6 +145,14 @@
   }
 }
 
+.raster-legend__units {
+  margin-top: -4px;
+  font-size: 10px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .raster-legend__gradient {
   flex-shrink: 0;
   width: 14px;

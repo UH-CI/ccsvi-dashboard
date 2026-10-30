@@ -78,22 +78,15 @@ export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
 
   return (
     <CollapsibleLegend title={info.title} icon={<TerrainIcon className={styles["legend-icon"]} />} order={0}>
+      {info.units?.trim() ? (
+        <span className={styles["raster-legend__units"]}>{info.units.trim()}</span>
+      ) : null}
       <div className={styles["raster-legend__row"]} style={{ width: widthPx }}>
         <div
           className={styles["raster-legend__gradient"]}
           style={{ background: gradientCss, height: gradientHeightPx }}
           aria-hidden
         />
-        {info.units?.trim() ? (
-          <div
-            className={styles["raster-legend__unit-col"]}
-            style={{ minHeight: gradientHeightPx }}
-            aria-hidden
-          >
-            <span>{info.units.trim()}</span>
-            <span>{info.units.trim()}</span>
-          </div>
-        ) : null}
         <div
           className={styles["raster-legend__nums"]}
           style={{ minHeight: gradientHeightPx }}
