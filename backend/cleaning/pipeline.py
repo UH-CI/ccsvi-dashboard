@@ -210,19 +210,15 @@ def add_percentages_to_directory(
     config_path: str,
     base_path: str,
     block_group_populations: dict,
-    hawaiian_homelands_populations: dict,
 ) -> None:
     cleaned_dir = os.path.expanduser(cleaned_dir)
-    total_population = sum(block_group_populations.values()) + sum(hawaiian_homelands_populations.values())
 
     for output in dataset_outputs(load_dataset_config(config_path, base_path)):
         csv_file = os.path.join(cleaned_dir, f"{output['name']}.csv")
         print(f"Adding proportions to {output['name']}.csv...")
         df_with_props = proportions.add_percentages_to_csv(
             csv_file,
-            total_population,
             block_group_populations,
-            hawaiian_homelands_populations,
             output["hawaiian_homelands"],
             denominator_column=output["percent_denominator"],
             counts_only=output["counts_only"],

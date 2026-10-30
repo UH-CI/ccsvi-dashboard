@@ -30,9 +30,6 @@ DEFAULT_RAW_BASE_PATH = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
 DEFAULT_CENTRAL_DIR = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
 DEFAULT_NOTES_XLSX = "/home/exouser/ccsvi-data/archived/raw_files/metrics/JPL_CCSVI_all_fields.xlsx"
 DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
-DEFAULT_HAWAIIAN_HOMELANDS_GEOJSON = os.path.join(
-    REPO_ROOT, "public", "data", "Census_Hawaiian_Homelands_hhl10_Stripped.geojson"
-)
 DEFAULT_OUTPUT_DIR = "/home/exouser/ccsvi-data/archived/cleaned-data"
 
 PREFIXES_TO_REMOVE = [
@@ -294,15 +291,11 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     )
 
     block_group_populations = proportions.load_block_group_populations(args.boundaries_geojson)
-    hawaiian_homelands_populations = proportions.load_hawaiian_homelands_populations(
-        args.hawaiian_homelands_geojson
-    )
     pipeline.add_percentages_to_directory(
         cleaned_dir,
         args.config,
         args.raw_base_path,
         block_group_populations,
-        hawaiian_homelands_populations,
     )
 
     return cleaned_dir
@@ -334,7 +327,6 @@ if __name__ == "__main__":
     parser.add_argument("--notes-xlsx", default=DEFAULT_NOTES_XLSX)
     parser.add_argument("--central-dir", default=DEFAULT_CENTRAL_DIR)
     parser.add_argument("--boundaries-geojson", default=DEFAULT_BOUNDARIES_GEOJSON)
-    parser.add_argument("--hawaiian-homelands-geojson", default=DEFAULT_HAWAIIAN_HOMELANDS_GEOJSON)
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
 
