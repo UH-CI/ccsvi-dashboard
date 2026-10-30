@@ -535,7 +535,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             <HcdpMapLegend mapId={mapId} />
             {metricLabel && (
               <MapLegend
-                title={metricLabel}
+                title={metricLabel2 ? `${metricLabel} × ${metricLabel2}` : metricLabel}
                 limits={colorScale?.limits ?? null}
                 colors={colorScale?.getLegendColors() ?? null}
                 bivariate={bivariateColorScale ?? undefined}
