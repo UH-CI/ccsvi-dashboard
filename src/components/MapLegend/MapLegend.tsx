@@ -6,6 +6,7 @@ import { ComputedBivariateColorScale } from "../../utils/colorThresholds";
 import { CollapsibleLegend } from "./CollapsibleLegend";
 
 interface MapLegendProps {
+  title: string;
   limits: number[] | null;
   colors: string[] | null;
   bivariate?: ComputedBivariateColorScale;
@@ -15,6 +16,7 @@ interface MapLegendProps {
 }
 
 export const MapLegend: React.FC<MapLegendProps> = ({
+  title,
   limits,
   colors,
   bivariate,
@@ -29,7 +31,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
     const items = [];
     for (let i = limits.length - 2; i >= 0; i--) {
-      const fmt = (n: number) => n.toFixed(isCount ? 0 : 1);
+      const fmt = (n: number) => (isCount ? n.toFixed(0) : `${Math.round(n)}%`);
       const label =
         i === limits.length - 2
           ? `> ${fmt(limits[i])}`
@@ -51,7 +53,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   if (!bivariate && (!limits || !colors)) return null;
 
   return (
-    <CollapsibleLegend title="Vulnerability Indicator" icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
+    <CollapsibleLegend title={title} icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
       {bivariate ? (
         <div className={styles["legend__bivariate"]}>
           <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
