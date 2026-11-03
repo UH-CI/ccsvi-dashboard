@@ -77,7 +77,7 @@ export default defineConfig(({ mode }) => {
         "/api/tiles/carto": cartoProxy,
         "/ccsvi-dashboard/api": hcdpProxy,
         "/api": "http://128.171.215.85:8000",
-        "/data": "http://128.171.215.85:8000",
+        "/data": "http://128.171.215.85",
       },
     },
     preview: {
@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
         "/api/tiles/carto": cartoProxy,
         "/ccsvi-dashboard/api": hcdpProxy,
         "/api": "http://128.171.215.85:8000",
-        "/data": "http://128.171.215.85:8000",
+        "/data": "http://128.171.215.85",
       },
     },
   };

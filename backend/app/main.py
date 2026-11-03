@@ -3,11 +3,10 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from .db import close_pool, create_pool
-from .routers import block_groups, datasets, metrics, points, rasters, search
+from .routers import block_groups, datasets, metrics, points, rasters
 
 
 @asynccontextmanager
@@ -30,13 +29,9 @@ app.include_router(datasets.router)
 app.include_router(metrics.router)
 app.include_router(block_groups.router)
 app.include_router(points.router)
-app.include_router(search.router)
 app.include_router(rasters.router)
 app.include_router(rasters.cog.router, prefix="/api/tiles/cog", tags=["COG"])
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
-
-# Local-dev fallback only. In beta/prod, nginx serves /data/ directly from disk
-app.mount("/data", StaticFiles(directory="/home/exouser/ccsvi-data"), name="data")
 
 
 @app.get("/api/v1/health")
