@@ -3,8 +3,8 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
 import { useHazardLayersStore } from "../../stores";
-import parseGeoraster from "georaster";
-import GeoRasterLayer from "georaster-layer-for-leaflet";
+import { FeaturePopup } from "../FeaturePopup";
+import type { SubHazardLayerConfig } from "../../types";
 
 interface HazardLayerRendererProps {
   parentId: string;
@@ -34,8 +34,8 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
     return mapLayers ? mapLayers.has(activeLayerId) : false;
   });
 
-  const filePath = activeLayer?.filePath;
-  const popupConfig = activeLayer?.popupConfig;
+  const file = activeLayer?.file;
+  const popup = activeLayer?.popup;
   const color = activeLayer?.color || "#cc0000";
   const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
 
@@ -62,116 +62,85 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       }
     };
 
-    if (!isVisible || !filePath) {
+    if (!isVisible || !file) {
       return clearLayer;
     }
 
-    const ext = filePath.split(".").pop()?.toLowerCase();
+    const DATA_BASE = import.meta.env.VITE_DATA_BASE_URL ?? "";
+    const url = `${DATA_BASE}/hazards/${file}.pmtiles`;
 
-    if (ext === "pmtiles") {
-      const stem = filePath.replace(".pmtiles", "");
-      const DATA_BASE = import.meta.env.VITE_DATA_BASE_URL ?? "";
-      const url = `${DATA_BASE}/hazards/${filePath}`;
-
-      if (!map.getPane("hazardPane")) {
-        const pane = map.createPane("hazardPane");
-        pane.style.zIndex = "450";
-      }
-
-      proLayer = leafletLayer({
-        sources: { [stem]: { url, maxDataZoom: 14 } },
-        pane: "hazardPane",
-        maxZoom: 18,
-        paintRules: [
-          {
-            dataSource: stem,
-            dataLayer: stem,
-            symbolizer: new PolygonSymbolizer({
-              fill: color,
-              opacity: 0.3,
-              stroke: color,
-              width: 2,
-            }),
-          },
-          {
-            dataSource: stem,
-            dataLayer: stem,
-            symbolizer: new LineSymbolizer({ color, width: 2, opacity: 0.9 }),
-          },
-        ],
-        labelRules: [],
-      });
-
-      if (!isMounted) return clearLayer;
-
-      proLayer.addTo(map);
-
-      if (popupConfig) {
-        domClickHandler = (e: MouseEvent) => {
-          if (!proLayer) return;
-          // Points are drawn above hazards, so a click on a point or cluster icon is theirs
-          if ((e.target as HTMLElement).closest(".leaflet-marker-icon")) return;
-          const latlng = map.mouseEventToLatLng(e);
-          const results = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5);
-          const features = results.get(stem) ?? [];
-          if (features.length === 0) return;
-          e.stopImmediatePropagation();
-          const content = createPopupContent(features[0].feature.props, popupConfig!, layerName);
-          currentPopup = L.popup().setLatLng(latlng).setContent(content).openOn(map);
-        };
-        map.getContainer().addEventListener("click", domClickHandler, true);
-      }
-    } else if (["tif", "tiff", "geotiff"].includes(ext ?? "")) {
-      // DEPRECATED — placeholder TIF branch predating the PMTiles migration. Hazard layers now
-      // use PMTiles via protomaps-leaflet (see the pmtiles branch above). COG/TiTiler raster
-      // rendering is handled by RasterLayerRenderer, not here. Pending deletion.
-      const renderRaster = async () => {
-        try {
-          const response = await fetch(filePath);
-          if (!response.ok || !isMounted) return;
-          const arrayBuffer = await response.arrayBuffer();
-          if (!isMounted) return;
-
-          const georaster = await parseGeoraster(arrayBuffer);
-          if (!isMounted) return;
-
-          const rasterLayer = new GeoRasterLayer({
-            georaster,
-            opacity: 0.7,
-            pixelValuesToColorFn: (values: number[] | null) => {
-              if (!values || values.length === 0 || values[0] === null) return "rgba(0,0,0,0)";
-              const vv = Math.max(0, Math.min(255, Math.round(values[0])));
-              return `rgb(${vv}, ${vv}, ${vv})`;
-            },
-          });
-          rasterLayer.addTo(map);
-        } catch (err) {
-          console.error("Error loading raster layer:", err);
-        }
-      };
-      renderRaster();
+    if (!map.getPane("hazardPane")) {
+      const pane = map.createPane("hazardPane");
+      pane.style.zIndex = "450";
     }
+
+    proLayer = leafletLayer({
+      sources: { [file]: { url, maxDataZoom: 14 } },
+      pane: "hazardPane",
+      maxZoom: 18,
+      paintRules: [
+        {
+          dataSource: file,
+          dataLayer: file,
+          symbolizer: new PolygonSymbolizer({
+            fill: color,
+            opacity: 0.3,
+            stroke: color,
+            width: 2,
+          }),
+        },
+        {
+          dataSource: file,
+          dataLayer: file,
+          symbolizer: new LineSymbolizer({ color, width: 2, opacity: 0.9 }),
+        },
+      ],
+      labelRules: [],
+    });
+
+    if (!isMounted) return clearLayer;
+
+    proLayer.addTo(map);
+
+    domClickHandler = (e: MouseEvent) => {
+      if (!proLayer) return;
+      // Points are drawn above hazards, so a click on a point or cluster icon is theirs
+      if ((e.target as HTMLElement).closest(".leaflet-marker-icon")) return;
+      const latlng = map.mouseEventToLatLng(e);
+      const results = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5);
+      const features = results.get(file) ?? [];
+      if (features.length === 0) return;
+      e.stopImmediatePropagation();
+      const content = popupHtml(features[0].feature.props, popup, layerName);
+      currentPopup = L.popup().setLatLng(latlng).setContent(content).openOn(map);
+    };
+    map.getContainer().addEventListener("click", domClickHandler, true);
 
     return () => {
       isMounted = false;
       clearLayer();
     };
-  }, [map, filePath, isVisible, popupConfig, color, layerName]);
+  }, [map, file, isVisible, popup, color, layerName]);
 
   return null;
 };
 
-const createPopupContent = (
+// Heading: the title column's value, else the layer name. Then the hand-labelled fields, then every
+// other column with a value under its raw name
+const popupHtml = (
   props: Record<string, unknown>,
-  popupConfig: { titleField?: string; fields?: Array<{ key: string; label: string }> },
+  popup: SubHazardLayerConfig["popup"],
   layerName: string | undefined,
 ) => {
-  const title = (props?.[popupConfig.titleField ?? ""] as string) || layerName;
-  let html = `<h3>${title}</h3>`;
-  Object.entries(props).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      html += `<strong>${key}:</strong> ${value}<br/>`;
-    }
+  const title = popup?.title ? props[popup.title] : undefined;
+  const listed = popup?.fields ?? [];
+  const rest = Object.keys(props)
+    .filter((key) => props[key] != null && key !== popup?.title)
+    .filter((key) => !listed.some((field) => field.key === key))
+    .map((key) => ({ key, label: key }));
+  return FeaturePopup({
+    metadata: [String(title || layerName)],
+    properties: props,
+    fields: [...listed, ...rest],
   });
-  return html;
 };

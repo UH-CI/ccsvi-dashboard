@@ -1,0 +1,123 @@
+{
+  "layers": [
+    {
+      "id": "potential_flood_highways",
+      "name": "Highway Flood Risk",
+      "description": "Highway sections at risk of flooding under sea level rise scenarios can reduce transportation access during hazard events.",
+      "icon": "FaRoad",
+      "color": "#000000",
+      "subLayers": [
+        {
+          "id": "0.5ft_pfh",
+          "name": "0.5ft",
+          "color": "#000000",
+          "file": "filtered_slr_potent_fld_hwys_0pt5ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
+            "inner": "slr_potent_fld_hwys_0_pt_5_ft.shp"
+          },
+          "popup": {"fields": [{"key": "NAME", "label": "Highway"}]}
+        },
+        {
+          "id": "1.1ft_pfh",
+          "name": "1.1ft",
+          "color": "#2e2e2e",
+          "file": "filtered_slr_potent_fld_hwys_1pt1ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
+            "inner": "slr_potent_fld_hwys_1_pt_1_ft.shp"
+          },
+          "popup": {"fields": [{"key": "NAME", "label": "Highway"}]}
+        },
+        {
+          "id": "2.0ft_pfh",
+          "name": "2.0ft",
+          "color": "#575757",
+          "file": "filtered_slr_potent_fld_hwys_2pt0ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
+            "inner": "slr_potent_fld_hwys_2_pt_0_ft.shp"
+          },
+          "popup": {"fields": [{"key": "NAME", "label": "Highway"}]}
+        },
+        {
+          "id": "3.2ft_pfh",
+          "name": "3.2ft",
+          "color": "#808080",
+          "file": "filtered_slr_potent_fld_hwys_3pt2ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
+            "inner": "slr_potent_fld_hwys_3_pt_2_ft.shp"
+          },
+          "popup": {"fields": [{"key": "NAME", "label": "Highway"}]}
+        }
+      ]
+    },
+    {
+      "id": "sidewalks_and_paths",
+      "name": "Sidewalks and Paths",
+      "icon": "FaWalking",
+      "color": "#000000",
+      "file": "filtered_sidewalks_and_paths",
+      "source": {
+        "zips": ["line/HI_All_Counties_Roads.zip", "sidewalks_and_paths_state.shp.zip"],
+        "inner": "sidewalks_and_paths_state_existing.shp"
+      },
+      "popup": {
+        "fields": [
+          {"key": "ISLAND", "label": "Island"},
+          {"key": "TYPE", "label": "Type"},
+          {"key": "MATERIAL", "label": "Material"}
+        ]
+      }
+    },
+    {
+      "id": "state_roads",
+      "name": "State Roads",
+      "icon": "FaRoad",
+      "color": "#000000",
+      "subLayers": [
+        {
+          "id": "hawaii_island",
+          "name": "Hawaii Island",
+          "color": "#000000",
+          "file": "filtered_road_Hawaii_island",
+          "source": {
+            "zips": ["line/HI_All_Counties_Roads.zip", "centerlines_haw.shp.zip"],
+            "inner": "centerlines_haw.shp"
+          }
+        },
+        {
+          "id": "kauai",
+          "name": "Kauai",
+          "color": "#000000",
+          "file": "filtered_road_Kauai",
+          "source": {
+            "zips": ["line/HI_All_Counties_Roads.zip", "centerlines_kau.shp.zip"],
+            "inner": "centerlines_kau.shp"
+          }
+        },
+        {
+          "id": "maui",
+          "name": "Maui",
+          "color": "#000000",
+          "file": "filtered_road_Maui",
+          "source": {
+            "zips": ["line/HI_All_Counties_Roads.zip", "roads_mau.shp.zip"],
+            "inner": "roads_mau.shp"
+          }
+        },
+        {
+          "id": "oahu",
+          "name": "Oahu",
+          "color": "#000000",
+          "file": "filtered_road_Oahu",
+          "source": {
+            "zips": ["line/HI_All_Counties_Roads.zip", "streets_oah.shp.zip"],
+            "inner": "streets_oah.shp"
+          }
+        }
+      ]
+    }
+  ]
+}

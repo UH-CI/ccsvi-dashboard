@@ -1,4 +1,3 @@
-import { Feature } from "geojson";
 import styles from "./FeaturePopup.module.scss";
 import type { Reliability, ReliabilityTier } from "../../types";
 
@@ -47,7 +46,8 @@ export interface MetricDisplay {
 interface FeaturePopupProps {
   // title: string;
   metadata?: string[];
-  feature: Feature;
+  // The clicked shape's column values
+  properties: Record<string, unknown>;
   fields: PopupField[];
   metric1?: MetricDisplay;
   metric2?: MetricDisplay;
@@ -93,7 +93,7 @@ function renderMetricField(metric: MetricDisplay): string {
 export function FeaturePopup({
   // title
   metadata,
-  feature,
+  properties,
   fields,
   metric1,
   metric2,
@@ -101,8 +101,6 @@ export function FeaturePopup({
   overlay,
   pointCounts,
 }: FeaturePopupProps): string {
-  const properties = feature.properties || {};
-
   return `
     <div>
       ${

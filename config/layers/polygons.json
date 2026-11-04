@@ -1,0 +1,605 @@
+{
+  "layers": [
+    {
+      "id": "flood_hazard",
+      "name": "Flooding",
+      "description": "Regulatory flood zones designate locations with established flood risk and indicate potential flood exposure.",
+      "icon": "FaWater",
+      "color": "#0000FF",
+      "metadata": {
+        "citation": "Federal Emergency Management Agency (FEMA), Flood Map Service Center; Hawaii Statewide GIS Program",
+        "period": "May 2021"
+      },
+      "subLayers": [
+        {
+          "id": "Zone_VE",
+          "name": "Coastal High Risk",
+          "description": "Elevated coastal flood risk can increase exposure to flooding and inundation.",
+          "color": "#0000FF",
+          "file": "Flood_Hazard_VE",
+          "source": {
+            "zips": ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"],
+            "inner": "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp"
+          },
+          "keep": ["fld_zone", "sfha_tf", "static_bfe", "depth"],
+          "rowFilter": "fld_zone = 'VE'",
+          "popup": {
+            "fields": [
+              {"key": "fld_zone", "label": "Flood Zone"},
+              {"key": "static_bfe", "label": "Base Flood Elevation"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_AE",
+          "name": "Base Flood Area",
+          "description": "The estimated base floodplain represents locations with a 1% annual chance of flooding and greater potential for flood exposure.",
+          "color": "#1313c2",
+          "file": "Flood_Hazard_AE",
+          "source": {
+            "zips": ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"],
+            "inner": "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp"
+          },
+          "keep": ["fld_zone", "sfha_tf", "static_bfe", "depth"],
+          "rowFilter": "fld_zone = 'AE'",
+          "popup": {
+            "fields": [
+              {"key": "fld_zone", "label": "Flood Zone"},
+              {"key": "static_bfe", "label": "Base Flood Elevation"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_AO",
+          "name": "Shallow Sheet Flow",
+          "description": "Shallow, flowing water during flood events can increase exposure to localized flooding.",
+          "color": "#161691",
+          "file": "Flood_Hazard_AO",
+          "source": {
+            "zips": ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"],
+            "inner": "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp"
+          },
+          "keep": ["fld_zone", "sfha_tf", "static_bfe", "depth"],
+          "rowFilter": "fld_zone = 'AO'",
+          "popup": {
+            "fields": [{"key": "fld_zone", "label": "Flood Zone"}, {"key": "depth", "label": "Depth"}]
+          }
+        },
+        {
+          "id": "Zone_AH",
+          "name": "Shallow Ponding",
+          "description": "Low lying areas where water may collect during flood events can experience increased localized flood exposure.",
+          "color": "#12126e",
+          "file": "Flood_Hazard_AH",
+          "source": {
+            "zips": ["polygon/hazards/Flood_Hazard_Areas_(DFIRM)_-_Statewide.zip"],
+            "inner": "Flood_Hazard_Areas_(DFIRM)_-_Statewide.shp"
+          },
+          "keep": ["fld_zone", "sfha_tf", "static_bfe", "depth"],
+          "rowFilter": "fld_zone = 'AH'",
+          "popup": {
+            "fields": [
+              {"key": "fld_zone", "label": "Flood Zone"},
+              {"key": "static_bfe", "label": "Base Flood Elevation"}
+            ]
+          }
+        },
+        {
+          "id": "full_combined",
+          "name": "All Zones (Combined)",
+          "color": "#0000FF",
+          "file": "Flood_Hazard",
+          "popup": {"fields": [{"key": "fld_zone", "label": "Flood Zone"}]},
+          "off": true
+        },
+        {
+          "id": "trimmed",
+          "name": "All Zones (Trimmed)",
+          "color": "#0000FF",
+          "file": "Flood_Hazard_trimmed",
+          "off": true
+        }
+      ]
+    },
+    {
+      "id": "erosion",
+      "name": "Coastal Erosion",
+      "description": "Projected shoreline erosion under sea level rise scenarios can increase long term exposure along the coast.",
+      "icon": "FaUmbrellaBeach",
+      "color": "#A89C90",
+      "subLayers": [
+        {
+          "id": "0.5ft_erosion",
+          "name": "0.5ft",
+          "color": "#736a62",
+          "file": "filtered_slr_cstl_erosn_0pt5ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
+            "inner": "slr_cstl_erosn_0_pt_5_ft.shp"
+          }
+        },
+        {
+          "id": "1.1ft_erosion",
+          "name": "1.1ft",
+          "color": "#63584f",
+          "file": "filtered_slr_cstl_erosn_1pt1ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
+            "inner": "slr_cstl_erosn_1_pt_1_ft.shp"
+          }
+        },
+        {
+          "id": "2.0ft_erosion",
+          "name": "2.0ft",
+          "color": "#5c4e42",
+          "file": "filtered_slr_cstl_erosn_2pt0ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
+            "inner": "slr_cstl_erosn_2_pt_0_ft.shp"
+          }
+        },
+        {
+          "id": "3.2ft_erosion",
+          "name": "3.2ft",
+          "color": "#524032",
+          "file": "filtered_slr_cstl_erosn_3pt2ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
+            "inner": "slr_cstl_erosn_3_pt_2_ft.shp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "exposure_area",
+      "name": "Exposure Area",
+      "description": "Frequent inundation under sea level rise scenarios indicates locations with greater exposure to repeated flooding.",
+      "icon": "FaRadiationAlt",
+      "color": "#7ea834",
+      "subLayers": [
+        {
+          "id": "0.5ft_ea",
+          "name": "0.5ft",
+          "color": "#7ea834",
+          "file": "filtered_slr_exposure_area_0pt5ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
+            "inner": "slr_exposure_area_0_pt_5_ft.shp"
+          }
+        },
+        {
+          "id": "1.1ft_ea",
+          "name": "1.1ft",
+          "color": "#7ea834",
+          "file": "filtered_slr_exposure_area_1pt1ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
+            "inner": "slr_exposure_area_1_pt_1_ft.shp"
+          }
+        },
+        {
+          "id": "2.0ft_ea",
+          "name": "2.0ft",
+          "color": "#7ea834",
+          "file": "filtered_slr_exposure_area_2pt0ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
+            "inner": "slr_exposure_area_2_pt_0_ft.shp"
+          }
+        },
+        {
+          "id": "3.2ft_ea",
+          "name": "3.2ft",
+          "color": "#7ea834",
+          "file": "filtered_slr_exposure_area_3pt2ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
+            "inner": "slr_exposure_area_3_pt_2_ft.shp"
+          }
+        },
+        {
+          "id": "3.2ft_ea_scenario",
+          "name": "3.2ft Scenario",
+          "color": "#7ea834",
+          "file": "filtered_slr_exposure_area_3pt2ft_scenario",
+          "off": true
+        }
+      ]
+    },
+    {
+      "id": "passive_flood",
+      "name": "Passive Flood",
+      "description": "Low lying areas projected to experience inundation as sea levels rise may face increasing long-term exposure.",
+      "icon": "FaTint",
+      "color": "#37bbf0",
+      "subLayers": [
+        {
+          "id": "0.5ft_pf",
+          "name": "0.5ft",
+          "color": "#37bbf0",
+          "file": "filtered_slr_passive_fld_0pt5ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
+            "inner": "slr_passive_fld_0_pt_5_ft.shp"
+          },
+          "popup": {"fields": [{"key": "FloodSrc", "label": "Flood SRC"}]}
+        },
+        {
+          "id": "1.1ft_pf",
+          "name": "1.1ft",
+          "color": "#2c9cc9",
+          "file": "filtered_slr_passive_fld_1pt1ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
+            "inner": "slr_passive_fld_1_pt_1_ft.shp"
+          },
+          "popup": {"fields": [{"key": "FloodSrc", "label": "Flood SRC"}]}
+        },
+        {
+          "id": "2.0ft_pf",
+          "name": "2.0ft",
+          "color": "#22799c",
+          "file": "filtered_slr_passive_fld_2pt0ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
+            "inner": "slr_passive_fld_2_pt_0_ft.shp"
+          },
+          "popup": {"fields": [{"key": "FloodSrc", "label": "Flood SRC"}]}
+        },
+        {
+          "id": "3.2ft_pf",
+          "name": "3.2ft",
+          "color": "#1a5d78",
+          "file": "filtered_slr_passive_fld_3pt2ft",
+          "source": {
+            "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
+            "inner": "slr_passive_fld_3_pt_2_ft.shp"
+          },
+          "popup": {"fields": [{"key": "FloodSrc", "label": "Flood SRC"}]}
+        }
+      ]
+    },
+    {
+      "id": "solar_insolation",
+      "name": "Solar Insolation",
+      "description": "Surface solar radiation intensity indicates potential exposure to higher levels of heat.",
+      "icon": "FaSun",
+      "color": "#FFD700",
+      "metadata": {"citation": "Hawaii Statewide GIS Program, Hawaii State Energy Office", "period": "1985"},
+      "subLayers": [
+        {
+          "id": "200_250",
+          "name": "200–250 W/m²",
+          "color": "#FFE066",
+          "file": "Solar_Insolation_200-250",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '200-250'"
+        },
+        {
+          "id": "250_300",
+          "name": "250–300 W/m²",
+          "color": "#FFD700",
+          "file": "Solar_Insolation_250-300",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '250-300'"
+        },
+        {
+          "id": "300_350",
+          "name": "300–350 W/m²",
+          "color": "#FFC200",
+          "file": "Solar_Insolation_300-350",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '300-350'"
+        },
+        {
+          "id": "350_400",
+          "name": "350–400 W/m²",
+          "color": "#FFAD00",
+          "file": "Solar_Insolation_350-400",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '350-400'"
+        },
+        {
+          "id": "400_450",
+          "name": "400–450 W/m²",
+          "color": "#FF9800",
+          "file": "Solar_Insolation_400-450",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '400-450'"
+        },
+        {
+          "id": "450_500",
+          "name": "450–500 W/m²",
+          "color": "#FF8300",
+          "file": "Solar_Insolation_450-500",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '450-500'"
+        },
+        {
+          "id": "500_550",
+          "name": "500–550 W/m²",
+          "color": "#FF6E00",
+          "file": "Solar_Insolation_500-550",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '500-550'"
+        },
+        {
+          "id": "550_600",
+          "name": "550–600 W/m²",
+          "color": "#FF5900",
+          "file": "Solar_Insolation_550-600",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '550-600'"
+        },
+        {
+          "id": "600_650",
+          "name": "600–650 W/m²",
+          "color": "#FF4400",
+          "file": "Solar_Insolation_600-650",
+          "source": {
+            "zips": ["polygon/hazards/Solar_Insolation_Ranges.zip"],
+            "inner": "Solar_Insolation_Ranges.shp"
+          },
+          "rowFilter": "solar_cal = '600-650'"
+        }
+      ]
+    },
+    {
+      "id": "fire_zone",
+      "name": "Fire Zone",
+      "description": "Mapped wildfire risk indicates locations with greater potential for fire exposure.",
+      "icon": "FaFire",
+      "color": "#D73502",
+      "metadata": {
+        "citation": "Department of Land and Natural Resources (DLNR), Division of Forestry and Wildlife (DOFAW), Fire Management Program; Hawaii Statewide GIS Program",
+        "period": "2007"
+      },
+      "subLayers": [
+        {
+          "id": "Zone_1",
+          "name": "Zone 1",
+          "color": "#D73502",
+          "file": "Fire_zone_1",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 1",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_2",
+          "name": "Zone 2",
+          "color": "#FF7500",
+          "file": "Fire_zone_2",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 2",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_3",
+          "name": "Zone 3",
+          "color": "#F46D43",
+          "file": "Fire_zone_3",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 3",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_4",
+          "name": "Zone 4",
+          "color": "#FDAE61",
+          "file": "Fire_zone_4",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 4",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_5",
+          "name": "Zone 5",
+          "color": "#A6D96A",
+          "file": "Fire_zone_5",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 5",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        },
+        {
+          "id": "Zone_6",
+          "name": "Zone 6",
+          "color": "#1A9641",
+          "file": "Fire_zone_6",
+          "source": {"zips": ["polygon/hazards/Fire_Risk_Areas.zip"], "inner": "Fire_Risk_Areas.shp"},
+          "rowFilter": "zone = 6",
+          "popup": {
+            "fields": [
+              {"key": "commu_name", "label": "Community name"},
+              {"key": "island", "label": "Island"},
+              {"key": "risk_ratin", "label": "Risk Rating"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "pcl_filtered",
+      "name": "Previously Contaminated Land",
+      "icon": "FaOilCan",
+      "color": "#000000",
+      "metadata": {
+        "citation": "Hawaii State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaii Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaii Statewide GIS Program",
+        "period": "September 2019"
+      },
+      "file": "Prev_contaminated_land_filtered",
+      "source": {
+        "zips": ["polygon/hazards/Hawaii_Brightfields_Initiative_Data.zip"],
+        "inner": "Hawaii_Brightfields_Initiative_Data.shp"
+      },
+      "keep": ["objectid", "tmk_txt", "county", "island", "site___fac", "site_owner", "site_addre", "city", "zip_code", "pcsf_land", "historic_u", "current_de", "proposed_u", "urban_area", "distance_t", "epa_site_i", "doh_brownf", "heer_facil", "ehmp__y_n_", "potential", "heer_asses", "heer_respo", "nature_of", "nature_o_1", "st_areasha", "st_perimet"],
+      "popup": {
+        "fields": [
+          {"key": "city", "label": "City"},
+          {"key": "county", "label": "County"},
+          {"key": "island", "label": "Island"},
+          {"key": "site___fac", "label": "Site/Facility name"},
+          {"key": "site_addre", "label": "Address"},
+          {"key": "heer_asses", "label": "Hazardous Waste Assessment"},
+          {"key": "heer_respo", "label": "Hazardous Waste Response"},
+          {"key": "nature_of", "label": "Nature of Contamination"},
+          {"key": "nature_o_1", "label": "Nature of Contamination 1"}
+        ]
+      }
+    },
+    {
+      "id": "pcl_landfill",
+      "name": "Solid Waste Disposal Sites",
+      "icon": "FaTrash",
+      "color": "#000000",
+      "metadata": {
+        "citation": "Hawaii State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaii Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaii Statewide GIS Program",
+        "period": "September 2019"
+      },
+      "file": "Prev_contaminated_land_landfills",
+      "source": {
+        "zips": ["polygon/hazards/Hawaii_Brightfields_Initiative_Data.zip"],
+        "inner": "Hawaii_Brightfields_Initiative_Data.shp"
+      },
+      "keep": ["objectid", "tmk_txt", "county", "island", "site___fac", "site_owner", "site_addre", "city", "zip_code", "pcsf_land", "historic_u", "current_de", "proposed_u", "urban_area", "distance_t", "epa_site_i", "doh_brownf", "heer_facil", "ehmp__y_n_", "potential", "heer_asses", "heer_respo", "nature_of", "nature_o_1", "st_areasha", "st_perimet", "heer_res_1", "landfill_s", "landfill_y", "landfill_o", "landfill_1"],
+      "rowFilter": "known_land = 'Y'",
+      "popup": {
+        "fields": [
+          {"key": "city", "label": "City"},
+          {"key": "county", "label": "County"},
+          {"key": "island", "label": "Island"},
+          {"key": "site_addre", "label": "Address"},
+          {"key": "site___fac", "label": "Site/Facility name"},
+          {"key": "landfill_s", "label": "Start year"},
+          {"key": "landfill_y", "label": "Currently Active"},
+          {"key": "landfill_o", "label": "Owner"}
+        ]
+      }
+    },
+    {
+      "id": "airport_areas",
+      "name": "Airport Grounds",
+      "icon": "FaPlane",
+      "color": "#f3c863",
+      "metadata": {
+        "citation": "State of Hawaii Department of Transportation, Airports Division; Hawaii Statewide GIS Program",
+        "period": "March 2019"
+      },
+      "file": "Airports",
+      "source": {"zips": ["polygon/Airports.zip"], "inner": "Airports.shp"},
+      "keep": ["objectid", "airport_co", "airport_na"],
+      "markers": true,
+      "popup": {"title": "airport_na", "fields": [{"key": "airport_co", "label": "Airport Code"}]}
+    },
+    {
+      "id": "commercial_harbor_areas",
+      "name": "Commercial Harbor Grounds",
+      "icon": "FaShip",
+      "color": "#254bbc",
+      "metadata": {
+        "citation": "Hawaii State Department of Transportation, Harbors Division; Hawaii Statewide GIS Program",
+        "period": "March 2019"
+      },
+      "file": "Commercial_Harbors",
+      "source": {"zips": ["polygon/Commercial_Harbors.zip"], "inner": "Commercial_Harbors.shp"},
+      "keep": ["objectid", "harbor_nam", "berth_leng", "yard_area", "shed_area", "channel_de", "turn_basin"],
+      "markers": true,
+      "popup": {
+        "title": "harbor_nam",
+        "fields": [
+          {"key": "berth_leng", "label": "Dock Length"},
+          {"key": "yard_area", "label": "Outdoor Storage Area"},
+          {"key": "shed_area", "label": "Warehouse Area"},
+          {"key": "channel_de", "label": "Channel Depth"},
+          {"key": "turn_basin", "label": "Turning Area"}
+        ]
+      }
+    },
+    {
+      "id": "potent_econ_loss",
+      "name": "Potential Economic Loss",
+      "icon": "FaDollarSign",
+      "color": "#8B0000",
+      "off": true,
+      "subLayers": [
+        {
+          "id": "0.5ft_pel",
+          "name": "0.5ft",
+          "color": "#8B0000",
+          "file": "filtered_slr_potent_econ_loss_0pt5ft"
+        },
+        {
+          "id": "1.1ft_pel",
+          "name": "1.1ft",
+          "color": "#A00000",
+          "file": "filtered_slr_potent_econ_loss_1pt1ft"
+        },
+        {
+          "id": "2.0ft_pel",
+          "name": "2.0ft",
+          "color": "#B50000",
+          "file": "filtered_slr_potent_econ_loss_2pt0ft"
+        },
+        {
+          "id": "3.2ft_pel",
+          "name": "3.2ft",
+          "color": "#CC0000",
+          "file": "filtered_slr_potent_econ_loss_3pt2ft"
+        }
+      ]
+    }
+  ]
+}

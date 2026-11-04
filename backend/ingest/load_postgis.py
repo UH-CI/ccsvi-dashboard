@@ -17,6 +17,7 @@ import psycopg2
 import psycopg2.extras
 
 import settings
+from pipeline.check_layers import shape_layers
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
@@ -36,54 +37,6 @@ POINT_LAYERS = [
     ("Airports_points.geojson",                     "airports",          "airport_na"),
     ("Commercial_Harbors_points.geojson",           "commercial_harbors", "harbor_nam"),
     ("Small_Boat_Harbors_Ramps.geojson",            "small_boat_harbors", "name"),
-]
-
-# (filename, hazard_id, sub_id) — IDs match hazardLayers.ts
-HAZARD_LAYERS = [
-    ("Flood_Hazard_VE.geojson",                     "flood_hazard",             "Zone_VE"),
-    ("Flood_Hazard_AE.geojson",                     "flood_hazard",             "Zone_AE"),
-    ("Flood_Hazard_AO.geojson",                     "flood_hazard",             "Zone_AO"),
-    ("Flood_Hazard_AH.geojson",                     "flood_hazard",             "Zone_AH"),
-    ("filtered_slr_cstl_erosn_0pt5ft.geojson",      "erosion",                  "0.5ft_erosion"),
-    ("filtered_slr_cstl_erosn_1pt1ft.geojson",      "erosion",                  "1.1ft_erosion"),
-    ("filtered_slr_cstl_erosn_2pt0ft.geojson",      "erosion",                  "2.0ft_erosion"),
-    ("filtered_slr_cstl_erosn_3pt2ft.geojson",      "erosion",                  "3.2ft_erosion"),
-    ("filtered_slr_potent_fld_hwys_0pt5ft.geojson", "potential_flood_highways", "0.5ft_pfh"),
-    ("filtered_slr_potent_fld_hwys_1pt1ft.geojson", "potential_flood_highways", "1.1ft_pfh"),
-    ("filtered_slr_potent_fld_hwys_2pt0ft.geojson", "potential_flood_highways", "2.0ft_pfh"),
-    ("filtered_slr_potent_fld_hwys_3pt2ft.geojson", "potential_flood_highways", "3.2ft_pfh"),
-    ("filtered_slr_exposure_area_0pt5ft.geojson",   "exposure_area",            "0.5ft_ea"),
-    ("filtered_slr_exposure_area_1pt1ft.geojson",   "exposure_area",            "1.1ft_ea"),
-    ("filtered_slr_exposure_area_2pt0ft.geojson",   "exposure_area",            "2.0ft_ea"),
-    ("filtered_slr_exposure_area_3pt2ft.geojson",   "exposure_area",            "3.2ft_ea"),
-    ("filtered_slr_passive_fld_0pt5ft.geojson",     "passive_flood",            "0.5ft_pf"),
-    ("filtered_slr_passive_fld_1pt1ft.geojson",     "passive_flood",            "1.1ft_pf"),
-    ("filtered_slr_passive_fld_2pt0ft.geojson",     "passive_flood",            "2.0ft_pf"),
-    ("filtered_slr_passive_fld_3pt2ft.geojson",     "passive_flood",            "3.2ft_pf"),
-    ("filtered_sidewalks_and_paths.geojson",        "sidewalks_and_paths",      None),
-    ("filtered_road_Hawaii_island.geojson",         "state_roads",              "hawaii_island"),
-    ("filtered_road_Kauai.geojson",                 "state_roads",              "kauai"),
-    ("filtered_road_Maui.geojson",                  "state_roads",              "maui"),
-    ("filtered_road_Oahu.geojson",                  "state_roads",              "oahu"),
-    ("Solar_Insolation_200-250.geojson",            "solar_insolation",         "200_250"),
-    ("Solar_Insolation_250-300.geojson",            "solar_insolation",         "250_300"),
-    ("Solar_Insolation_300-350.geojson",            "solar_insolation",         "300_350"),
-    ("Solar_Insolation_350-400.geojson",            "solar_insolation",         "350_400"),
-    ("Solar_Insolation_400-450.geojson",            "solar_insolation",         "400_450"),
-    ("Solar_Insolation_450-500.geojson",            "solar_insolation",         "450_500"),
-    ("Solar_Insolation_500-550.geojson",            "solar_insolation",         "500_550"),
-    ("Solar_Insolation_550-600.geojson",            "solar_insolation",         "550_600"),
-    ("Solar_Insolation_600-650.geojson",            "solar_insolation",         "600_650"),
-    ("Fire_zone_1.geojson",                         "fire_zone",                "Zone_1"),
-    ("Fire_zone_2.geojson",                         "fire_zone",                "Zone_2"),
-    ("Fire_zone_3.geojson",                         "fire_zone",                "Zone_3"),
-    ("Fire_zone_4.geojson",                         "fire_zone",                "Zone_4"),
-    ("Fire_zone_5.geojson",                         "fire_zone",                "Zone_5"),
-    ("Fire_zone_6.geojson",                         "fire_zone",                "Zone_6"),
-    ("Prev_contaminated_land_landfills.geojson",    "pcl_landfill",             None),
-    ("Prev_contaminated_land_filtered.geojson",     "pcl_filtered",             None),
-    ("Airports.geojson",                            "airport_areas",            None),
-    ("Commercial_Harbors.geojson",                  "commercial_harbor_areas",  None),
 ]
 
 BATCH_SIZE = 500
@@ -183,13 +136,9 @@ def load_hazards(cur) -> int:
     cur.execute("TRUNCATE hazards RESTART IDENTITY")
     total = 0
 
-    for filename, hazard_id, sub_id in HAZARD_LAYERS:
-        path = settings.HAZARD_GEOJSON_DIR / filename
-        if not path.exists():
-            print(f"  WARNING: {path} not found, skipping {hazard_id}/{sub_id}")
-            continue
-
-        with open(path) as f:
+    for layer in shape_layers():
+        hazard_id, sub_id = layer.layer_id, layer.sub_id
+        with open(layer.data_file) as f:
             fc = json.load(f)
 
         rows = []

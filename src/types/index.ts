@@ -110,32 +110,26 @@ export interface PointLayerConfig {
   };
 }
 
+// A line or polygon layer or sub-layer as written in config/layers/lines.json and polygons.json
+// (the fields the app reads)
 export interface SubHazardLayerConfig {
   id: string;
   name: string;
+  description?: string;
   color?: string;
-  visible: boolean;
-  filePath?: string;
-  description?: string; // human-readable description for UI
-  popupConfig?: {
-    titleField?: string;
+  // Map tiles are hazards/<file>.pmtiles, whose layer is also named <file>
+  file?: string;
+  // title: the column whose value heads the popup; fields: columns shown under hand-written labels
+  popup?: {
+    title?: string;
     fields?: { key: string; label: string }[];
   };
-  subLayers?: SubHazardLayerConfig[];
+  // Switched off: kept in the file, left out of the app
+  off?: boolean;
 }
 
-export interface HazardLayerConfig {
-  id: string;
-  name: string;
+export interface HazardLayerConfig extends SubHazardLayerConfig {
   icon?: string;
-  color?: string;
-  visible: boolean;
-  filePath?: string;
-  description?: string; // human-readable description for UI
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
   subLayers?: SubHazardLayerConfig[];
 }
 

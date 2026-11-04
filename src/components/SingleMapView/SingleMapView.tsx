@@ -438,8 +438,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             {/* Render hazard layers based on visibility state */}
             {hazardLayerConfigs.map((layer) => (
               <React.Fragment key={layer.id}>
-                {/* Render parent layer if it has a filePath and is visible */}
-                {layer.filePath && visibleLayerIdsByMap[mapId]?.has(layer.id) && (
+                {/* Render parent layer if it has a file and is visible */}
+                {layer.file && visibleLayerIdsByMap[mapId]?.has(layer.id) && (
                   <HazardLayerRenderer mapId={mapId} parentId={layer.id} />
                 )}
 

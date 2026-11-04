@@ -70,7 +70,7 @@ export function buildPolygonPopupHtml(
 
   return FeaturePopup({
     metadata: metadata.length > 0 ? metadata : undefined,
-    feature,
+    properties: feature.properties ?? {},
     fields: ctx.config.fields,
     metric1: metric1Display,
     metric2: metric2Display,

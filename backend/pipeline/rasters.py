@@ -28,7 +28,7 @@ def build(raster, row):
          "-co", "COMPRESS=DEFLATE",
          "-co", "OVERVIEWS=IGNORE_EXISTING",
          "-co", "OVERVIEW_RESAMPLING=AVERAGE",
-         f"/vsizip/{raster.zip}/{raster.inner}", staged])
+         f"/vsizip/{settings.RAW_DIR / raster.zips[0]}/{raster.inner}", staged])
     row["size"] = file_size(staged)
     row["time"] = f"{time.time() - start:.0f} s"
     print(f"Built {raster.file}: {row['size']} in {row['time']}")
@@ -56,7 +56,7 @@ def main():
         raise
 
     for path, raster in staged:
-        path.replace(settings.RASTER_DIR / raster.file)
+        path.replace(raster.data_file)
         (settings.RASTER_DIR / f"{raster.file}.aux.xml").unlink(missing_ok=True)
         print(f"Installed {raster.file}")
     STAGING_DIR.rmdir()
