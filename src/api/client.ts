@@ -11,10 +11,6 @@ const get = async <T>(path: string): Promise<T> => {
 
 export const getDatasets = () => get<DatasetCatalog>("/api/v1/datasets");
 
-// DEPRECATED: replaced by getDatasetTable → /api/v1/datasets/{id}/table
-// export const getMetrics = (dataset: string) =>
-//   get<Record<string, string>[]>(`/api/v1/metrics/${dataset}`);
-
 export const getDatasetTable = (dataset: string) =>
   get<Record<string, string | number | null>[]>(`/api/v1/datasets/${dataset}/table`);
 
@@ -22,10 +18,6 @@ export const getMetricValues = (dataset: string, metric: string) =>
   get<Record<string, MetricValue>>(
     `/api/v1/metric-values?dataset=${encodeURIComponent(dataset)}&metric=${encodeURIComponent(metric)}`,
   );
-
-// DEPRECATED: reads from census_metrics table (dropped by migration); not currently used
-// export const getBlockGroup = (geoid: string) =>
-//   get<Record<string, unknown>>(`/api/v1/block-groups/${geoid}`);
 
 // One layer's point names, grouped by the geoid of the area they're in
 export const getPointsByGeoid = (layerId: string, homelands: boolean) =>

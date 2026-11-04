@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 from .db import close_pool, create_pool
-from .routers import block_groups, datasets, metrics, points, rasters
+from .routers import block_groups, datasets, points, rasters
 
 
 @asynccontextmanager
@@ -26,7 +26,6 @@ app.add_middleware(
 )
 
 app.include_router(datasets.router)
-app.include_router(metrics.router)
 app.include_router(block_groups.router)
 app.include_router(points.router)
 app.include_router(rasters.router)

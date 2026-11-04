@@ -73,12 +73,6 @@ async def metric_columns(conn, homelands: bool) -> list[str]:
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-# DEPRECATED: replaced by /api/v1/geographies + /api/v1/metric-values (normalized schema).
-# Reads from census_metrics table which is dropped by migrate_schema.py.
-# @router.get("/api/v1/census-metrics")
-# async def get_census_metrics(conn: ConnDep, response: Response) -> dict[str, Any]:
-#     ...
-
 
 @router.get(
     "/api/v1/geographies",
@@ -349,9 +343,3 @@ async def run_filter(
         )
 
     return [dict(row) for row in rows]
-
-
-# DEPRECATED: reads from census_metrics table (dropped by migrate_schema.py); not called by frontend.
-# @router.get("/api/v1/block-groups/{geoid}")
-# async def get_block_group(geoid: str, conn: ConnDep) -> dict[str, Any]:
-#     ...
