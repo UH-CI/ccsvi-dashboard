@@ -3,14 +3,15 @@
 # then move them and empty the nginx tile cache. 
 # Writes reports/rasters_<date>_<time>.txt
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/../scripts/env.sh"
 
-RAW_DIR=/home/exouser/ccsvi-data/archived/raw_files/rasters
-STAGING_DIR=/home/exouser/ccsvi-data/v05-2026/rasters_staging
-RASTER_DIR=/home/exouser/ccsvi-data/v05-2026/rasters
-REPORT_DIR=/home/exouser/ccsvi-data/v05-2026/reports
+RASTER_RAW_DIR="$RAW_DIR/rasters"
+STAGING_DIR="$DATA_DIR/rasters_staging"
+RASTER_DIR="$DATA_DIR/rasters"
+REPORT_DIR="$DATA_DIR/reports"
 REPORT="$REPORT_DIR/rasters_$(date +%Y-%m-%d_%H%M%S).txt"
-SLOSH="/vsizip/$RAW_DIR/SLOSH_Storm_Surge.zip/SLOSH_Storm_Surge/Hawaii_SLOSH_MOM_Inundation_11_2018"
-LANDSLIDE="/vsizip/$RAW_DIR/Landslide Susceptability.zip/Landslide Susceptability"
+SLOSH="/vsizip/$RASTER_RAW_DIR/SLOSH_Storm_Surge.zip/SLOSH_Storm_Surge/Hawaii_SLOSH_MOM_Inundation_11_2018"
+LANDSLIDE="/vsizip/$RASTER_RAW_DIR/Landslide Susceptability.zip/Landslide Susceptability"
 
 RASTERS=(
     "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif|$SLOSH/Hawaii_Category1_MOM_Inundation_HighTide.tif|255"
@@ -77,5 +78,5 @@ done
 rmdir "$STAGING_DIR"
 
 echo "Emptying the nginx tile cache"
-sudo find /var/cache/nginx/tiles -type f -delete
+sudo find "$TILE_CACHE_DIR" -type f -delete
 write_report

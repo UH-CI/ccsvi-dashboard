@@ -4,14 +4,7 @@
 #   (default) census side only — keeps geographies.geom, points, hazards
 #   --full    also drops the spatial tables and re-runs load_postgis.py
 set -euo pipefail
-
-CONTAINER=ccsvi-pg
-DB_NAME=ccsvi
-DB_USER=ccsvi
-
-SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
-PYTHON="$BACKEND_DIR/.venv/bin/python"
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 FULL=false
 case "${1:-}" in
@@ -20,14 +13,7 @@ case "${1:-}" in
     *)      echo "Usage: $(basename "$0") [--full]" >&2; exit 1 ;;
 esac
 
-if [ -z "${DATABASE_URL:-}" ]; then
-    echo "DATABASE_URL is not set — export it first" >&2
-    exit 1
-fi
-
-psql_run() {
-    docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME"
-}
+: "${DATABASE_URL:?DATABASE_URL is not set; add it to $REPO_ROOT/.env}"
 
 $FULL && echo "== Full rebuild ==" || echo "== Census rebuild (keeping geometry) =="
 
@@ -50,7 +36,7 @@ SQL
 fi
 
 echo "-- applying schema"
-"$SCRIPTS_DIR/db-schema.sh"
+"$BACKEND_DIR/scripts/db-schema.sh"
 
 echo "-- loading census data"
 cd "$BACKEND_DIR"

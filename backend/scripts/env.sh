@@ -1,0 +1,27 @@
+# Shared folders, names and passwords for every backend script. Source it, don't run it.
+
+BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$BACKEND_DIR/.." && pwd)"
+PYTHON="$BACKEND_DIR/.venv/bin/python"
+
+# Sets DATA_ROOT and DATA_VERSION
+source "$BACKEND_DIR/settings.conf"
+DATA_DIR="$DATA_ROOT/$DATA_VERSION"
+RAW_DIR="$DATA_ROOT/archived/raw_files"
+
+PG_CONTAINER=ccsvi-pg
+DB_NAME=ccsvi
+DB_USER=ccsvi
+WEB_ROOT=/var/www/ccsvi
+TILE_CACHE_DIR=/var/cache/nginx/tiles
+
+if [[ -f "$REPO_ROOT/.env" ]]; then
+    set -a
+    source "$REPO_ROOT/.env"
+    set +a
+fi
+
+# Without ON_ERROR_STOP, psql exits 0 even after a failed statement
+psql_run() {
+    docker exec -i "$PG_CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME"
+}

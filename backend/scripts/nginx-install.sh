@@ -14,17 +14,7 @@
 # (not indefinite) since tiles aren't yet covered by the versioning
 # convention's immutable-cache guarantee.
 set -euo pipefail
-
-REPO_ROOT="/home/exouser/ccsvi-dashboard"
-DATA_ROOT="/home/exouser/ccsvi-data"
-FRONTEND_ROOT="/var/www/ccsvi"
-TILE_CACHE_DIR="/var/cache/nginx/tiles"
-
-if [[ -f "$REPO_ROOT/.env" ]]; then
-    set -a
-    source "$REPO_ROOT/.env"
-    set +a
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 HCDP_API_TOKEN=${HCDP_API_TOKEN:?Need HCDP_API_TOKEN set in $REPO_ROOT/.env}
 HCDP_EMAIL=${HCDP_EMAIL:?Need HCDP_EMAIL set in $REPO_ROOT/.env}
@@ -100,7 +90,7 @@ server {
     }
 
     location /ccsvi-dashboard/ {
-        alias ${FRONTEND_ROOT}/;
+        alias ${WEB_ROOT}/;
         try_files \$uri \$uri/ /ccsvi-dashboard/index.html;
     }
 }

@@ -2,11 +2,7 @@
 # Pull the latest code and restart API. Run on the VM.
 # Does not touch the db, rebuild is a separate process.
 set -euo pipefail
-
-SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
-REPO_ROOT="$(cd "$BACKEND_DIR/.." && pwd)"
-PYTHON="$BACKEND_DIR/.venv/bin/python"
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 cd "$REPO_ROOT"
 

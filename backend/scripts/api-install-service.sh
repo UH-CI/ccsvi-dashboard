@@ -2,21 +2,11 @@
 # Install ccsvi-api as a systemd service.
 # Run once on VM after the venv and database are set up.
 set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BACKEND_DIR="$REPO_ROOT/backend"
-VENV_PYTHON="$BACKEND_DIR/.venv/bin/python"
-
-if [[ -f "$REPO_ROOT/.env" ]]; then
-    set -a
-    source "$REPO_ROOT/.env"
-    set +a
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 DATABASE_URL=${DATABASE_URL:?Need DATABASE_URL set in $REPO_ROOT/.env}
 
-if [[ ! -x "$VENV_PYTHON" ]]; then
+if [[ ! -x "$PYTHON" ]]; then
     echo "ERROR: venv not found at $BACKEND_DIR/.venv"
     echo "Run: cd $BACKEND_DIR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
     exit 1
@@ -40,7 +30,7 @@ Type=simple
 User=$(whoami)
 WorkingDirectory=$BACKEND_DIR
 EnvironmentFile=/etc/ccsvi-api.env
-ExecStart=$VENV_PYTHON -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 3
+ExecStart=$PYTHON -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 3
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

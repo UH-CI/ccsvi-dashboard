@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Install the latest CI frontend build. Run on the VM.
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 URL=https://github.com/UH-CI/ccsvi-dashboard/releases/download/beta/dist.tar.gz
-WEB_ROOT=/var/www/ccsvi
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT

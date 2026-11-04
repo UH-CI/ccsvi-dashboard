@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 # Start the Postgres container. Safe to run repeatedly.
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
-CONTAINER=ccsvi-pg
-DB_NAME=ccsvi
-DB_USER=ccsvi
-DB_PASS=${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD set}
+DB_PASS=${POSTGRES_PASSWORD:?Need POSTGRES_PASSWORD set in $REPO_ROOT/.env}
 
-if docker ps -q -f "name=^${CONTAINER}$" | grep -q .; then
+if docker ps -q -f "name=^${PG_CONTAINER}$" | grep -q .; then
     echo "Postgres already running."
-elif docker ps -aq -f "name=^${CONTAINER}$" | grep -q .; then
+elif docker ps -aq -f "name=^${PG_CONTAINER}$" | grep -q .; then
     echo "Container stopped — restarting."
-    docker start "$CONTAINER"
+    docker start "$PG_CONTAINER"
 else
     echo "Creating Postgres container..."
     docker run -d \
-        --name "$CONTAINER" \
+        --name "$PG_CONTAINER" \
         --restart unless-stopped \
         -e POSTGRES_DB="$DB_NAME" \
         -e POSTGRES_USER="$DB_USER" \
@@ -25,7 +23,7 @@ else
 fi
 
 echo "Waiting for Postgres to be ready..."
-until docker exec "$CONTAINER" pg_isready -U "$DB_USER" -q 2>/dev/null; do
+until docker exec "$PG_CONTAINER" pg_isready -U "$DB_USER" -q 2>/dev/null; do
     sleep 1
 done
 echo "Ready."
