@@ -50,7 +50,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     (s) => s.colormapOverrides[mapId]?.[activeLayerId],
   );
 
-  const colormapName = colormapOverride ?? layerConfig?.colormapName ?? "blues";
+  const colormapName = colormapOverride ?? layerConfig?.colormap ?? "blues";
   const opacity = layerConfig?.opacity ?? 0.7;
   const units = layerConfig?.units;
   const layerName = layerConfig?.name ?? activeLayerId;

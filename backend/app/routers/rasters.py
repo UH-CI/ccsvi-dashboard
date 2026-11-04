@@ -1,24 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from rio_tiler.colormap import cmap as colormap_registry
 from titiler.core.factory import TilerFactory
 
 import settings
+from pipeline.check_layers import rasters
+
+from ..caching import revalidated_json
 
 router = APIRouter()
 
-# Maps composite layer IDs (matching the frontend store convention) to COG filenames.
-# Convention: top-level layers use their id (e.g. "Landslide");
-# sub-layers use "parentId.subId" (e.g. "stormSurge.inundation_category1").
-# Add new raster layers here
-RASTER_CATALOG: dict[str, str] = {
-    "stormSurge.inundation_category1": "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
-    "stormSurge.inundation_category2": "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
-    "stormSurge.inundation_category3": "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
-    "stormSurge.inundation_category4": "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
-    "Landslide": "lw_hi.cog.tif",
-}
+# Raster id -> COG file name, from config/layers/rasters.json. A sub-layer's id is "<parent id>.<sub id>"
+RASTER_CATALOG: dict[str, str] = {raster.id: raster.file for raster in rasters()}
 
 
 def raster_path_dep(
@@ -43,11 +37,10 @@ cog = TilerFactory(path_dependency=raster_path_dep)
 
 
 @router.get("/api/v1/rasters/colormap")
-async def get_colormap(name: str, response: Response) -> list[list[int]]:
+async def get_colormap(name: str, request: Request) -> Response:
     """Return the 256 RGBA entries for a named TiTiler/rio-tiler colormap."""
     try:
         cm = colormap_registry.get(name)
     except Exception:
         raise HTTPException(status_code=404, detail=f"Unknown colormap: '{name}'")
-    response.headers["Cache-Control"] = "public, max-age=86400"
-    return list(cm.values())
+    return revalidated_json(request, [[int(value) for value in rgba] for rgba in cm.values()])

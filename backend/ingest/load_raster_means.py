@@ -20,7 +20,7 @@ import rasterio
 from rasterio.mask import mask
 
 import settings
-from app.routers.rasters import RASTER_CATALOG
+from pipeline.check_layers import rasters
 
 # (geographies.type value, hawaiian_homelands flag to write on the dataset)
 AREA_TYPES = [
@@ -28,17 +28,13 @@ AREA_TYPES = [
     ("hawaiian_homeland", True),
 ]
 
-# Per RASTER_CATALOG id: (dataset id, dataset label, mean metric name, max metric name)
-RASTER_METRICS = {
-    "stormSurge.inundation_category1": ("storm_surge", "Storm Surge", "Inundation Category 1 (mean, ft)", "Inundation Category 1 (max, ft)"),
-    "stormSurge.inundation_category2": ("storm_surge", "Storm Surge", "Inundation Category 2 (mean, ft)", "Inundation Category 2 (max, ft)"),
-    "stormSurge.inundation_category3": ("storm_surge", "Storm Surge", "Inundation Category 3 (mean, ft)", "Inundation Category 3 (max, ft)"),
-    "stormSurge.inundation_category4": ("storm_surge", "Storm Surge", "Inundation Category 4 (mean, ft)", "Inundation Category 4 (max, ft)"),
-    "Landslide": ("landslide", "Landslide", "Susceptibility (mean index)", "Susceptibility (max index)"),
-}
+# The two values saved for every raster, in display order
+METRICS = ("Mean", "Max")
 
 
-def dataset_id_for(dataset_id: str, homelands: bool) -> str:
+# One dataset per raster: its id with "." as "_", then "_raster", e.g. "stormSurge_inundation_category1_raster"
+def dataset_id_for(raster_id: str, homelands: bool) -> str:
+    dataset_id = f"{raster_id.replace('.', '_')}_raster"
     return f"{dataset_id}_homelands" if homelands else dataset_id
 
 
@@ -69,29 +65,30 @@ async def load_track(
         )
     ]
 
-    for order, (raster_id, filename) in enumerate(RASTER_CATALOG.items()):
-        base_id, label, mean_name, max_name = RASTER_METRICS[raster_id]
-        dataset_id = dataset_id_for(base_id, homelands)
+    for raster in rasters():
+        dataset_id = dataset_id_for(raster.id, homelands)
 
         await conn.execute(
             """
-            INSERT INTO datasets (id, label, hawaiian_homelands, source_type)
-            VALUES ($1, $2, $3, 'raster')
+            INSERT INTO datasets (id, label, hawaiian_homelands, source_type, layer_id)
+            VALUES ($1, $2, $3, 'raster', $4)
             ON CONFLICT (id) DO UPDATE SET
                 label              = EXCLUDED.label,
                 hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-                source_type        = EXCLUDED.source_type
+                source_type        = EXCLUDED.source_type,
+                layer_id           = EXCLUDED.layer_id
             """,
             dataset_id,
-            label,
+            raster.label,
             homelands,
+            raster.id,
         )
 
-        with rasterio.open(settings.RASTER_DIR / filename) as src:
+        with rasterio.open(settings.RASTER_DIR / raster.file) as src:
             stats = [(geoid, stats_over(src, geom)) for geoid, geom in shapes]
 
         # classification_mode/mv_column are set elsewhere
-        for stat_index, name in enumerate((mean_name, max_name)):
+        for stat_index, name in enumerate(METRICS):
             await conn.execute(
                 """
                 INSERT INTO metrics (dataset_id, name, classification_mode, display_order,
@@ -101,7 +98,7 @@ async def load_track(
                 """,
                 dataset_id,
                 name,
-                order * 2 + stat_index,
+                stat_index,
             )
             metric_id = await conn.fetchval(
                 "SELECT id FROM metrics WHERE dataset_id = $1 AND name = $2",

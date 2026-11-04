@@ -15,35 +15,34 @@ import asyncpg
 import rasterio
 
 import settings
-from app.routers.rasters import RASTER_CATALOG
+from pipeline.check_layers import Raster, rasters
 
 
-async def load_raster(
-    conn: asyncpg.Connection, raster_id: str, filename: str, points: list[asyncpg.Record]
-) -> None:
+async def load_raster(conn: asyncpg.Connection, raster: Raster, points: list[asyncpg.Record]) -> None:
     coords = [(p["lon"], p["lat"]) for p in points]
-    with rasterio.open(settings.RASTER_DIR / filename) as src:
+    with rasterio.open(settings.RASTER_DIR / raster.file) as src:
         samples = list(src.sample(coords, indexes=1, masked=True))
 
     rows = [
-        (point["id"], raster_id, float(sample[0]))
+        (point["id"], raster.id, float(sample[0]))
         for point, sample in zip(points, samples)
         if not sample.mask[0]
     ]
     await conn.executemany(
         "INSERT INTO point_raster_values (point_id, raster_id, value) VALUES ($1, $2, $3)", rows
     )
-    print(f"  {raster_id}: {len(rows)} of {len(points)} points")
+    print(f"  {raster.id}: {len(rows)} of {len(points)} points")
 
 
 async def main() -> None:
+    found = rasters()
     conn = await asyncpg.connect(settings.database_url())
     try:
         await conn.execute("TRUNCATE point_raster_values")
         points = await conn.fetch("SELECT id, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM points")
-        print(f"Sampling {len(RASTER_CATALOG)} raster(s) at {len(points)} points")
-        for raster_id, filename in RASTER_CATALOG.items():
-            await load_raster(conn, raster_id, filename, points)
+        print(f"Sampling {len(found)} raster(s) at {len(points)} points")
+        for raster in found:
+            await load_raster(conn, raster, points)
         print("Done.")
     finally:
         await conn.close()

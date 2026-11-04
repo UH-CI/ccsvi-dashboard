@@ -93,6 +93,13 @@ server {
         alias ${WEB_ROOT}/;
         try_files \$uri \$uri/ /ccsvi-dashboard/index.html;
     }
+
+    # The page is checked on every load so a new deploy shows at once. The code files it loads
+    # get a new name on every build, so those can be kept
+    location = /ccsvi-dashboard/index.html {
+        alias ${WEB_ROOT}/index.html;
+        add_header Cache-Control "no-cache";
+    }
 }
 EOF
 

@@ -88,11 +88,11 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
     if (override) return override;
     const [parentId, subId] = activeRasterLeafId.split(".");
     if (!subId) {
-      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormapName ?? null;
+      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormap ?? null;
     }
     const parent = rasterLayerConfigs.find((l) => l.id === parentId);
     return (
-      parent?.subLayers?.find((s) => s.id === subId)?.colormapName ?? parent?.colormapName ?? null
+      parent?.subLayers?.find((s) => s.id === subId)?.colormap ?? parent?.colormap ?? null
     );
   }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 

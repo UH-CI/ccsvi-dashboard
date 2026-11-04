@@ -1,66 +1,9 @@
-import { RasterLayerConfig } from "../types";
+import rasters from "../../config/layers/rasters.json";
+import type { RasterLayerConfig } from "../types";
 
-export const RASTER_LAYERS: RasterLayerConfig[] = [
-  {
-    id: "stormSurge",
-    name: "Storm Surge",
-    icon: "FaCloudShowersHeavy",
-    color: "#37474F",
-    units: "ft",
-    opacity: 0.7,
-    subLayers: [
-      {
-        id: "inundation_category1",
-        name: "Inundation Category 1",
-        color: "#0000FF",
-        units: "ft",
-        opacity: 0.7,
-        sourceFileName: "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
-        savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 1 (mean, ft)", max: "Inundation Category 1 (max, ft)" },
-        colormapName: "plasma",
-      },
-      {
-        id: "inundation_category2",
-        name: "Inundation Category 2",
-        color: "#0066FF",
-        units: "ft",
-        opacity: 0.7,
-        sourceFileName: "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
-        savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 2 (mean, ft)", max: "Inundation Category 2 (max, ft)" },
-        colormapName: "plasma",
-      },
-      {
-        id: "inundation_category3",
-        name: "Inundation Category 3",
-        color: "#0099FF",
-        units: "ft",
-        opacity: 0.7,
-        sourceFileName: "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
-        savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 3 (mean, ft)", max: "Inundation Category 3 (max, ft)" },
-        colormapName: "plasma",
-      },
-      {
-        id: "inundation_category4",
-        name: "Inundation Category 4",
-        color: "#00CCFF",
-        units: "ft",
-        opacity: 0.7,
-        sourceFileName: "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
-        savedMetrics: { dataset: "storm_surge", mean: "Inundation Category 4 (mean, ft)", max: "Inundation Category 4 (max, ft)" },
-        colormapName: "plasma",
-      },
-    ],
-  },
-  {
-    id: "Landslide",
-    name: "Landslide",
-    description: "Locations with greater potential for slope failure and related exposure.",
-    icon: "FaMountain",
-    color: "#6D4C41",
-    units: "Susceptibility Index",
-    opacity: 0.7,
-    sourceFileName: "lw_hi.cog.tif",
-    savedMetrics: { dataset: "landslide", mean: "Susceptibility (mean index)", max: "Susceptibility (max index)" },
-    colormapName: "ylorrd",
-  },
-];
+// The raster layers in config/layers/rasters.json, without the switched-off ones
+export const RASTER_LAYERS: RasterLayerConfig[] = (rasters.layers as RasterLayerConfig[])
+  .filter((layer) => !layer.off)
+  .map((layer) =>
+    layer.subLayers ? { ...layer, subLayers: layer.subLayers.filter((sub) => !sub.off) } : layer,
+  );

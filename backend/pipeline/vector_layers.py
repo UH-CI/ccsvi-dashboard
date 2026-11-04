@@ -15,17 +15,16 @@ import tempfile
 import time
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 import settings
+from pipeline.build_tools import file_size, run, write_report
 
 RAW_DIR = settings.RAW_DIR
 GEOJSON_DIR = settings.HAZARD_GEOJSON_DIR
 TILES_DIR = settings.HAZARD_TILES_DIR
 STAGING_DIR = settings.DATA_DIR / "hazards_staging"
 POINT_DIR = settings.POINT_DATA_DIR
-REPORT_DIR = settings.REPORT_DIR
 
 # Coordinate decimals; 5 is about 1 m
 DECIMALS = 5
@@ -121,16 +120,6 @@ LAYERS = [
     Layer("Commercial_Harbors", ["polygon/Commercial_Harbors.zip"], "Commercial_Harbors.shp",
           columns=HARBOR_COLUMNS, markers=True),
 ]
-
-
-def run(cmd):
-    return subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE, text=True, check=True).stdout
-
-
-# Total size, in KB under 1 MB
-def file_size(*paths):
-    size = sum(path.stat().st_size for path in paths)
-    return f"{size / 1e6:.1f} MB" if size >= 1e6 else f"{size / 1e3:.0f} KB"
 
 
 # Every corner in nested GeoJSON coordinates
@@ -280,26 +269,7 @@ def build(layer, row):
 
 REPORT_COLUMNS = [("Layer", "layer"), ("Shapes in source -> kept", "shapes"), ("Length or area kept", "kept"),
                   ("Map files", "map_files"), ("Largest tile", "largest"), ("Time", "time")]
-
-
-def write_report(rows):
-    notes = [f"  {row['layer']}: {note}" for row in rows for note in row["notes"]]
-    table = [[heading for heading, _ in REPORT_COLUMNS]]
-    table += [[row.get(key, "-") for _, key in REPORT_COLUMNS] for row in rows]
-    widths = [max(len(line[i]) for line in table) for i in range(len(REPORT_COLUMNS))]
-    lines = [
-        "Vector layers pipeline report",
-        "",
-        "---------- Notes ----------",
-        *(notes or ["  none"]),
-        "---------------------------",
-        "",
-        *("  ".join(cell.ljust(width) for cell, width in zip(line, widths)).rstrip() for line in table),
-    ]
-    REPORT_DIR.mkdir(exist_ok=True)
-    path = REPORT_DIR / f"vector_layers_{datetime.now():%Y-%m-%d_%H%M%S}.txt"
-    path.write_text("\n".join(lines) + "\n")
-    print(f"Report: {path}")
+REPORT = ("Vector layers pipeline report", "vector_layers", REPORT_COLUMNS)
 
 
 def main():
@@ -318,14 +288,14 @@ def main():
                 moves += build(layer, row)
     except (SystemExit, subprocess.CalledProcessError) as failure:
         row["notes"].append(f"{failure}; run stopped, nothing installed")
-        write_report(rows)
+        write_report(*REPORT, rows)
         raise
 
     for staged, live in moves:
         staged.replace(live)
         print(f"Installed {live.name}")
     STAGING_DIR.rmdir()
-    write_report(rows)
+    write_report(*REPORT, rows)
 
 
 if __name__ == "__main__":

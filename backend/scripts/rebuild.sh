@@ -20,6 +20,9 @@ $FULL && echo "== Full rebuild ==" || echo "== Census rebuild (keeping geometry)
 echo "-- checking generated SQL"
 (cd "$BACKEND_DIR" && "$PYTHON" -m db.generate_views --check)
 
+echo "-- checking the layer files"
+(cd "$BACKEND_DIR" && "$PYTHON" -m pipeline.check_layers)
+
 echo "-- dropping census tables"
 psql_run <<'SQL'
 DROP MATERIALIZED VIEW IF EXISTS block_group_metrics;

@@ -1,0 +1,70 @@
+"""Raster pipeline: turns the original raster downloads into the COG files the map tiles are drawn
+from.
+
+Each raster is built in a staging folder and only moved live once every one has built. Then the
+nginx tile cache is emptied so the map draws the new files. Each run writes a report to reports/.
+
+python -m pipeline.rasters [--only <raster id>]
+"""
+
+import argparse
+import subprocess
+import time
+
+import settings
+from pipeline.build_tools import file_size, run, write_report
+from pipeline.check_layers import rasters, source_problems, stop_on
+
+STAGING_DIR = settings.DATA_DIR / "rasters_staging"
+REPORT = ("Rasters pipeline report", "rasters", [("Raster", "raster"), ("File size", "size"), ("Time", "time")])
+
+
+# Zoomed-out versions are rebuilt by averaging, ignoring any that came with the download
+def build(raster, row):
+    print(f"Building {raster.file}")
+    start = time.time()
+    staged = STAGING_DIR / raster.file
+    run(["gdal_translate", "-of", "COG", "-a_nodata", raster.nodata, "-stats",
+         "-co", "COMPRESS=DEFLATE",
+         "-co", "OVERVIEWS=IGNORE_EXISTING",
+         "-co", "OVERVIEW_RESAMPLING=AVERAGE",
+         f"/vsizip/{raster.zip}/{raster.inner}", staged])
+    row["size"] = file_size(staged)
+    row["time"] = f"{time.time() - start:.0f} s"
+    print(f"Built {raster.file}: {row['size']} in {row['time']}")
+    return staged
+
+
+def main():
+    found = rasters()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--only", choices=[raster.id for raster in found], help="build just this raster")
+    args = parser.parse_args()
+    chosen = [raster for raster in found if args.only in (None, raster.id)]
+    stop_on(source_problems(chosen))
+
+    STAGING_DIR.mkdir(exist_ok=True)
+    rows, staged = [], []
+    try:
+        for raster in chosen:
+            row = {"raster": raster.id, "notes": []}
+            rows.append(row)
+            staged.append((build(raster, row), raster))
+    except subprocess.CalledProcessError as failure:
+        row["notes"].append(f"{failure}; run stopped, nothing installed")
+        write_report(*REPORT, rows)
+        raise
+
+    for path, raster in staged:
+        path.replace(settings.RASTER_DIR / raster.file)
+        (settings.RASTER_DIR / f"{raster.file}.aux.xml").unlink(missing_ok=True)
+        print(f"Installed {raster.file}")
+    STAGING_DIR.rmdir()
+
+    print("Emptying the nginx tile cache")
+    run(["sudo", "find", settings.TILE_CACHE_DIR, "-type", "f", "-delete"])
+    write_report(*REPORT, rows)
+
+
+if __name__ == "__main__":
+    main()

@@ -4,36 +4,35 @@ import { usePointLayerStore } from "../stores/usePointLayersStore";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { getPointsByGeoid } from "../api/client";
 import type { PointLayerConfig } from "../types";
-
-const datasetIdFor = (layerId: string, isHomelands: boolean): string =>
-  isHomelands ? `${layerId}_points_homelands` : `${layerId}_points`;
+import { layerDatasetId } from "../utils/layerDatasets";
 
 // Per-layer point counts for one block group / Hawaiian Homeland area, for use outside of react components (like the popup)
 export async function fetchPointCounts(
   geoid: string,
   isHomelands: boolean,
 ): Promise<Record<string, number | null>> {
-  const { fetchMetricValues } = useAppStore.getState();
-  await Promise.all(
-    POINT_LAYERS.map((layer) => fetchMetricValues(datasetIdFor(layer.id, isHomelands), "Count")),
+  const { blockGroupData, fetchMetricValues } = useAppStore.getState();
+  const datasets = POINT_LAYERS.map(
+    (layer) => [layer.id, layerDatasetId(blockGroupData, layer.id, isHomelands)] as const,
   );
+  await Promise.all(datasets.map(([, dataset]) => dataset && fetchMetricValues(dataset, "Count")));
 
   const cache = useAppStore.getState().metricValuesCache;
   const counts: Record<string, number | null> = {};
-  for (const layer of POINT_LAYERS) {
-    const cacheKey = `${datasetIdFor(layer.id, isHomelands)}::Count`;
-    counts[layer.id] = cache[cacheKey]?.[geoid]?.absolute ?? null;
+  for (const [layerId, dataset] of datasets) {
+    counts[layerId] = dataset ? (cache[`${dataset}::Count`]?.[geoid]?.absolute ?? null) : null;
   }
   return counts;
 }
 
 export interface TablePointCounts {
   layers: PointLayerConfig[]; // currently visible on the map
-  getCount: (layerId: string, geoid: string) => number;
+  getCount: (layerId: string, geoid: string) => number | null;
 }
 
-// Point counts for every geoid, across whichever layers are currently toggled on map
+// Point counts for every geoid, across whichever layers are currently toggled on map; blank where a layer has none saved
 export function usePointCountsForTable(isHomelands: boolean, mapId: string): TablePointCounts {
+  const blockGroupData = useAppStore((state) => state.blockGroupData);
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
   const visibleIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
@@ -45,24 +44,25 @@ export function usePointCountsForTable(isHomelands: boolean, mapId: string): Tab
 
   useEffect(() => {
     for (const layer of layers) {
-      fetchMetricValues(datasetIdFor(layer.id, isHomelands), "Count");
+      const dataset = layerDatasetId(blockGroupData, layer.id, isHomelands);
+      if (dataset) fetchMetricValues(dataset, "Count");
     }
-  }, [layers, isHomelands, fetchMetricValues]);
+  }, [layers, blockGroupData, isHomelands, fetchMetricValues]);
 
   return useMemo(() => {
-    const getCount = (layerId: string, geoid: string): number => {
-      const cacheKey = `${datasetIdFor(layerId, isHomelands)}::Count`;
-      return metricValuesCache[cacheKey]?.[geoid]?.absolute ?? 0;
+    const getCount = (layerId: string, geoid: string): number | null => {
+      const dataset = layerDatasetId(blockGroupData, layerId, isHomelands);
+      return dataset ? (metricValuesCache[`${dataset}::Count`]?.[geoid]?.absolute ?? null) : null;
     };
     return { layers, getCount };
-  }, [layers, isHomelands, metricValuesCache]);
+  }, [layers, blockGroupData, isHomelands, metricValuesCache]);
 }
 
 // Shared across every table, so switching tabs/rows never re-fetches a layer already fetched
 const namesCache: Record<string, Promise<Record<string, string[]>>> = {};
 
 function fetchNamesOnce(layerId: string, isHomelands: boolean): Promise<Record<string, string[]>> {
-  const cacheKey = `${datasetIdFor(layerId, isHomelands)}::names`;
+  const cacheKey = `${layerId}::${isHomelands ? "homelands" : "block_groups"}`;
   if (!namesCache[cacheKey]) {
     namesCache[cacheKey] = getPointsByGeoid(layerId, isHomelands);
   }

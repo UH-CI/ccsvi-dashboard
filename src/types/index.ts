@@ -55,6 +55,8 @@ export interface Dataset {
     metricName: string;
     metricLabel: string;
     hawaiianHomelands?: boolean;
+    // The map layer a point or raster dataset belongs to; null for census
+    layerId: string | null;
     metadata?: DatasetMetadata | null;
     columnThresholds: {
       [columnName: string]: MetricConfig;
@@ -137,74 +139,24 @@ export interface HazardLayerConfig {
   subLayers?: SubHazardLayerConfig[];
 }
 
+// A raster layer or sub-layer as written in config/layers/rasters.json (the fields the app reads)
 export interface SubRasterLayerConfig {
   id: string;
   name: string;
   description?: string;
   color?: string;
-  // The underlying COG file name, used by the popup zonal stats flow.
-  sourceFileName?: string;
-  // Dataset and metric names of this raster's saved per-area mean and max, which the popup and table read
-  savedMetrics?: { dataset: string; mean: string; max: string };
-  // Use TiTiler built-in colormap names
-  colormapName?: string;
-  // Shown on the map legend and click-to-query popup
+  // TiTiler built-in colormap name; set on every layer that has a file
+  colormap?: string;
+  // Shown on the map legend, popup and table
   units?: string;
   opacity?: number;
-  type?: "raster";
-  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
-  filePath?: string;
-
-  
-  /** @deprecated TiTiler selects overview level automatically. REMOVE */
-  overviewZoom?: {
-    minZoom: number;
-    maxZoom: number;
-    overviewIndex: number;
-  }[];
-  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
-  legendWidthPx?: number;
-  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
-  legendGradientHeightPx?: number;
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
+  // Switched off: kept in the file, left out of the app
+  off?: boolean;
 }
 
-export interface RasterLayerConfig {
-  id: string;
-  name: string;
-  description?: string;
+export interface RasterLayerConfig extends SubRasterLayerConfig {
   icon?: string;
-  color?: string;
-  // The underlying COG file name, used by the popup zonal stats flow.
-  sourceFileName?: string;
-  // Dataset and metric names of this raster's saved per-area mean and max, which the popup and table read
-  savedMetrics?: { dataset: string; mean: string; max: string };
-  // Use TiTiler built-in colormap names
-  colormapName?: string;
-  // Shown on the map legend and click-to-query popup
-  units?: string;
-  opacity?: number;
-  type?: "raster";
   subLayers?: SubRasterLayerConfig[];
-  /** @deprecated Replaced by TiTiler catalog-based raster_id. REMOVE */
-  filePath?: string;
-  /** @deprecated TiTiler selects overview level automatically. REMOVE */
-  overviewZoom?: {
-    minZoom: number;
-    maxZoom: number;
-    overviewIndex: number;
-  }[];
-  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
-  legendWidthPx?: number;
-  /** @deprecated Legend dimensions unused after TiTiler migration. REMOVE */
-  legendGradientHeightPx?: number;
-  popupConfig?: {
-    titleField?: string;
-    fields?: { key: string; label: string }[];
-  };
 }
 
 export interface BlockGroupResult {
@@ -225,6 +177,8 @@ export interface CatalogDataset {
   hawaiianHomelands: boolean;
   // 'census', 'point' or 'raster'
   sourceType: string;
+  // The map layer a point or raster dataset belongs to; null for census
+  layerId: string | null;
   metadata?: DatasetMetadata | null;
   columnThresholds: Record<string, CatalogMetric>;
 }

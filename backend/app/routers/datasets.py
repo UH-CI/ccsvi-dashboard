@@ -1,9 +1,10 @@
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
+from ..caching import revalidated_json
 from ..db import ConnDep
 from ..reliability import reliability
 
@@ -38,6 +39,7 @@ class DatasetRecord(BaseModel):
     metricLabel: str
     hawaiianHomelands: bool
     sourceType: str
+    layerId: str | None
     metadata: DatasetMetadata | None
     columnThresholds: dict[str, MetricConfig]
 
@@ -49,11 +51,10 @@ class DatasetRecord(BaseModel):
     response_model=dict[str, DatasetRecord],
     summary="Dataset catalog with metric metadata",
 )
-async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
-    response.headers["Cache-Control"] = "public, max-age=86400"
+async def get_datasets(conn: ConnDep, request: Request) -> Response:
     rows = await conn.fetch(
         f"""
-        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.metadata, m.name, m.classification_mode, m.mv_column
+        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata, m.name, m.classification_mode, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, {_CATALOG_ORDER_SQL[CATALOG_METRIC_ORDER]}
@@ -67,6 +68,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
                 "metricLabel": row["label"],
                 "hawaiianHomelands": row["hawaiian_homelands"],
                 "sourceType": row["source_type"],
+                "layerId": row["layer_id"],
                 "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
                 "columnThresholds": {},
             }
@@ -74,7 +76,7 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
             "classificationMode": row["classification_mode"],
             "mvColumn": row["mv_column"],
         }
-    return result
+    return revalidated_json(request, result)
 
 
 @router.get(
@@ -82,9 +84,8 @@ async def get_datasets(conn: ConnDep, response: Response) -> dict[str, Any]:
     summary="Full dataset rows for TableViewer",
 )
 async def get_dataset_table(
-    dataset_id: str, conn: ConnDep, response: Response
-) -> list[dict[str, Any]]:
-    response.headers["Cache-Control"] = "public, max-age=86400"
+    dataset_id: str, conn: ConnDep, request: Request
+) -> Response:
 
     metric_rows = await conn.fetch(
         """
@@ -170,4 +171,4 @@ async def get_dataset_table(
                 row["absolute"], row["margin_of_error"], row["cv"], True
             )["label"]
 
-    return list(geoid_data.values())
+    return revalidated_json(request, list(geoid_data.values()))

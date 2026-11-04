@@ -4,7 +4,7 @@ BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "$BACKEND_DIR/.." && pwd)"
 PYTHON="$BACKEND_DIR/.venv/bin/python"
 
-# Sets DATA_ROOT and DATA_VERSION
+# Sets DATA_ROOT, DATA_VERSION and TILE_CACHE_DIR
 source "$BACKEND_DIR/settings.conf"
 DATA_DIR="$DATA_ROOT/$DATA_VERSION"
 RAW_DIR="$DATA_ROOT/archived/raw_files"
@@ -13,7 +13,6 @@ PG_CONTAINER=ccsvi-pg
 DB_NAME=ccsvi
 DB_USER=ccsvi
 WEB_ROOT=/var/www/ccsvi
-TILE_CACHE_DIR=/var/cache/nginx/tiles
 
 if [[ -f "$REPO_ROOT/.env" ]]; then
     set -a

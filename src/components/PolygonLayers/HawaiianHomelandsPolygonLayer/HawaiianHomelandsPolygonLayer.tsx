@@ -195,12 +195,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
 
         let stats: { mean: number | null; max: number | null } = { mean: null, max: null };
         try {
-          const savedMetrics = activeRaster.config?.savedMetrics as {
-            dataset: string;
-            mean: string;
-            max: string;
-          };
-          stats = await savedRasterStats(savedMetrics, String(geoid), true);
+          stats = await savedRasterStats(activeRaster.id, String(geoid), true);
         } catch {
           // keep the empty stats
         }

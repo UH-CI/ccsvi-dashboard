@@ -36,16 +36,18 @@ async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
 
         await conn.execute(
             """
-            INSERT INTO datasets (id, label, hawaiian_homelands, source_type)
-            VALUES ($1, $2, $3, 'point')
+            INSERT INTO datasets (id, label, hawaiian_homelands, source_type, layer_id)
+            VALUES ($1, $2, $3, 'point', $4)
             ON CONFLICT (id) DO UPDATE SET
                 label              = EXCLUDED.label,
                 hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-                source_type        = EXCLUDED.source_type
+                source_type        = EXCLUDED.source_type,
+                layer_id           = EXCLUDED.layer_id
             """,
             dataset_id,
             label_for(layer_id),
             homelands,
+            layer_id,
         )
 
         # classification_mode/mv_column are set elsewhere

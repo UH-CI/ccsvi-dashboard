@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS datasets (
     hawaiian_homelands BOOLEAN NOT NULL DEFAULT false,
     -- 'census', 'point' or 'raster'
     source_type        TEXT    NOT NULL DEFAULT 'census',
+    -- Map layer a point or raster dataset belongs to ("<parent>.<sub>" for a sub-layer); null for census
+    layer_id           TEXT,
     -- Census metadata (table_id, program, period, citation); null for point and raster datasets
     metadata           JSONB
 );

@@ -242,12 +242,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
         if (currentVisibleIds?.has(activeRasterLayerId)) {
           try {
-            const savedMetrics = activeRasterLayerConfig?.savedMetrics as {
-              dataset: string;
-              mean: string;
-              max: string;
-            };
-            const stats = await savedRasterStats(savedMetrics, String(geoid), false);
+            const stats = await savedRasterStats(activeRasterLayerId, String(geoid), false);
 
             const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
             if (currentRasterId?.has(activeRasterLayerId)) {

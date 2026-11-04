@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useAppStore } from "../stores/useAppStore.ts";
 import { useRasterLayersStore } from "../stores/useRasterLayersStore.ts";
 import type { RasterLayerConfig, SubRasterLayerConfig } from "../types";
+import { layerDatasetId } from "./layerDatasets.ts";
 
 // The raster a popup reports on: a visible sub-layer if there is one, else the first visible layer
 export function getActiveRaster(
@@ -19,21 +20,20 @@ export function getActiveRaster(
   return { id, config };
 }
 
-// A raster's saved mean and max for one area.
+// A raster's saved mean and max for one area; null where it has none
 export async function savedRasterStats(
-  saved: { dataset: string; mean: string; max: string },
+  rasterId: string,
   geoid: string,
   homelands: boolean,
 ): Promise<{ mean: number | null; max: number | null }> {
-  const dataset = homelands ? `${saved.dataset}_homelands` : saved.dataset;
-  await Promise.all([
-    useAppStore.getState().fetchMetricValues(dataset, saved.mean),
-    useAppStore.getState().fetchMetricValues(dataset, saved.max),
-  ]);
+  const { blockGroupData, fetchMetricValues } = useAppStore.getState();
+  const dataset = layerDatasetId(blockGroupData, rasterId, homelands);
+  if (!dataset) return { mean: null, max: null };
+  await Promise.all([fetchMetricValues(dataset, "Mean"), fetchMetricValues(dataset, "Max")]);
   const cache = useAppStore.getState().metricValuesCache;
   return {
-    mean: cache[`${dataset}::${saved.mean}`]?.[geoid]?.absolute ?? null,
-    max: cache[`${dataset}::${saved.max}`]?.[geoid]?.absolute ?? null,
+    mean: cache[`${dataset}::Mean`]?.[geoid]?.absolute ?? null,
+    max: cache[`${dataset}::Max`]?.[geoid]?.absolute ?? null,
   };
 }
 
@@ -41,28 +41,30 @@ export async function savedRasterStats(
 export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
   const visibleIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
   const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const blockGroupData = useAppStore((s) => s.blockGroupData);
   const metricValuesCache = useAppStore((s) => s.metricValuesCache);
   const fetchMetricValues = useAppStore((s) => s.fetchMetricValues);
 
-  const config = useMemo(() => getActiveRaster(visibleIds, configs)?.config ?? null, [visibleIds, configs]);
-  const saved = config?.savedMetrics ?? null;
-  const dataset = saved ? (isHomelands ? `${saved.dataset}_homelands` : saved.dataset) : null;
+  const active = useMemo(() => getActiveRaster(visibleIds, configs), [visibleIds, configs]);
+  const dataset = active ? layerDatasetId(blockGroupData, active.id, isHomelands) : null;
 
   useEffect(() => {
-    if (!saved || !dataset) return;
-    fetchMetricValues(dataset, saved.mean);
-    fetchMetricValues(dataset, saved.max);
-  }, [saved, dataset, fetchMetricValues]);
+    if (!dataset) return;
+    fetchMetricValues(dataset, "Mean");
+    fetchMetricValues(dataset, "Max");
+  }, [dataset, fetchMetricValues]);
 
   return useMemo(() => {
-    if (!config || !saved || !dataset) return null;
-    const lookup = (metric: string) => (geoid: string): number | null =>
-      metricValuesCache[`${dataset}::${metric}`]?.[geoid]?.absolute ?? null;
+    if (!active?.config) return null;
+    const lookup =
+      (metric: string) =>
+      (geoid: string): number | null =>
+        dataset ? (metricValuesCache[`${dataset}::${metric}`]?.[geoid]?.absolute ?? null) : null;
     return {
-      name: config.name,
-      units: config.units,
-      getMean: lookup(saved.mean),
-      getMax: lookup(saved.max),
+      name: active.config.name,
+      units: active.config.units,
+      getMean: lookup("Mean"),
+      getMax: lookup("Max"),
     };
-  }, [config, saved, dataset, metricValuesCache]);
+  }, [active, dataset, metricValuesCache]);
 }

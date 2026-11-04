@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict
 
+from ..caching import revalidated_json
 from ..db import ConnDep
 from ..reliability import reliability
 
@@ -79,12 +80,11 @@ async def metric_columns(conn, homelands: bool) -> list[str]:
     response_model=dict[str, GeographyRecord],
     summary="Location metadata for all block groups / homelands",
 )
-async def get_geographies(conn: ConnDep, response: Response) -> dict[str, Any]:
-    response.headers["Cache-Control"] = "public, max-age=86400"
+async def get_geographies(conn: ConnDep, request: Request) -> Response:
     rows = await conn.fetch(
         "SELECT geoid, name, block_group, census_tract, county FROM geographies"
     )
-    return {
+    return revalidated_json(request, {
         row["geoid"]: {
             "name": row["name"],
             "block_group": row["block_group"],
@@ -92,7 +92,7 @@ async def get_geographies(conn: ConnDep, response: Response) -> dict[str, Any]:
             "county": row["county"],
         }
         for row in rows
-    }
+    })
 
 
 @router.get(
@@ -102,11 +102,10 @@ async def get_geographies(conn: ConnDep, response: Response) -> dict[str, Any]:
 )
 async def get_metric_values(
     conn: ConnDep,
-    response: Response,
+    request: Request,
     dataset: str = Query(...),
     metric: str = Query(...),
-) -> dict[str, Any]:
-    response.headers["Cache-Control"] = "public, max-age=86400"
+) -> Response:
     rows = await conn.fetch(
         """
         SELECT mv.geoid,
@@ -129,7 +128,7 @@ async def get_metric_values(
             status_code=404,
             detail=f"No data for dataset='{dataset}' metric='{metric}'",
         )
-    return {
+    return revalidated_json(request, {
         row["geoid"]: {
             "absolute": row["absolute"],
             "margin_of_error": row["margin_of_error"],
@@ -139,7 +138,7 @@ async def get_metric_values(
             "moe_derived": row["moe_derived"],
         }
         for row in rows
-    }
+    })
 
 
 @router.get(

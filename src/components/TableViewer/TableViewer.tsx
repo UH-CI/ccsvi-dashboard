@@ -196,7 +196,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       const geoid = geoidFromRow(row);
       const extra: Record<string, number | string> = {};
       for (const layer of pointLayers) {
-        extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid);
+        extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid) ?? "";
         extra[`pointnames_${layer.id}`] = getNames(layer.id, geoid).join(", ") || "—";
       }
       if (savedRaster) {

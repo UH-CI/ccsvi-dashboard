@@ -30,6 +30,8 @@ CENSUS_RAW_DIR = RAW_DIR / "census_raw"
 CENSUS_NOTES_XLSX = RAW_DIR / "metrics" / "JPL_CCSVI_all_fields.xlsx"
 CENSUS_CLEANED_DIR = DATA_ROOT / "archived" / "cleaned-data"
 
+TILE_CACHE_DIR = Path(_SETTINGS["TILE_CACHE_DIR"])
+
 
 # The database address, read when connecting so tools that only use folders don't need it
 def database_url() -> str:
