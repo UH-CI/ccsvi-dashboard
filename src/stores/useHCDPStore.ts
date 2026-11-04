@@ -41,12 +41,5 @@ export const useHCDPStore = create<HCDPState>((set) => ({
     }),
 }));
 
-// Selector hooks for convenience and parity with other stores
 export const useHcdpOverlay = (mapId: string) =>
   useHCDPStore((s) => s.overlaysByMap[mapId] ?? null);
-
-export const useHasHcdpOverlay = (mapId: string) =>
-  useHCDPStore((s) => s.overlaysByMap[mapId] != null);
-
-export const useHcdpOverlayLoadId = (mapId: string) =>
-  useHCDPStore((s) => s.overlaysByMap[mapId]?.loadId ?? null);

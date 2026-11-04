@@ -10,9 +10,7 @@ interface PointLayerState {
   visibleLayerIdsByMap: Record<string, Set<string>>;
   isLoaded: boolean;
 
-  // Loading and error states
   loadingLayers: Set<string>;
-  errorLayers: Map<string, string>;
 
   // Setters
   setPointLayerData: (layerId: string, data: FeatureCollection<Point>) => void;
@@ -34,7 +32,6 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
   visibleLayerIdsByMap: {},
   isLoaded: false,
   loadingLayers: new Set(),
-  errorLayers: new Map(),
 
   // Setters
   setPointLayerData: (layerId, data) => {
@@ -107,7 +104,6 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
 
     set((state) => ({
       loadingLayers: new Set(state.loadingLayers).add(layerId),
-      errorLayers: new Map(state.errorLayers).set(layerId, ""),
     }));
 
     try {
@@ -125,30 +121,16 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
       set((state) => {
         const newLoadingLayers = new Set(state.loadingLayers);
         newLoadingLayers.delete(layerId);
-        const newErrorLayers = new Map(state.errorLayers);
-        newErrorLayers.delete(layerId);
-        return { loadingLayers: newLoadingLayers, errorLayers: newErrorLayers };
+        return { loadingLayers: newLoadingLayers };
       });
     } catch (err) {
       console.error(`Error loading ${layerConfig.name} data:`, err);
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
       set((state) => {
         const newLoadingLayers = new Set(state.loadingLayers);
         newLoadingLayers.delete(layerId);
-        const newErrorLayers = new Map(state.errorLayers);
-        newErrorLayers.set(layerId, errorMessage);
-        return { loadingLayers: newLoadingLayers, errorLayers: newErrorLayers };
+        return { loadingLayers: newLoadingLayers };
       });
     }
   },
 }));
-
-// Selector hooks
-export const usePointLayerConfigs = () => usePointLayerStore((state) => state.pointLayerConfigs);
-
-export const useIsLayerVisible = (mapId: string, layerId: string) =>
-  usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);
-
-export const usePointLayerData = (layerId: string) =>
-  usePointLayerStore((state) => state.pointLayerData.get(layerId));

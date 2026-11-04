@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
           proxyReq.setHeader("Authorization", `Bearer ${hcdpApiToken}`);
         } else {
           console.warn(
-            "HCDP_API_TOKEN is missing. Add it to public/data/HCDP_API/.env or the project .env (never use VITE_ prefix).",
+            "HCDP_API_TOKEN is missing. Add it to the project .env (never use VITE_ prefix, never under public/).",
           );
         }
         if (hcdpEmail) {

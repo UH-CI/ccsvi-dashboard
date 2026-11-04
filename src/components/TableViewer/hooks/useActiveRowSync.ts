@@ -96,7 +96,7 @@ export const useActiveRowSync = ({
       // Census full GEOIDs look like "1500000US150010201001" or "2500000US5003".
       // Strip the numeric prefix + "US" to get the bare geoid used by the map layers.
       const geoid = rawGeoid.replace(/^\d+US/i, "");
-      if (geoid) updateMapActiveFeature(primaryMapId, { geoid, lat: 0, lng: 0, zoom: 0 });
+      if (geoid) updateMapActiveFeature(primaryMapId, { geoid });
     },
     [geoidColIndex, primaryMapId, updateMapActiveFeature],
   );

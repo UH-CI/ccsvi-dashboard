@@ -51,9 +51,9 @@ export function hcdpRasterSearchParams(
 /**
  * Same-origin URL for the HCDP raster proxy (`/api/raster` → api.hcdp.ikewai.org).
  *
- * The Bearer token must never be set here. In local dev, Vite adds
- * `Authorization: Bearer …` from `public/data/HCDP_API/.env` (or project `.env`)
- * via `vite.config.ts`. For a standalone backend, use `public/data/HCDP_API/server.py`.
+ * The Bearer token must never be set here. In local dev, Vite's dev server adds
+ * `Authorization: Bearer …` from the project-root `.env` (`vite.config.ts`); on the VM, nginx adds it.
+ * Never put the token under `public/`, which is published with the site.
  */
 export function hcdpRasterUrl(row: HcdpRangeRow, date: Dayjs, extent?: string): string {
   const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");

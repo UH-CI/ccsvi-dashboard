@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { DATASETS_CONFIG, DataSourceKey, DataSourceTypeMap } from "../config";
-import { GeographiesData, MetricValue, Dataset, PointLayerConfig, DatasetCatalog } from "../types";
+import { GeographiesData, MetricValue, Dataset, DatasetCatalog } from "../types";
 import { getMetricValues, getDatasets } from "../api/client";
 import { FeatureCollection, Geometry } from "geojson";
 import {
@@ -8,8 +8,6 @@ import {
   HawaiianHomelandProperties,
   CountyBoundariesProperties,
 } from "../types";
-import { HazardLayerConfig } from "../types";
-import { useHazardLayersStore } from "./useHazardLayersStore";
 
 interface LoadingState {
   geographiesData: boolean;
@@ -17,8 +15,6 @@ interface LoadingState {
   censusBlockGroups: boolean;
   hawaiianHomelands: boolean;
   countyBoundaries: boolean;
-  pointLayers: boolean;
-  hazardLayers: boolean;
 }
 
 interface ErrorState {
@@ -40,8 +36,6 @@ interface AppState {
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties> | null;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
   countyBoundaries: FeatureCollection<Geometry, CountyBoundariesProperties> | null;
-  pointLayers: PointLayerConfig[];
-  hazardLayers: HazardLayerConfig[];
 
   loading: LoadingState;
   errors: ErrorState;
@@ -52,8 +46,6 @@ interface AppState {
   setCensusBlockGroups: (data: FeatureCollection<Geometry, BlockGroupProperties>) => void;
   setHawaiianHomelands: (data: FeatureCollection<Geometry, HawaiianHomelandProperties>) => void;
   setCountyBoundaries: (data: FeatureCollection<Geometry, CountyBoundariesProperties>) => void;
-  setPointLayers: (data: PointLayerConfig[]) => void;
-  setHazardLayers: (data: HazardLayerConfig[]) => void;
 
   setLoading: (key: keyof LoadingState, loading: boolean) => void;
   setError: (key: string, error: string | null) => void;
@@ -66,7 +58,6 @@ interface AppState {
   fetchCensusBlockGroups: () => Promise<void>;
   fetchHawaiianHomelands: () => Promise<void>;
   fetchCountyBoundaries: () => Promise<void>;
-  fetchHazardLayers: () => Promise<void>;
   fetchAllData: () => Promise<void>;
 }
 
@@ -76,8 +67,6 @@ const initialLoadingState: LoadingState = {
   censusBlockGroups: false,
   hawaiianHomelands: false,
   countyBoundaries: false,
-  pointLayers: false,
-  hazardLayers: false,
 };
 
 const initialErrorState: ErrorState = {};
@@ -125,8 +114,6 @@ export const useAppStore = create<AppState>((set, get) => {
     censusBlockGroups: null,
     hawaiianHomelands: null,
     countyBoundaries: null,
-    pointLayers: [],
-    hazardLayers: [],
     loading: initialLoadingState,
     errors: initialErrorState,
 
@@ -136,8 +123,6 @@ export const useAppStore = create<AppState>((set, get) => {
     setCensusBlockGroups: (data) => set({ censusBlockGroups: data }),
     setHawaiianHomelands: (data) => set({ hawaiianHomelands: data }),
     setCountyBoundaries: (data) => set({ countyBoundaries: data }),
-    setPointLayers: (data) => set({ pointLayers: data }),
-    setHazardLayers: (data) => set({ hazardLayers: data }),
 
     setLoading: (key, loading) =>
       set((state) => ({
@@ -204,25 +189,6 @@ export const useAppStore = create<AppState>((set, get) => {
       return fetchData("countyBoundaries", setCountyBoundaries);
     },
 
-    fetchHazardLayers: async () => {
-      const { setLoading, setError, setHazardLayers } = get();
-      const { fetchHazardLayerConfigs, hazardLayerConfigs } = useHazardLayersStore.getState();
-
-      setLoading("hazardLayers", true);
-      setError("hazardLayers", null);
-
-      try {
-        await fetchHazardLayerConfigs();
-        const { hazardLayerConfigs: updated } = useHazardLayersStore.getState();
-        setHazardLayers(updated);
-      } catch (err) {
-        console.error("Failed to fetch hazard layers:", err);
-        setError("hazardLayers", "Failed to fetch hazard layers");
-      } finally {
-        setLoading("hazardLayers", false);
-      }
-    },
-
     fetchAllData: async () => {
       const {
         fetchGeographiesData,
@@ -230,7 +196,6 @@ export const useAppStore = create<AppState>((set, get) => {
         fetchCensusBlockGroups,
         fetchHawaiianHomelands,
         fetchCountyBoundaries,
-        fetchHazardLayers,
       } = get();
 
       await Promise.all([
@@ -239,7 +204,6 @@ export const useAppStore = create<AppState>((set, get) => {
         fetchCensusBlockGroups(),
         fetchHawaiianHomelands(),
         fetchCountyBoundaries(),
-        fetchHazardLayers(),
       ]);
     },
   };
@@ -259,8 +223,7 @@ export const useIsReady = () => {
       state.blockGroupData !== null &&
       state.censusBlockGroups !== null &&
       state.hawaiianHomelands !== null &&
-      state.countyBoundaries !== null &&
-      state.hazardLayers.length > 0
+      state.countyBoundaries !== null
     );
   });
 };

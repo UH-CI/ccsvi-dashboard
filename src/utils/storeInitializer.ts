@@ -3,7 +3,6 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
-  defaultExpandedSections,
   DEFAULT_LAYER_OPACITIES,
 } from "../stores";
 import { DEFAULT_COLOR_SCHEME } from "../config";
@@ -54,14 +53,6 @@ function initializeMapStore(
     ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
   }));
 
-  const expandedSectionsByMap = fullConfigs.reduce(
-    (acc, config) => {
-      acc[config.id] = { ...defaultExpandedSections };
-      return acc;
-    },
-    {} as Record<string, typeof defaultExpandedSections>,
-  );
-
   const layerOpacities = fullConfigs.reduce(
     (acc, config) => {
       acc[config.id] = { ...DEFAULT_LAYER_OPACITIES };
@@ -79,7 +70,6 @@ function initializeMapStore(
   useMapStore.setState({
     mapConfigs: fullConfigs,
     nextMapId: maxMapNum + 1,
-    expandedSectionsByMap,
     layerOpacities,
   });
 

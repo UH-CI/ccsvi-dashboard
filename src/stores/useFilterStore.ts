@@ -5,7 +5,6 @@ import { POINT_LAYERS } from "../config/pointLayers";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 interface FilterState {
-  county: string | null;
   hazards: string[];
   rasters: string[];
   metricFilters: Partial<Record<string, number>>;
@@ -29,7 +28,6 @@ interface PointFilter {
 }
 
 interface FilterActions {
-  setCounty: (county: string | null) => void;
   setHomelands: (homelands: boolean) => void;
   setHazards: (ids: string[]) => void;
   setRasters: (ids: string[]) => void;
@@ -44,7 +42,6 @@ interface FilterActions {
 }
 
 const initialState: FilterState = {
-  county: null,
   hazards: [],
   rasters: [],
   metricFilters: {},
@@ -61,7 +58,6 @@ const initialState: FilterState = {
 
 const buildParams = (state: FilterState): URLSearchParams => {
   const params = new URLSearchParams();
-  if (state.county && state.county !== "__all__") params.set("county", state.county);
   for (const id of state.hazards) params.append("hazard", id);
   for (const [col, val] of Object.entries(state.metricFilters)) {
     if (val !== undefined) params.set(`min_${col}`, String(val));
@@ -76,7 +72,6 @@ const filterUrl = (state: FilterState, params: URLSearchParams): string =>
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...initialState,
 
-  setCounty: (county) => set({ county }),
   setHomelands: (homelands) => set({ homelands }),
   setHazards: (ids) => set({ hazards: ids }),
   setRasters: (ids) => set({ rasters: ids }),
@@ -155,7 +150,5 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
   clearFilter: () => set({ ...initialState }),
 }));
-
-export const useIsFiltered = () => useFilterStore((s) => s.results !== null);
 
 export const useFilteredGeoids = () => useFilterStore((s) => s.filteredGeoids);

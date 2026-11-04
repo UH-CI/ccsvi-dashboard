@@ -8,7 +8,6 @@ export interface UseMapSnapshotReturn {
     options?: SnapshotOptions,
     wrapper?: React.RefObject<HTMLElement | null> | HTMLElement | null,
   ) => Promise<void>;
-  isSnapshotAvailable: boolean;
 }
 
 /**
@@ -42,11 +41,8 @@ export const useMapSnapshot = (): UseMapSnapshotReturn => {
     [],
   );
 
-  const isSnapshotAvailable = mapRef.current !== null;
-
   return {
     mapRef,
     takeSnapshot,
-    isSnapshotAvailable,
   };
 };

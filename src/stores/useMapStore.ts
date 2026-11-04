@@ -22,19 +22,6 @@ interface MapState {
     }
   >;
 
-  // UI state
-  expandedSectionsByMap: Record<
-    string,
-    {
-      maps: boolean;
-      utils: boolean;
-      points: boolean;
-      hazards: boolean;
-      rasters: boolean;
-      opacity: boolean;
-    }
-  >;
-
   // Actions
   addMap: () => void;
   removeMap: (mapId: string) => void;
@@ -46,12 +33,6 @@ interface MapState {
     mapId: string,
     layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
     opacity: number,
-  ) => void;
-
-  // UI actions
-  toggleSectionByMap: (
-    mapId: string,
-    section: "maps" | "utils" | "points" | "hazards" | "rasters" | "opacity",
   ) => void;
 
   // Reset
@@ -74,15 +55,6 @@ const initialMapConfig: MapConfig = {
   baseMap: DEFAULT_BASE_MAP_ID,
 };
 
-export const defaultExpandedSections = {
-  maps: true,
-  utils: true,
-  points: false,
-  hazards: false,
-  rasters: false,
-  opacity: false,
-};
-
 export const useMapStore = create<MapState>((set, get) => ({
   // Initial state
   mapConfigs: [initialMapConfig],
@@ -91,7 +63,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   layerOpacities: {
     [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
   },
-  expandedSectionsByMap: { [initialMapConfig.id]: { ...defaultExpandedSections } },
 
   // Map config actions
   addMap: () => {
@@ -113,10 +84,6 @@ export const useMapStore = create<MapState>((set, get) => ({
         ...state.layerOpacities,
         [newMapId]: { ...DEFAULT_LAYER_OPACITIES },
       },
-      expandedSectionsByMap: {
-        ...state.expandedSectionsByMap,
-        [newMapId]: { ...defaultExpandedSections },
-      },
     }));
   },
 
@@ -131,13 +98,10 @@ export const useMapStore = create<MapState>((set, get) => ({
           : primaryMapId;
       set((state) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { [mapId]: _removed, ...restExpandedSections } = state.expandedSectionsByMap;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [mapId]: _removedOpacity, ...restOpacities } = state.layerOpacities;
         return {
           mapConfigs: remaining,
           primaryMapId: newPrimaryId,
-          expandedSectionsByMap: restExpandedSections,
           layerOpacities: restOpacities,
         };
       });
@@ -184,19 +148,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     }));
   },
 
-  // UI actions
-  toggleSectionByMap: (mapId, section) => {
-    set((state) => ({
-      expandedSectionsByMap: {
-        ...state.expandedSectionsByMap,
-        [mapId]: {
-          ...state.expandedSectionsByMap[mapId],
-          [section]: !state.expandedSectionsByMap[mapId]?.[section],
-        },
-      },
-    }));
-  },
-
   reset: () => {
     set({
       mapConfigs: [initialMapConfig],
@@ -204,9 +155,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       primaryMapId: initialMapConfig.id,
       layerOpacities: {
         [initialMapConfig.id]: { ...DEFAULT_LAYER_OPACITIES },
-      },
-      expandedSectionsByMap: {
-        [initialMapConfig.id]: { ...defaultExpandedSections },
       },
     });
   },

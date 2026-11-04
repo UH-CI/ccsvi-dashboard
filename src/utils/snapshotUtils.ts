@@ -6,14 +6,6 @@ export interface SnapshotOptions {
   customPrefix?: string;
   format?: "png" | "jpeg";
   quality?: number;
-  includeLegend?: boolean;
-  includeTitle?: boolean;
-  extraText?: string;
-  layerSelection?:
-    | "all"
-    | "visible"
-    | { mode: "single"; layerId: string }
-    | { mode: "list"; layerIds: string[] };
 }
 
 // Generates a descriptive filename for the snapshot based on current map state

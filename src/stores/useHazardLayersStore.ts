@@ -106,10 +106,3 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
     // once it sees isVisible = true and constructs the PMTiles URL from config.
   },
 }));
-
-// Selector hooks
-export const useHazardLayerConfigs = () =>
-  useHazardLayersStore((state) => state.hazardLayerConfigs);
-
-export const useIsHazardLayerVisible = (mapId: string, layerId: string) =>
-  useHazardLayersStore((state) => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);

@@ -81,7 +81,6 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
           mapId={resolvedMapsMapId}
           canRemoveMap={canRemoveMap}
           onRemove={handleRemoveMap}
-          section="management"
         />
       )}
     </MenuShell>

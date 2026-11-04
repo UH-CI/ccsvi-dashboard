@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect, memo, useState } from "react";
+import React, { useMemo, useCallback, useRef, useEffect, memo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
@@ -46,10 +46,9 @@ interface SingleMapViewProps {
 
 interface MapResizeHandlerProps {
   onMapRef: (map: L.Map | null) => void;
-  onZoomChange?: (zoom: number) => void;
 }
 
-const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomChange }) => {
+const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef }) => {
   const map = useMap();
   const containerRef = useRef<HTMLElement | null>(null);
 
@@ -82,22 +81,6 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef, onZoomCha
     return () => resizeObserver.disconnect();
   }, [map]);
 
-  useEffect(() => {
-    if (!onZoomChange) return;
-
-    const handleZoomEnd = () => {
-      onZoomChange(map.getZoom());
-    };
-
-    // Initialize with current zoom
-    onZoomChange(map.getZoom());
-    map.on("zoomend", handleZoomEnd);
-
-    return () => {
-      map.off("zoomend", handleZoomEnd);
-    };
-  }, [map, onZoomChange]);
-
   return null;
 };
 
@@ -109,15 +92,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     // Wrapper ref so snapshot includes legend and any overlays in this container
     const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
-    const [mapZoom, setMapZoom] = useState<number>(MAP_CONFIG.zoom);
-
     const handleMapRef = useCallback((map: L.Map | null) => {
       mapRef.current = map;
     }, [mapRef]);
-
-    const handleZoomChange = useCallback((zoom: number) => {
-      setMapZoom(zoom);
-    }, []);
 
     // Snapshot registry store
     const registerSnapshot = useSnapshotStore((s) => s.register);
@@ -298,15 +275,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         const map = mapRef.current;
         if (!map) return;
 
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-
-        updateMapActiveFeature(mapId, {
-          geoid,
-          lat: center.lat,
-          lng: center.lng,
-          zoom: zoom,
-        });
+        updateMapActiveFeature(mapId, { geoid });
 
         const bounds = layer.getBounds();
         if (bounds.isValid()) {
@@ -410,10 +379,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             className={styles["leaflet-map"]}
             style={{ zIndex: 1 }}
           >
-            <MapResizeHandler
-              onMapRef={handleMapRef}
-              onZoomChange={handleZoomChange}
-            />
+            <MapResizeHandler onMapRef={handleMapRef} />
 
             <TileLayer
               key={activeBaseMap.id}
@@ -500,7 +466,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                   <RasterLayerRenderer
                     mapId={mapId}
                     parentId={layer.id}
-                    mapZoom={mapZoom}
                     interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
                   />
                 )}
@@ -514,7 +479,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                       mapId={mapId}
                       parentId={layer.id}
                       layerId={sub.id}
-                      mapZoom={mapZoom}
                       interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
                     />
                   ) : null;

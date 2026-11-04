@@ -8,8 +8,6 @@ const TILES_COG_BASE = "/api/tiles/cog";
 interface RasterLayerRendererProps {
   parentId: string;
   layerId?: string;
-  /** Kept for interface compatibility — TiTiler selects overview level per tile automatically. */
-  mapZoom?: number;
   mapId: string;
   interactionMode?: "raster" | "social";
 }

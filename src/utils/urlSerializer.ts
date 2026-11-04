@@ -135,7 +135,7 @@ export function deserializeMapConfigs(params: URLSearchParams): DeserializedStat
 
     const afParam = params.get(`af_${id}`);
     if (afParam) {
-      config.activeFeature = { geoid: afParam, lat: 0, lng: 0, zoom: 0 };
+      config.activeFeature = { geoid: afParam };
     }
 
     return config;

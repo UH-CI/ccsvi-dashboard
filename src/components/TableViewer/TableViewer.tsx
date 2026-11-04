@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Paper, Typography, Box, Collapse, Alert, IconButton } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
-import { ParsedCSVData } from "../../utils/csvParser";
+import { TableData } from "./types";
 import { DatasetMetadata } from "../../types";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
@@ -49,7 +49,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     [filterResults],
   );
 
-  const [tableData, setTableData] = useState<ParsedCSVData | null>(null);
+  const [tableData, setTableData] = useState<TableData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });

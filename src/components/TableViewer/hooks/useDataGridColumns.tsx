@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { GridColDef } from "@mui/x-data-grid";
-import { ParsedCSVData } from "../../../utils/csvParser";
+import { TableData } from "../types";
 import styles from "../TableViewer.module.scss";
 
 const PLACEHOLDER_VALUES = new Set(["", "—", "-", "**", "N/A", "n/a", "x", "null", "NULL", "na"]);
@@ -35,9 +35,9 @@ interface DataGridColumns {
   geoidColIndex: number;
 }
 
-// Builds DataGrid columns + rows from parsed CSV: per-column type detection,
+// Builds DataGrid columns + rows from the table's headers and rows: per-column type detection,
 // number formatting, substring quick-filter, and the geography column index.
-export const useDataGridColumns = (tableData: ParsedCSVData | null): DataGridColumns => {
+export const useDataGridColumns = (tableData: TableData | null): DataGridColumns => {
   return useMemo(() => {
     if (!tableData) return { columns: [], rows: [], geoidColIndex: -1 };
 

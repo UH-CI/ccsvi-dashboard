@@ -158,6 +158,3 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     }
   },
 }));
-
-export const useIsRasterLayerVisible = (mapId: string, layerId: string) =>
-  useRasterLayersStore((state) => state.visibleLayerIdsByMap[mapId]?.has(layerId) ?? false);

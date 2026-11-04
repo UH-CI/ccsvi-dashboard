@@ -4,7 +4,6 @@ export interface SviIndicator {
   label: string;
   description?: string; //description for UI
   calculationDescription?: string;
-  mvColumn?: string; //column name if applicable
   isCount?: boolean; //raw counts, mostly 0s: legend shows whole numbers and 0 gets its own bin
 }
 
@@ -74,7 +73,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Below 100% Federal Poverty Line",
         calculationDescription: "Percentage of population with income below 100% of the federal poverty level.",
         description: "Income constraints can limit access to resources needed to prepare for, respond to, and recover from disasters.",
-        mvColumn: "fpl_under_100_pct_calc",
       },
       {
         dataset: "income_share_of_fpl",
@@ -111,7 +109,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Without Health Insurance",
         calculationDescription: "Percentage of civilian noninstitutionalized population without health insurance.",
         description: "Uninsured individuals may have reduced access to medical care during and after hazards.",
-        mvColumn: "no_health_insurance_pct_calc",
       },
     ],
   },
@@ -284,7 +281,6 @@ export const SVI_CATEGORIES: SviCategory[] = [
         label: "Households Without Internet Access",
         calculationDescription: "Percentage of households without internet access.",
         description: "Lack of internet access can reduce access to information and resources for hazard preparedness, response, and recovery.",
-        mvColumn: "no_internet_pct",
       },
       {
         dataset: "households_w_computer",

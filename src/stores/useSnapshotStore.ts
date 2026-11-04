@@ -7,7 +7,6 @@ type SnapshotState = {
   register: (mapId: string, fn: SnapshotFn) => void;
   unregister: (mapId: string) => void;
   snapshotOne: (mapId: string) => Promise<void>;
-  snapshotAll: (mapIds?: string[]) => Promise<void>;
 };
 
 export const useSnapshotStore = create<SnapshotState>((set, get) => ({
@@ -24,15 +23,5 @@ export const useSnapshotStore = create<SnapshotState>((set, get) => ({
   snapshotOne: async (mapId) => {
     const fn = get().handlers[mapId];
     if (fn) await fn();
-  },
-
-  snapshotAll: async (mapIds) => {
-    const { handlers } = get();
-    const ids = mapIds ?? Object.keys(handlers);
-
-    for (const id of ids) {
-      const fn = handlers[id];
-      if (fn) await fn();
-    }
   },
 }));

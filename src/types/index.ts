@@ -1,6 +1,3 @@
-import { Feature, Geometry } from "geojson";
-import { PathOptions } from "leaflet";
-
 export interface MapConfig {
   id: string;
   title: string;
@@ -14,9 +11,6 @@ export interface MapConfig {
   baseMap?: string;
   activeFeature?: {
     geoid: string;
-    lat: number;
-    lng: number;
-    zoom: number;
   };
 }
 
@@ -130,12 +124,6 @@ export interface SubHazardLayerConfig {
   subLayers?: SubHazardLayerConfig[];
 }
 
-export interface SubHazardLayerGroup {
-  id: string;
-  name: string;
-  subLayers: SubHazardLayerConfig[];
-}
-
 export type HazardLayerMenuPanel = "hazards" | "points" | "locations";
 
 export interface HazardLayerConfig {
@@ -225,13 +213,6 @@ export interface RasterLayerConfig {
   };
 }
 
-export type StyleFunction = (
-  feature: Feature<Geometry, BlockGroupProperties> | undefined,
-) => PathOptions;
-export type HomelandsStyleFunction = (
-  feature: Feature<Geometry, HawaiianHomelandProperties> | undefined,
-) => PathOptions;
-
 export interface BlockGroupResult {
   geoid: string;
   name: string | null;
@@ -255,31 +236,3 @@ export interface CatalogDataset {
 }
 
 export type DatasetCatalog = Record<string, CatalogDataset>;
-
-export interface FilterParams {
-  county?: string;
-  hazardId?: string;
-  subId?: string;
-  heightFt?: number;
-  metricFilters?: Partial<Record<string, number>>;
-}
-
-// Generic polygon layer types
-export interface PolygonLayerConfig {
-  name: string;
-  path: string;
-  geoidProperty: string;
-  enabled: boolean;
-  popupConfig: {
-    title: string;
-    fields: Array<{ key: string; label: string }>;
-  };
-  styleConfig?: {
-    activeColor: string;
-    inactiveColor: string;
-    activeWeight: number;
-    inactiveWeight: number;
-    activeFillOpacity: number;
-    inactiveFillOpacity: number;
-  };
-}
