@@ -1,16 +1,3 @@
-// DEPRECATED IMPORTS — replaced by TiTiler/COG integration
-// The services below drove the client-side ArrayBuffer decode + custom GridLayer renderer
-// Preserved because HCDPRasterLayer.tsx (src/components/HCDP/) uses a parallel
-// ArrayBuffer → GeoRasterLayer pattern that may eventually adopt a similar approach
-// Pending deletion once deprecated service files are cleaned up
-//
-// import { useRasterLayerData } from "../../stores";
-// import { DataProcessorService } from "./data-processor.service";
-// import { initializeRasterLayer, R, RasterOptions } from "./leaflet-raster-layer.service";
-// import { ColorGeneratorService } from "./color-generator.service";
-// import { ColorScale } from "./colorScale";
-// import { RasterData } from "./RasterData";
-
 import React, { useEffect, useMemo, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
@@ -46,19 +33,6 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   const popupRef = useRef<L.Popup | null>(null);
   const tilesLoadedRef = useRef(false);
 
-  // DEPRECATED — service refs for client-side ArrayBuffer decode + GridLayer render.
-  // Replaced by TiTiler tile URL and /point endpoint. Pending deletion.
-  //
-  // const dataProcessorRef = useRef<DataProcessorService | null>(null);
-  // const colorGeneratorRef = useRef<ColorGeneratorService | null>(null);
-
-  // DEPRECATED — local render state driven by ArrayBuffer decode pipeline.
-  // Replaced by cogInfo (min/max) from the store. Pending deletion.
-  //
-  // const [leafletLayer, setLeafletLayer] = useState<L.Layer | null>(null);
-  // const [rasterData, setRasterData] = useState<RasterData | null>(null);
-  // const [colorScale, setColorScale] = useState<ColorScale | null>(null);
-
   // Get config from store
   const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
 
@@ -78,24 +52,10 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     (s) => s.colormapOverrides[mapId]?.[activeLayerId],
   );
 
-  // DEPRECATED — arrayBuffer was the full TIF file downloaded into memory.
-  // Replaced by cogInfo (min/max) fetched from /statistics on toggle-on. Pending deletion.
-  //
-  // const arrayBuffer = useRasterLayerData(activeLayerId);
-
   const colormapName = colormapOverride ?? layerConfig?.colormapName ?? "blues";
   const opacity = layerConfig?.opacity ?? 0.7;
   const units = layerConfig?.units;
   const layerName = layerConfig?.name ?? activeLayerId;
-
-  // DEPRECATED — service initialization effect.
-  // DataProcessorService spun up a Web Worker for TIFF decoding; no longer needed.
-  // Pending deletion.
-  //
-  // useEffect(() => {
-  //   if (!dataProcessorRef.current) dataProcessorRef.current = new DataProcessorService();
-  //   if (!colorGeneratorRef.current) colorGeneratorRef.current = new ColorGeneratorService();
-  // }, []);
 
   // Build and add the tile layer when the layer becomes visible and COG info is available.
   // Re-runs when colormap or opacity changes, replacing the tile layer with an updated URL.
@@ -252,22 +212,6 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       useRasterLayersStore.getState().setRasterLegend(mapId, null);
     };
   }, [map, mapId]);
-
-  // DEPRECATED — old effects for ArrayBuffer decode → GridLayer render pipeline.
-  // Replaced by the tile layer and click handler effects above. Pending deletion.
-  //
-  // "Process and render raster when data is available or zoom changes"
-  // useEffect(() => {
-  //   if (!map || !isVisible || !arrayBuffer) return;
-  //   ... (DataProcessorService.getRasterDataFromGeoTIFFArrayBuffer → ColorGeneratorService
-  //        → initializeRasterLayer → R.gridLayer.RasterLayer → layer swap on "load") ...
-  // }, [map, mapZoom, arrayBuffer, isVisible, opacity, layerConfig?.overviewZoom, ...]);
-  //
-  // "Update opacity when it changes"
-  // useEffect(() => { if (leafletLayer) (leafletLayer as any).setOpacity(opacity); }, [...]);
-  //
-  // "Update color scale when it changes"
-  // useEffect(() => { if (leafletLayer && colorScale && rasterData) ... }, [...]);
 
   return null;
 };

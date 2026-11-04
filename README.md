@@ -1,54 +1,29 @@
-# React + TypeScript + Vite
+# CCSVI Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web map of Hawaiʻi's climate change social vulnerability: census-based vulnerability indicators by block group and Hawaiian Home Lands, overlaid with hazard layers (flood, fire, storm surge, landslide and more), point layers (shelters, hospitals, fire stations and more) and climate rasters.
 
-Currently, two official plugins are available:
+## Layout
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `src/`: the web app (React, Vite, Zustand, react-leaflet).
+- `backend/app/`: the API (FastAPI, with TiTiler for raster tiles).
+- `backend/db/`: database setup (PostGIS) and the generated metric views.
+- `backend/pipeline/`: turns raw census tables and hazard, point and raster files into cleaned data and map files.
+- `backend/ingest/`: loads the pipeline's output into the database.
+- `backend/scripts/`: rebuild, deploy and server setup scripts.
+- `.github/workflows/`: builds and deploys the web app.
 
-## Expanding the ESLint configuration
+## Running the web app locally
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. `npm install`
+2. `npm run dev`
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+There is no local backend. The dev server forwards API requests (`/api`) and map files (`/data`) to the beta server (see `server.proxy` in `vite.config.ts`).
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Other scripts: `npm run build`, `npm run lint`, `npm run preview`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Settings
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+None of these files are in the repo; get them from the team.
+
+- `.env.development` and `.env.production`: `VITE_API_BASE_URL`, `VITE_DATA_BASE_URL`.
+- `.env`: `HCDP_API_TOKEN`, `HCDP_EMAIL`, `CARTO_API_KEY`, read by `vite.config.ts` for the dev server's HCDP and basemap forwarding.

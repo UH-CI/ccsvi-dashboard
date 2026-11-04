@@ -102,14 +102,12 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const getStyle = useCallback(
     (feature: Feature<Geometry, BlockGroupProperties> | undefined): StyleConfig => {
       if (!feature) {
-        console.log("Not feature")
         return LAYER_CONFIG.styles.default;
       }
 
       const geoid = feature.properties?.[LAYER_CONFIG.geoidProperty as keyof BlockGroupProperties];
 
       if (!geoid) {
-        console.log("Not geoid")
         return LAYER_CONFIG.styles.default;
       }
 
@@ -129,20 +127,17 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
 
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoidStr)) {
-          console.log("Is filtered")
           return { ...LAYER_CONFIG.styles.default, fillColor, ...LAYER_CONFIG.styles.filterMatch } as StyleConfig;
         }
         return { ...LAYER_CONFIG.styles.disabled } as StyleConfig;
       }
 
       if (shouldUseBackgroundStyle) {
-        console.log("Switching to background style");
         return {
           ...LAYER_CONFIG.styles.background,
           fillColor,
         } as StyleConfig;
       }
-      console.log("Default style");
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,

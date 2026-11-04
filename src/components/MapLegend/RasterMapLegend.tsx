@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import TerrainIcon from "@mui/icons-material/Terrain";
 import { useRasterLayersStore } from "../../stores";
-// DEPRECATED — ColorGeneratorService drove the monochromaticRainfall color scale used in the
-// old ArrayBuffer decode → GridLayer render pipeline. Replaced by the TiTiler native colormap
-// endpoint (/api/v1/rasters/colormap). Pending deletion.
-//
-// import { ColorGeneratorService } from "../RasterLayers/color-generator.service";
 import {
   RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX,
   RASTER_LEGEND_DEFAULT_WIDTH_PX,
@@ -19,22 +14,6 @@ function formatValue(v: number): string {
   if (a >= 10000 || (a > 0 && a < 0.001)) return v.toExponential(2);
   return a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(2) : v.toFixed(3);
 }
-
-// DEPRECATED — buildGradientCss used ColorGeneratorService (monochromaticRainfall scale) to
-// build the legend gradient. Replaced by colormapToCss below. Pending deletion.
-//
-// function buildGradientCss(info: RasterLegendInfo): string {
-//   const gen = new ColorGeneratorService();
-//   const scale = gen.getDefaultMonochromaticRainfallColorScale([info.min, info.max], false);
-//   const hexes = scale.getColorsHex();
-//   const n = hexes.length;
-//   const step = Math.max(1, Math.floor(n / 16));
-//   const sampled = hexes.filter((_, i) => i % step === 0 || i === n - 1);
-//   const stops = sampled
-//     .map((hex, i) => `${hex} ${(i / Math.max(1, sampled.length - 1)) * 100}%`)
-//     .join(", ");
-//   return `linear-gradient(to top, ${stops})`;
-// }
 
 // Session-level gradient cache — avoids re-fetching the same colormap within a tab.
 const colormapGradientCache = new Map<string, string>();

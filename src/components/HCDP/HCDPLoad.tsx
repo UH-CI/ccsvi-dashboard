@@ -204,7 +204,6 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
         const url = `${appBase}api/datasets/date/range?${params.toString()}`;
 
-        console.log("Url range call: ", url);
         //const url = `https://api.hcdp.ikewai.org/datasets/date/range?${params.toString()}`;
         const res = await fetch(url);
         
