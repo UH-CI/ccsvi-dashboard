@@ -3,23 +3,21 @@
 which block_group_metrics or hawaiian_homeland_metrics column each metric corresponds to
 (needed for the cross-dataset filter UI's threshold dropdown). Safe to run more than once.
 
-Usage (from the backend/ directory):
-    DATABASE_URL=postgresql://ccsvi:<pass>@localhost/ccsvi python3 -m ingest.add_mv_column
+rebuild.sh runs it. By hand, from the backend/ directory with DATABASE_URL set:
+    python -m ingest.add_mv_column
 """
 
 import asyncio
-import os
 import sys
 
 import asyncpg
 
+import settings
 from db.mv_columns import BLOCK_GROUP_COLUMNS, HAWAIIAN_HOMELAND_COLUMNS
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
 
 async def apply() -> None:
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
 
     try:
         await conn.execute("UPDATE metrics SET mv_column = NULL")

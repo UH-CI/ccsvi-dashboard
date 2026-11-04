@@ -9,11 +9,10 @@ A new metric needs mv_columns.py updated by hand before it's filterable.
 """
 
 import asyncio
-import os
 
 import asyncpg
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
+import settings
 
 # (geographies.type value, hawaiian_homelands flag to write on the dataset)
 AREA_TYPES = [
@@ -89,7 +88,7 @@ async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
 
 
 async def main() -> None:
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
     try:
         layer_ids = [
             r["layer_id"]

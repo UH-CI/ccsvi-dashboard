@@ -1,15 +1,16 @@
-import os
 from typing import Annotated, AsyncGenerator
 
 import asyncpg
 from fastapi import Depends
+
+import settings
 
 _pool: asyncpg.Pool | None = None
 
 
 async def create_pool() -> None:
     global _pool
-    _pool = await asyncpg.create_pool(os.environ["DATABASE_URL"])
+    _pool = await asyncpg.create_pool(settings.database_url())
 
 
 async def close_pool() -> None:

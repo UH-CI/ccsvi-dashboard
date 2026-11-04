@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Populate geographies.geom, points, and hazards.
 
-Run on the VM from the backend/ directory:
-    export $(sudo cat /etc/ccsvi-api.env | xargs)
+rebuild.sh --full runs it. By hand, on the VM from the backend/ directory with DATABASE_URL set:
     python -m ingest.load_postgis
 
 After this script completes, redo the hazard overlaps and refresh the materialized views
@@ -12,18 +11,15 @@ After this script completes, redo the hazard overlaps and refresh the materializ
     docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 """
 import json
-import os
 from pathlib import Path
 
 import psycopg2
 import psycopg2.extras
 
+import settings
+
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
-POINT_DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026/point_data")
-HAZARDS_DIR = Path("/home/exouser/ccsvi-data/v05-2026/hazards_geojson")
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
 # (filename, layer_id matching pointLayers.ts, name property key)
 POINT_LAYERS = [
@@ -155,7 +151,7 @@ def load_points(cur) -> int:
     total = 0
 
     for filename, layer_id, name_field in POINT_LAYERS:
-        path = POINT_DATA_DIR / filename
+        path = settings.POINT_DATA_DIR / filename
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping {layer_id}")
             continue
@@ -188,7 +184,7 @@ def load_hazards(cur) -> int:
     total = 0
 
     for filename, hazard_id, sub_id in HAZARD_LAYERS:
-        path = HAZARDS_DIR / filename
+        path = settings.HAZARD_GEOJSON_DIR / filename
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping {hazard_id}/{sub_id}")
             continue
@@ -216,7 +212,7 @@ def load_hazards(cur) -> int:
 
 
 def main() -> None:
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(settings.database_url())
     try:
         with conn.cursor() as cur:
             print("Updating block group geometries...")

@@ -10,21 +10,19 @@ pixels, and points off the raster, get none.
 """
 
 import asyncio
-import os
 
 import asyncpg
 import rasterio
 
-from app.routers.rasters import RASTER_CATALOG, RASTER_DIR
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
+import settings
+from app.routers.rasters import RASTER_CATALOG
 
 
 async def load_raster(
     conn: asyncpg.Connection, raster_id: str, filename: str, points: list[asyncpg.Record]
 ) -> None:
     coords = [(p["lon"], p["lat"]) for p in points]
-    with rasterio.open(RASTER_DIR / filename) as src:
+    with rasterio.open(settings.RASTER_DIR / filename) as src:
         samples = list(src.sample(coords, indexes=1, masked=True))
 
     rows = [
@@ -39,7 +37,7 @@ async def load_raster(
 
 
 async def main() -> None:
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
     try:
         await conn.execute("TRUNCATE point_raster_values")
         points = await conn.fetch("SELECT id, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM points")

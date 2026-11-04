@@ -1,13 +1,12 @@
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from rio_tiler.colormap import cmap as colormap_registry
 from titiler.core.factory import TilerFactory
 
-router = APIRouter()
+import settings
 
-RASTER_DIR = Path("/home/exouser/ccsvi-data/v05-2026/rasters")
+router = APIRouter()
 
 # Maps composite layer IDs (matching the frontend store convention) to COG filenames.
 # Convention: top-level layers use their id (e.g. "Landslide");
@@ -32,7 +31,7 @@ def raster_path_dep(
     filename = RASTER_CATALOG.get(raster_id)
     if not filename:
         raise HTTPException(status_code=404, detail=f"Unknown raster_id: '{raster_id}'")
-    return str(RASTER_DIR / filename)
+    return str(settings.RASTER_DIR / filename)
 
 
 # TiTiler factory wired to the catalog resolver.

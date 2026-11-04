@@ -7,11 +7,10 @@ Run after ingest.load_postgis (rebuild.sh --full does this):
 """
 
 import asyncio
-import os
 
 import asyncpg
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
+import settings
 
 
 def inserted(status: str) -> int:
@@ -44,7 +43,7 @@ async def load_layer(conn: asyncpg.Connection, hazard_id: str, sub_id: str | Non
 
 
 async def main() -> None:
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
     try:
         await conn.execute("TRUNCATE geography_hazards, point_hazards")
         # Island-sized shapes take minutes per overlap test; small pieces of them take

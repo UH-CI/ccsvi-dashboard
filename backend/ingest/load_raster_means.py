@@ -14,15 +14,13 @@ metre in Hawaii).
 
 import asyncio
 import json
-import os
 
 import asyncpg
 import rasterio
 from rasterio.mask import mask
 
-from app.routers.rasters import RASTER_CATALOG, RASTER_DIR
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
+import settings
+from app.routers.rasters import RASTER_CATALOG
 
 # (geographies.type value, hawaiian_homelands flag to write on the dataset)
 AREA_TYPES = [
@@ -89,7 +87,7 @@ async def load_track(
             homelands,
         )
 
-        with rasterio.open(RASTER_DIR / filename) as src:
+        with rasterio.open(settings.RASTER_DIR / filename) as src:
             stats = [(geoid, stats_over(src, geom)) for geoid, geom in shapes]
 
         # classification_mode/mv_column are set elsewhere
@@ -129,7 +127,7 @@ async def load_track(
 
 
 async def main() -> None:
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
     try:
         for geo_type, homelands in AREA_TYPES:
             await load_track(conn, geo_type, homelands)

@@ -18,13 +18,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-RAW_DIR = Path("/home/exouser/ccsvi-data/archived/raw_files")
-DATA_DIR = Path("/home/exouser/ccsvi-data/v05-2026")
-GEOJSON_DIR = DATA_DIR / "hazards_geojson"
-TILES_DIR = DATA_DIR / "hazards"
-STAGING_DIR = DATA_DIR / "hazards_staging"
-POINT_DIR = DATA_DIR / "point_data"
-REPORT_DIR = DATA_DIR / "reports"
+import settings
+
+RAW_DIR = settings.RAW_DIR
+GEOJSON_DIR = settings.HAZARD_GEOJSON_DIR
+TILES_DIR = settings.HAZARD_TILES_DIR
+STAGING_DIR = settings.DATA_DIR / "hazards_staging"
+POINT_DIR = settings.POINT_DATA_DIR
+REPORT_DIR = settings.REPORT_DIR
 
 # Coordinate decimals; 5 is about 1 m
 DECIMALS = 5

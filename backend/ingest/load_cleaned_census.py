@@ -1,7 +1,7 @@
 """Reads every cleaned census CSV in a dir and inserts into datasets/metrics/metric_values.
 Geographies table are assumed to already exist.
 
-Usage (from the backend/ directory, after activating .venv and exporting DATABASE_URL):
+rebuild.sh runs it. By hand, from the backend/ directory with .venv active and DATABASE_URL set:
     python -m ingest.load_cleaned_census
 
 Cleans raw Census files and loads the result into database
@@ -17,20 +17,14 @@ import tempfile
 import asyncpg
 import pandas as pd
 
+import settings
 from pipeline.census import clean, proportions
 from pipeline.census.census_transform import clean_column_name
 from pipeline.census.proportions import moe_column_name
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
-
-# Where the raw-cleaning pipeline reads its inputs from on the VM. Edit if
-# VM's directory layout changes.
-DEFAULT_RAW_BASE_PATH = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
-DEFAULT_CENTRAL_DIR = "/home/exouser/ccsvi-data/archived/raw_files/census_raw"
-DEFAULT_NOTES_XLSX = "/home/exouser/ccsvi-data/archived/raw_files/metrics/JPL_CCSVI_all_fields.xlsx"
 DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
-DEFAULT_OUTPUT_DIR = "/home/exouser/ccsvi-data/archived/cleaned-data"
 
 PREFIXES_TO_REMOVE = [
     "Estimate!!Total:!!",
@@ -41,8 +35,6 @@ PREFIXES_TO_REMOVE = [
 ]
 
 NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/ccsvi")
 
 # Turns a raw Census column header into a short metric name
 def metric_name_for(col: str) -> str:
@@ -306,7 +298,7 @@ async def main(cleaned_dir: str, config_path: str) -> None:
     outputs = sorted(clean.dataset_outputs(clean.load_dataset_config(config_path)), key=lambda output: output["name"])
     print(f"Loading {len(outputs)} CSV file(s) from {cleaned_dir}")
 
-    conn = await asyncpg.connect(DATABASE_URL)
+    conn = await asyncpg.connect(settings.database_url())
     try:
         seen_geoids: set[str] = set()
         for output in outputs:
@@ -322,12 +314,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dir", help="Skip cleaning — load a folder of already-cleaned census CSVs instead"
     )
-    parser.add_argument("--raw-base-path", default=DEFAULT_RAW_BASE_PATH)
+    parser.add_argument("--raw-base-path", default=str(settings.CENSUS_RAW_DIR))
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
-    parser.add_argument("--notes-xlsx", default=DEFAULT_NOTES_XLSX)
-    parser.add_argument("--central-dir", default=DEFAULT_CENTRAL_DIR)
+    parser.add_argument("--notes-xlsx", default=str(settings.CENSUS_NOTES_XLSX))
+    parser.add_argument("--central-dir", default=str(settings.CENSUS_RAW_DIR))
     parser.add_argument("--boundaries-geojson", default=DEFAULT_BOUNDARIES_GEOJSON)
-    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--output-dir", default=str(settings.CENSUS_CLEANED_DIR))
     args = parser.parse_args()
 
     asyncio.run(main(resolve_cleaned_dir(args), args.config))
