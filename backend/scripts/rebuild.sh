@@ -44,7 +44,7 @@ SQL
 if $FULL; then
     echo "-- dropping spatial tables"
     psql_run <<'SQL'
-DROP TABLE IF EXISTS geographies, counties, hawaiian_homelands, points, hazards,
+DROP TABLE IF EXISTS geographies, points, hazards,
     geography_hazards, point_hazards, point_raster_values CASCADE;
 SQL
 fi
@@ -89,8 +89,6 @@ UNION SELECT 'metrics',                  count(*) FROM metrics
 UNION SELECT 'geographies',              count(*) FROM geographies
 UNION SELECT 'geographies with geom',    count(*) FROM geographies WHERE geom IS NOT NULL
 UNION SELECT 'metric_values',            count(*) FROM metric_values
-UNION SELECT 'counties',                 count(*) FROM counties
-UNION SELECT 'hawaiian_homelands',       count(*) FROM hawaiian_homelands
 UNION SELECT 'points',                   count(*) FROM points
 UNION SELECT 'hazards',                  count(*) FROM hazards
 UNION SELECT 'geography_hazards',        count(*) FROM geography_hazards
