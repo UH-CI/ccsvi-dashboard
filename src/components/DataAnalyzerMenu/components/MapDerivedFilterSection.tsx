@@ -1,20 +1,9 @@
 import { useMemo } from "react";
-import { Stack, Typography, Chip, Button, IconButton, CircularProgress, Tooltip } from "@mui/material";
+import { Stack, Button, IconButton, CircularProgress, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
-import {
-  useAppStore,
-  useFilterStore,
-  useMapStore,
-  useHazardLayersStore,
-  usePointLayerStore,
-  useRasterLayersStore,
-} from "../../../stores";
-import { deriveVisibleHazards } from "../deriveHazard";
-import { deriveVisibleRasters } from "../deriveRaster";
-import {
-  deriveVisibleCriticalInfrastructure,
-  deriveVisibleLocationsOfEnhancedExposure,
-} from "../derivePoints";
+import { useAppStore, useFilterStore, useMapStore } from "../../../stores";
+import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
+import { flattenVisibleLayers } from "../../../utils/layerMenus";
 
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
@@ -32,10 +21,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   onClearAll,
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const visibleRasterIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
-  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
+  const menuTrees = useVisibleMenuTrees(primaryMapId);
   const datasetCatalog = useAppStore((state) => state.datasetCatalog);
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
@@ -45,44 +31,22 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const setHomelands = useFilterStore((state) => state.setHomelands);
   const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
   const metricFilters = useFilterStore((state) => state.metricFilters);
-  const pointLayerFilters = useFilterStore((state) => state.pointLayerFilters);
-  const pointGroupModes = useFilterStore((state) => state.pointGroupModes);
-  const setAnyFilters = useFilterStore((state) => state.setAnyFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
   const applyPointHazardFilter = useFilterStore((state) => state.applyPointHazardFilter);
   const buildExportUrl = useFilterStore((state) => state.buildExportUrl);
   const isLoading = useFilterStore((state) => state.isLoading);
-  const error = useFilterStore((state) => state.error);
-  const results = useFilterStore((state) => state.results);
 
-  const derivedHazards = useMemo(
-    () => deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId]),
-    [visibleLayerIdsByMap, primaryMapId],
-  );
-
-  const derivedRasters = useMemo(
-    () => deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs),
-    [visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
-  );
-
-  // Checked layers that are still visible on the map, kept separate per section so
-  // each section's own All/Any switch can be read when Apply runs.
-  const checkedVisibleBySection = useMemo(() => {
-    const visiblePoints = visiblePointLayerIdsByMap[primaryMapId];
+  // Every visible shape must overlap, every visible raster is checked, and every visible
+  // point layer must have at least one point in the area, whichever menu each is in
+  const { hazardIds, rasterIds, pointLayerIds } = useMemo(() => {
+    const visible = menuTrees.flatMap(({ nodes }) => flattenVisibleLayers(nodes));
+    const keysOf = (kind: string) => visible.filter((l) => l.kind === kind).map((l) => l.key);
     return {
-      criticalInfrastructure: deriveVisibleCriticalInfrastructure(visiblePoints).filter((layer) =>
-        pointLayerFilters.has(layer.id),
-      ),
-      locationsOfEnhancedExposure: deriveVisibleLocationsOfEnhancedExposure(visiblePoints).filter(
-        (layer) => pointLayerFilters.has(layer.id),
-      ),
+      hazardIds: keysOf("shape"),
+      rasterIds: keysOf("raster"),
+      pointLayerIds: keysOf("point"),
     };
-  }, [visiblePointLayerIdsByMap, primaryMapId, pointLayerFilters]);
-
-  const checkedVisiblePointLayers = [
-    ...checkedVisibleBySection.criticalInfrastructure,
-    ...checkedVisibleBySection.locationsOfEnhancedExposure,
-  ];
+  }, [menuTrees]);
 
   // Primary metric threshold, from the Explore section's "Filter range" slider
   const mvColumn =
@@ -103,17 +67,12 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const hasMetricThreshold = mvColumn !== null && filterRange !== null;
   const hasMetricThreshold2 = mvColumn2 !== null && filterRange2 !== null;
   const hasCriteria = sviShown
-    ? derivedHazards.length > 0 ||
-      hasMetricThreshold ||
-      hasMetricThreshold2 ||
-      checkedVisiblePointLayers.length > 0
-    : (derivedHazards.length > 0 || derivedRasters.length > 0) && checkedVisiblePointLayers.length > 0;
+    ? hazardIds.length > 0 || hasMetricThreshold || hasMetricThreshold2 || pointLayerIds.length > 0
+    : (hazardIds.length > 0 || rasterIds.length > 0) && pointLayerIds.length > 0;
 
   const handleApply = () => {
-    const hazardIds = derivedHazards.map((h) => (h.subId ? `${h.hazardId}.${h.subId}` : h.hazardId));
-    const rasterIds = derivedRasters.map((r) => r.rasterId);
     if (!sviShown) {
-      applyPointHazardFilter(hazardIds, rasterIds, new Set(checkedVisiblePointLayers.map((layer) => layer.id)));
+      applyPointHazardFilter(hazardIds, rasterIds, new Set(pointLayerIds));
       return;
     }
 
@@ -126,18 +85,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
 
-    const anyEntries: string[] = [];
-    for (const [groupId, layers] of Object.entries(checkedVisibleBySection)) {
-      const mode = pointGroupModes[groupId] ?? "all";
-      for (const layer of layers) {
-        if (mode === "all") {
-          setMetricFilter(`${layer.id}_count_abs`, 1);
-        } else {
-          anyEntries.push(`${groupId}:${layer.id}_count_abs:1`);
-        }
-      }
-    }
-    setAnyFilters(anyEntries);
+    for (const id of pointLayerIds) setMetricFilter(`${id}_count_abs`, 1);
 
     applyFilter();
   };

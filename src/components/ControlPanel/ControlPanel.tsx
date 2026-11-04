@@ -37,11 +37,11 @@ import {
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";
-import { PointsMenu } from "./components/PointsMenu";
-import { LocationsMenu } from "./components/LocationsMenu";
-import { HazardsMenu } from "./components/HazardsMenu";
+import { LayerMenu } from "./components/LayerMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
 import { AnalyzerMenu } from "./components/AnalyzerMenu";
+import { LAYER_MENUS } from "../../config/layerMenus";
+import type { LayerMenuId } from "../../config/layerMenus";
 
 interface IntegratedControlPanelProps {
   maxMaps: number;
@@ -50,7 +50,13 @@ interface IntegratedControlPanelProps {
   onSnapshot?: () => void | Promise<void>;
 }
 
-type PopoverKey = "maps" | "svi" | "points" | "locations" | "hazards" | "HCDP" | "analyzer" | null;
+type PopoverKey = "maps" | "svi" | LayerMenuId | "HCDP" | "analyzer" | null;
+
+const LAYER_MENU_ICONS: Record<LayerMenuId, React.ReactNode> = {
+  criticalInfrastructure: <LocationOn fontSize="small" />,
+  locations: <Factory fontSize="small" />,
+  hazards: <Warning fontSize="small" />,
+};
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   maxMaps,
@@ -212,27 +218,12 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
       description:
         "Select social vulnerability indicators to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariately using the Compare with selector.",
     },
-    {
-      key: "points",
-      label: "Critical Infrastructure",
-      icon: <LocationOn fontSize="small" />,
-      description:
-        "Overlay point data for critical infrastructure including hospitals, fire stations, police stations, emergency shelters, schools, and road networks.",
-    },
-    {
-      key: "locations",
-      label: "Secondary Environmental Risk Areas",
-      icon: <Factory fontSize="small" />,
-      description:
-        "Show locations with environmental hazards or risk-prone infrastructure that can worsen climate impacts, such as onsite sewage disposal systems.",
-    },
-    {
-      key: "hazards",
-      label: "Hazards",
-      icon: <Warning fontSize="small" />,
-      description:
-        "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), solar insolation, storm surge, and landslide data.",
-    },
+    ...LAYER_MENUS.map((menu) => ({
+      key: menu.id,
+      label: menu.title,
+      icon: LAYER_MENU_ICONS[menu.id],
+      description: menu.description,
+    })),
     {
       key: "HCDP",
       label: "Hawaii Climate Data Portal",
@@ -357,24 +348,16 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         onClose={() => closeMenu("svi")}
         onInfoClick={(e) => handleInfoClick("svi", e)}
       />
-      <PointsMenu
-        open={Boolean(anchors.points)}
-        anchorEl={anchors.points ?? null}
-        onClose={() => closeMenu("points")}
-        onInfoClick={(e) => handleInfoClick("points", e)}
-      />
-      <LocationsMenu
-        open={Boolean(anchors.locations)}
-        anchorEl={anchors.locations ?? null}
-        onClose={() => closeMenu("locations")}
-        onInfoClick={(e) => handleInfoClick("locations", e)}
-      />
-      <HazardsMenu
-        open={Boolean(anchors.hazards)}
-        anchorEl={anchors.hazards ?? null}
-        onClose={() => closeMenu("hazards")}
-        onInfoClick={(e) => handleInfoClick("hazards", e)}
-      />
+      {LAYER_MENUS.map((menu) => (
+        <LayerMenu
+          key={menu.id}
+          menu={menu}
+          open={Boolean(anchors[menu.id])}
+          anchorEl={anchors[menu.id] ?? null}
+          onClose={() => closeMenu(menu.id)}
+          onInfoClick={(e) => handleInfoClick(menu.id, e)}
+        />
+      ))}
       <HcdpMenu
         open={Boolean(anchors.HCDP)}
         anchorEl={anchors.HCDP ?? null}

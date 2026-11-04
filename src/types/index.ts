@@ -91,8 +91,6 @@ export interface CountyBoundariesProperties {
 export interface PointLayerConfig {
   id: string;
   name: string;
-  menu: "criticalInfrastructure" | "locationsOfEnhancedExposure";
-  menuGroup?: string;
   description?: string;
   visible: boolean;
   icon: string;
@@ -124,8 +122,6 @@ export interface SubHazardLayerConfig {
   subLayers?: SubHazardLayerConfig[];
 }
 
-export type HazardLayerMenuPanel = "hazards" | "points" | "locations";
-
 export interface HazardLayerConfig {
   id: string;
   name: string;
@@ -139,8 +135,6 @@ export interface HazardLayerConfig {
     fields?: { key: string; label: string }[];
   };
   subLayers?: SubHazardLayerConfig[];
-  menuPanel?: HazardLayerMenuPanel;
-  menuGroup?: string;
 }
 
 export interface SubRasterLayerConfig {

@@ -4,7 +4,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "fire_stations",
     name: "Fire Stations",
-    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaFireExtinguisher",
     color: "#FF0000",
@@ -15,7 +14,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "hospitals",
     name: "Hospitals",
-    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHospital",
     color: "#00BFFF",
@@ -26,7 +24,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "police_stations",
     name: "Police Stations",
-    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaShieldAlt",
     color: "#000080",
@@ -37,7 +34,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "shelters",
     name: "Emergency Shelters",
-    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaHouseUser",
     color: "#00CC00",
@@ -55,8 +51,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "preschools",
     name: "Preschools",
-    menu: "criticalInfrastructure",
-    menuGroup: "Schools",
     visible: false,
     icon: "FaSchool",
     color: "#FFA500",
@@ -73,8 +67,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "public_schools",
     name: "Public Schools",
-    menu: "criticalInfrastructure",
-    menuGroup: "Schools",
     visible: false,
     icon: "FaSchool",
     color: "#8A2BE2",
@@ -91,8 +83,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "private_schools",
     name: "Private Schools",
-    menu: "criticalInfrastructure",
-    menuGroup: "Schools",
     visible: false,
     icon: "FaSchool",
     color: "#DC143C",
@@ -109,7 +99,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "bridges",
     name: "Bridges",
-    menu: "criticalInfrastructure",
     visible: false,
     icon: "FaArchway",
     color: "#6c757d",
@@ -147,7 +136,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "wastewater_plant",
     name: "Wastewater Treatment Plants",
-    menu: "locationsOfEnhancedExposure",
     description:
       "Wastewater treatment facilities can be vulnerable to flooding and other hazards that affect essential services.",
     visible: false,
@@ -163,8 +151,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "airports",
     name: "Airports",
-    menu: "criticalInfrastructure",
-    menuGroup: "Airports",
     visible: false,
     icon: "FaPlane",
     color: "#e4870e",
@@ -178,8 +164,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "commercial_harbors",
     name: "Commercial Harbors",
-    menu: "criticalInfrastructure",
-    menuGroup: "Harbors",
     visible: false,
     icon: "FaShip",
     color: "#021f74",
@@ -199,8 +183,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "small_boat_harbors",
     name: "Small Boat Harbors",
-    menu: "criticalInfrastructure",
-    menuGroup: "Harbors",
     visible: false,
     icon: "FaShip",
     color: "#021f74",

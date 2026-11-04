@@ -1,22 +1,5 @@
 import { HazardLayerConfig } from "../types";
 
-export interface HazardMenuGroup {
-  label: string; //matches the layers' menuGroup name
-  description?: string; //group level description for UI
-  icon?: string;
-  color?: string;
-}
-
-export const HAZARD_MENU_GROUPS: HazardMenuGroup[] = [
-  {
-    label: "Sea Level Rise",
-    description:
-      "Projected changes in sea level identify locations with increasing exposure to coastal inundation and long term flooding.",
-    icon: "FaWaveSquare",
-    color: "#1976d2",
-  },
-];
-
 export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "flood_hazard",
@@ -96,7 +79,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     id: "erosion",
     name: "Coastal Erosion",
     description: "Projected shoreline erosion under sea level rise scenarios can increase long term exposure along the coast.",
-    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaUmbrellaBeach",
     color: "#A89C90",
@@ -139,7 +121,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     id: "potential_flood_highways",
     name: "Highway Flood Risk",
     description: "Highway sections at risk of flooding under sea level rise scenarios can reduce transportation access during hazard events.",
-    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
@@ -182,7 +163,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     id: "exposure_area",
     name: "Exposure Area",
     description: "Frequent inundation under sea level rise scenarios indicates locations with greater exposure to repeated flooding.",
-    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaRadiationAlt",
     color: "#7ea834",
@@ -226,7 +206,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
     id: "passive_flood",
     name: "Passive Flood",
     description: "Low lying areas projected to experience inundation as sea levels rise may face increasing long-term exposure.",
-    menuGroup: "Sea Level Rise",
     visible: false,
     icon: "FaTint",
     color: "#37bbf0",
@@ -268,7 +247,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "sidewalks_and_paths",
     name: "Sidewalks and Paths",
-    menuPanel: "points",
     visible: false,
     icon: "FaWalking",
     color: "#000000",
@@ -285,7 +263,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "state_roads",
     name: "State Roads",
-    menuPanel: "points",
     visible: false,
     icon: "FaRoad",
     color: "#000000",
@@ -509,7 +486,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "pcl_filtered",
     name: "Previously Contaminated Land",
-    menuPanel: "locations",
     visible: false,
     icon: "FaOilCan",
     color: "#000000",
@@ -532,7 +508,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "pcl_landfill",
     name: "Solid Waste Disposal Sites",
-    menuPanel: "locations",
     visible: false,
     icon: "FaTrash",
     color: "#000000",
@@ -555,8 +530,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "airport_areas",
     name: "Airport Grounds",
-    menuPanel: "points",
-    menuGroup: "Airports",
     visible: false,
     icon: "FaPlane",
     color: "#f3c863",
@@ -569,8 +542,6 @@ export const HAZARD_LAYERS: HazardLayerConfig[] = [
   {
     id: "commercial_harbor_areas",
     name: "Commercial Harbor Grounds",
-    menuPanel: "points",
-    menuGroup: "Harbors",
     visible: false,
     icon: "FaShip",
     color: "#254bbc",

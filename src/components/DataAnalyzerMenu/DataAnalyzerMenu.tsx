@@ -1,54 +1,16 @@
-import { useMemo, useState } from "react";
+import { Fragment, useState } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
-import {
-  useAppStore,
-  useMapStore,
-  useFilterStore,
-  useHazardLayersStore,
-  usePointLayerStore,
-  useRasterLayersStore,
-} from "../../stores";
+import { useAppStore, useMapStore, useFilterStore } from "../../stores";
 import { HistogramSection } from "./components/HistogramSection";
-import { HazardSection } from "./components/HazardSection";
-import { PointSection } from "./components/PointSection";
+import { LayerMenuSection } from "./components/LayerMenuSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
-import { deriveVisibleHazards } from "./deriveHazard";
-import { deriveVisibleRasters } from "./deriveRaster";
-import {
-  deriveVisibleCriticalInfrastructure,
-  deriveVisibleLocationsOfEnhancedExposure,
-} from "./derivePoints";
+import { useVisibleMenuTrees } from "../../hooks/useVisibleMenuTrees";
 
 export const DataAnalyzerMenu = () => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
-  const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-  const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const visibleRasterIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
-  const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-
-  // Each section mirrors one control panel menu, so it counts that menu's points, shapes and rasters
-  const hasHazard = useMemo(
-    () =>
-      deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "hazards").length > 0 ||
-      deriveVisibleRasters(visibleRasterIdsByMap[primaryMapId], rasterLayerConfigs).length > 0,
-    [visibleLayerIdsByMap, visibleRasterIdsByMap, primaryMapId, rasterLayerConfigs],
-  );
-
-  const hasCriticalInfrastructure = useMemo(
-    () =>
-      deriveVisibleCriticalInfrastructure(visiblePointLayerIdsByMap[primaryMapId]).length > 0 ||
-      deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "points").length > 0,
-    [visiblePointLayerIdsByMap, visibleLayerIdsByMap, primaryMapId],
-  );
-
-  const hasLocationsOfEnhancedExposure = useMemo(
-    () =>
-      deriveVisibleLocationsOfEnhancedExposure(visiblePointLayerIdsByMap[primaryMapId]).length >
-        0 || deriveVisibleHazards(visibleLayerIdsByMap[primaryMapId], "locations").length > 0,
-    [visiblePointLayerIdsByMap, visibleLayerIdsByMap, primaryMapId],
-  );
+  const menuTrees = useVisibleMenuTrees(primaryMapId);
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
   const dataset = primaryConfig?.dataset;
@@ -78,26 +40,14 @@ export const DataAnalyzerMenu = () => {
         metric2={metric2}
       />
 
-      {hasCriticalInfrastructure && (
-        <>
-          <Divider />
-          <PointSection menu="criticalInfrastructure" title="Critical Infrastructure" />
-        </>
-      )}
-
-      {hasLocationsOfEnhancedExposure && (
-        <>
-          <Divider />
-          <PointSection menu="locationsOfEnhancedExposure" title="Secondary Environmental Risk Areas" />
-        </>
-      )}
-
-      {hasHazard && (
-        <>
-          <Divider />
-          <HazardSection />
-        </>
-      )}
+      {menuTrees
+        .filter(({ nodes }) => nodes.length > 0)
+        .map(({ menu, nodes }) => (
+          <Fragment key={menu.id}>
+            <Divider />
+            <LayerMenuSection title={menu.title} nodes={nodes} />
+          </Fragment>
+        ))}
 
       <Divider />
       <Typography variant="caption" color="text.secondary">

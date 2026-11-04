@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useHazardLayersStore } from "../stores/useHazardLayersStore";
-import { deriveVisibleHazards } from "../components/DataAnalyzerMenu/deriveHazard";
+import { useVisibleMenuTrees } from "./useVisibleMenuTrees";
+import { flattenVisibleLayers } from "../utils/layerMenus";
 import { getHazardAreas } from "../api/client";
 
 // Resolves to the touching areas, or null if the database has no data for that hazard.
@@ -33,14 +33,14 @@ export interface TableHazardOverlaps {
 // One Yes/No column per hazard or sub-layer currently toggled on the map. A hazard shows up
 // only once its data has loaded, and never if the database has none (that would read as "No").
 export function useHazardOverlapsForTable(mapId: string): TableHazardOverlaps {
-  const visibleIds = useHazardLayersStore((state) => state.visibleLayerIdsByMap[mapId]);
+  const menuTrees = useVisibleMenuTrees(mapId);
   const visible = useMemo(
     () =>
-      deriveVisibleHazards(visibleIds).map((hazard) => ({
-        key: hazard.subId ? `${hazard.hazardId}.${hazard.subId}` : hazard.hazardId,
-        label: hazard.label,
-      })),
-    [visibleIds],
+      menuTrees
+        .flatMap(({ nodes }) => flattenVisibleLayers(nodes))
+        .filter((layer) => layer.kind === "shape")
+        .map(({ key, label }) => ({ key, label })),
+    [menuTrees],
   );
 
   const [areasByKey, setAreasByKey] = useState<Record<string, Set<string> | null>>({});

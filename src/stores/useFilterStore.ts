@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { BlockGroupResult } from "../types";
-import { POINT_LAYERS } from "../config/pointLayers";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -8,10 +7,6 @@ interface FilterState {
   hazards: string[];
   rasters: string[];
   metricFilters: Partial<Record<string, number>>;
-  pointLayerFilters: Set<string>;
-  pointGroupModes: Record<string, "all" | "any">;
-  // Filters for "ANY/OR" conditions
-  anyFilters: string[];
   homelands: boolean;
   results: BlockGroupResult[] | null;
   filteredGeoids: Set<string> | null;
@@ -32,9 +27,6 @@ interface FilterActions {
   setHazards: (ids: string[]) => void;
   setRasters: (ids: string[]) => void;
   setMetricFilter: (col: string, value: number | null) => void;
-  togglePointLayerFilter: (id: string) => void;
-  setPointGroupMode: (groupId: string, mode: "all" | "any") => void;
-  setAnyFilters: (entries: string[]) => void;
   applyFilter: () => Promise<void>;
   applyPointHazardFilter: (hazards: string[], rasters: string[], layers: Set<string>) => void;
   buildExportUrl: () => string;
@@ -45,9 +37,6 @@ const initialState: FilterState = {
   hazards: [],
   rasters: [],
   metricFilters: {},
-  pointLayerFilters: new Set(POINT_LAYERS.map((layer) => layer.id)),
-  pointGroupModes: {},
-  anyFilters: [],
   homelands: false,
   results: null,
   filteredGeoids: null,
@@ -62,7 +51,6 @@ const buildParams = (state: FilterState): URLSearchParams => {
   for (const [col, val] of Object.entries(state.metricFilters)) {
     if (val !== undefined) params.set(`min_${col}`, String(val));
   }
-  for (const entry of state.anyFilters) params.append("any", entry);
   return params;
 };
 
@@ -86,22 +74,6 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       }
       return { metricFilters: next };
     }),
-
-  togglePointLayerFilter: (id) =>
-    set((state) => {
-      const next = new Set(state.pointLayerFilters);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return { pointLayerFilters: next };
-    }),
-
-  setPointGroupMode: (groupId, mode) =>
-    set((state) => ({ pointGroupModes: { ...state.pointGroupModes, [groupId]: mode } })),
-
-  setAnyFilters: (entries) => set({ anyFilters: entries }),
 
   applyFilter: async () => {
     set({ isLoading: true, error: null });
