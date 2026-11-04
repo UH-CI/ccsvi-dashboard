@@ -19,6 +19,7 @@ __pycache__/
 
 # Virtual environment
 venv/
+.venv/
 env/
 .env
 
@@ -29,8 +30,9 @@ config.json
 
 # Node.js dependencies
 node_modules/
-# Build output
+# Build output and Vite's cache
 dist/
+.vite/
 
 # Scratch notes
 docs/
