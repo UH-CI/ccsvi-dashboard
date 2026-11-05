@@ -1,15 +1,14 @@
 interface Switchable {
   off?: boolean;
-  subLayers?: { off?: boolean }[];
 }
 
-// A layer file's entries without the switched-off ones ("off": true), at both levels
-export function switchedOn<T extends Switchable>(layers: T[]): T[] {
-  return layers
-    .filter((layer) => !layer.off)
-    .map((layer) =>
-      layer.subLayers
-        ? ({ ...layer, subLayers: layer.subLayers.filter((sub) => !sub.off) } as T)
-        : layer,
-    );
+const on = <V>(items: V[]): V[] => items.filter((item) => !(item as Switchable).off);
+
+// A config file's entries without the switched-off ones ("off": true), at both levels: layers and
+// their subLayers, or menu categories and their indicators
+export function switchedOn<T, K extends keyof T>(items: T[], children: K): T[] {
+  return on(items).map((item) => {
+    const kids = item[children];
+    return Array.isArray(kids) ? { ...item, [children]: on(kids) } : item;
+  });
 }

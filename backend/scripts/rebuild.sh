@@ -45,6 +45,9 @@ echo "-- loading census data"
 cd "$BACKEND_DIR"
 "$PYTHON" -m ingest.load_cleaned_census
 
+echo "-- checking the census menu against the loaded metrics"
+"$PYTHON" -m pipeline.check_layers --census-metrics
+
 if $FULL; then
     echo "-- loading geometry, points, hazards"
     "$PYTHON" -m ingest.load_postgis

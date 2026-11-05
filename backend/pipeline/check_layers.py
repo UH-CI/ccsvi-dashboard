@@ -1,8 +1,9 @@
-"""Reads the map layer files in config/layers/ and checks them. Every backend part that needs a
-layer gets it from here, so they all read the same entry.
+"""Reads the map layer files in config/layers/ and the census menu in config/census_menu.json, and
+checks them. Every backend part that needs a layer gets it from here, so they all read the same entry.
 
-python -m pipeline.check_layers            every check, including the files on the VM
-python -m pipeline.check_layers --static   only the checks that need no data files
+python -m pipeline.check_layers                    every check, including the files on the VM
+python -m pipeline.check_layers --static           only the checks that need no data files
+python -m pipeline.check_layers --census-metrics   the census menu against the loaded metrics
 """
 
 import argparse
@@ -16,7 +17,13 @@ import settings
 from pipeline.build_tools import run
 
 LAYERS_DIR = Path(__file__).resolve().parents[2] / "config" / "layers"
+CENSUS_MENU = LAYERS_DIR.parent / "census_menu.json"
+CENSUS_CONFIG = Path(__file__).resolve().parent / "census" / "config" / "census_datasets_config.json"
 SHAPES = {"polygons": "MultiPolygon", "lines": "MultiLineString"}
+
+# The census menu's fields, as (required, optional)
+CATEGORY_FIELDS = ({"id", "label", "indicators"}, {"description"})
+INDICATOR_FIELDS = ({"dataset", "metric", "label"}, {"description", "calculationDescription", "isCount", "off"})
 
 # Per layer file, the fields each kind of entry must have and may have, as (required, optional).
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
@@ -228,16 +235,68 @@ def popup_problems(found):
     return problems
 
 
+# Every census dataset id: an entry's alias, or the names of its outputs when it is split into several
+def census_dataset_ids():
+    entries = json.loads(CENSUS_CONFIG.read_text())["datasets"]
+    split = {output["name"] for entry in entries for output in entry.get("outputs", [])}
+    return split | {entry["alias"] for entry in entries if "outputs" not in entry}
+
+
+def census_categories():
+    return json.loads(CENSUS_MENU.read_text())["categories"]
+
+
+# Every indicator, switched off or not, so one switched back on still works
+def census_pairs():
+    return [(i["dataset"], i["metric"]) for category in census_categories() for i in category["indicators"]]
+
+
+def census_problems():
+    categories = census_categories()
+    dataset_ids = census_dataset_ids()
+    problems = [f"category {id_}: id used twice" for id_ in repeats([c.get("id") for c in categories])]
+    live = []
+    for category in categories:
+        problems += [f"category {category.get('id')}: {p}" for p in field_problems("census", category, *CATEGORY_FIELDS)]
+        for indicator in category.get("indicators", []):
+            name = f"{indicator.get('dataset')} / {indicator.get('metric')}"
+            problems += [f"{name}: {p}" for p in field_problems("census", indicator, *INDICATOR_FIELDS)]
+            if indicator.get("dataset") not in dataset_ids:
+                problems.append(f"{name}: no census dataset with that id")
+            if not indicator.get("off"):
+                live.append((indicator.get("dataset"), indicator.get("metric")))
+    problems += [f"{dataset} / {metric}: in the menu twice" for dataset, metric in repeats(live)]
+    return problems
+
+
+def census_metric_problems():
+    # The database driver is only needed here, on the VM after the census load
+    import psycopg2
+
+    with psycopg2.connect(settings.database_url()) as conn, conn.cursor() as cur:
+        cur.execute("SELECT dataset_id, name FROM metrics")
+        loaded = set(cur.fetchall())
+    return [f"{d} / {m}: no such metric after the census load" for d, m in census_pairs() if (d, m) not in loaded]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--static", action="store_true", help="skip the checks that need the data files")
+    parser.add_argument("--census-metrics", action="store_true", help="check the census menu against the loaded metrics")
     args = parser.parse_args()
+
+    stop_on(census_problems())
+    if args.census_metrics:
+        stop_on(census_metric_problems())
+        print(f"Census menu ok: all {len(census_pairs())} indicators have a metric")
+        return
 
     found_rasters, found_shapes = rasters(), shape_layers()
     if not args.static:
         found = found_rasters + found_shapes
         stop_on(source_problems(found) + data_file_problems(found) + popup_problems(found_shapes))
-    print(f"Layer files ok: {len(found_rasters)} rasters, {len(found_shapes)} lines and polygons")
+    print(f"Layer files ok: {len(found_rasters)} rasters, {len(found_shapes)} lines and polygons, "
+          f"{len(census_pairs())} census indicators")
 
 
 if __name__ == "__main__":
