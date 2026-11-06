@@ -1,232 +1,50 @@
-"""The wide metric view columns
+"""The wide metric view columns the Data Analyzer filters on: one per census menu indicator, switched
+on or off, and one per point layer's count
 
-Each entry is (view column, dataset id, metric name, metric_values column to read)
+Each entry is (view column, dataset id, metric name)
 """
 
-BLOCK_GROUP_COLUMNS: list[tuple[str, str, str, str]] = [
-    ('housing_pre_1990_pct_calc', 'age_of_structure',
-     'Total Housing Built Before 1990 (calc.)', 'percentage'),
-    ('vehicles_aggregate_abs', 'aggregate_vehicles',
-     'Aggregate number of vehicles available', 'absolute'),
-    ('gender_male_pct', 'genders',
-     'Male', 'percentage'),
-    ('gender_female_pct', 'genders',
-     'Female', 'percentage'),
-    ('no_health_insurance_pct_calc', 'health_insurance',
-     'No Health Insurance Coverage (calc.)', 'percentage'),
-    ('no_computer_pct', 'households_w_computer',
-     'No Computer', 'percentage'),
-    ('fpl_total_abs', 'income_share_of_fpl',
-     'Total', 'absolute'),
-    ('fpl_under_100_pct_calc', 'income_share_of_fpl',
-     'Total Under 100% FPL (calc.)', 'percentage'),
-    ('fpl_under_150_pct_calc', 'income_share_of_fpl',
-     'Total Under 150% FPL (calc.)', 'percentage'),
-    ('fpl_under_200_pct_calc', 'income_share_of_fpl',
-     'Total Under 200% FPL (calc.)', 'percentage'),
-    ('no_internet_pct', 'internet_subscription',
-     'No Internet access', 'percentage'),
-    ('limited_english_total_pct_calc', 'limited_english_speaking',
-     'Total Limited English Speaking Households (calc.)', 'percentage'),
-    ('limited_english_spanish_pct', 'limited_english_speaking',
-     'Spanish: Limited English speaking household', 'percentage'),
-    ('limited_english_indo_european_pct', 'limited_english_speaking',
-     'Other Indo-European languages: Limited English speaking household', 'percentage'),
-    ('limited_english_asian_pi_pct', 'limited_english_speaking',
-     'Asian and Pacific Island languages: Limited English speaking household', 'percentage'),
-    ('limited_english_other_pct', 'limited_english_speaking',
-     'Other languages: Limited English speaking household', 'percentage'),
-    ('living_alone_total_pct_calc', 'living_arrangements',
-     'Total Living alone (calc.)', 'percentage'),
-    ('living_alone_male_pct', 'living_arrangements',
-     'In households: Householder: Male: Living alone', 'percentage'),
-    ('living_alone_female_pct', 'living_arrangements',
-     'In households: Householder: Female: Living alone', 'percentage'),
-    # Age-range columns are consolidated below (male + female combined).
-    # The segregated male/female data still exists in the database
-    # (datasets person_under_5_65_males / person_under_5_65_females) and
-    # these entries work if uncommented — just no longer in the map view.
-    # ('females_under_5_pct_calc', 'person_under_5_65_females',
-    #  'Females Under 5 (calc.)', 'percentage'),
-    # ('females_under_18_pct_calc', 'person_under_5_65_females',
-    #  'Females Under 18 (calc.)', 'percentage'),
-    # ('females_over_65_pct_calc', 'person_under_5_65_females',
-    #  'Females Over 65 (calc.)', 'percentage'),
-    # ('males_under_5_pct_calc', 'person_under_5_65_males',
-    #  'Males Under 5 (calc.)', 'percentage'),
-    # ('males_under_18_pct_calc', 'person_under_5_65_males',
-    #  'Males Under 18 (calc.)', 'percentage'),
-    # ('males_over_65_pct_calc', 'person_under_5_65_males',
-    #  'Males Over 65 (calc.)', 'percentage'),
-    ('pop_under_5_pct_calc', 'person_under_5_65_total',
-     'Total Under 5 (calc.)', 'percentage'),
-    ('pop_under_18_pct_calc', 'person_under_5_65_total',
-     'Total Under 18 (calc.)', 'percentage'),
-    ('pop_over_65_pct_calc', 'person_under_5_65_total',
-     'Total Over 65 (calc.)', 'percentage'),
-    ('group_quarters_total_abs', 'population_group_quarters',
-     'Institutionalized population', 'absolute'),
-    ('group_quarters_correctional_abs', 'population_group_quarters',
-     'Institutionalized population: Correctional facilities for adults', 'absolute'),
-    ('group_quarters_juvenile_abs', 'population_group_quarters',
-     'Institutionalized population: Juvenile facilities', 'absolute'),
-    ('group_quarters_nursing_abs', 'population_group_quarters',
-     'Institutionalized population: Nursing facilities/Skilled-nursing facilities', 'absolute'),
-    ('group_quarters_other_abs', 'population_group_quarters',
-     'Institutionalized population: Other institutional facilities', 'absolute'),
-    ('race_white_pct', 'race_origin',
-     'White alone', 'percentage'),
-    ('race_black_pct', 'race_origin',
-     'Black or African American alone', 'percentage'),
-    ('race_aian_pct', 'race_origin',
-     'American Indian and Alaska Native alone', 'percentage'),
-    ('race_asian_pct', 'race_origin',
-     'Asian alone', 'percentage'),
-    ('race_nhpi_pct', 'race_origin',
-     'Native Hawaiian and Other Pacific Islander alone', 'percentage'),
-    ('race_other_pct', 'race_origin',
-     'Some Other Race alone', 'percentage'),
-    ('race_two_or_more_pct', 'race_origin',
-     'Two or More Races', 'percentage'),
-    ('tenure_renter_pct', 'tenure',
-     'Renter occupied', 'percentage'),
+import hashlib
+import re
 
-    # Point counts per layer.
-    ('fire_stations_count_abs', 'fire_stations_points',
-     'Count', 'absolute'),
-    ('hospitals_count_abs', 'hospitals_points',
-     'Count', 'absolute'),
-    ('police_stations_count_abs', 'police_stations_points',
-     'Count', 'absolute'),
-    ('shelters_count_abs', 'shelters_points',
-     'Count', 'absolute'),
-    ('preschools_count_abs', 'preschools_points',
-     'Count', 'absolute'),
-    ('public_schools_count_abs', 'public_schools_points',
-     'Count', 'absolute'),
-    ('private_schools_count_abs', 'private_schools_points',
-     'Count', 'absolute'),
-    ('bridges_count_abs', 'bridges_points',
-     'Count', 'absolute'),
-    ('sewage_count_abs', 'sewage_points',
-     'Count', 'absolute'),
-    ('wastewater_plant_count_abs', 'wastewater_plant_points',
-     'Count', 'absolute'),
-    ('airports_count_abs', 'airports_points',
-     'Count', 'absolute'),
-    ('commercial_harbors_count_abs', 'commercial_harbors_points',
-     'Count', 'absolute'),
-    ('small_boat_harbors_count_abs', 'small_boat_harbors_points',
-     'Count', 'absolute'),
+from ingest.load_postgis import POINT_LAYERS
+from pipeline.check_layers import census_categories, census_datasets, repeats
 
-    # Raster means per area.
-    ('storm_surge_cat1_mean_abs', 'stormSurge_inundation_category1_raster',
-     'Mean', 'absolute'),
-    ('storm_surge_cat2_mean_abs', 'stormSurge_inundation_category2_raster',
-     'Mean', 'absolute'),
-    ('storm_surge_cat3_mean_abs', 'stormSurge_inundation_category3_raster',
-     'Mean', 'absolute'),
-    ('storm_surge_cat4_mean_abs', 'stormSurge_inundation_category4_raster',
-     'Mean', 'absolute'),
-    ('landslide_mean_abs', 'Landslide_raster',
-     'Mean', 'absolute'),
-    ('storm_surge_cat1_max_abs', 'stormSurge_inundation_category1_raster',
-     'Max', 'absolute'),
-    ('storm_surge_cat2_max_abs', 'stormSurge_inundation_category2_raster',
-     'Max', 'absolute'),
-    ('storm_surge_cat3_max_abs', 'stormSurge_inundation_category3_raster',
-     'Max', 'absolute'),
-    ('storm_surge_cat4_max_abs', 'stormSurge_inundation_category4_raster',
-     'Max', 'absolute'),
-    ('landslide_max_abs', 'Landslide_raster',
-     'Max', 'absolute'),
-]
+# Postgres cuts names longer than this
+MAX_NAME = 63
 
-HAWAIIAN_HOMELAND_COLUMNS: list[tuple[str, str, str, str]] = [
-    ('pop_under_5_pct_calc', '2022_census_hawaiian_homelands',
-     'Total Population Under 5 (calc.)', 'percentage'),
-    ('pop_under_18_pct_calc', '2022_census_hawaiian_homelands',
-     'Total Population Under 18 (calc.)', 'percentage'),
-    ('pop_over_65_pct_calc', '2022_census_hawaiian_homelands',
-     'Total Population Over 65 (calc.)', 'percentage'),
-    ('male_pct', '2022_census_hawaiian_homelands',
-     'Total population SEX Male', 'percentage'),
-    ('female_pct', '2022_census_hawaiian_homelands',
-     'Total population SEX Female', 'percentage'),
-    ('race_white_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race White', 'percentage'),
-    ('race_black_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race Black or African American', 'percentage'),
-    ('race_aian_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race American Indian and Alaska Native', 'percentage'),
-    ('race_asian_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race Asian', 'percentage'),
-    ('race_nhpi_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race Native Hawaiian and Other Pacific Islander', 'percentage'),
-    ('race_other_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN One race Some other race', 'percentage'),
-    ('race_two_or_more_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN Two or more races', 'percentage'),
-    ('hispanic_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN Hispanic or Latino origin (of any race)', 'percentage'),
-    ('race_white_non_hispanic_pct', '2022_census_hawaiian_homelands',
-     'Total population RACE AND HISPANIC OR LATINO ORIGIN White alone, not Hispanic or Latino', 'percentage'),
-    ('limited_english_pct', '2022_census_hawaiian_homelands',
-     'LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well', 'percentage'),
-    ('median_income_abs', '2022_census_hawaiian_homelands',
-     "INDIVIDUALS' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS) Population 15 years and over Median income (dollars)", 'absolute'),
-    ('fpl_under_100_pct', '2022_census_hawaiian_homelands',
-     'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level', 'percentage'),
-    ('fpl_under_150_pct_calc', '2022_census_hawaiian_homelands',
-     'Total Under 150% FPL (calc.)', 'percentage'),
 
-    # Point counts per layer.
-    ('fire_stations_count_abs', 'fire_stations_points_homelands',
-     'Count', 'absolute'),
-    ('hospitals_count_abs', 'hospitals_points_homelands',
-     'Count', 'absolute'),
-    ('police_stations_count_abs', 'police_stations_points_homelands',
-     'Count', 'absolute'),
-    ('shelters_count_abs', 'shelters_points_homelands',
-     'Count', 'absolute'),
-    ('preschools_count_abs', 'preschools_points_homelands',
-     'Count', 'absolute'),
-    ('public_schools_count_abs', 'public_schools_points_homelands',
-     'Count', 'absolute'),
-    ('private_schools_count_abs', 'private_schools_points_homelands',
-     'Count', 'absolute'),
-    ('bridges_count_abs', 'bridges_points_homelands',
-     'Count', 'absolute'),
-    ('sewage_count_abs', 'sewage_points_homelands',
-     'Count', 'absolute'),
-    ('wastewater_plant_count_abs', 'wastewater_plant_points_homelands',
-     'Count', 'absolute'),
-    ('airports_count_abs', 'airports_points_homelands',
-     'Count', 'absolute'),
-    ('commercial_harbors_count_abs', 'commercial_harbors_points_homelands',
-     'Count', 'absolute'),
-    ('small_boat_harbors_count_abs', 'small_boat_harbors_points_homelands',
-     'Count', 'absolute'),
+# Lowercase, with every run of characters other than a-z and 0-9 as one _
+def name_part(text):
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
 
-    # Raster means per area.
-    ('storm_surge_cat1_mean_abs', 'stormSurge_inundation_category1_raster_homelands',
-     'Mean', 'absolute'),
-    ('storm_surge_cat2_mean_abs', 'stormSurge_inundation_category2_raster_homelands',
-     'Mean', 'absolute'),
-    ('storm_surge_cat3_mean_abs', 'stormSurge_inundation_category3_raster_homelands',
-     'Mean', 'absolute'),
-    ('storm_surge_cat4_mean_abs', 'stormSurge_inundation_category4_raster_homelands',
-     'Mean', 'absolute'),
-    ('landslide_mean_abs', 'Landslide_raster_homelands',
-     'Mean', 'absolute'),
-    ('storm_surge_cat1_max_abs', 'stormSurge_inundation_category1_raster_homelands',
-     'Max', 'absolute'),
-    ('storm_surge_cat2_max_abs', 'stormSurge_inundation_category2_raster_homelands',
-     'Max', 'absolute'),
-    ('storm_surge_cat3_max_abs', 'stormSurge_inundation_category3_raster_homelands',
-     'Max', 'absolute'),
-    ('storm_surge_cat4_max_abs', 'stormSurge_inundation_category4_raster_homelands',
-     'Max', 'absolute'),
-    ('landslide_max_abs', 'Landslide_raster_homelands',
-     'Max', 'absolute'),
-]
+
+# "<dataset>__<metric>", with d_ in front of a leading digit; a name too long for Postgres keeps
+# its first 56 characters and a short fingerprint of the whole name, so it stays unique
+def column_name(dataset, metric):
+    name = f"{name_part(dataset)}__{name_part(metric)}"
+    if name[0].isdigit():
+        name = f"d_{name}"
+    if len(name) > MAX_NAME:
+        name = f"{name[:56]}_{hashlib.sha1(name.encode()).hexdigest()[:6]}"
+    return name
+
+
+def view_columns(homelands):
+    homelands_of = census_datasets()
+    pairs = [
+        (indicator["dataset"], indicator["metric"])
+        for category in census_categories()
+        for indicator in category["indicators"]
+        if homelands_of[indicator["dataset"]] == homelands
+    ]
+    suffix = "_homelands" if homelands else ""
+    pairs += [(f"{layer_id}_points{suffix}", "Count") for _, layer_id, _ in POINT_LAYERS]
+    columns = [(column_name(dataset, metric), dataset, metric) for dataset, metric in pairs]
+    if repeated := repeats([column for column, _, _ in columns]):
+        raise SystemExit(f"Filter column name used twice: {', '.join(repeated)}")
+    return columns
+
+
+BLOCK_GROUP_COLUMNS = view_columns(False)
+HAWAIIAN_HOMELAND_COLUMNS = view_columns(True)

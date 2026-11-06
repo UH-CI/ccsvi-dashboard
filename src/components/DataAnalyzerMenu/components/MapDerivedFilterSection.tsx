@@ -4,6 +4,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { useAppStore, useFilterStore, useMapStore } from "../../../stores";
 import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
+import { layerDatasetId } from "../../../utils/layerDatasets";
 
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
@@ -25,6 +26,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const datasetCatalog = useAppStore((state) => state.datasetCatalog);
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
+  const exportTable = useAppStore((state) => state.exportTable);
 
   const setHazards = useFilterStore((state) => state.setHazards);
   const setRasters = useFilterStore((state) => state.setRasters);
@@ -33,7 +35,6 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const metricFilters = useFilterStore((state) => state.metricFilters);
   const applyFilter = useFilterStore((state) => state.applyFilter);
   const applyPointHazardFilter = useFilterStore((state) => state.applyPointHazardFilter);
-  const buildExportUrl = useFilterStore((state) => state.buildExportUrl);
   const isLoading = useFilterStore((state) => state.isLoading);
 
   // Every visible shape must overlap, every visible raster is checked, and every visible
@@ -76,16 +77,20 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
       return;
     }
 
-    setHomelands(
-      dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false,
-    );
+    const homelands =
+      dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false;
+    setHomelands(homelands);
     setHazards(hazardIds);
     setRasters(rasterIds);
     for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
     if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
     if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
 
-    for (const id of pointLayerIds) setMetricFilter(`${id}_count_abs`, 1);
+    // At least one point of each visible point layer, on its count's filter column
+    for (const id of pointLayerIds) {
+      const pointDataset = layerDatasetId(datasetCatalog, id, homelands)!;
+      setMetricFilter(datasetCatalog![pointDataset].columnThresholds.Count.mvColumn!, 1);
+    }
 
     applyFilter();
   };
@@ -113,13 +118,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
         <Button size="small" onClick={onClearAll}>
           Clear
         </Button>
-        <IconButton
-          size="small"
-          disabled={!hasCriteria || !sviShown}
-          component="a"
-          href={hasCriteria && sviShown ? buildExportUrl() : undefined}
-          download
-        >
+        <IconButton size="small" disabled={!exportTable} onClick={() => exportTable!()}>
           <DownloadIcon fontSize="small" />
         </IconButton>
       </Stack>

@@ -32,6 +32,9 @@ interface AppState {
   // Comparison metric's threshold slider (Data Analyzer)
   filterRange2: [number, number] | null;
   setFilterRange2: (range: [number, number] | null) => void;
+  // The table's CSV export while the table is showing, so the Data Analyzer's download saves the same file
+  exportTable: (() => void) | null;
+  setExportTable: (exportTable: (() => void) | null) => void;
   blockGroupData: Dataset | null;
   censusBlockGroups: FeatureCollection<Geometry, BlockGroupProperties> | null;
   hawaiianHomelands: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
@@ -110,6 +113,8 @@ export const useAppStore = create<AppState>((set, get) => {
     setFilterRange: (range) => set({ filterRange: range }),
     filterRange2: null,
     setFilterRange2: (range) => set({ filterRange2: range }),
+    exportTable: null,
+    setExportTable: (exportTable) => set({ exportTable }),
     blockGroupData: null,
     censusBlockGroups: null,
     hawaiianHomelands: null,

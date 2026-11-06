@@ -29,7 +29,6 @@ interface FilterActions {
   setMetricFilter: (col: string, value: number | null) => void;
   applyFilter: () => Promise<void>;
   applyPointHazardFilter: (hazards: string[], rasters: string[], layers: Set<string>) => void;
-  buildExportUrl: () => string;
   clearFilter: () => void;
 }
 
@@ -113,12 +112,6 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       pointFilter: { geoids: null, hazards, rasters, layers },
       error: null,
     }),
-
-  buildExportUrl: () => {
-    const params = buildParams(get());
-    params.set("format", "csv");
-    return filterUrl(get(), params);
-  },
 
   clearFilter: () => set({ ...initialState }),
 }));

@@ -5,7 +5,7 @@ Run after ingest.load_postgis, before the view refresh, in both rebuild.sh
 modes:
     python -m ingest.load_point_counts
 
-A new metric needs mv_columns.py updated by hand before it's filterable.
+Every point layer's count gets its filter column automatically (db/mv_columns.py).
 """
 
 import asyncio

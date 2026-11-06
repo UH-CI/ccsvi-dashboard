@@ -1,6 +1,3 @@
-import csv
-import io
-import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
@@ -56,7 +53,7 @@ class HawaiianHomelandResult(BaseModel):
     population: int | None
 
 
-# ── Column list for SELECT / CSV ──────────────────────────────────────────────
+# ── Column list for SELECT ────────────────────────────────────────────────────
 
 _BGM_ID_COLS = ["geoid", "name", "county", "population"]
 _HHM_ID_COLS = ["geoid", "name", "population"]
@@ -152,7 +149,7 @@ async def get_metric_values(
         "numeric lower-bound thresholds on any block_group_metrics column via "
         "min_<col>=<value> query params (ANDed together), and grouped OR thresholds via "
         "repeatable ?any=<group>:<col>:<value> params (ORed within a group, ANDed between "
-        "groups and with every other filter). Use ?format=csv for a downloadable CSV attachment."
+        "groups and with every other filter)."
     ),
 )
 async def filter_block_groups(
@@ -168,9 +165,8 @@ async def filter_block_groups(
         alias="any",
         description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
     ),
-    fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, False, county, hazard, any_group, fmt)
+    return await run_filter(conn, request, False, county, hazard, any_group)
 
 
 @router.get(
@@ -194,9 +190,8 @@ async def filter_hawaiian_homelands(
         alias="any",
         description="'<group>:<col>:<min>'. Repeatable; ORed within a group, ANDed between groups.",
     ),
-    fmt: str = Query("json", alias="format", description="'json' or 'csv'"),
 ) -> Any:
-    return await run_filter(conn, request, True, None, hazard, any_group, fmt)
+    return await run_filter(conn, request, True, None, hazard, any_group)
 
 
 @router.get(
@@ -251,12 +246,11 @@ async def run_filter(
     county: str | None,
     hazard: list[str] | None,
     any_group: list[str] | None,
-    fmt: str,
 ) -> Any:
     if homelands:
-        view, id_cols, filename = "hawaiian_homeland_metrics", _HHM_ID_COLS, "hawaiian_homelands_filtered.csv"
+        view, id_cols = "hawaiian_homeland_metrics", _HHM_ID_COLS
     else:
-        view, id_cols, filename = "block_group_metrics", _BGM_ID_COLS, "block_groups_filtered.csv"
+        view, id_cols = "block_group_metrics", _BGM_ID_COLS
     metric_cols = await metric_columns(conn, homelands)
     allowed_cols = frozenset(metric_cols)
 
@@ -327,18 +321,5 @@ async def run_filter(
     async with conn.transaction():
         await conn.execute("SET LOCAL statement_timeout = '5s'")
         rows = await conn.fetch(sql, *params)
-
-    if fmt == "csv":
-        all_cols = id_cols + metric_cols
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow(all_cols)
-        for row in rows:
-            writer.writerow([row[c] for c in all_cols])
-        return Response(
-            content=buf.getvalue(),
-            media_type="text/csv",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )
 
     return [dict(row) for row in rows]

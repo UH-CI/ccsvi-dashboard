@@ -1,4 +1,4 @@
-"""Generates db/init/03_metric_views.sql from db/mv_columns.py.
+"""Generates db/init/03_metric_views.sql from the census menu and the point layers (db/mv_columns.py).
 
 Usage (from the backend/ directory):
     python -m db.generate_views           write the file
@@ -13,7 +13,7 @@ from db.mv_columns import BLOCK_GROUP_COLUMNS, HAWAIIAN_HOMELAND_COLUMNS
 OUT_PATH = Path(__file__).parent / "init" / "03_metric_views.sql"
 
 HEADER = """-- GENERATED FILE — do not edit.
--- Change db/mv_columns.py, then run: python -m db.generate_views
+-- Change config/census_menu.json or the point layers, then run: python -m db.generate_views
 --
 -- Both views are dropped and recreated on every apply
 -- A rebuild applies this while the tables are still empty, so refresh afterwards:
@@ -79,14 +79,15 @@ CREATE INDEX        IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics
 """
 
 
-# One filtered aggregate per mapped column
-def columns_sql(rows: list[tuple[str, str, str, str]]) -> str:
+# One filtered aggregate per column, holding the number the map shows: the percentage when the
+# metric has one, otherwise the count
+def columns_sql(rows: list[tuple[str, str, str]]) -> str:
     lines = []
-    for column, dataset_id, name, source in rows:
+    for column, dataset_id, name in rows:
         escaped = name.replace("'", "''")
         lines.append(
-            f"    MAX(mv.{source}) FILTER (WHERE m.dataset_id = '{dataset_id}'\n"
-            f"        AND m.name = '{escaped}') AS {column}"
+            "    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)\n"
+            f"        FILTER (WHERE m.dataset_id = '{dataset_id}' AND m.name = '{escaped}') AS {column}"
         )
     return ",\n".join(lines)
 

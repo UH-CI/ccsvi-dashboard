@@ -48,7 +48,12 @@ export const LAYER_MENUS: LayerMenu[] = [
     title: "Secondary Environmental Risk Areas",
     description:
       "Show locations with environmental hazards or risk-prone infrastructure that can worsen climate impacts, such as onsite sewage disposal systems.",
-    items: ["wastewater_plant", "pcl_filtered", "pcl_landfill"],
+    items: [
+      // "sewage",
+      "wastewater_plant",
+      "pcl_filtered",
+      "pcl_landfill",
+    ],
   },
   {
     id: "hazards",

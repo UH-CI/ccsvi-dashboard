@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Paper, Typography, Box, Collapse, Alert, IconButton } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
@@ -6,7 +6,7 @@ import { TableData } from "./types";
 import { DatasetMetadata } from "../../types";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
-import { usePrimaryMapState, useFilterStore, useMapStore } from "../../stores";
+import { usePrimaryMapState, useFilterStore, useMapStore, useAppStore } from "../../stores";
 import { usePointCountsForTable, usePointNamesForTable } from "../../hooks/usePointCounts";
 import { useSavedRasterForTable } from "../../utils/savedRaster";
 import { useHazardOverlapsForTable } from "../../hooks/useHazardOverlapsForTable";
@@ -55,6 +55,23 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
   const apiRef = useGridApiRef();
+
+  // The one export, used by the toolbar's Export CSV and the Data Analyzer's download: the table as shown
+  const exportTable = useCallback(
+    () =>
+      apiRef.current!.exportDataAsCsv({
+        fileName: `${activeDataset}_export`,
+        delimiter: ",",
+        utf8WithBom: true,
+      }),
+    [apiRef, activeDataset],
+  );
+  const setExportTable = useAppStore((state) => state.setExportTable);
+  useEffect(() => {
+    if (!activeDataset || error) return;
+    setExportTable(exportTable);
+    return () => setExportTable(null);
+  }, [activeDataset, error, exportTable, setExportTable]);
 
   const {
     isCollapsed,
@@ -292,7 +309,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                     datasetLabel,
                     metadataText,
                     isFullHeight,
-                    activeDataset,
+                    exportTable,
                     toggleCollapse,
                     toggleFullHeight,
                   },

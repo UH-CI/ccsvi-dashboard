@@ -1,8 +1,6 @@
-import type { Dataset } from "../types";
-
 // The dataset holding a point or raster layer's saved values for block groups or Homelands; null if it has none
 export function layerDatasetId(
-  catalog: Dataset | null,
+  catalog: Record<string, { layerId: string | null; hawaiianHomelands?: boolean }> | null,
   layerId: string,
   homelands: boolean,
 ): string | null {

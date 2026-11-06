@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fills in metrics.mv_column from db/mv_columns.py so the API can tell the frontend
+"""Fills in metrics.mv_column from db/mv_columns.py (the census menu and point layers) so the API can tell the frontend
 which block_group_metrics or hawaiian_homeland_metrics column each metric corresponds to
 (needed for the cross-dataset filter UI's threshold dropdown). Safe to run more than once.
 
@@ -24,7 +24,7 @@ async def apply() -> None:
 
         all_columns = BLOCK_GROUP_COLUMNS + HAWAIIAN_HOMELAND_COLUMNS
         unmatched = []
-        for mv_column, dataset_id, name, _source in all_columns:
+        for mv_column, dataset_id, name in all_columns:
             result = await conn.execute(
                 "UPDATE metrics SET mv_column = $1 WHERE dataset_id = $2 AND name = $3",
                 mv_column,

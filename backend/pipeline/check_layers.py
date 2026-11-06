@@ -235,11 +235,12 @@ def popup_problems(found):
     return problems
 
 
-# Every census dataset id: an entry's alias, or the names of its outputs when it is split into several
-def census_dataset_ids():
+# Every census dataset id, an entry's alias or the names of its outputs when it is split into several,
+# with whether it is a Hawaiian Homelands dataset
+def census_datasets():
     entries = json.loads(CENSUS_CONFIG.read_text())["datasets"]
-    split = {output["name"] for entry in entries for output in entry.get("outputs", [])}
-    return split | {entry["alias"] for entry in entries if "outputs" not in entry}
+    split = {output["name"]: output["hawaiian_homelands"] for entry in entries for output in entry.get("outputs", [])}
+    return split | {entry["alias"]: entry["hawaiian_homelands"] for entry in entries if "outputs" not in entry}
 
 
 def census_categories():
@@ -253,7 +254,7 @@ def census_pairs():
 
 def census_problems():
     categories = census_categories()
-    dataset_ids = census_dataset_ids()
+    dataset_ids = census_datasets()
     problems = [f"category {id_}: id used twice" for id_ in repeats([c.get("id") for c in categories])]
     live = []
     for category in categories:

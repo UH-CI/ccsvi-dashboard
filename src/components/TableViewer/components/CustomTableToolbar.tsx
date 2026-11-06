@@ -4,7 +4,6 @@ import {
   Toolbar,
   ColumnsPanelTrigger,
   FilterPanelTrigger,
-  ExportCsv,
   QuickFilter,
   QuickFilterTrigger,
   QuickFilterControl,
@@ -24,7 +23,7 @@ interface CustomToolbarProps {
   datasetLabel: string;
   metadataText: string | null;
   isFullHeight: boolean;
-  activeDataset: string;
+  exportTable: () => void;
   toggleCollapse: () => void;
   toggleFullHeight: () => void;
 }
@@ -34,7 +33,7 @@ declare module "@mui/x-data-grid" {
     datasetLabel: string;
     metadataText: string | null;
     isFullHeight: boolean;
-    activeDataset: string;
+    exportTable: () => void;
     toggleCollapse: () => void;
     toggleFullHeight: () => void;
   }
@@ -44,7 +43,7 @@ export const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
   datasetLabel,
   metadataText,
   isFullHeight,
-  activeDataset,
+  exportTable,
   toggleCollapse,
   toggleFullHeight,
 }) => (
@@ -73,13 +72,13 @@ export const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
     >
       Filters
     </FilterPanelTrigger>
-    <ExportCsv
+    <Button
       size="small"
       startIcon={<SaveAlt className={styles["toolbar-icon"]} />}
-      options={{ fileName: `${activeDataset}_export`, delimiter: ",", utf8WithBom: true }}
+      onClick={exportTable}
     >
       Export CSV
-    </ExportCsv>
+    </Button>
     <QuickFilter parser={(v) => (v.trim() ? [v] : [])}>
       <QuickFilterTrigger
         render={(props, state) => (
