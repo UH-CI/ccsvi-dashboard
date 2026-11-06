@@ -34,10 +34,10 @@ async def apply() -> None:
                 if result == "UPDATE 0":
                     unmatched.append((mv_column, dataset_id, name))
 
-        if unmatched:
-            print(f"{len(unmatched)} mapping(s) matched no metric (left unset, not fatal):", file=sys.stderr)
             for mv_column, dataset_id, name in unmatched:
                 print(f"  {mv_column}: {dataset_id} | {name}", file=sys.stderr)
+            if unmatched:
+                raise SystemExit(f"{len(unmatched)} mapping(s) matched no metric")
 
         print(f"mv_column set on {len(all_columns)} metrics.")
 

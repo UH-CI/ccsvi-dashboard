@@ -88,12 +88,7 @@ async def load_points(conn: asyncpg.Connection) -> int:
     total = 0
 
     for filename, layer_id, name_field in POINT_LAYERS:
-        path = settings.POINT_DATA_DIR / filename
-        if not path.exists():
-            print(f"  WARNING: {path} not found, skipping {layer_id}")
-            continue
-
-        with open(path) as f:
+        with open(settings.POINT_DATA_DIR / filename) as f:
             fc = json.load(f)
 
         rows = []
