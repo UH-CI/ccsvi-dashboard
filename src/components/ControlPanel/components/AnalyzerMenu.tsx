@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { DataAnalyzerMenu } from "../../DataAnalyzerMenu/DataAnalyzerMenu";
 import { MenuShell } from "./MenuShell";
-import { useAppStore } from "../../../stores";
 import styles from "../ControlPanel.module.scss";
 
 interface AnalyzerMenuProps {
@@ -17,12 +16,6 @@ export const AnalyzerMenu: React.FC<AnalyzerMenuProps> = ({
   onClose,
   onInfoClick,
 }) => {
-  const fetchDatasetCatalog = useAppStore((state) => state.fetchDatasetCatalog);
-
-  useEffect(() => {
-    if (open) fetchDatasetCatalog();
-  }, [open, fetchDatasetCatalog]);
-
   return (
     <MenuShell
       open={open}

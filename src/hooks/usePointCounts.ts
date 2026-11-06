@@ -3,6 +3,8 @@ import { useAppStore } from "../stores";
 import { usePointLayerStore } from "../stores/usePointLayersStore";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { getPointsByGeoid } from "../api/client";
+import { queryClient } from "../api/queryClient";
+import { datasetsQuery, useDatasets } from "../api/queries/datasets";
 import type { PointLayerConfig } from "../types";
 import { layerDatasetId } from "../utils/layerDatasets";
 
@@ -11,9 +13,10 @@ export async function fetchPointCounts(
   geoid: string,
   isHomelands: boolean,
 ): Promise<Record<string, number | null>> {
-  const { blockGroupData, fetchMetricValues } = useAppStore.getState();
+  const { fetchMetricValues } = useAppStore.getState();
+  const catalog = await queryClient.fetchQuery(datasetsQuery);
   const datasets = POINT_LAYERS.map(
-    (layer) => [layer.id, layerDatasetId(blockGroupData, layer.id, isHomelands)] as const,
+    (layer) => [layer.id, layerDatasetId(catalog, layer.id, isHomelands)] as const,
   );
   await Promise.all(datasets.map(([, dataset]) => dataset && fetchMetricValues(dataset, "Count")));
 
@@ -32,7 +35,7 @@ export interface TablePointCounts {
 
 // Point counts for every geoid, across whichever layers are currently toggled on map; blank where a layer has none saved
 export function usePointCountsForTable(isHomelands: boolean, mapId: string): TablePointCounts {
-  const blockGroupData = useAppStore((state) => state.blockGroupData);
+  const catalog = useDatasets();
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
   const visibleIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
@@ -44,18 +47,18 @@ export function usePointCountsForTable(isHomelands: boolean, mapId: string): Tab
 
   useEffect(() => {
     for (const layer of layers) {
-      const dataset = layerDatasetId(blockGroupData, layer.id, isHomelands);
+      const dataset = layerDatasetId(catalog, layer.id, isHomelands);
       if (dataset) fetchMetricValues(dataset, "Count");
     }
-  }, [layers, blockGroupData, isHomelands, fetchMetricValues]);
+  }, [layers, catalog, isHomelands, fetchMetricValues]);
 
   return useMemo(() => {
     const getCount = (layerId: string, geoid: string): number | null => {
-      const dataset = layerDatasetId(blockGroupData, layerId, isHomelands);
+      const dataset = layerDatasetId(catalog, layerId, isHomelands);
       return dataset ? (metricValuesCache[`${dataset}::Count`]?.[geoid]?.absolute ?? null) : null;
     };
     return { layers, getCount };
-  }, [layers, blockGroupData, isHomelands, metricValuesCache]);
+  }, [layers, catalog, isHomelands, metricValuesCache]);
 }
 
 // Shared across every table, so switching tabs/rows never re-fetches a layer already fetched

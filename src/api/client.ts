@@ -1,5 +1,5 @@
 import { FeatureCollection, Point } from "geojson";
-import { DatasetCatalog, MetricValue } from "../types";
+import { DatasetCatalog, GeographiesData, MetricValue } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -13,13 +13,21 @@ export class ApiError extends Error {
   }
 }
 
-const get = async <T>(path: string): Promise<T> => {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new ApiError(res.status, path);
+const fetchJson = async <T>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  if (!res.ok) throw new ApiError(res.status, url);
   return res.json() as Promise<T>;
 };
 
+const get = <T>(path: string): Promise<T> => fetchJson<T>(`${BASE_URL}${path}`);
+
+// A file shipped with the app, e.g. "data/2020_Census_Block_Groups_Stripped.geojson"
+export const getAppFile = <T>(path: string): Promise<T> =>
+  fetchJson<T>(`${import.meta.env.BASE_URL}${path}`);
+
 export const getDatasets = () => get<DatasetCatalog>("/api/v1/datasets");
+
+export const getGeographies = () => get<GeographiesData>("/api/v1/geographies");
 
 export const getDatasetTable = (dataset: string) =>
   get<Record<string, string | number | null>[]>(`/api/v1/datasets/${dataset}/table`);

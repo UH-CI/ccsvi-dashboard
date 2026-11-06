@@ -17,7 +17,7 @@ export interface PolygonPopupContext {
   config: PopupConfig;
   activeMetric: string;
   metric1: MetricLookup;
-  geographiesData: GeographiesData | null;
+  geographiesData: GeographiesData | undefined;
   activeMetric2?: string | null;
   metric2?: MetricLookup | null;
 }

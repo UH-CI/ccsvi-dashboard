@@ -5,13 +5,13 @@ import { ControlPanel } from "./components/ControlPanel";
 import { MultiMapContainer } from "./components/MultiMapContainer";
 import { TableViewer } from "./components/TableViewer";
 import {
-  useAppStore,
-  useIsReady,
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
   usePrimaryMapState,
 } from "./stores";
+import { useDatasets } from "./api/queries/datasets";
+import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
 import { initializeStoresFromUrl } from "./utils/storeInitializer";
@@ -76,15 +76,13 @@ const App: React.FC = () => {
   const { dataset: primaryDataset } = usePrimaryMapState();
 
   // Get data from stores
-  const errors = useAppStore((state) => state.errors);
-  const fetchAllData = useAppStore((state) => state.fetchAllData);
   const fetchPointLayerConfigs = usePointLayerStore((state) => state.fetchPointLayerConfigs);
-  const blockGroupData = useAppStore((state) => state.blockGroupData);
   const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
   const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
   const rasterLoaded = useRasterLayersStore((state) => state.isLoaded);
 
-  const isReady = useIsReady();
+  const { ready, errors } = useStartupData();
+  const datasets = useDatasets();
 
   // Initialize stores from URL on mount (runs once)
   useEffect(() => {
@@ -99,28 +97,28 @@ const App: React.FC = () => {
   // Enable bidirectional URL sync after initialization
   useUrlSync(isUrlInitialized);
 
-  // Fetch all data on mount
+  // Load the layer configs on mount
   useEffect(() => {
-    fetchAllData();
     fetchPointLayerConfigs();
     fetchHazardLayerConfigs();
     fetchRasterLayerConfigs();
-  }, [fetchAllData, fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
+  }, [fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
 
   // === Error handling ===
-  const hasErrors = Object.values(errors).some((error) => error !== null);
-  if (hasErrors) {
+  if (errors.length > 0) {
     return (
       <div className={styles["error-container"]}>
         <h2>Error loading data</h2>
-        {Object.entries(errors).map(([key, error]) => error && <p key={key}>{error}</p>)}
+        {errors.map((error) => (
+          <p key={error}>{error}</p>
+        ))}
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
   // === Loading ===
-  if (!isReady || !rasterLoaded) {
+  if (!ready || !rasterLoaded) {
     return (
       <div className={styles["loading-container"]}>
         <div>Loading data...</div>
@@ -129,8 +127,7 @@ const App: React.FC = () => {
   }
 
   // === Main UI ===
-  const activeDatasetObject =
-    blockGroupData && primaryDataset ? blockGroupData[primaryDataset] : null;
+  const activeDatasetObject = datasets && primaryDataset ? datasets[primaryDataset] : null;
 
   return (
     <div className={styles["app-container"]}>

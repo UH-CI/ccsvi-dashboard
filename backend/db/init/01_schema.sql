@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS metrics (
     id                  SERIAL  PRIMARY KEY,
     dataset_id          TEXT    NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
     name                TEXT    NOT NULL,
-    classification_mode TEXT    NOT NULL DEFAULT 'q',
     mv_column           TEXT,
     display_order       INTEGER,
     has_moe             BOOLEAN NOT NULL DEFAULT FALSE,

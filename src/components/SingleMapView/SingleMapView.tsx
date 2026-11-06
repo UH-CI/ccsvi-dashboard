@@ -37,6 +37,9 @@ import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
+import { useDatasets } from "../../api/queries/datasets";
+import { useGeographies } from "../../api/queries/geographies";
+import { useBoundary } from "../../api/queries/boundaries";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -103,27 +106,18 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const {
-      blockGroupData,
-      metricValuesCache,
-      geographiesData,
-      censusBlockGroups,
-      hawaiianHomelands,
-      countyBoundaries,
-      filterRange,
-      filterRange2,
-    } = useAppStore(
+    const { metricValuesCache, filterRange, filterRange2 } = useAppStore(
       useShallow((state) => ({
-        blockGroupData: state.blockGroupData,
         metricValuesCache: state.metricValuesCache,
-        geographiesData: state.geographiesData,
-        censusBlockGroups: state.censusBlockGroups,
-        hawaiianHomelands: state.hawaiianHomelands,
-        countyBoundaries: state.countyBoundaries,
         filterRange: state.filterRange,
         filterRange2: state.filterRange2,
       })),
     );
+    const blockGroupData = useDatasets();
+    const geographiesData = useGeographies();
+    const censusBlockGroups = useBoundary("blockGroups");
+    const hawaiianHomelands = useBoundary("homelands");
+    const countyBoundaries = useBoundary("counties");
     const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
 
     const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);

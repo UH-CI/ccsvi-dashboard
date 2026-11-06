@@ -5,7 +5,7 @@ import {
   ComputedColorScale,
   ComputedBivariateColorScale,
 } from "../../../utils/colorThresholds";
-import { MetricConfig } from "../../../types";
+import { CatalogMetric } from "../../../types";
 
 interface UseMapColorScaleArgs {
   allMetricValues: number[];
@@ -13,7 +13,7 @@ interface UseMapColorScaleArgs {
   colorScheme: string;
   bivariateColorScheme: string;
   hasSecondMetric: boolean;
-  datasetMetricObject: MetricConfig | null;
+  datasetMetricObject: CatalogMetric | null;
   isCount: boolean;
 }
 
@@ -35,29 +35,13 @@ export function useMapColorScale({
 }: UseMapColorScaleArgs): MapColorScale {
   const colorScale = useMemo(() => {
     if (!datasetMetricObject) return null;
-    return computeColorScale(
-      allMetricValues,
-      colorScheme,
-      datasetMetricObject.classificationMode ?? "q",
-      isCount,
-    );
+    return computeColorScale(allMetricValues, colorScheme, isCount);
   }, [allMetricValues, colorScheme, datasetMetricObject, isCount]);
 
   const bivariateColorScale = useMemo(() => {
     if (!hasSecondMetric || allMetricValues2.length === 0) return null;
-    return computeBivariateColorScale(
-      allMetricValues,
-      allMetricValues2,
-      bivariateColorScheme,
-      datasetMetricObject?.classificationMode ?? "q",
-    );
-  }, [
-    allMetricValues,
-    allMetricValues2,
-    bivariateColorScheme,
-    datasetMetricObject,
-    hasSecondMetric,
-  ]);
+    return computeBivariateColorScale(allMetricValues, allMetricValues2, bivariateColorScheme);
+  }, [allMetricValues, allMetricValues2, bivariateColorScheme, hasSecondMetric]);
 
   const getColor = useMemo(() => {
     if (bivariateColorScale) {

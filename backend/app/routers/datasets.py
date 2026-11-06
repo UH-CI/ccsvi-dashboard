@@ -24,7 +24,6 @@ _CATALOG_ORDER_SQL = {
 # ── Pydantic models ──────────────────────────────────────────────────────────
 
 class MetricConfig(BaseModel):
-    classificationMode: str
     mvColumn: str | None = None
 
 
@@ -54,7 +53,7 @@ class DatasetRecord(BaseModel):
 async def get_datasets(conn: ConnDep, request: Request) -> Response:
     rows = await conn.fetch(
         f"""
-        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata, m.name, m.classification_mode, m.mv_column
+        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata, m.name, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, {_CATALOG_ORDER_SQL[CATALOG_METRIC_ORDER]}
@@ -72,10 +71,7 @@ async def get_datasets(conn: ConnDep, request: Request) -> Response:
                 "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
                 "columnThresholds": {},
             }
-        result[dataset_id]["columnThresholds"][row["name"]] = {
-            "classificationMode": row["classification_mode"],
-            "mvColumn": row["mv_column"],
-        }
+        result[dataset_id]["columnThresholds"][row["name"]] = {"mvColumn": row["mv_column"]}
     return revalidated_json(request, result)
 
 

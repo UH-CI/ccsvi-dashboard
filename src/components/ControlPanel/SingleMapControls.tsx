@@ -12,7 +12,6 @@ import {
 } from "@mui/icons-material";
 // Management actions for each map
 import {
-  useAppStore,
   useMapStore,
   useMapConfig,
   DEFAULT_LAYER_OPACITIES,
@@ -36,7 +35,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   onRemove,
 }) => {
   const config = useMapConfig(mapId);
-  const dataset = useAppStore((state) => state.blockGroupData);
 
   const updateMapConfig = useMapStore((state) => state.updateMapConfig);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
@@ -134,7 +132,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           open={Boolean(colorSchemeAnchor)}
           onClose={() => setColorSchemeAnchor(null)}
           config={config}
-          dataset={dataset}
           mapOpacities={mapOpacities}
           updateMapConfig={updateMapConfig}
           setLayerOpacity={setLayerOpacity}

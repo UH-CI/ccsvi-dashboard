@@ -1,10 +1,9 @@
 import React from "react";
 import { FormControl, InputLabel, Select, MenuItem, ListSubheader } from "@mui/material";
-import { Dataset } from "../../../types";
 import { SVI_CATEGORIES } from "../../../config";
+import { useDatasets } from "../../../api/queries/datasets";
 
 interface ComparisonMetricSelectProps {
-  blockGroupData: Dataset | null;
   dataset: string;
   metric: string;
   dataset2?: string;
@@ -16,7 +15,6 @@ interface ComparisonMetricSelectProps {
 // Reusable bivariate "Compare with" selection. Lists the SVI menu's indicators
 // whose dataset matches the primary's Hawaiian-homelands flag, grouped by menu category
 export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
-  blockGroupData,
   dataset,
   metric,
   dataset2,
@@ -24,6 +22,8 @@ export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
   onChange,
   label = "Compare with",
 }) => {
+  const datasets = useDatasets();
+
   return (
     <FormControl size="small" fullWidth>
       <InputLabel>{label}</InputLabel>
@@ -45,15 +45,15 @@ export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
         <MenuItem value="">
           <em>None (univariate)</em>
         </MenuItem>
-        {blockGroupData &&
+        {datasets &&
           (() => {
             const primaryIsHawaiian = dataset
-              ? (blockGroupData[dataset]?.hawaiianHomelands ?? false)
+              ? (datasets[dataset]?.hawaiianHomelands ?? false)
               : false;
             return SVI_CATEGORIES.map((category) => {
               const indicators = category.indicators.filter(
                 (ind) =>
-                  (blockGroupData[ind.dataset]?.hawaiianHomelands ?? false) === primaryIsHawaiian &&
+                  (datasets[ind.dataset]?.hawaiianHomelands ?? false) === primaryIsHawaiian &&
                   !(ind.dataset === dataset && ind.metric === metric),
               );
               if (indicators.length === 0) return [];

@@ -20,7 +20,7 @@ import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface HawaiianHomelandsPolygonLayerProps {
   data: FeatureCollection<Geometry, HawaiianHomelandProperties> | null;
-  geographiesData: GeographiesData | null;
+  geographiesData: GeographiesData | undefined;
   metric1: MetricLookup;
   metric2?: MetricLookup | null;
   mapId: string;

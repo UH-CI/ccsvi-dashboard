@@ -37,17 +37,15 @@ export function computeBivariateColorScale(
   values1: number[],
   values2: number[],
   paletteName: string,
-  mode = "q",
 ): ComputedBivariateColorScale | null {
   if (values1.length === 0 || values2.length === 0) return null;
 
   const palette = BIVARIATE_PALETTES[paletteName] ?? BIVARIATE_PALETTES.PurpleBlue;
   const numClasses = palette.length; // 3
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const limits1 = chroma.limits(values1, mode as any, numClasses);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const limits2 = chroma.limits(values2, mode as any, numClasses);
+  // Quantile breaks: each class holds about the same number of areas
+  const limits1 = chroma.limits(values1, "q", numClasses);
+  const limits2 = chroma.limits(values2, "q", numClasses);
 
   const classify = (value: number, limits: number[]): number => {
     for (let i = limits.length - 2; i >= 1; i--) {
@@ -73,21 +71,19 @@ export function computeBivariateColorScale(
 export function computeColorScale(
   values: number[],
   scaleName: string,
-  mode = "q",
   isCount = false,
   numClasses = 10,
 ): ComputedColorScale | null {
   if (values.length === 0) return null;
 
+  // Quantile breaks: each class holds about the same number of areas
   let rawLimits: number[];
   if (isCount) {
     // Mostly-0 counts would fill most bins with 0s, so 0 gets its own bin and
     // only the non-zero values are split into the rest.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rawLimits = [0, ...chroma.limits(values.filter((v) => v !== 0), mode as any, numClasses - 1)];
+    rawLimits = [0, ...chroma.limits(values.filter((v) => v !== 0), "q", numClasses - 1)];
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rawLimits = chroma.limits(values, mode as any, numClasses);
+    rawLimits = chroma.limits(values, "q", numClasses);
   }
   // Skewed data (e.g. mostly zeros) can produce repeated quantile cut
   // points; collapse those so the legend doesn't show empty bins.

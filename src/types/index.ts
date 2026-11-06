@@ -39,29 +39,11 @@ export interface GeographyMetadata {
 
 export type GeographiesData = Record<string, GeographyMetadata>;
 
-export interface MetricConfig {
-  classificationMode?: string;
-}
-
 export interface DatasetMetadata {
   table_id: string;
   program: string;
   period: string;
   citation: string;
-}
-
-export interface Dataset {
-  [key: string]: {
-    metricName: string;
-    metricLabel: string;
-    hawaiianHomelands?: boolean;
-    // The map layer a point or raster dataset belongs to; null for census
-    layerId: string | null;
-    metadata?: DatasetMetadata | null;
-    columnThresholds: {
-      [columnName: string]: MetricConfig;
-    };
-  };
 }
 
 export interface BlockGroupProperties {
@@ -162,7 +144,6 @@ export interface BlockGroupResult {
 }
 
 export interface CatalogMetric {
-  classificationMode: string;
   mvColumn: string | null;
 }
 

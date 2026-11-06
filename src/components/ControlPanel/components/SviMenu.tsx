@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Stack } from "@mui/material";
-import { useMapStore, useAppStore } from "../../../stores";
+import { useMapStore } from "../../../stores";
 import { SVI_CATEGORIES } from "../../../config";
 import { MenuShell } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
@@ -20,7 +20,6 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
   const mapConfigs = useMapStore((s) => s.mapConfigs);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
   const updateMapConfig = useMapStore((s) => s.updateMapConfig);
-  const blockGroupData = useAppStore((s) => s.blockGroupData);
 
   const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
   const [sviMapId, setSviMapId] = useState<string>("");
@@ -91,7 +90,6 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
           })}
           {sviConfig?.dataset && sviConfig?.metric && (
             <ComparisonMetricSelect
-              blockGroupData={blockGroupData}
               dataset={sviConfig.dataset}
               metric={sviConfig.metric}
               dataset2={sviConfig.dataset2}

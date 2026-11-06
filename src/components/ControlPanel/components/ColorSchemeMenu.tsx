@@ -1,7 +1,8 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
-import { MapConfig, Dataset } from "../../../types";
+import { MapConfig } from "../../../types";
 import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME } from "../../../config";
+import { useDatasets } from "../../../api/queries/datasets";
 import styles from "../ControlPanel.module.scss";
 
 interface LayerOpacities {
@@ -15,7 +16,6 @@ interface ColorSchemeMenuProps {
   open: boolean;
   onClose: () => void;
   config: MapConfig;
-  dataset: Dataset | null;
   mapOpacities: LayerOpacities;
   updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
   setLayerOpacity: (
@@ -33,11 +33,12 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
   open,
   onClose,
   config,
-  dataset,
   mapOpacities,
   updateMapConfig,
   setLayerOpacity,
 }) => {
+  const dataset = useDatasets();
+
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
 

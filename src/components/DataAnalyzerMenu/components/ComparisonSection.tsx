@@ -11,6 +11,7 @@ import {
 import { useAppStore, useFilteredGeoids } from "../../../stores";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { sviLabel } from "../../../config";
+import { useGeographies } from "../../../api/queries/geographies";
 
 interface ComparisonSectionProps {
   dataset: string | undefined;
@@ -32,7 +33,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   activeGeoid,
 }) => {
   const metricValuesCache = useAppStore((state) => state.metricValuesCache);
-  const geographiesData = useAppStore((state) => state.geographiesData);
+  const geographiesData = useGeographies();
   const filteredGeoids = useFilteredGeoids();
 
   const cacheKey1 = dataset && metric ? `${dataset}::${metric}` : null;

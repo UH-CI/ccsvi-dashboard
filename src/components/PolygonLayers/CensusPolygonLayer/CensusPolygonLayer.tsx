@@ -24,7 +24,7 @@ import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface CensusPolygonLayerProps {
   data: FeatureCollection<Geometry, BlockGroupProperties> | null;
-  geographiesData: GeographiesData | null;
+  geographiesData: GeographiesData | undefined;
   metric1: MetricLookup;
   metric2?: MetricLookup | null;
   mapId: string;

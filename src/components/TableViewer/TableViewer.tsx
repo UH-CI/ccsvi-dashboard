@@ -3,7 +3,7 @@ import { Paper, Typography, Box, Collapse, Alert, IconButton } from "@mui/materi
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { TableData } from "./types";
-import { DatasetMetadata } from "../../types";
+import { CatalogDataset } from "../../types";
 import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
 import { usePrimaryMapState, useFilterStore, useMapStore, useAppStore } from "../../stores";
@@ -15,17 +15,9 @@ import { useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
 import styles from "./TableViewer.module.scss";
 
-interface DatasetInfo {
-  metricName?: string;
-  metricLabel?: string;
-  hawaiianHomelands?: boolean;
-  metadata?: DatasetMetadata | null;
-  columnThresholds?: Record<string, unknown>;
-}
-
 interface TableViewerProps {
   activeDataset: string;
-  datasetInfo: DatasetInfo | null;
+  datasetInfo: CatalogDataset | null;
   onSizeChange?: (isCollapsed: boolean) => void;
   initialCollapsed?: boolean;
   tableHeight?: number | null;

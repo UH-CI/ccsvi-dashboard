@@ -1,4 +1,6 @@
 import { useEffect, useMemo } from "react";
+import { queryClient } from "../api/queryClient.ts";
+import { datasetsQuery, useDatasets } from "../api/queries/datasets.ts";
 import { useAppStore } from "../stores/useAppStore.ts";
 import { useRasterLayersStore } from "../stores/useRasterLayersStore.ts";
 import type { RasterLayerConfig, SubRasterLayerConfig } from "../types";
@@ -26,8 +28,8 @@ export async function savedRasterStats(
   geoid: string,
   homelands: boolean,
 ): Promise<{ mean: number | null; max: number | null }> {
-  const { blockGroupData, fetchMetricValues } = useAppStore.getState();
-  const dataset = layerDatasetId(blockGroupData, rasterId, homelands);
+  const { fetchMetricValues } = useAppStore.getState();
+  const dataset = layerDatasetId(await queryClient.fetchQuery(datasetsQuery), rasterId, homelands);
   if (!dataset) return { mean: null, max: null };
   await Promise.all([fetchMetricValues(dataset, "Mean"), fetchMetricValues(dataset, "Max")]);
   const cache = useAppStore.getState().metricValuesCache;
@@ -41,12 +43,12 @@ export async function savedRasterStats(
 export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
   const visibleIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
   const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
-  const blockGroupData = useAppStore((s) => s.blockGroupData);
+  const datasets = useDatasets();
   const metricValuesCache = useAppStore((s) => s.metricValuesCache);
   const fetchMetricValues = useAppStore((s) => s.fetchMetricValues);
 
   const active = useMemo(() => getActiveRaster(visibleIds, configs), [visibleIds, configs]);
-  const dataset = active ? layerDatasetId(blockGroupData, active.id, isHomelands) : null;
+  const dataset = active ? layerDatasetId(datasets, active.id, isHomelands) : null;
 
   useEffect(() => {
     if (!dataset) return;

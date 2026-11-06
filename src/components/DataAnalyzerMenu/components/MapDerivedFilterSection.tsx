@@ -5,6 +5,7 @@ import { useAppStore, useFilterStore, useMapStore } from "../../../stores";
 import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
 import { layerDatasetId } from "../../../utils/layerDatasets";
+import { useDatasets } from "../../../api/queries/datasets";
 
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
@@ -23,7 +24,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
 }) => {
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const menuTrees = useVisibleMenuTrees(primaryMapId);
-  const datasetCatalog = useAppStore((state) => state.datasetCatalog);
+  const datasetCatalog = useDatasets();
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
   const exportTable = useAppStore((state) => state.exportTable);
