@@ -3,18 +3,12 @@
 
 rebuild.sh --full runs it. By hand, on the VM from the backend/ directory with DATABASE_URL set:
     python -m ingest.load_postgis
-
-After this script completes, redo the hazard overlaps and refresh the materialized views
-(rebuild.sh --full does all of this):
-    python -m ingest.load_hazard_overlaps
-    docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW block_group_metrics;"
-    docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 """
+import asyncio
 import json
 from pathlib import Path
 
-import psycopg2
-import psycopg2.extras
+import asyncpg
 
 import settings
 from pipeline.check_layers import shape_layers
@@ -39,15 +33,8 @@ POINT_LAYERS = [
     ("Small_Boat_Harbors_Ramps.geojson",            "small_boat_harbors", "name"),
 ]
 
-BATCH_SIZE = 500
 
-
-def _batch_insert(cur, sql, rows):
-    for i in range(0, len(rows), BATCH_SIZE):
-        psycopg2.extras.execute_batch(cur, sql, rows[i : i + BATCH_SIZE])
-
-
-def load_block_group_geoms(cur) -> int:
+async def load_block_group_geoms(conn: asyncpg.Connection) -> int:
     path = PUBLIC_DATA / "2020_Census_Block_Groups_Stripped.geojson"
     with open(path) as f:
         fc = json.load(f)
@@ -57,15 +44,14 @@ def load_block_group_geoms(cur) -> int:
         for feat in fc["features"]
         if feat.get("geometry") and feat["properties"].get("geoid20")
     ]
-    _batch_insert(
-        cur,
-        "UPDATE geographies SET geom = ST_Multi(ST_GeomFromGeoJSON(%s)) WHERE geoid = %s",
+    await conn.executemany(
+        "UPDATE geographies SET geom = ST_Multi(ST_GeomFromGeoJSON($1)) WHERE geoid = $2",
         rows,
     )
     return len(rows)
 
 
-def load_hawaiian_homeland_geoms(cur) -> int:
+async def load_hawaiian_homeland_geoms(conn: asyncpg.Connection) -> int:
     """Update geographies.geom for Hawaiian Homeland geoids.
 
     Matches on GEOID10 from the GeoJSON — must match geographies.geoid values
@@ -80,27 +66,25 @@ def load_hawaiian_homeland_geoms(cur) -> int:
         for feat in fc["features"]
         if feat.get("geometry") and feat["properties"].get("GEOID10")
     ]
-    _batch_insert(
-        cur,
-        "UPDATE geographies SET geom = ST_Multi(ST_GeomFromGeoJSON(%s)) WHERE geoid = %s",
+    await conn.executemany(
+        "UPDATE geographies SET geom = ST_Multi(ST_GeomFromGeoJSON($1)) WHERE geoid = $2",
         rows,
     )
     # Report mismatches so we know if GEOID10 doesn't align with geographies.geoid
-    cur.execute(
+    null_count = await conn.fetchval(
         "SELECT count(*) FROM geographies g "
         "JOIN metrics m ON true "
         "JOIN metric_values mv ON mv.geoid = g.geoid AND mv.metric_id = m.id "
         "WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND g.geom IS NULL"
     )
-    null_count = cur.fetchone()[0]
     if null_count:
         print(f"  WARNING: {null_count} Hawaiian Homeland geographies still have NULL geom "
               "(GEOID10 may not match geographies.geoid)")
     return len(rows)
 
 
-def load_points(cur) -> int:
-    cur.execute("TRUNCATE points RESTART IDENTITY")
+async def load_points(conn: asyncpg.Connection) -> int:
+    await conn.execute("TRUNCATE points RESTART IDENTITY")
     total = 0
 
     for filename, layer_id, name_field in POINT_LAYERS:
@@ -120,10 +104,9 @@ def load_points(cur) -> int:
             props = feat.get("properties") or {}
             rows.append((layer_id, props.get(name_field), json.dumps(props), json.dumps(geom)))
 
-        _batch_insert(
-            cur,
+        await conn.executemany(
             "INSERT INTO points (layer_id, name, props, geom) "
-            "VALUES (%s, %s, %s, ST_Centroid(ST_GeomFromGeoJSON(%s)))",
+            "VALUES ($1, $2, $3, ST_Centroid(ST_GeomFromGeoJSON($4)))",
             rows,
         )
         total += len(rows)
@@ -132,8 +115,8 @@ def load_points(cur) -> int:
     return total
 
 
-def load_hazards(cur) -> int:
-    cur.execute("TRUNCATE hazards RESTART IDENTITY")
+async def load_hazards(conn: asyncpg.Connection) -> int:
+    await conn.execute("TRUNCATE hazards RESTART IDENTITY")
     total = 0
 
     for layer in shape_layers():
@@ -148,10 +131,9 @@ def load_hazards(cur) -> int:
                 continue
             rows.append((hazard_id, sub_id, json.dumps(geom)))
 
-        _batch_insert(
-            cur,
+        await conn.executemany(
             "INSERT INTO hazards (hazard_id, sub_id, geom) "
-            "VALUES (%s, %s, ST_GeomFromGeoJSON(%s))",
+            "VALUES ($1, $2, ST_GeomFromGeoJSON($3))",
             rows,
         )
         total += len(rows)
@@ -160,33 +142,29 @@ def load_hazards(cur) -> int:
     return total
 
 
-def main() -> None:
-    conn = psycopg2.connect(settings.database_url())
+async def main() -> None:
+    conn = await asyncpg.connect(settings.database_url())
     try:
-        with conn.cursor() as cur:
+        async with conn.transaction():
             print("Updating block group geometries...")
-            n = load_block_group_geoms(cur)
+            n = await load_block_group_geoms(conn)
             print(f"  → {n} block groups")
 
             print("Updating Hawaiian Homeland geometries...")
-            n = load_hawaiian_homeland_geoms(cur)
+            n = await load_hawaiian_homeland_geoms(conn)
             print(f"  → {n} homelands attempted")
 
             print("Populating points...")
-            n = load_points(cur)
+            n = await load_points(conn)
             print(f"  → {n} total points")
 
             print("Populating hazards (this may take several minutes)...")
-            n = load_hazards(cur)
+            n = await load_hazards(conn)
             print(f"  → {n} total hazard features")
-
-        conn.commit()
-        print("\nAll done. Next step — refresh materialized views:")
-        print('  docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW block_group_metrics;"')
-        print('  docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"')
+        print("Done.")
     finally:
-        conn.close()
+        await conn.close()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -7,11 +7,14 @@ python -m pipeline.check_layers --census-metrics   the census menu against the l
 """
 
 import argparse
+import asyncio
 import functools
 import json
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+
+import asyncpg
 
 import settings
 from pipeline.build_tools import run
@@ -271,12 +274,14 @@ def census_problems():
 
 
 def census_metric_problems():
-    # The database driver is only needed here, on the VM after the census load
-    import psycopg2
+    async def fetch_metrics():
+        conn = await asyncpg.connect(settings.database_url())
+        try:
+            return await conn.fetch("SELECT dataset_id, name FROM metrics")
+        finally:
+            await conn.close()
 
-    with psycopg2.connect(settings.database_url()) as conn, conn.cursor() as cur:
-        cur.execute("SELECT dataset_id, name FROM metrics")
-        loaded = set(cur.fetchall())
+    loaded = {(row["dataset_id"], row["name"]) for row in asyncio.run(fetch_metrics())}
     return [f"{d} / {m}: no such metric after the census load" for d, m in census_pairs() if (d, m) not in loaded]
 
 

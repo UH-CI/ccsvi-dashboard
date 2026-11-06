@@ -7,7 +7,6 @@ titiler.core>=0.18
 titiler.core>=0.18
 
 # Dev — ingest scripts, linting, testing
-psycopg2-binary>=2.9
 ruff>=0.7
 mypy>=1.13
 pytest>=8.3
