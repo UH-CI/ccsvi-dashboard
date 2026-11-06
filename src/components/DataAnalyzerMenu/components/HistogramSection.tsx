@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { useAppStore, useFilteredGeoids } from "../../../stores";
+import { useMetricValues } from "../../../api/queries/metricValues";
 import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
@@ -50,10 +51,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
 }) => {
   const setFilterRange = useAppStore((state) => state.setFilterRange);
   const setFilterRange2 = useAppStore((state) => state.setFilterRange2);
-  const metricValuesCache = useAppStore((state) => state.metricValuesCache);
-
-  const cacheKey2 = dataset2 && metric2 ? `${dataset2}::${metric2}` : null;
-  const cachedValues2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
+  const cachedValues2 = useMetricValues(dataset2, metric2);
 
   const { isPercentage2, dataMin2, dataMax2 } = useMemo(() => {
     if (!cachedValues2) return { isPercentage2: false, dataMin2: 0, dataMax2: 1 };

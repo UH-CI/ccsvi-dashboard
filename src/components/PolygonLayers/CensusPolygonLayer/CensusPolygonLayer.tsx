@@ -13,13 +13,14 @@ import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from ".
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { hcdpStatsForFeature } from "../../../utils/zonalStats.ts";
-import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
+import { getActiveRaster } from "../../../utils/savedRaster.ts";
+import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
 import { POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
-import { fetchPointCounts } from "../../../hooks/usePointCounts";
+import { fetchPointCounts } from "../../../api/queries/pointCounts";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface CensusPolygonLayerProps {

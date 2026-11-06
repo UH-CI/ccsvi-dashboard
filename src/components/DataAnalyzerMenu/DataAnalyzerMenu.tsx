@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
-import { useAppStore, useMapStore, useFilterStore } from "../../stores";
+import { useMapStore, useFilterStore } from "../../stores";
+import { useMetricValues } from "../../api/queries/metricValues";
 import { HistogramSection } from "./components/HistogramSection";
 import { LayerMenuSection } from "./components/LayerMenuSection";
 import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
@@ -9,7 +10,6 @@ import { useVisibleMenuTrees } from "../../hooks/useVisibleMenuTrees";
 export const DataAnalyzerMenu = () => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const menuTrees = useVisibleMenuTrees(primaryMapId);
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
@@ -18,8 +18,7 @@ export const DataAnalyzerMenu = () => {
   const dataset2 = primaryConfig?.dataset2 ?? dataset;
   const metric2 = primaryConfig?.metric2;
   const activeGeoid = primaryConfig?.activeFeature?.geoid ?? null;
-  const cacheKey = dataset && metric ? `${dataset}::${metric}` : null;
-  const cachedValues = cacheKey ? metricValuesCache[cacheKey] : null;
+  const cachedValues = useMetricValues(dataset, metric);
 
   const [resetKey, setResetKey] = useState(0);
 

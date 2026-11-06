@@ -35,8 +35,8 @@ function buildNumericLookup(cache: MetricCache, field: keyof MetricValue): Map<s
 }
 
 export function useMetricLookups(
-  cachedMetric1: MetricCache | null,
-  cachedMetric2: MetricCache | null,
+  cachedMetric1: MetricCache | undefined,
+  cachedMetric2: MetricCache | undefined,
   metric1?: string,
   metric2?: string,
 ): MetricLookups {

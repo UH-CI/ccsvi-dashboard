@@ -8,10 +8,11 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useAppStore, useFilteredGeoids } from "../../../stores";
+import { useFilteredGeoids } from "../../../stores";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { sviLabel } from "../../../config";
 import { useGeographies } from "../../../api/queries/geographies";
+import { useMetricValues } from "../../../api/queries/metricValues";
 
 interface ComparisonSectionProps {
   dataset: string | undefined;
@@ -32,14 +33,11 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   metric2,
   activeGeoid,
 }) => {
-  const metricValuesCache = useAppStore((state) => state.metricValuesCache);
   const geographiesData = useGeographies();
   const filteredGeoids = useFilteredGeoids();
 
-  const cacheKey1 = dataset && metric ? `${dataset}::${metric}` : null;
-  const cacheKey2 = dataset2 && metric2 ? `${dataset2}::${metric2}` : null;
-  const cachedValues1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
-  const cachedValues2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
+  const cachedValues1 = useMetricValues(dataset, metric);
+  const cachedValues2 = useMetricValues(dataset2, metric2);
 
   const { points, activePoint, isPct1, isPct2, maxX, maxY } = useMemo(() => {
     if (!cachedValues1 || !cachedValues2) {

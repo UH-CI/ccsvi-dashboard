@@ -12,10 +12,11 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 import { POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
-import { fetchPointCounts } from "../../../hooks/usePointCounts";
+import { fetchPointCounts } from "../../../api/queries/pointCounts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
-import { getActiveRaster, savedRasterStats } from "../../../utils/savedRaster.ts";
+import { getActiveRaster } from "../../../utils/savedRaster.ts";
+import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
 interface HawaiianHomelandsPolygonLayerProps {

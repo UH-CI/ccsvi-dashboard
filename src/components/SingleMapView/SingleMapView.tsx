@@ -40,6 +40,7 @@ import { useMapColorScale } from "./hooks/useMapColorScale";
 import { useDatasets } from "../../api/queries/datasets";
 import { useGeographies } from "../../api/queries/geographies";
 import { useBoundary } from "../../api/queries/boundaries";
+import { useMetricValues } from "../../api/queries/metricValues";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -106,9 +107,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const { metricValuesCache, filterRange, filterRange2 } = useAppStore(
+    const { filterRange, filterRange2 } = useAppStore(
       useShallow((state) => ({
-        metricValuesCache: state.metricValuesCache,
         filterRange: state.filterRange,
         filterRange2: state.filterRange2,
       })),
@@ -118,7 +118,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const censusBlockGroups = useBoundary("blockGroups");
     const hawaiianHomelands = useBoundary("homelands");
     const countyBoundaries = useBoundary("counties");
-    const fetchMetricValues = useAppStore((state) => state.fetchMetricValues);
 
     const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
     const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
@@ -209,19 +208,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       return activeDatasetObject.columnThresholds[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
 
-    const cacheKey1 =
-      effectiveDataset && effectiveMetric ? `${effectiveDataset}::${effectiveMetric}` : null;
-    const cacheKey2 =
-      effectiveDataset2 && effectiveMetric2 ? `${effectiveDataset2}::${effectiveMetric2}` : null;
-    const cachedMetric1 = cacheKey1 ? metricValuesCache[cacheKey1] : null;
-    const cachedMetric2 = cacheKey2 ? metricValuesCache[cacheKey2] : null;
-
-    useEffect(() => {
-      if (!effectiveDataset) return;
-      if (effectiveMetric) void fetchMetricValues(effectiveDataset, effectiveMetric);
-      if (effectiveMetric2 && effectiveDataset2)
-        void fetchMetricValues(effectiveDataset2, effectiveMetric2);
-    }, [effectiveDataset, effectiveDataset2, effectiveMetric, effectiveMetric2, fetchMetricValues]);
+    const cachedMetric1 = useMetricValues(effectiveDataset, effectiveMetric);
+    const cachedMetric2 = useMetricValues(effectiveDataset2, effectiveMetric2);
 
     const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
       cachedMetric1,
