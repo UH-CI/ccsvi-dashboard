@@ -3,9 +3,19 @@ import { DatasetCatalog, MetricValue } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
+// A failed request, with the server's status so callers can tell a bad request (4xx) from a server failure
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    path: string,
+  ) {
+    super(`API error ${status}: ${path}`);
+  }
+}
+
 const get = async <T>(path: string): Promise<T> => {
   const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  if (!res.ok) throw new ApiError(res.status, path);
   return res.json() as Promise<T>;
 };
 
