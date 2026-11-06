@@ -7,6 +7,7 @@ Each entry is (view column, dataset id, metric name)
 import hashlib
 import re
 
+from ingest.load_point_counts import dataset_id_for
 from ingest.load_postgis import POINT_LAYERS
 from pipeline.check_layers import census_categories, census_datasets, repeats
 
@@ -38,8 +39,7 @@ def view_columns(homelands):
         for indicator in category["indicators"]
         if homelands_of[indicator["dataset"]] == homelands
     ]
-    suffix = "_homelands" if homelands else ""
-    pairs += [(f"{layer_id}_points{suffix}", "Count") for _, layer_id, _ in POINT_LAYERS]
+    pairs += [(dataset_id_for(layer_id, homelands), "Count") for _, layer_id, _ in POINT_LAYERS]
     columns = [(column_name(dataset, metric), dataset, metric) for dataset, metric in pairs]
     if repeated := repeats([column for column, _, _ in columns]):
         raise SystemExit(f"Filter column name used twice: {', '.join(repeated)}")
