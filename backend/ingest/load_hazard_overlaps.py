@@ -45,22 +45,23 @@ async def load_layer(conn: asyncpg.Connection, hazard_id: str, sub_id: str | Non
 async def main() -> None:
     conn = await asyncpg.connect(settings.database_url())
     try:
-        await conn.execute("TRUNCATE geography_hazards, point_hazards")
-        # Island-sized shapes take minutes per overlap test; small pieces of them take
-        # milliseconds and cover exactly the same ground. Dropped when the connection closes.
-        await conn.execute(
-            """
-            CREATE TEMP TABLE hazard_pieces AS
-            SELECT hazard_id, sub_id, ST_Subdivide(geom, 256) AS geom FROM hazards;
-            CREATE INDEX ON hazard_pieces USING GIST (geom);
-            CREATE INDEX ON hazard_pieces (hazard_id, sub_id);
-            ANALYZE hazard_pieces;
-            """
-        )
-        layers = await conn.fetch("SELECT DISTINCT hazard_id, sub_id FROM hazards ORDER BY 1, 2")
-        print(f"Found {len(layers)} hazard layer(s)")
-        for layer in layers:
-            await load_layer(conn, layer["hazard_id"], layer["sub_id"])
+        async with conn.transaction():
+            await conn.execute("TRUNCATE geography_hazards, point_hazards")
+            # Island-sized shapes take minutes per overlap test; small pieces of them take
+            # milliseconds and cover exactly the same ground. Dropped when the connection closes.
+            await conn.execute(
+                """
+                CREATE TEMP TABLE hazard_pieces AS
+                SELECT hazard_id, sub_id, ST_Subdivide(geom, 256) AS geom FROM hazards;
+                CREATE INDEX ON hazard_pieces USING GIST (geom);
+                CREATE INDEX ON hazard_pieces (hazard_id, sub_id);
+                ANALYZE hazard_pieces;
+                """
+            )
+            layers = await conn.fetch("SELECT DISTINCT hazard_id, sub_id FROM hazards ORDER BY 1, 2")
+            print(f"Found {len(layers)} hazard layer(s)")
+            for layer in layers:
+                await load_layer(conn, layer["hazard_id"], layer["sub_id"])
         print("Done.")
     finally:
         await conn.close()

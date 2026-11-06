@@ -38,11 +38,12 @@ async def main() -> None:
     found = rasters()
     conn = await asyncpg.connect(settings.database_url())
     try:
-        await conn.execute("TRUNCATE point_raster_values")
-        points = await conn.fetch("SELECT id, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM points")
-        print(f"Sampling {len(found)} raster(s) at {len(points)} points")
-        for raster in found:
-            await load_raster(conn, raster, points)
+        async with conn.transaction():
+            await conn.execute("TRUNCATE point_raster_values")
+            points = await conn.fetch("SELECT id, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM points")
+            print(f"Sampling {len(found)} raster(s) at {len(points)} points")
+            for raster in found:
+                await load_raster(conn, raster, points)
         print("Done.")
     finally:
         await conn.close()

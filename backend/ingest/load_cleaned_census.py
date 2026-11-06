@@ -10,7 +10,6 @@ Pass --dir instead to skip cleaning and load CSVs you already have.
 
 import argparse
 import asyncio
-import json
 import os
 import tempfile
 
@@ -18,6 +17,7 @@ import asyncpg
 import pandas as pd
 
 import settings
+from ingest.writer import Dataset, Metric, Value, save_dataset
 from pipeline.census import clean, proportions
 from pipeline.census.census_transform import clean_column_name
 from pipeline.census.csv_format import (
@@ -69,7 +69,7 @@ def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
     return (geoid, "block_group", name, parts[0], parts[1], parts[2], parts[3], pop)
 
 
-def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[dict], list[tuple[str, dict]], list[tuple]]:
+def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[Metric], list[Value], list[tuple]]:
     df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
     base_cols = [
@@ -82,28 +82,29 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
     ]
     col_to_metric = {col: metric_name_for(col) for col in base_cols}
 
-    # One record per metric: column position, and which derived values it has.
+    # One metric per name: column position, and which derived values it has.
     # Two source columns can clean down to the same name, so merge those.
-    metric_specs: dict[str, dict] = {}
+    metrics: dict[str, Metric] = {}
     for order, col in enumerate(base_cols):
-        spec = {
-            "name": col_to_metric[col],
-            "display_order": order,
-            "has_moe": _column_has_values(df, moe_column_name(col)),
-            "has_percentage": _column_has_values(df, col + PERCENT),
-            "has_moe_pp": _column_has_values(df, col + MOE_PP),
-        }
-        existing = metric_specs.get(spec["name"])
+        metric = Metric(
+            name=col_to_metric[col],
+            display_order=order,
+            has_moe=_column_has_values(df, moe_column_name(col)),
+            has_percentage=_column_has_values(df, col + PERCENT),
+            has_moe_pp=_column_has_values(df, col + MOE_PP),
+        )
+        existing = metrics.get(metric.name)
         if existing is None:
-            metric_specs[spec["name"]] = spec
+            metrics[metric.name] = metric
         else:
-            for flag in ("has_moe", "has_percentage", "has_moe_pp"):
-                existing[flag] = existing[flag] or spec[flag]
+            existing.has_moe = existing.has_moe or metric.has_moe
+            existing.has_percentage = existing.has_percentage or metric.has_percentage
+            existing.has_moe_pp = existing.has_moe_pp or metric.has_moe_pp
 
     def numeric_or_none(row, col):
         return None if col not in df.columns or pd.isna(row[col]) else float(row[col])
 
-    rows = []
+    values = []
     geo_rows = []
     for _, row in df.iterrows():
         geoid = row["Geography"]
@@ -124,147 +125,66 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
             )
         )
 
-        values = {}
+        # Keyed by metric name, so a later column that cleans to the same name replaces the earlier one
+        row_values: dict[str, Value] = {}
         for col in base_cols:
+            name = col_to_metric[col]
             moe_derived_col = col + MOE_DERIVED
-            values[col_to_metric[col]] = {
-                "absolute": None if pd.isna(row[col]) else float(row[col]),
-                "margin_of_error": numeric_or_none(row, moe_column_name(col)),
-                "percentage": numeric_or_none(row, col + PERCENT),
-                "moe_percentage_points": numeric_or_none(row, col + MOE_PP),
-                "cv": numeric_or_none(row, col + CV),
-                "moe_derived": (
+            row_values[name] = Value(
+                geoid=geoid,
+                metric=name,
+                absolute=None if pd.isna(row[col]) else float(row[col]),
+                margin_of_error=numeric_or_none(row, moe_column_name(col)),
+                percentage=numeric_or_none(row, col + PERCENT),
+                moe_percentage_points=numeric_or_none(row, col + MOE_PP),
+                cv=numeric_or_none(row, col + CV),
+                moe_derived=(
                     None
                     if moe_derived_col not in df.columns or pd.isna(row[moe_derived_col])
                     else bool(row[moe_derived_col])
                 ),
-            }
-        rows.append((str(geoid), values))
+            )
+        values.extend(row_values.values())
 
-    return list(metric_specs.values()), rows, geo_rows
+    return list(metrics.values()), values, geo_rows
 
 
 # output is one record from clean.dataset_outputs; its name is the dataset id and the CSV file name
 async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, seen_geoids: set[str]) -> None:
-    dataset_id = output["name"]
-
-    await conn.execute(
-        """
-        INSERT INTO datasets (id, label, universe, hawaiian_homelands, source_type, metadata)
-        VALUES ($1, $2, $3, $4, 'census', $5::jsonb)
-        ON CONFLICT (id) DO UPDATE SET
-            label              = EXCLUDED.label,
-            universe           = EXCLUDED.universe,
-            hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-            source_type        = EXCLUDED.source_type,
-            metadata           = EXCLUDED.metadata
-        """,
-        dataset_id,
-        output["label"],
-        output["universe"],
-        output["hawaiian_homelands"],
-        json.dumps(output["metadata"]),
+    dataset = Dataset(
+        id=output["name"],
+        label=output["label"],
+        source_type="census",
+        hawaiian_homelands=output["hawaiian_homelands"],
+        universe=output["universe"],
+        metadata=output["metadata"],
     )
-
-    metric_specs, rows, geo_rows = read_dataset_rows(csv_path, skip_column=output["skip_metric_column"])
-    metric_names = [spec["name"] for spec in metric_specs]
+    metrics, values, geo_rows = read_dataset_rows(csv_path, skip_column=output["skip_metric_column"])
 
     geo_rows = [r for r in geo_rows if r[0] not in seen_geoids]
     seen_geoids.update(r[0] for r in geo_rows)
-    await conn.executemany(
-        """
-        INSERT INTO geographies (
-            geoid, type, name, block_group, census_tract, county, state, population
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT (geoid) DO UPDATE SET
-            type         = EXCLUDED.type,
-            name         = EXCLUDED.name,
-            block_group  = EXCLUDED.block_group,
-            census_tract = EXCLUDED.census_tract,
-            county       = EXCLUDED.county,
-            state        = EXCLUDED.state,
-            population   = EXCLUDED.population
-        """,
-        geo_rows,
-    )
 
-    # Drop any metric this dataset no longer produces so stale values don't hang
-    await conn.execute(
-        "DELETE FROM metrics WHERE dataset_id = $1 AND name != ALL($2::text[])",
-        dataset_id,
-        metric_names,
-    )
-
-    # DO UPDATE so re-running refreshes existing metrics. classification_mode and
-    # mv_column are set elsewhere, so they're left alone.
-    await conn.executemany(
-        """
-        INSERT INTO metrics (
-            dataset_id, name, classification_mode,
-            display_order, has_moe, has_percentage, has_moe_pp
-        )
-        VALUES ($1, $2, 'q', $3, $4, $5, $6)
-        ON CONFLICT (dataset_id, name) DO UPDATE SET
-            display_order  = EXCLUDED.display_order,
-            has_moe        = EXCLUDED.has_moe,
-            has_percentage = EXCLUDED.has_percentage,
-            has_moe_pp     = EXCLUDED.has_moe_pp
-        """,
-        [
-            (
-                dataset_id,
-                spec["name"],
-                spec["display_order"],
-                spec["has_moe"],
-                spec["has_percentage"],
-                spec["has_moe_pp"],
-            )
-            for spec in metric_specs
-        ],
-    )
-
-    metric_id_map = {
-        r["name"]: r["id"]
-        for r in await conn.fetch("SELECT id, name FROM metrics WHERE dataset_id = $1", dataset_id)
-    }
-
-    value_rows = [
-        (
-            geoid,
-            metric_id_map[name],
-            v["absolute"],
-            v["margin_of_error"],
-            v["percentage"],
-            v["moe_percentage_points"],
-            v["cv"],
-            v["moe_derived"],
-        )
-        for geoid, values in rows
-        for name, v in values.items()
-    ]
-
-    chunk_size = 5000
-    for i in range(0, len(value_rows), chunk_size):
+    async with conn.transaction():
         await conn.executemany(
             """
-            INSERT INTO metric_values (
-                geoid, metric_id, absolute, margin_of_error, percentage,
-                moe_percentage_points, cv, moe_derived
+            INSERT INTO geographies (
+                geoid, type, name, block_group, census_tract, county, state, population
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT (geoid, metric_id) DO UPDATE SET
-                absolute               = EXCLUDED.absolute,
-                margin_of_error        = EXCLUDED.margin_of_error,
-                percentage             = EXCLUDED.percentage,
-                moe_percentage_points  = EXCLUDED.moe_percentage_points,
-                cv                     = EXCLUDED.cv,
-                moe_derived            = EXCLUDED.moe_derived
+            ON CONFLICT (geoid) DO UPDATE SET
+                type         = EXCLUDED.type,
+                name         = EXCLUDED.name,
+                block_group  = EXCLUDED.block_group,
+                census_tract = EXCLUDED.census_tract,
+                county       = EXCLUDED.county,
+                state        = EXCLUDED.state,
+                population   = EXCLUDED.population
             """,
-            value_rows[i : i + chunk_size],
+            geo_rows,
         )
+        value_count = await save_dataset(conn, dataset, metrics, values)
 
-    print(f"  {dataset_id}: {len(metric_names)} metrics, {len(value_rows)} metric_values rows")
+    print(f"  {dataset.id}: {len(metrics)} metrics, {value_count} metric_values rows")
 
 
 # If --dir given, skip cleaning and use that folder. Else, run the full

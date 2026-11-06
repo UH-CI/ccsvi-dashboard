@@ -20,13 +20,8 @@ import rasterio
 from rasterio.mask import mask
 
 import settings
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
 from pipeline.check_layers import rasters
-
-# (geographies.type value, hawaiian_homelands flag to write on the dataset)
-AREA_TYPES = [
-    ("block_group", False),
-    ("hawaiian_homeland", True),
-]
 
 # The two values saved for every raster, in display order
 METRICS = ("Mean", "Max")
@@ -66,61 +61,32 @@ async def load_track(
     ]
 
     for raster in rasters():
-        dataset_id = dataset_id_for(raster.id, homelands)
-
-        await conn.execute(
-            """
-            INSERT INTO datasets (id, label, hawaiian_homelands, source_type, layer_id)
-            VALUES ($1, $2, $3, 'raster', $4)
-            ON CONFLICT (id) DO UPDATE SET
-                label              = EXCLUDED.label,
-                hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-                source_type        = EXCLUDED.source_type,
-                layer_id           = EXCLUDED.layer_id
-            """,
-            dataset_id,
-            raster.label,
-            homelands,
-            raster.id,
+        dataset = Dataset(
+            id=dataset_id_for(raster.id, homelands),
+            label=raster.label,
+            source_type="raster",
+            hawaiian_homelands=homelands,
+            layer_id=raster.id,
         )
 
         with rasterio.open(settings.RASTER_DIR / raster.file) as src:
             stats = [(geoid, stats_over(src, geom)) for geoid, geom in shapes]
+        with_data = [(geoid, values) for geoid, values in stats if values is not None]
 
-        # classification_mode/mv_column are set elsewhere
-        for stat_index, name in enumerate(METRICS):
-            await conn.execute(
-                """
-                INSERT INTO metrics (dataset_id, name, classification_mode, display_order,
-                                      has_moe, has_percentage, has_moe_pp)
-                VALUES ($1, $2, 'q', $3, false, false, false)
-                ON CONFLICT (dataset_id, name) DO NOTHING
-                """,
-                dataset_id,
-                name,
-                stat_index,
-            )
-            metric_id = await conn.fetchval(
-                "SELECT id FROM metrics WHERE dataset_id = $1 AND name = $2",
-                dataset_id,
-                name,
-            )
-            rows = [
-                (geoid, metric_id, values[stat_index])
-                for geoid, values in stats
-                if values is not None
-            ]
-
-            await conn.executemany(
-                """
-                INSERT INTO metric_values (geoid, metric_id, absolute)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (geoid, metric_id) DO UPDATE SET absolute = EXCLUDED.absolute
-                """,
-                rows,
+        async with conn.transaction():
+            await save_dataset(
+                conn,
+                dataset,
+                [Metric(name, stat_index) for stat_index, name in enumerate(METRICS)],
+                [
+                    Value(geoid, name, values[stat_index])
+                    for stat_index, name in enumerate(METRICS)
+                    for geoid, values in with_data
+                ],
             )
 
-            print(f"  {dataset_id} / {name}: {len(rows)} of {len(shapes)} areas have data")
+        for name in METRICS:
+            print(f"  {dataset.id} / {name}: {len(with_data)} of {len(shapes)} areas have data")
 
 
 async def main() -> None:

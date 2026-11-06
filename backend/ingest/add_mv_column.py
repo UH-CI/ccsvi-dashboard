@@ -20,19 +20,19 @@ async def apply() -> None:
     conn = await asyncpg.connect(settings.database_url())
 
     try:
-        await conn.execute("UPDATE metrics SET mv_column = NULL")
-
         all_columns = BLOCK_GROUP_COLUMNS + HAWAIIAN_HOMELAND_COLUMNS
         unmatched = []
-        for mv_column, dataset_id, name in all_columns:
-            result = await conn.execute(
-                "UPDATE metrics SET mv_column = $1 WHERE dataset_id = $2 AND name = $3",
-                mv_column,
-                dataset_id,
-                name,
-            )
-            if result == "UPDATE 0":
-                unmatched.append((mv_column, dataset_id, name))
+        async with conn.transaction():
+            await conn.execute("UPDATE metrics SET mv_column = NULL")
+            for mv_column, dataset_id, name in all_columns:
+                result = await conn.execute(
+                    "UPDATE metrics SET mv_column = $1 WHERE dataset_id = $2 AND name = $3",
+                    mv_column,
+                    dataset_id,
+                    name,
+                )
+                if result == "UPDATE 0":
+                    unmatched.append((mv_column, dataset_id, name))
 
         if unmatched:
             print(f"{len(unmatched)} mapping(s) matched no metric (left unset, not fatal):", file=sys.stderr)

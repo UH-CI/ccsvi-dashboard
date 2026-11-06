@@ -13,12 +13,7 @@ import asyncio
 import asyncpg
 
 import settings
-
-# (geographies.type value, hawaiian_homelands flag to write on the dataset)
-AREA_TYPES = [
-    ("block_group", False),
-    ("hawaiian_homeland", True),
-]
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
 
 
 def dataset_id_for(layer_id: str, homelands: bool) -> str:
@@ -32,37 +27,12 @@ def label_for(layer_id: str) -> str:
 
 async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
     for geo_type, homelands in AREA_TYPES:
-        dataset_id = dataset_id_for(layer_id, homelands)
-
-        await conn.execute(
-            """
-            INSERT INTO datasets (id, label, hawaiian_homelands, source_type, layer_id)
-            VALUES ($1, $2, $3, 'point', $4)
-            ON CONFLICT (id) DO UPDATE SET
-                label              = EXCLUDED.label,
-                hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-                source_type        = EXCLUDED.source_type,
-                layer_id           = EXCLUDED.layer_id
-            """,
-            dataset_id,
-            label_for(layer_id),
-            homelands,
-            layer_id,
-        )
-
-        # classification_mode/mv_column are set elsewhere
-        await conn.execute(
-            """
-            INSERT INTO metrics (dataset_id, name, classification_mode, display_order,
-                                  has_moe, has_percentage, has_moe_pp)
-            VALUES ($1, 'Count', 'q', 0, false, false, false)
-            ON CONFLICT (dataset_id, name) DO NOTHING
-            """,
-            dataset_id,
-        )
-        metric_id = await conn.fetchval(
-            "SELECT id FROM metrics WHERE dataset_id = $1 AND name = 'Count'",
-            dataset_id,
+        dataset = Dataset(
+            id=dataset_id_for(layer_id, homelands),
+            label=label_for(layer_id),
+            source_type="point",
+            hawaiian_homelands=homelands,
+            layer_id=layer_id,
         )
 
         counts = await conn.fetch(
@@ -77,16 +47,15 @@ async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
             geo_type,
         )
 
-        await conn.executemany(
-            """
-            INSERT INTO metric_values (geoid, metric_id, absolute)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (geoid, metric_id) DO UPDATE SET absolute = EXCLUDED.absolute
-            """,
-            [(r["geoid"], metric_id, r["cnt"]) for r in counts],
-        )
+        async with conn.transaction():
+            await save_dataset(
+                conn,
+                dataset,
+                [Metric("Count", 0)],
+                [Value(r["geoid"], "Count", r["cnt"]) for r in counts],
+            )
 
-        print(f"  {dataset_id}: {len(counts)} geoids")
+        print(f"  {dataset.id}: {len(counts)} geoids")
 
 
 async def main() -> None:
