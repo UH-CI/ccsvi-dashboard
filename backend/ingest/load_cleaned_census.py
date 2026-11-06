@@ -278,9 +278,8 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     print(f"Cleaning raw datasets into {cleaned_dir} ...")
     clean.run_full_cleaning(
         args.config,
-        args.raw_base_path,
         args.notes_xlsx,
-        args.central_dir,
+        args.raw_dir,
         output_dir=cleaned_dir,
     )
 
@@ -288,7 +287,6 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     clean.add_percentages_to_directory(
         cleaned_dir,
         args.config,
-        args.raw_base_path,
         block_group_populations,
     )
 
@@ -316,10 +314,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dir", help="Skip cleaning — load a folder of already-cleaned census CSVs instead"
     )
-    parser.add_argument("--raw-base-path", default=str(settings.CENSUS_RAW_DIR))
+    parser.add_argument("--raw-dir", default=str(settings.CENSUS_RAW_DIR))
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--notes-xlsx", default=str(settings.CENSUS_NOTES_XLSX))
-    parser.add_argument("--central-dir", default=str(settings.CENSUS_RAW_DIR))
     parser.add_argument("--boundaries-geojson", default=DEFAULT_BOUNDARIES_GEOJSON)
     parser.add_argument("--output-dir", default=str(settings.CENSUS_CLEANED_DIR))
     args = parser.parse_args()
