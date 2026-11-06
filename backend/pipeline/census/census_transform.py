@@ -5,6 +5,8 @@ import os
 
 import pandas as pd
 
+from .csv_format import CALC, ESTIMATE_PREFIX, MISSING_VALUES, moe_column_name
+
 
 """
 Census datasets are double headered (a code row and a name row). This maps
@@ -24,7 +26,7 @@ def map_census_aliases(file_path: str, column_mapping_dict: dict) -> pd.DataFram
 
         column_mapping_dict.update(dict(zip(names, codes)))
 
-    df = pd.read_csv(file_path, skiprows=[0], na_values=["", "-", "**", "null", "(X)"], encoding="utf-8-sig")
+    df = pd.read_csv(file_path, skiprows=[0], na_values=MISSING_VALUES, encoding="utf-8-sig")
     df.columns = pd.MultiIndex.from_tuples(list(zip(codes, names)), names=["Code", "Alias"])
 
     return df
@@ -53,8 +55,8 @@ def census_drop_cols(df: pd.DataFrame, cols_to_drop: list) -> pd.DataFrame:
         if clean_remove_col in alias_to_col:
             columns_to_drop.add(alias_to_col[clean_remove_col])
 
-            if clean_remove_col.startswith("Estimate!!"):
-                margin_col = "Margin of Error!!" + clean_remove_col[len("Estimate!!"):]
+            if clean_remove_col.startswith(ESTIMATE_PREFIX):
+                margin_col = moe_column_name(clean_remove_col)
                 if margin_col in alias_to_col:
                     columns_to_drop.add(alias_to_col[margin_col])
 
@@ -94,7 +96,7 @@ def export_census_csv(df: pd.DataFrame, output_dir: str, filename: str, overwrit
     for alias, code in zip(aliases, codes):
         cleaned = alias.replace('"', "").replace('"', "").strip() if isinstance(alias, str) else alias
         if code == "CALCULATED":
-            cleaned = f"{cleaned} (calc.)"
+            cleaned = cleaned + CALC
         cleaned_aliases.append(cleaned)
 
     temp_df = df.copy()

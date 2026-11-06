@@ -20,17 +20,27 @@ import pandas as pd
 import settings
 from pipeline.census import clean, proportions
 from pipeline.census.census_transform import clean_column_name
-from pipeline.census.proportions import moe_column_name
+from pipeline.census.csv_format import (
+    CV,
+    DERIVED_ENDINGS,
+    ESTIMATE_PREFIX,
+    MISSING_VALUES,
+    MOE_DERIVED,
+    MOE_PP,
+    MOE_PREFIX,
+    PERCENT,
+    moe_column_name,
+)
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
 DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
 
 PREFIXES_TO_REMOVE = [
-    "Estimate!!Total:!!",
-    "Estimate!!Total!!",
-    "Margin of Error!!",
-    "Estimate!!",
+    ESTIMATE_PREFIX + "Total:!!",
+    ESTIMATE_PREFIX + "Total!!",
+    MOE_PREFIX,
+    ESTIMATE_PREFIX,
     "!!Total:!!",  # Decennial files use "Total" not "Estimate"
 ]
 
@@ -40,10 +50,6 @@ NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
 def metric_name_for(col: str) -> str:
     name = clean_column_name(col, PREFIXES_TO_REMOVE)
     return name if name else "Total"
-
-# Finds the matching Margin of Error column for a metric column, if the cleaned CSV has one.
-def moe_column_for(col: str) -> str | None:
-    return moe_column_name(col)
 
 # True when the CSV has this column and at least one row has a value in it
 def _column_has_values(df: pd.DataFrame, col: str) -> bool:
@@ -64,18 +70,15 @@ def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
 
 
 def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[dict], list[tuple[str, dict]], list[tuple]]:
-    df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
+    df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
     base_cols = [
         col
         for col in df.columns
         if col not in NON_METRIC_COLS
         and col != skip_column
-        and not col.startswith("Margin of Error")
-        and not col.endswith(" (%)")
-        and not col.endswith(" (MOE pp)")
-        and not col.endswith(" (CV)")
-        and not col.endswith(" (MOE derived)")
+        and not col.startswith(MOE_PREFIX)
+        and not col.endswith(DERIVED_ENDINGS)
     ]
     col_to_metric = {col: metric_name_for(col) for col in base_cols}
 
@@ -83,13 +86,12 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
     # Two source columns can clean down to the same name, so merge those.
     metric_specs: dict[str, dict] = {}
     for order, col in enumerate(base_cols):
-        moe_col = moe_column_for(col)
         spec = {
             "name": col_to_metric[col],
             "display_order": order,
-            "has_moe": bool(moe_col) and _column_has_values(df, moe_col),
-            "has_percentage": _column_has_values(df, f"{col} (%)"),
-            "has_moe_pp": _column_has_values(df, f"{col} (MOE pp)"),
+            "has_moe": _column_has_values(df, moe_column_name(col)),
+            "has_percentage": _column_has_values(df, col + PERCENT),
+            "has_moe_pp": _column_has_values(df, col + MOE_PP),
         }
         existing = metric_specs.get(spec["name"])
         if existing is None:
@@ -124,17 +126,17 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
 
         values = {}
         for col in base_cols:
-            moe_col = moe_column_for(col)
+            moe_derived_col = col + MOE_DERIVED
             values[col_to_metric[col]] = {
                 "absolute": None if pd.isna(row[col]) else float(row[col]),
-                "margin_of_error": numeric_or_none(row, moe_col) if moe_col else None,
-                "percentage": numeric_or_none(row, f"{col} (%)"),
-                "moe_percentage_points": numeric_or_none(row, f"{col} (MOE pp)"),
-                "cv": numeric_or_none(row, f"{col} (CV)"),
+                "margin_of_error": numeric_or_none(row, moe_column_name(col)),
+                "percentage": numeric_or_none(row, col + PERCENT),
+                "moe_percentage_points": numeric_or_none(row, col + MOE_PP),
+                "cv": numeric_or_none(row, col + CV),
                 "moe_derived": (
                     None
-                    if f"{col} (MOE derived)" not in df.columns or pd.isna(row[f"{col} (MOE derived)"])
-                    else bool(row[f"{col} (MOE derived)"])
+                    if moe_derived_col not in df.columns or pd.isna(row[moe_derived_col])
+                    else bool(row[moe_derived_col])
                 ),
             }
         rows.append((str(geoid), values))

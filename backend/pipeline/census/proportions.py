@@ -7,6 +7,18 @@ import os
 
 import pandas as pd
 
+from .csv_format import (
+    CALC,
+    CV,
+    DERIVED_ENDINGS,
+    MISSING_VALUES,
+    MOE_DERIVED,
+    MOE_PP,
+    MOE_PREFIX,
+    PERCENT,
+    moe_column_name,
+)
+
 
 def load_block_group_populations(geojson_path: str) -> dict:
     with open(os.path.expanduser(geojson_path), "r") as f:
@@ -18,12 +30,6 @@ def load_block_group_populations(geojson_path: str) -> dict:
         populations[f"1500000US{geoid}"] = feature["properties"]["pop20"]
 
     return populations
-
-
-def moe_column_name(col: str) -> str:
-    if col.startswith("Estimate!!"):
-        return "Margin of Error!!" + col[len("Estimate!!"):]
-    return "Margin of Error!!" + col
 
 
 # Coefficient of variation MOE as a share of the estimate. NaN when estimate is 0
@@ -43,7 +49,7 @@ def add_percentages_to_csv(
     denominator_column: str | None = None,
     counts_only: bool = False,
 ) -> pd.DataFrame:
-    df = pd.read_csv(csv_path, na_values=["", "-", "**", "null"])
+    df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
     filename = os.path.basename(csv_path)
 
@@ -66,11 +72,7 @@ def add_percentages_to_csv(
 
     # Drop any previously computed (%) / (MOE pp) / (CV) / (MOE derived) columns before
     # recomputing, to avoid duplicates
-    existing_derived_cols = [
-        col
-        for col in df.columns
-        if " (%)" in col or " (MOE pp)" in col or " (CV)" in col or " (MOE derived)" in col
-    ]
+    existing_derived_cols = [col for col in df.columns if col.endswith(DERIVED_ENDINGS)]
     df = df.drop(columns=existing_derived_cols)
 
     if denominator_column and denominator_column in df.columns:
@@ -90,7 +92,7 @@ def add_percentages_to_csv(
         col
         for col in df.columns
         if col not in ["Geography", "Geographic Area Name", "Census_Population", denominator_column]
-        and not col.startswith("Margin of Error")
+        and not col.startswith(MOE_PREFIX)
         and "(Per Capita)" not in col
         and "Median" not in col
     ]
@@ -131,7 +133,7 @@ def add_percentages_to_csv(
             moe_pp_cols[col] = ((100 / denominator) * radicand.pow(0.5)).round(1)
 
         # metrics we calculate
-        moe_derived_cols[col] = col.endswith("(calc.)")
+        moe_derived_cols[col] = col.endswith(CALC)
 
     if counts_only:
         pct_cols, moe_pp_cols = {}, {}
@@ -139,7 +141,7 @@ def add_percentages_to_csv(
     # CV needs only a column's own estimate and MOE, so every column with an MOE gets one
     for col in df.columns:
         moe_col = moe_column_name(col)
-        if col.startswith("Margin of Error") or moe_col not in df.columns or not pd.api.types.is_numeric_dtype(df[col]):
+        if col.startswith(MOE_PREFIX) or moe_col not in df.columns or not pd.api.types.is_numeric_dtype(df[col]):
             continue
         moe_values = pd.to_numeric(df[moe_col], errors="coerce")
         cv_cols[col] = _coefficient_of_variation(df[col], moe_values).round(1)
@@ -150,19 +152,19 @@ def add_percentages_to_csv(
     for col in df.columns:
         new_order.append(col)
         if col in pct_cols:
-            prop_col = f"{col} (%)"
+            prop_col = col + PERCENT
             df[prop_col] = pct_cols[col]
             new_order.append(prop_col)
         if col in moe_pp_cols:
-            moe_pp_col = f"{col} (MOE pp)"
+            moe_pp_col = col + MOE_PP
             df[moe_pp_col] = moe_pp_cols[col]
             new_order.append(moe_pp_col)
         if col in cv_cols:
-            cv_col = f"{col} (CV)"
+            cv_col = col + CV
             df[cv_col] = cv_cols[col]
             new_order.append(cv_col)
         if col in moe_derived_cols:
-            moe_derived_col = f"{col} (MOE derived)"
+            moe_derived_col = col + MOE_DERIVED
             df[moe_derived_col] = moe_derived_cols[col]
             new_order.append(moe_derived_col)
     df = df[new_order]
@@ -185,8 +187,8 @@ def check_percentages_over_100(cleaned_path_head: str) -> dict:
 
     for csv_file in csv_files:
         filename = os.path.basename(csv_file)
-        df = pd.read_csv(csv_file, na_values=["", "-", "**", "null"])
-        pct_cols = [col for col in df.columns if col.endswith("(%)")]
+        df = pd.read_csv(csv_file, na_values=MISSING_VALUES)
+        pct_cols = [col for col in df.columns if col.endswith(PERCENT)]
 
         for col in pct_cols:
             values = pd.to_numeric(df[col], errors="coerce")
@@ -237,7 +239,7 @@ def check_population_source_mismatch(raw_dataset_dir: str, block_group_populatio
             est_str, moe_str = row[2], row[3]
             try:
                 est = float(est_str)
-                moe = float(moe_str) if moe_str not in ("", "-", "**", "null") else None
+                moe = float(moe_str) if moe_str not in MISSING_VALUES else None
             except ValueError:
                 continue
 
@@ -273,7 +275,7 @@ def compare_population_denominators(cleaned_csv_path: str, raw_dataset_dir: str,
     cleaned_csv_path = os.path.expanduser(cleaned_csv_path)
     raw_dataset_dir = os.path.expanduser(raw_dataset_dir)
 
-    df = pd.read_csv(cleaned_csv_path, na_values=["", "-", "**", "null"])
+    df = pd.read_csv(cleaned_csv_path, na_values=MISSING_VALUES)
 
     raw_csv_files = glob.glob(os.path.join(raw_dataset_dir, "*.csv"))
     if not raw_csv_files:
@@ -304,8 +306,8 @@ def compare_population_denominators(cleaned_csv_path: str, raw_dataset_dir: str,
 
     # For each metric column, show the actual computed percentage under both denominator
     # choices for these same worst-gap rows, plus how many rows land over 100% overall
-    for pct_col in [c for c in df.columns if c.endswith("(%)")]:
-        base_col = pct_col.replace(" (%)", "")
+    for pct_col in [c for c in df.columns if c.endswith(PERCENT)]:
+        base_col = pct_col.removesuffix(PERCENT)
         if base_col not in df.columns:
             continue
 

@@ -9,6 +9,8 @@ Recipes only read raw tables and never change a table they are given, so order d
 
 import pandas as pd
 
+from .csv_format import ESTIMATE_PREFIX, moe_column_name
+
 
 def _estimate_total_cols(df: pd.DataFrame) -> list:
     return [col for col in df.columns if len(col) == 2 and col[1].startswith("Estimate!!Total:!!")]
@@ -25,10 +27,10 @@ def _total_universe_col(df: pd.DataFrame):
 # Finds the "Margin of Error!!..." column matching an estimate column, if the source has one
 def _moe_col_for(df: pd.DataFrame, estimate_col):
     alias = estimate_col[1]
-    if not alias.startswith("Estimate!!"):
+    if not alias.startswith(ESTIMATE_PREFIX):
         return None
 
-    moe_alias = "Margin of Error!!" + alias[len("Estimate!!"):]
+    moe_alias = moe_column_name(alias)
     for col in df.columns:
         if len(col) == 2 and col[1] == moe_alias:
             return col
@@ -95,6 +97,18 @@ def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
     return pd.Series([combine(i) for i in range(len(df))], index=df.index)
 
 
+# Adds a CALCULATED total of estimate_cols and its margin of error to target_df, at position if given, else at the end
+def _add_total(target_df: pd.DataFrame, df: pd.DataFrame, name: str, estimate_cols: list, position: int | None = None) -> None:
+    estimate_col = ("CALCULATED", name)
+    moe_col = ("CALCULATED", moe_column_name(name))
+    if position is None:
+        target_df[estimate_col] = _sum_estimates(df, estimate_cols)
+        target_df[moe_col] = _sum_moe(df, estimate_cols)
+    else:
+        target_df.insert(position, estimate_col, _sum_estimates(df, estimate_cols))
+        target_df.insert(position + 1, moe_col, _sum_moe(df, estimate_cols))
+
+
 # Adds "Total Housing Built Before 1990" and "Total Housing Built Before 1970" columns,
 # and carries through the raw total-housing-units column so it can be used as a
 # percentage denominator
@@ -119,10 +133,8 @@ def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
         elif "1970 to 1979" in col_alias or "1980 to 1989" in col_alias:
             cols_before_1990.append(col)
 
-    cleaned_df[("CALCULATED", "Total Housing Built Before 1990")] = _sum_estimates(df, cols_before_1990)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1990")] = _sum_moe(df, cols_before_1990)
-    cleaned_df[("CALCULATED", "Total Housing Built Before 1970")] = _sum_estimates(df, cols_before_1970)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Housing Built Before 1970")] = _sum_moe(df, cols_before_1970)
+    _add_total(cleaned_df, df, "Total Housing Built Before 1990", cols_before_1990)
+    _add_total(cleaned_df, df, "Total Housing Built Before 1970", cols_before_1970)
 
     return cleaned_df
 
@@ -147,8 +159,7 @@ def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
         ):
             overcrowded_cols.append(col)
 
-    cleaned_df[("CALCULATED", "Total Overcrowded Housing Units")] = _sum_estimates(df, overcrowded_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Overcrowded Housing Units")] = _sum_moe(df, overcrowded_cols)
+    _add_total(cleaned_df, df, "Total Overcrowded Housing Units", overcrowded_cols)
 
     return cleaned_df
 
@@ -168,10 +179,7 @@ def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
     )
     single_parent_cols = [col for col in _estimate_total_cols(df) if col[1] in single_parent_labels]
 
-    cleaned_df[("CALCULATED", "Total Single-Parent Households With Children")] = _sum_estimates(df, single_parent_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Single-Parent Households With Children")] = _sum_moe(
-        df, single_parent_cols
-    )
+    _add_total(cleaned_df, df, "Total Single-Parent Households With Children", single_parent_cols)
 
     return cleaned_df
 
@@ -183,8 +191,7 @@ def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     if total_col is not None:
         _carry_with_moe(cleaned_df, df, total_col)
     cols_to_sum = _estimate_total_cols(df)
-    cleaned_df[("CALCULATED", "No Health Insurance Coverage")] = _sum_estimates(df, cols_to_sum)
-    cleaned_df[("CALCULATED", "Margin of Error!!No Health Insurance Coverage")] = _sum_moe(df, cols_to_sum)
+    _add_total(cleaned_df, df, "No Health Insurance Coverage", cols_to_sum)
     return cleaned_df
 
 
@@ -192,12 +199,7 @@ def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
 def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = _estimate_total_cols(df)
-    cleaned_df.insert(2, ("CALCULATED", "Total Limited English Speaking Households"), _sum_estimates(df, cols_to_sum))
-    cleaned_df.insert(
-        3,
-        ("CALCULATED", "Margin of Error!!Total Limited English Speaking Households"),
-        _sum_moe(df, cols_to_sum),
-    )
+    _add_total(cleaned_df, df, "Total Limited English Speaking Households", cols_to_sum, position=2)
     return cleaned_df
 
 
@@ -205,8 +207,7 @@ def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
 def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.copy()
     cols_to_sum = [col for col in _estimate_total_cols(df) if col[1].endswith("!!Living alone")]
-    cleaned_df.insert(2, ("CALCULATED", 'Total "Living alone"'), _sum_estimates(df, cols_to_sum))
-    cleaned_df.insert(3, ("CALCULATED", 'Margin of Error!!Total "Living alone"'), _sum_moe(df, cols_to_sum))
+    _add_total(cleaned_df, df, 'Total "Living alone"', cols_to_sum, position=2)
     return cleaned_df
 
 
@@ -232,12 +233,9 @@ def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
         elif "1.50 to 1.84" in col_alias or "1.85 to 1.99" in col_alias:
             under_2_cols.append(col)
 
-    cleaned_df[("CALCULATED", "Total Under 100% FPL")] = _sum_estimates(df, under_1_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 100% FPL")] = _sum_moe(df, under_1_cols)
-    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = _sum_estimates(df, under_1_5_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
-    cleaned_df[("CALCULATED", "Total Under 200% FPL")] = _sum_estimates(df, under_2_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 200% FPL")] = _sum_moe(df, under_2_cols)
+    _add_total(cleaned_df, df, "Total Under 100% FPL", under_1_cols)
+    _add_total(cleaned_df, df, "Total Under 150% FPL", under_1_5_cols)
+    _add_total(cleaned_df, df, "Total Under 200% FPL", under_2_cols)
 
     return cleaned_df
 
@@ -292,34 +290,25 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     under_5_cols = males_under_5 + females_under_5
     under_18_cols = males_under_18 + females_under_18
     over_65_cols = males_over_65 + females_over_65
-    total_df[("CALCULATED", "Total Under 5")] = _sum_estimates(df, under_5_cols)
-    total_df[("CALCULATED", "Margin of Error!!Total Under 5")] = _sum_moe(df, under_5_cols)
-    total_df[("CALCULATED", "Total Under 18")] = _sum_estimates(df, under_18_cols)
-    total_df[("CALCULATED", "Margin of Error!!Total Under 18")] = _sum_moe(df, under_18_cols)
-    total_df[("CALCULATED", "Total Over 65")] = _sum_estimates(df, over_65_cols)
-    total_df[("CALCULATED", "Margin of Error!!Total Over 65")] = _sum_moe(df, over_65_cols)
+    _add_total(total_df, df, "Total Under 5", under_5_cols)
+    _add_total(total_df, df, "Total Under 18", under_18_cols)
+    _add_total(total_df, df, "Total Over 65", over_65_cols)
 
     # Segregated male/female age-bucket totals — kept for reference, no longer
     # exposed as SVI indicators (see sviCategories.ts).
     males_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(males_df, df, total_col)
-    males_df[("CALCULATED", "Males Under 5")] = _sum_estimates(df, males_under_5)
-    males_df[("CALCULATED", "Margin of Error!!Males Under 5")] = _sum_moe(df, males_under_5)
-    males_df[("CALCULATED", "Males Under 18")] = _sum_estimates(df, males_under_18)
-    males_df[("CALCULATED", "Margin of Error!!Males Under 18")] = _sum_moe(df, males_under_18)
-    males_df[("CALCULATED", "Males Over 65")] = _sum_estimates(df, males_over_65)
-    males_df[("CALCULATED", "Margin of Error!!Males Over 65")] = _sum_moe(df, males_over_65)
+    _add_total(males_df, df, "Males Under 5", males_under_5)
+    _add_total(males_df, df, "Males Under 18", males_under_18)
+    _add_total(males_df, df, "Males Over 65", males_over_65)
 
     females_df = df.iloc[:, :2].copy()
     if total_col is not None:
         _carry_with_moe(females_df, df, total_col)
-    females_df[("CALCULATED", "Females Under 5")] = _sum_estimates(df, females_under_5)
-    females_df[("CALCULATED", "Margin of Error!!Females Under 5")] = _sum_moe(df, females_under_5)
-    females_df[("CALCULATED", "Females Under 18")] = _sum_estimates(df, females_under_18)
-    females_df[("CALCULATED", "Margin of Error!!Females Under 18")] = _sum_moe(df, females_under_18)
-    females_df[("CALCULATED", "Females Over 65")] = _sum_estimates(df, females_over_65)
-    females_df[("CALCULATED", "Margin of Error!!Females Over 65")] = _sum_moe(df, females_over_65)
+    _add_total(females_df, df, "Females Under 5", females_under_5)
+    _add_total(females_df, df, "Females Under 18", females_under_18)
+    _add_total(females_df, df, "Females Over 65", females_over_65)
 
     return {
         "genders": genders_df,
@@ -355,12 +344,9 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
             elif "65 to 74" in col_alias or "75" in col_alias:
                 over_65_cols.append(col)
 
-    cleaned_df[("CALCULATED", "Total Population Under 5")] = _sum_estimates(df, under_5_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 5")] = _sum_moe(df, under_5_cols)
-    cleaned_df[("CALCULATED", "Total Population Under 18")] = _sum_estimates(df, under_18_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Under 18")] = _sum_moe(df, under_18_cols)
-    cleaned_df[("CALCULATED", "Total Population Over 65")] = _sum_estimates(df, over_65_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Population Over 65")] = _sum_moe(df, over_65_cols)
+    _add_total(cleaned_df, df, "Total Population Under 5", under_5_cols)
+    _add_total(cleaned_df, df, "Total Population Under 18", under_18_cols)
+    _add_total(cleaned_df, df, "Total Population Over 65", over_65_cols)
 
     # Both bands are already percentages of the same poverty universe, so they add directly
     under_1_5_cols = [
@@ -371,8 +357,7 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
         and ("Below 100 percent" in col[1] or "100 to 149 percent" in col[1])
     ]
 
-    cleaned_df[("CALCULATED", "Total Under 150% FPL")] = _sum_estimates(df, under_1_5_cols)
-    cleaned_df[("CALCULATED", "Margin of Error!!Total Under 150% FPL")] = _sum_moe(df, under_1_5_cols)
+    _add_total(cleaned_df, df, "Total Under 150% FPL", under_1_5_cols)
 
     cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:].copy()], axis=1)
 
