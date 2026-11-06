@@ -26,6 +26,7 @@ env/
 # Local configuration
 *.env
 .env.*
+!.env.example
 config.json
 
 # Node.js dependencies
