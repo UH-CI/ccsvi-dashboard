@@ -4,8 +4,10 @@ name: Build frontend
 on:
   push:
     branches: [dev]
+    # Must match the exclusions in ops/deploy.sh, which checks the build is current
     paths-ignore:
       - 'backend/**'
+      - 'ops/**'
       - 'notebooks/**'
       - '**/*.md'
   workflow_dispatch:

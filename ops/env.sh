@@ -1,7 +1,8 @@
-# Shared folders, names and passwords for every backend script. Source it, don't run it.
+# Shared folders, names and passwords for every VM script. Source it, don't run it.
 
-BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_ROOT="$(cd "$BACKEND_DIR/.." && pwd)"
+OPS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$OPS_DIR/.." && pwd)"
+BACKEND_DIR="$REPO_ROOT/backend"
 PYTHON="$BACKEND_DIR/.venv/bin/python"
 
 # Sets DATA_ROOT, DATA_VERSION and TILE_CACHE_DIR

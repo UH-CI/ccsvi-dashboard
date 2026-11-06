@@ -1,4 +1,4 @@
--- Db schema, rebuild with (backend/scripts/rebuild.sh) after editing
+-- Db schema, rebuild with (ops/rebuild.sh) after editing
 
 CREATE TABLE IF NOT EXISTS datasets (
     id                 TEXT    PRIMARY KEY,

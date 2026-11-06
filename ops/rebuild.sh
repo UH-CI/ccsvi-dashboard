@@ -39,7 +39,7 @@ SQL
 fi
 
 echo "-- applying schema"
-"$BACKEND_DIR/scripts/db-schema.sh"
+"$OPS_DIR/db-schema.sh"
 
 echo "-- loading census data"
 cd "$BACKEND_DIR"

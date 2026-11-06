@@ -1,6 +1,6 @@
 """Where the data lives on the VM, and the database address. Every backend part reads them from here.
 
-The data root and version are set in settings.conf, which backend/scripts/env.sh also reads.
+The data root and version are set in settings.conf, which ops/env.sh also reads.
 """
 
 import os
@@ -38,7 +38,7 @@ def database_url() -> str:
     url = os.environ.get("DATABASE_URL")
     if not url:
         raise SystemExit(
-            "DATABASE_URL is not set. On the VM, run this through backend/scripts/ "
+            "DATABASE_URL is not set. On the VM, run this through ops/ "
             "(env.sh loads it from the repo .env), or: export $(sudo cat /etc/ccsvi-api.env | xargs)"
         )
     return url
