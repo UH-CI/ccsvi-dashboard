@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Typography, MenuItem, MenuList, Box, Tooltip } from "@mui/material";
 import {
   Visibility,
@@ -15,6 +15,7 @@ import {
   useMapStore,
   useMapConfig,
   DEFAULT_LAYER_OPACITIES,
+  useActiveRaster,
   useRasterLayersStore,
 } from "../../stores";
 import styles from "./ControlPanel.module.scss";
@@ -49,9 +50,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
-  const visibleRasterIdsByMap = useRasterLayersStore((s) => s.visibleLayerIdsByMap);
-  const rasterColormapOverrides = useRasterLayersStore((s) => s.colormapOverrides);
-  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const activeRaster = useActiveRaster(mapId);
   const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -70,29 +69,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
       }, 0);
     }
   }, [isEditingTitle]);
-
-  const activeRasterLeafId = useMemo(() => {
-    const visible = visibleRasterIdsByMap[mapId];
-    if (!visible || visible.size === 0) return null;
-    for (const id of visible) {
-      if (id.includes(".")) return id;
-    }
-    return [...visible][0] ?? null;
-  }, [visibleRasterIdsByMap, mapId]);
-
-  const activeRasterColormap = useMemo(() => {
-    if (!activeRasterLeafId) return null;
-    const override = rasterColormapOverrides[mapId]?.[activeRasterLeafId];
-    if (override) return override;
-    const [parentId, subId] = activeRasterLeafId.split(".");
-    if (!subId) {
-      return rasterLayerConfigs.find((l) => l.id === parentId)?.colormap ?? null;
-    }
-    const parent = rasterLayerConfigs.find((l) => l.id === parentId);
-    return (
-      parent?.subLayers?.find((s) => s.id === subId)?.colormap ?? parent?.colormap ?? null
-    );
-  }, [activeRasterLeafId, rasterColormapOverrides, rasterLayerConfigs, mapId]);
 
   const activeBaseMapId = config?.baseMap ?? DEFAULT_BASE_MAP_ID;
 
@@ -136,14 +112,13 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           updateMapConfig={updateMapConfig}
           setLayerOpacity={setLayerOpacity}
         />
-        {activeRasterLeafId && (
+        {activeRaster && (
           <RasterColormapMenu
             anchorEl={rasterColorSchemeAnchor}
             open={Boolean(rasterColorSchemeAnchor)}
             onClose={() => setRasterColorSchemeAnchor(null)}
             mapId={mapId}
-            activeRasterLeafId={activeRasterLeafId}
-            activeRasterColormap={activeRasterColormap}
+            activeRaster={activeRaster}
             setRasterColormap={setRasterColormap}
           />
         )}
@@ -196,7 +171,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </MenuItem>
           </span>
         </Tooltip>
-        {activeRasterLeafId && (
+        {activeRaster && (
           <MenuItem
             onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
             className={styles["single-map-item"]}

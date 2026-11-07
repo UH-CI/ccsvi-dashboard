@@ -14,8 +14,7 @@ import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../..
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../api/queries/pointCounts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
-import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
-import { getActiveRaster } from "../../../utils/savedRaster.ts";
+import { useActiveRaster, useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
@@ -57,12 +56,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   filteredGeoids,
   onFeatureClick,
 }) => {
-  const visibleRasterLayerIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
-  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
-  const activeRaster = useMemo(
-    () => getActiveRaster(visibleRasterLayerIds, rasterLayerConfigs),
-    [visibleRasterLayerIds, rasterLayerConfigs],
-  );
+  const activeRaster = useActiveRaster(mapId);
 
   const getStyle = useCallback(
     (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined): StyleConfig => {

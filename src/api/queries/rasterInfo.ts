@@ -8,4 +8,6 @@ export const rasterInfoQuery = (rasterId: string) =>
     queryFn: () => getRasterInfo(rasterId),
   });
 
-export const useRasterInfo = (rasterId: string) => useQuery(rasterInfoQuery(rasterId)).data;
+// Waits until a raster is given
+export const useRasterInfo = (rasterId: string | undefined) =>
+  useQuery({ ...rasterInfoQuery(rasterId ?? ""), enabled: Boolean(rasterId) }).data;

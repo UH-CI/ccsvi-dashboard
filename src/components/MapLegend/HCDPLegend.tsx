@@ -4,26 +4,14 @@ import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import { useHCDPStore } from "../../stores/useHCDPStore";
 import { HCDP_PALETTE } from "../../config";
 import { cloneArrayBuffer } from "../../utils/hcdpRaster";
-import {
-  RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX,
-  RASTER_LEGEND_DEFAULT_WIDTH_PX,
-} from "./rasterLegendDefaults";
 import styles from "./MapLegend.module.scss";
-import { CollapsibleLegend } from "./CollapsibleLegend";
-
-function formatValue(v: number): string {
-  if (!Number.isFinite(v)) return "";
-  const a = Math.abs(v);
-  if (a >= 10000 || (a > 0 && a < 0.001)) return v.toExponential(2);
-  return a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(2) : v.toFixed(3);
-}
+import { GradientLegend } from "./GradientLegend";
 
 interface HcdpMapLegendProps {
   mapId: string;
-  dataType?: string; // Kept for backwards compatibility if needed elsewhere
 }
 
-export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType }) => {
+export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId }) => {
   const overlay = useHCDPStore((s) => s.overlaysByMap[mapId]);
   const [stats, setStats] = useState<{ min: number; max: number } | null>(null);
 
@@ -90,43 +78,13 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
   // Gracefully hide the legend entirely if no HCDP overlay or data stats are loaded
   if (!overlay || !stats) return null;
 
-  const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
-
-  const gradient = `linear-gradient(to top, ${HCDP_PALETTE.join(", ")})`;
-
-  // Safely grab units from the row payload if they exist
-  const units = (overlay.row as any)?.units?.trim() || (overlay.row as any)?.unit?.trim() || "";
-
   return (
-    <CollapsibleLegend title={overlay.title} icon={<CloudQueueIcon className={styles["legend-icon"]} />} order={0}>
-      <div className={styles["raster-legend__row"]} style={{ width: RASTER_LEGEND_DEFAULT_WIDTH_PX }}>
-        <div
-          className={styles["raster-legend__gradient"]}
-          style={{ background: gradient, height: gradientHeightPx }}
-          aria-hidden
-        />
-        {units ? (
-          <div
-            className={styles["raster-legend__unit-col"]}
-            style={{ minHeight: gradientHeightPx }}
-            aria-hidden
-          >
-            <span>{units}</span>
-            <span>{units}</span>
-          </div>
-        ) : null}
-        <div
-          className={styles["raster-legend__nums"]}
-          style={{ minHeight: gradientHeightPx }}
-        >
-          <span title={units ? `${formatValue(stats.max)}\u00a0${units}` : undefined}>
-            {formatValue(stats.max)}
-          </span>
-          <span title={units ? `${formatValue(stats.min)}\u00a0${units}` : undefined}>
-            {formatValue(stats.min)}
-          </span>
-        </div>
-      </div>
-    </CollapsibleLegend>
+    <GradientLegend
+      title={overlay.title}
+      icon={<CloudQueueIcon className={styles["legend-icon"]} />}
+      gradient={`linear-gradient(to top, ${HCDP_PALETTE.join(", ")})`}
+      min={stats.min}
+      max={stats.max}
+    />
   );
 };

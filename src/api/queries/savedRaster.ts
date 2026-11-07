@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-import { useRasterLayersStore } from "../../stores/useRasterLayersStore";
+import { useActiveRaster } from "../../stores/useRasterLayersStore";
 import { layerDatasetId } from "../../utils/layerDatasets";
-import { getActiveRaster } from "../../utils/savedRaster";
 import { queryClient } from "../queryClient";
 import { datasetsQuery, useDatasets } from "./datasets";
 import { fetchMetricValues, useMetricValues } from "./metricValues";
@@ -26,11 +25,8 @@ export async function savedRasterStats(
 
 // The visible raster's saved means and maxes for the table: its name and lookups of one area's values
 export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
-  const visibleIds = useRasterLayersStore((s) => s.visibleLayerIdsByMap[mapId]);
-  const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
   const datasets = useDatasets();
-
-  const active = useMemo(() => getActiveRaster(visibleIds, configs), [visibleIds, configs]);
+  const active = useActiveRaster(mapId);
   const dataset = active ? layerDatasetId(datasets, active.id, isHomelands) : null;
   const means = useMetricValues(dataset, "Mean");
   const maxes = useMetricValues(dataset, "Max");

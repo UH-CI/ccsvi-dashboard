@@ -1,14 +1,14 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader } from "@mui/material";
 import { RASTER_COLORMAPS } from "../../../config";
+import type { ActiveRaster } from "../../../stores/useRasterLayersStore";
 
 interface RasterColormapMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   mapId: string;
-  activeRasterLeafId: string;
-  activeRasterColormap: string | null;
+  activeRaster: ActiveRaster;
   setRasterColormap: (mapId: string, layerId: string, colormapName: string) => void;
 }
 
@@ -18,8 +18,7 @@ export const RasterColormapMenu: React.FC<RasterColormapMenuProps> = ({
   open,
   onClose,
   mapId,
-  activeRasterLeafId,
-  activeRasterColormap,
+  activeRaster,
   setRasterColormap,
 }) => {
   return (
@@ -28,9 +27,9 @@ export const RasterColormapMenu: React.FC<RasterColormapMenuProps> = ({
       {RASTER_COLORMAPS.map((cm) => (
         <MenuItem
           key={cm.name}
-          selected={activeRasterColormap === cm.name}
+          selected={activeRaster.colormap === cm.name}
           onClick={() => {
-            setRasterColormap(mapId, activeRasterLeafId, cm.name);
+            setRasterColormap(mapId, activeRaster.id, cm.name);
             onClose();
           }}
         >

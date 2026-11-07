@@ -8,7 +8,7 @@ export {
 } from "./useMapStore";
 export { usePointLayerStore } from "./usePointLayersStore";
 export { useHazardLayersStore } from "./useHazardLayersStore";
-export { useRasterLayersStore, type RasterLegendInfo } from "./useRasterLayersStore";
+export { useRasterLayersStore, useActiveRaster } from "./useRasterLayersStore";
 export { useSnapshotStore } from "./useSnapshotStore";
 export {
   useHCDPStore,

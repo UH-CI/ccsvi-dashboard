@@ -279,7 +279,6 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
       const arrayBuffer = await fetchHcdpRaster(activeRow, selectedDate);
 
       useRasterLayersStore.getState().setVisibleLayerIds(mapId, []);
-      useRasterLayersStore.getState().setRasterLegend(mapId, null);
 
       const dateStr = selectedDate.format("YYYY-MM-DD");
       setRasterOverlay(mapId, {

@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import { useRasterLayersStore } from "../../stores";
+import {
+  rasterColormap,
+  rasterConfig,
+  useRasterLayersStore,
+} from "../../stores/useRasterLayersStore";
 import { apiUrl, getRasterValue } from "../../api/client";
 import { useRasterInfo } from "../../api/queries/rasterInfo";
 
@@ -34,22 +38,19 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   // Get config from store
   const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
 
-  const layerConfig = useMemo(() => {
-    const parent = rasterLayerConfigs.find((r) => r.id === parentId);
-    const sub =
-      layerId && parent?.subLayers ? parent.subLayers.find((s) => s.id === layerId) : undefined;
-    return sub ?? parent;
-  }, [rasterLayerConfigs, parentId, layerId]);
+  const layerConfig = useMemo(
+    () => rasterConfig(activeLayerId, rasterLayerConfigs),
+    [activeLayerId, rasterLayerConfigs],
+  );
 
   const isVisible = useRasterLayersStore(
     (s) => s.visibleLayerIdsByMap[mapId]?.has(activeLayerId) ?? false,
   );
   const cogInfo = useRasterInfo(activeLayerId);
-  const colormapOverride = useRasterLayersStore(
-    (s) => s.colormapOverrides[mapId]?.[activeLayerId],
-  );
+  const colormapOverrides = useRasterLayersStore((s) => s.colormapOverrides[mapId]);
 
-  const colormapName = colormapOverride ?? layerConfig?.colormap ?? "blues";
+  // Every raster with a file has a colour bar; the layer check requires one
+  const colormapName = rasterColormap(activeLayerId, rasterLayerConfigs, colormapOverrides)!;
   const opacity = layerConfig?.opacity ?? 0.7;
   const units = layerConfig?.units;
   const layerName = layerConfig?.name ?? activeLayerId;
@@ -84,22 +85,12 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     tileLayer.addTo(map);
     tileLayerRef.current = tileLayer;
 
-    // Update legend whenever colormap or min/max changes
-    useRasterLayersStore.getState().setRasterLegend(mapId, {
-      layerId: activeLayerId,
-      title: layerName,
-      min: cogInfo.min,
-      max: cogInfo.max,
-      colormapName,
-      units,
-    });
-
     return () => {
       tileLayer.remove();
       tileLayerRef.current = null;
       tilesLoadedRef.current = false;
     };
-  }, [isVisible, cogInfo, colormapName, opacity, map, mapId, activeLayerId, layerName, units]);
+  }, [isVisible, cogInfo, colormapName, opacity, map, activeLayerId]);
 
   // Capture-phase click handler: samples the rendered tile's alpha channel to check for raster
   // data before stopping propagation, mirroring the hazard layer's synchronous hit-test pattern.
@@ -179,7 +170,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     };
   }, [interactionMode, isVisible, cogInfo, map, activeLayerId, layerName, units]);
 
-  // Remove tile layer, popup, and legend when visibility is toggled off
+  // Remove tile layer and popup when visibility is toggled off
   useEffect(() => {
     if (isVisible) return;
     tileLayerRef.current?.remove();
@@ -188,8 +179,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       popupRef.current.close();
       popupRef.current = null;
     }
-    useRasterLayersStore.getState().setRasterLegend(mapId, null);
-  }, [isVisible, mapId]);
+  }, [isVisible]);
 
   // Cleanup tile layer, popup, and click handler on unmount
   useEffect(() => {
@@ -201,9 +191,8 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
         popupRef.current.close();
         popupRef.current = null;
       }
-      useRasterLayersStore.getState().setRasterLegend(mapId, null);
     };
-  }, [map, mapId]);
+  }, [map]);
 
   return null;
 };

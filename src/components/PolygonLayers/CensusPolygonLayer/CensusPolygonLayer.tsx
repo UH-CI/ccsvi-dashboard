@@ -13,10 +13,9 @@ import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from ".
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { hcdpStatsForFeature } from "../../../utils/zonalStats.ts";
-import { getActiveRaster } from "../../../utils/savedRaster.ts";
 import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
-import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
+import { useActiveRaster, useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
@@ -62,17 +61,13 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   const visibleRasterLayerIds = useRasterLayersStore(
     (s) => s.visibleLayerIdsByMap[mapId] ?? EMPTY_RASTER_LAYER_SET,
   );
-  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
   const hasActiveRasterLayer = (visibleRasterLayerIds?.size ?? 0) > 0;
   const hasSocialDataActive = Boolean(activeMetric?.trim()) || Boolean(activeMetric2?.trim());
   const shouldUseBackgroundStyle = Boolean(hcdpOverlay || hasActiveRasterLayer);
   const shouldShowPolygonPopup = Boolean(hcdpOverlay || hasSocialDataActive);
   const shouldConsumePolygonClicks = shouldShowPolygonPopup;
 
-  const activeRaster = useMemo(
-    () => getActiveRaster(visibleRasterLayerIds, rasterLayerConfigs),
-    [visibleRasterLayerIds, rasterLayerConfigs],
-  );
+  const activeRaster = useActiveRaster(mapId);
   const activeRasterLayerId = activeRaster?.id ?? null;
   const activeRasterLayerConfig = activeRaster?.config ?? null;
 
