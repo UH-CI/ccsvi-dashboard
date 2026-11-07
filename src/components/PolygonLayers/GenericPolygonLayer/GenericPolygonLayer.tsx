@@ -2,6 +2,7 @@ import { GeoJSON, GeoJSONProps, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import { Layer, LatLngBounds, LeafletMouseEvent, PathOptions } from "leaflet";
 import React, { useEffect, useCallback, memo, useRef } from "react";
+import { NO_VALUE_COLOR } from "../../../config";
 
 export interface StyleConfig {
   fillColor: string;
@@ -115,7 +116,7 @@ export const GenericPolygonLayer = memo(
         const baseStyle = feature
           ? getStyle(feature)
           : {
-              fillColor: "#cccccc",
+              fillColor: NO_VALUE_COLOR,
               weight: 0.5,
               opacity: 1,
               color: "#333",

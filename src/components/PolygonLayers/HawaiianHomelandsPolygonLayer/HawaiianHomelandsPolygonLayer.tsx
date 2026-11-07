@@ -10,7 +10,7 @@ import {
 } from "../../../utils/renderPolygonPopup.ts";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
-import { POLYGON_LAYERS } from "../../../config";
+import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../api/queries/pointCounts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
@@ -89,7 +89,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
           metricValue2 != null &&
           (metricValue2 < filterRange2[0] || metricValue2 > filterRange2[1]));
 
-      const fillColor = outOfRange ? "#e0e0e0" : getColor(metricValue, metricValue2);
+      const fillColor = outOfRange ? OUTSIDE_RANGE_FILL : getColor(metricValue, metricValue2);
 
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoidStr)) {
@@ -105,7 +105,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
-        color: outOfRange ? "#cccccc" : LAYER_CONFIG.styles.default.color,
+        color: outOfRange ? OUTSIDE_RANGE_OUTLINE : LAYER_CONFIG.styles.default.color,
       };
     },
     [metric1, metric2, getColor, filteredGeoids, filterRange, filterRange2],

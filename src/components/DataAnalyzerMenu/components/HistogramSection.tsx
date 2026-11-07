@@ -13,7 +13,7 @@ import {
 import { useAppStore } from "../../../stores";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { useMetricValues } from "../../../api/queries/metricValues";
-import { sviCalculationDescription, sviLabel } from "../../../config";
+import { CHART_COLORS, sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { ComparisonSection } from "./ComparisonSection";
@@ -201,18 +201,18 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
               labelFormatter={(label) => (label != null ? String(label) : "")}
               contentStyle={{ fontSize: "0.75rem", borderRadius: 8 }}
             />
-            <Bar dataKey="matched" name="Matching" stackId="bin" fill="#1976d2" />
+            <Bar dataKey="matched" name="Matching" stackId="bin" fill={CHART_COLORS.matching} />
             <Bar
               dataKey="rest"
               name="Not matching"
               stackId="bin"
-              fill="#d0d0d0"
+              fill={CHART_COLORS.notMatching}
               radius={[2, 2, 0, 0]}
             />
             {activeBinLabel && (
               <ReferenceLine
                 x={activeBinLabel}
-                stroke="#e53935"
+                stroke={CHART_COLORS.selected}
                 strokeWidth={2}
                 strokeDasharray="4 2"
               />
@@ -251,7 +251,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 <Typography variant="caption" color="text.secondary" display="block">
                   Selected area
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#e53935" }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: CHART_COLORS.selected }}>
                   {formatValue(activeValue, isPercentage, dataMax)}
                 </Typography>
               </Box>

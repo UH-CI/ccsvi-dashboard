@@ -11,7 +11,13 @@ import {
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
 import { MapLegend, RasterMapLegend, HcdpMapLegend, LegendContainer } from "../MapLegend";
-import { DEFAULT_COLOR_SCHEME, MAP_CONFIG, sviIsCount, sviLabel } from "../../config";
+import {
+  DEFAULT_BIVARIATE_SCHEME,
+  DEFAULT_COLOR_SCHEME,
+  MAP_CONFIG,
+  sviIsCount,
+  sviLabel,
+} from "../../config";
 import styles from "./SingleMapView.module.scss";
 import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
 import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
@@ -220,7 +226,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     );
 
     const activeColorScheme = config?.colorScheme || DEFAULT_COLOR_SCHEME;
-    const activeBivariateColorScheme = config?.bivariateColorScheme || "PurpleBlue";
+    const activeBivariateColorScheme = config?.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME;
     const activeBaseMap =
       BASE_MAP_OPTIONS.find((b) => b.id === config?.baseMap) ?? BASE_MAP_OPTIONS[0];
 

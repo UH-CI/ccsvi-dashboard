@@ -6,8 +6,9 @@ import parseGeoraster from "georaster";
 import GeoRasterLayer from "georaster-layer-for-leaflet";
 import { cloneArrayBuffer } from "../../utils/hcdpRaster";
 import { useHCDPStore } from "../../stores/useHCDPStore";
+import { HCDP_PALETTE } from "../../config";
 
-const COLOR_SCALE = chroma.scale(["#313695", "#74add1", "#fee090", "#f46d43", "#a50026"]);
+const COLOR_SCALE = chroma.scale(HCDP_PALETTE);
 
 export function HCDPRasterLayer({ mapId }: { mapId: string }) {
   const map = useMap();

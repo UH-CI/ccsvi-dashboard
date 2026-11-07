@@ -1,7 +1,7 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapConfig } from "../../../types";
-import { COLOR_SCHEMES, DEFAULT_COLOR_SCHEME } from "../../../config";
+import { BIVARIATE_SCHEMES, COLOR_SCHEMES, DEFAULT_BIVARIATE_SCHEME } from "../../../config";
 import { useDatasets } from "../../../api/queries/datasets";
 import styles from "../ControlPanel.module.scss";
 
@@ -24,8 +24,6 @@ interface ColorSchemeMenuProps {
     opacity: number,
   ) => void;
 }
-
-const BIVARIATE_SCHEMES = ["PurpleBlue", "OrangePurple", "GreenBlue"];
 
 // Color-scheme picker (sequential/diverging/bivariate) plus per-layer opacity sliders.
 export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
@@ -118,10 +116,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
             ({ name, label }) => (
               <MenuItem
                 key={name}
-                selected={
-                  config.colorScheme === name ||
-                  (!config.colorScheme && name === DEFAULT_COLOR_SCHEME)
-                }
+                selected={config.colorScheme === name}
                 onClick={() => {
                   updateMapConfig(config.id, { colorScheme: name });
                   onClose();
@@ -138,19 +133,16 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
         <>
           <Divider />
           <ListSubheader>Bivariate Palette</ListSubheader>
-          {BIVARIATE_SCHEMES.map((scheme) => (
+          {BIVARIATE_SCHEMES.map(({ name, label }) => (
             <MenuItem
-              key={scheme}
-              selected={
-                config.bivariateColorScheme === scheme ||
-                (!config.bivariateColorScheme && scheme === "PurpleBlue")
-              }
+              key={name}
+              selected={(config.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME) === name}
               onClick={() => {
-                updateMapConfig(config.id, { bivariateColorScheme: scheme });
+                updateMapConfig(config.id, { bivariateColorScheme: name });
                 onClose();
               }}
             >
-              {scheme}
+              {label}
             </MenuItem>
           ))}
         </>

@@ -1,4 +1,5 @@
 import { PathOptions } from "leaflet";
+import { NO_VALUE_COLOR } from "./colorSchemes";
 
 export interface PopupFieldConfig {
   key: string;
@@ -41,7 +42,7 @@ export const POLYGON_LAYERS = {
     },
     styles: {
       default: {
-        fillColor: "#cccccc",
+        fillColor: NO_VALUE_COLOR,
         weight: 1.5,
         opacity: 1,
         color: "#000000",
@@ -89,7 +90,7 @@ export const POLYGON_LAYERS = {
     },
     styles: {
       default: {
-        fillColor: "#cccccc",
+        fillColor: NO_VALUE_COLOR,
         weight: 0.5,
         opacity: 1,
         color: "#333",
@@ -130,7 +131,7 @@ export const POLYGON_LAYERS = {
     },
     styles: {
       default: {
-        fillColor: "#cccccc",
+        fillColor: NO_VALUE_COLOR,
         weight: 0.5,
         opacity: 0.3,
         color: "#999",

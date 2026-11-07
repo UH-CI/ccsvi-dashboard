@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import parseGeoraster from "georaster";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 import { useHCDPStore } from "../../stores/useHCDPStore";
+import { HCDP_PALETTE } from "../../config";
 import { cloneArrayBuffer } from "../../utils/hcdpRaster";
 import {
   RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX,
@@ -91,8 +92,7 @@ export const HcdpMapLegend: React.FC<HcdpMapLegendProps> = ({ mapId, dataType })
 
   const gradientHeightPx = RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX;
 
-  // Emulates the exact chroma-js scale colors applied in HCDPRasterLayer.tsx
-  const gradient = "linear-gradient(to top, #313695, #74add1, #fee090, #f46d43, #a50026)";
+  const gradient = `linear-gradient(to top, ${HCDP_PALETTE.join(", ")})`;
 
   // Safely grab units from the row payload if they exist
   const units = (overlay.row as any)?.units?.trim() || (overlay.row as any)?.unit?.trim() || "";

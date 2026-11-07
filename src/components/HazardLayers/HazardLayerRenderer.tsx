@@ -37,7 +37,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 
   const file = activeLayer?.file;
   const popup = activeLayer?.popup;
-  const color = activeLayer?.color || "#cc0000";
+  const color = activeLayer?.color;
   const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
 
   useEffect(() => {

@@ -98,7 +98,7 @@ export interface SubHazardLayerConfig {
   id: string;
   name: string;
   description?: string;
-  color?: string;
+  color: string;
   // Map tiles are hazards/<file>.pmtiles, whose layer is also named <file>
   file?: string;
   // title: the column whose value heads the popup; fields: columns shown under hand-written labels

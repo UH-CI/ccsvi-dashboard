@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { pickValue, formatValue } from "../metricValueHelpers";
-import { sviLabel } from "../../../config";
+import { CHART_COLORS, sviLabel } from "../../../config";
 import { useGeographies } from "../../../api/queries/geographies";
 import { useMetricValues } from "../../../api/queries/metricValues";
 
@@ -21,10 +21,6 @@ interface ComparisonSectionProps {
   metric2: string | undefined;
   activeGeoid: string | null;
 }
-
-const RED = "#e53935";
-const BLUE = "#1976d2";
-const GRAY = "#d0d0d0";
 
 export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   dataset,
@@ -132,7 +128,13 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
               const { cx, cy, payload } = props;
               const inFilter = filteredGeoids ? filteredGeoids.has(payload.geoid) : true;
               return (
-                <circle cx={cx} cy={cy} r={2.5} fill={inFilter ? BLUE : GRAY} fillOpacity={0.6} />
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={2.5}
+                  fill={inFilter ? CHART_COLORS.matching : CHART_COLORS.notMatching}
+                  fillOpacity={0.6}
+                />
               );
             }}
           />
@@ -145,7 +147,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
                 return (
                   <g>
                     <circle cx={cx} cy={cy} r={6} fill="#fff" fillOpacity={0.9} />
-                    <circle cx={cx} cy={cy} r={4} fill={RED} />
+                    <circle cx={cx} cy={cy} r={4} fill={CHART_COLORS.selected} />
                   </g>
                 );
               }}

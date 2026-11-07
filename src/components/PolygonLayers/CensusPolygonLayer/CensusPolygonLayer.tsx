@@ -18,7 +18,7 @@ import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
 import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
-import { POLYGON_LAYERS } from "../../../config";
+import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../api/queries/pointCounts";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
@@ -124,7 +124,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
           metricValue2 != null &&
           (metricValue2 < filterRange2[0] || metricValue2 > filterRange2[1]));
 
-      const fillColor = outOfRange ? "#e0e0e0" : getColor(metricValue, metricValue2);
+      const fillColor = outOfRange ? OUTSIDE_RANGE_FILL : getColor(metricValue, metricValue2);
 
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoidStr)) {
@@ -142,7 +142,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
       return {
         ...LAYER_CONFIG.styles.default,
         fillColor,
-        color: outOfRange ? "#cccccc" : LAYER_CONFIG.styles.default.color,
+        color: outOfRange ? OUTSIDE_RANGE_OUTLINE : LAYER_CONFIG.styles.default.color,
       };
     },
     [

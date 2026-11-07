@@ -6,6 +6,7 @@ import {
   ComputedBivariateColorScale,
 } from "../../../utils/colorThresholds";
 import { CatalogMetric } from "../../../types";
+import { NO_VALUE_COLOR } from "../../../config";
 
 interface UseMapColorScaleArgs {
   allMetricValues: number[];
@@ -49,7 +50,7 @@ export function useMapColorScale({
         bivariateColorScale.getColor(value1, value2 ?? null);
     }
     return (value: number | null): string => {
-      if (value === null || !colorScale) return "#cccccc";
+      if (value === null || !colorScale) return NO_VALUE_COLOR;
       return colorScale.getColor(value);
     };
   }, [colorScale, bivariateColorScale]);
