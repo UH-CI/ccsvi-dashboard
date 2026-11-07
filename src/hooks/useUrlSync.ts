@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useShallow } from "zustand/react/shallow";
 import {
   useMapStore,
   usePointLayerStore,
@@ -8,191 +7,65 @@ import {
   useRasterLayersStore,
 } from "../stores";
 import {
-  serializeMapConfigs,
-  deserializeMapConfigs,
-  validateAndNormalize,
+  LAYER_LIST_KEYS,
+  type LayerListKey,
+  isUrlKey,
+  readUrl,
+  writeUrl,
 } from "../utils/urlSerializer";
-import { initializeStoresFromUrl } from "../utils/storeInitializer";
 
-/**
- * Hook that provides bidirectional sync between Zustand stores and URL parameters
- *
- * Store > URL: Updates URL when store state changes
- * URL > Store: Handles browser back/forward navigation
- *
- */
-export function useUrlSync(isInitialized: boolean) {
+// The store behind each of the link's layer lists
+const LAYER_STORES: Record<
+  LayerListKey,
+  { getState: () => { setVisibleLayerIds: (mapId: string, ids: string[]) => void } }
+> = {
+  layers: usePointLayerStore,
+  hazards: useHazardLayersStore,
+  rasters: useRasterLayersStore,
+};
+
+// Reads the link into the stores on first load, then keeps the link in step with them
+export function useUrlSync() {
   const [, setSearchParams] = useSearchParams();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Track URL update to prevent circular updates
-  const isUpdatingFromUrl = useRef(false);
+  useEffect(() => {
+    const { mapConfigs, primaryMapId, layers } = readUrl(
+      new URLSearchParams(window.location.search),
+    );
+    useMapStore.getState().loadMaps(mapConfigs, primaryMapId);
+    for (const key of LAYER_LIST_KEYS) {
+      for (const [mapId, ids] of Object.entries(layers[key])) {
+        LAYER_STORES[key].getState().setVisibleLayerIds(mapId, ids);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
 
-  const mapConfigs = useMapStore(useShallow((state) => state.mapConfigs));
+  const mapConfigs = useMapStore((state) => state.mapConfigs);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const visiblePointLayersByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-  const visibleHazardLayersByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-  const VisibleRasterLayersByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
+  const points = usePointLayerStore((state) => state.visibleLayerIdsByMap);
+  const hazards = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
+  const rasters = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
 
-  // --- STORE > URL SYNC ---
-
-  const mapConfigKey = useMemo(
-    () =>
-      mapConfigs
-        .map((c) => `${c.id}:${c.dataset}:${c.metric}:${c.dataset2 ?? ""}:${c.metric2 ?? ""}:${c.bivariateColorScheme ?? ""}:${c.visible}:${c.activeFeature?.geoid ?? ""}`)
-        .join("|"),
-    [mapConfigs],
-  );
-  const pointLayerKey = useMemo(
-    () =>
-      Object.entries(visiblePointLayersByMap)
-        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-        .sort()
-        .join(","),
-    [visiblePointLayersByMap],
-  );
-  const hazardLayerKey = useMemo(
-    () =>
-      Object.entries(visibleHazardLayersByMap)
-        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-        .sort()
-        .join(","),
-    [visibleHazardLayersByMap],
-  );
-  const rasterLayerKey = useMemo(
-    () =>
-      Object.entries(VisibleRasterLayersByMap)
-        .flatMap(([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`))
-        .sort()
-        .join(","),
-    [VisibleRasterLayersByMap],
+  // The app's part of the address; it changes only when something saved in the link changes
+  const urlText = useMemo(
+    () => writeUrl(mapConfigs, primaryMapId, { layers: points, hazards, rasters }).toString(),
+    [mapConfigs, primaryMapId, points, hazards, rasters],
   );
 
   useEffect(() => {
-    if (!isInitialized || isUpdatingFromUrl.current) return;
-
-    const isDefaultMapState =
-      mapConfigs.length === 1 && !mapConfigs[0].dataset && !mapConfigs[0].metric;
-
-    const serialized = serializeMapConfigs(mapConfigs);
-
+    if (!isInitialized) return;
     setSearchParams(
       (prev) => {
-        const newParams = new URLSearchParams(prev);
-
-        // --- Map configs ---
-        Array.from(prev.keys()).forEach((key) => {
-          if (
-            key.startsWith("d_") ||
-            key.startsWith("d2_") ||
-            key.startsWith("m_") ||
-            key.startsWith("m2_") ||
-            key.startsWith("bcs_") ||
-            key.startsWith("af_")
-          )
-            newParams.delete(key);
-        });
-
-        if (isDefaultMapState) {
-          newParams.delete("maps");
-        } else {
-          newParams.set("maps", serialized.maps);
-
-          Object.entries(serialized.datasets).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
-          Object.entries(serialized.datasets2).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
-          Object.entries(serialized.metrics).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
-          Object.entries(serialized.metrics2).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
-          Object.entries(serialized.bivariateColorSchemes).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
-          Object.entries(serialized.activeFeatures).forEach(([key, val]) => {
-            newParams.set(key, val);
-          });
+        const next = new URLSearchParams(prev);
+        for (const key of Array.from(prev.keys())) {
+          if (isUrlKey(key)) next.delete(key);
         }
-
-        // --- Point layers ---
-        const serializedPointLayers = Object.entries(visiblePointLayersByMap).flatMap(
-          ([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`),
-        );
-
-        if (serializedPointLayers.length > 0) {
-          newParams.set("layers", serializedPointLayers.sort().join(","));
-        } else {
-          newParams.delete("layers");
-        }
-
-        // --- Hazard layers ---
-        const serializedHazardLayers = Object.entries(visibleHazardLayersByMap).flatMap(
-          ([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`),
-        );
-
-        if (serializedHazardLayers.length > 0) {
-          newParams.set("hazards", serializedHazardLayers.sort().join(","));
-        } else {
-          newParams.delete("hazards");
-        }
-
-        // --- Raster layers ---
-        const serializedRasterLayers = Object.entries(VisibleRasterLayersByMap).flatMap(
-          ([mapId, layers]) => Array.from(layers).map((layerId) => `${mapId}:${layerId}`),
-        );
-
-        if (serializedRasterLayers.length > 0) {
-          newParams.set("rasters", Array.from(serializedRasterLayers).sort().join(","));
-        } else {
-          newParams.delete("rasters");
-        }
-
-        // --- Active map ---
-        if (!isDefaultMapState && primaryMapId) {
-          newParams.set("active", primaryMapId);
-        } else {
-          newParams.delete("active");
-        }
-
-        return newParams;
+        for (const [key, value] of new URLSearchParams(urlText)) next.set(key, value);
+        return next;
       },
       { replace: true },
     );
-  }, [
-    mapConfigKey,
-    primaryMapId,
-    pointLayerKey,
-    hazardLayerKey,
-    rasterLayerKey,
-    setSearchParams,
-    isInitialized,
-  ]);
-
-  // --- URL > STORE SYNC ---
-
-  // Handle browser back/forward navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      isUpdatingFromUrl.current = true;
-
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const urlState = deserializeMapConfigs(params);
-        const validatedState = validateAndNormalize(urlState);
-        initializeStoresFromUrl(validatedState);
-      } catch (error) {
-        console.error("Failed to restore state from URL navigation:", error);
-      } finally {
-        setTimeout(() => {
-          isUpdatingFromUrl.current = false;
-        }, 100);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [urlText, isInitialized, setSearchParams]);
 }

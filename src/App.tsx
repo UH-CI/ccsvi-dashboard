@@ -8,15 +8,11 @@ import { useHazardLayersStore, useRasterLayersStore, usePrimaryMapState } from "
 import { useDatasets } from "./api/queries/datasets";
 import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
-import { deserializeMapConfigs, validateAndNormalize } from "./utils/urlSerializer";
-import { initializeStoresFromUrl } from "./utils/storeInitializer";
 import { takeMapSnapshot } from "./utils/snapshotUtils";
 
 const MIN_TABLE_HEIGHT = 96;
 
 const App: React.FC = () => {
-  const [isUrlInitialized, setIsUrlInitialized] = useState(false);
-
   const [isTableOpen, setIsTableOpen] = useState(true);
   const [isGridView, setIsGridView] = useState(true);
   const [tableHeight, setTableHeight] = useState<number | null>(null);
@@ -78,18 +74,8 @@ const App: React.FC = () => {
   const { ready, errors } = useStartupData();
   const datasets = useDatasets();
 
-  // Initialize stores from URL on mount (runs once)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlState = deserializeMapConfigs(params);
-    const validatedState = validateAndNormalize(urlState);
-
-    initializeStoresFromUrl(validatedState);
-    setIsUrlInitialized(true);
-  }, []);
-
-  // Enable bidirectional URL sync after initialization
-  useUrlSync(isUrlInitialized);
+  // Reads the shared link into the stores, then keeps it in step with them
+  useUrlSync();
 
   // Load the layer configs on mount
   useEffect(() => {

@@ -12,7 +12,6 @@ interface PointLayerState {
 
   // Actions
   toggleLayerVisibility: (mapId: string, layerId: string) => void;
-  clearAllVisibility: () => void;
   // Forgets everything kept for a map that's being removed
   clearMap: (mapId: string) => void;
 }
@@ -51,10 +50,6 @@ export const usePointLayerStore = create<PointLayerState>((set, get) => ({
     }
 
     setVisibleLayerIds(mapId, Array.from(newVisibleIds));
-  },
-
-  clearAllVisibility: () => {
-    set({ visibleLayerIdsByMap: {} });
   },
 
   clearMap: (mapId) => {

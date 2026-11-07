@@ -10,7 +10,6 @@ interface HazardLayersState {
 
   // Setters
   setVisibleLayerIds: (mapId: string, ids: string[]) => void;
-  setVisibleLayerIdsByMap: (byMap: Record<string, string[]>) => void;
 
   // Actions
   toggleHazardLayerVisibility: (mapId: string, id: string) => void;
@@ -36,14 +35,6 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
         [mapId]: new Set(ids),
       },
     }));
-  },
-
-  setVisibleLayerIdsByMap: (byMap) => {
-    const visibleLayerIdsByMap: Record<string, Set<string>> = {};
-    for (const [mapId, ids] of Object.entries(byMap)) {
-      visibleLayerIdsByMap[mapId] = new Set(ids);
-    }
-    set({ visibleLayerIdsByMap });
   },
 
   // Actions

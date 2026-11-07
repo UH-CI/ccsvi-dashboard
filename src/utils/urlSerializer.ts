@@ -1,166 +1,113 @@
-import { MapConfig } from "../types";
+import type { MapConfig } from "../types";
+import { MAX_MAPS } from "../config";
 
-export interface SerializedMapState {
-  maps: string;
-  datasets: Record<string, string>;
-  datasets2: Record<string, string>;
-  metrics: Record<string, string>;
-  metrics2: Record<string, string>;
-  bivariateColorSchemes: Record<string, string>;
-  activeFeatures: Record<string, string>;
-}
+// Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written
+export const MAP_URL_FIELDS: {
+  prefix: string;
+  read: (config: MapConfig) => string | undefined;
+  write: (value: string) => Partial<MapConfig>;
+}[] = [
+  { prefix: "d", read: (c) => c.dataset, write: (dataset) => ({ dataset }) },
+  { prefix: "m", read: (c) => c.metric, write: (metric) => ({ metric }) },
+  { prefix: "d2", read: (c) => c.dataset2, write: (dataset2) => ({ dataset2 }) },
+  { prefix: "m2", read: (c) => c.metric2, write: (metric2) => ({ metric2 }) },
+  {
+    prefix: "bcs",
+    read: (c) => c.bivariateColorScheme,
+    write: (bivariateColorScheme) => ({ bivariateColorScheme }),
+  },
+  {
+    prefix: "af",
+    read: (c) => c.activeFeature?.geoid,
+    write: (geoid) => ({ activeFeature: { geoid } }),
+  },
+];
 
-export interface DeserializedState {
-  mapConfigs: Partial<MapConfig>[];
+// The link's lists of layers that are on: point layers, hazards and rasters
+export const LAYER_LIST_KEYS = ["layers", "hazards", "rasters"] as const;
+export type LayerListKey = (typeof LAYER_LIST_KEYS)[number];
+
+// Layers that are on, per list, per map
+export type LayersOn = Record<LayerListKey, Record<string, Iterable<string>>>;
+
+export interface UrlState {
+  mapConfigs: (Partial<MapConfig> & { id: string })[];
   primaryMapId?: string;
-  pointLayers: string[];
-  hazardLayers: string[];
-  rasterLayers: string[];
+  layers: Record<LayerListKey, Record<string, string[]>>;
 }
 
-/**
- * Serializes map configurations into URL-friendly format
- * Format: "map1:vis,map2:hid,map3:vis"
- */
-export function serializeMapConfigs(configs: MapConfig[]): SerializedMapState {
-  const maps = configs
-    .map((config) => {
-      const vis = config.visible ? "vis" : "hid";
-      return `${config.id}:${vis}`;
+// One entry of a layer list, e.g. "map2:stormSurge.inundation_category4"
+export const layerEntry = (mapId: string, layerId: string) => `${mapId}:${layerId}`;
+
+// An entry back into its map and layer; null when it has no colon (e.g. from an edited link)
+export function parseLayerEntry(entry: string): { mapId: string; layerId: string } | null {
+  const colon = entry.indexOf(":");
+  if (colon === -1) return null;
+  return { mapId: entry.substring(0, colon), layerId: entry.substring(colon + 1) };
+}
+
+// The maps, primary map and layers a link describes. A hand-edited link can hold a bad map id
+// or too many maps, so only ids like "map3" are kept, and only the first MAX_MAPS of them.
+export function readUrl(params: URLSearchParams): UrlState {
+  const mapConfigs = (params.get("maps") ?? "")
+    .split(",")
+    .map((entry) => {
+      const [id, visibility] = entry.split(":");
+      const config: Partial<MapConfig> & { id: string } = { id, visible: visibility === "vis" };
+      for (const field of MAP_URL_FIELDS) {
+        const value = params.get(`${field.prefix}_${id}`);
+        if (value) Object.assign(config, field.write(value));
+      }
+      return config;
     })
-    .join(",");
+    .filter((config) => /^map\d+$/.test(config.id))
+    .slice(0, MAX_MAPS);
 
-  const datasets = configs.reduce(
-    (acc, config) => {
-      if (config.dataset) {
-        acc[`d_${config.id}`] = config.dataset;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  const metrics = configs.reduce(
-    (acc, config) => {
-      if (config.metric) {
-        acc[`m_${config.id}`] = config.metric;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  const datasets2 = configs.reduce(
-    (acc, config) => {
-      if (config.dataset2) {
-        acc[`d2_${config.id}`] = config.dataset2;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  const metrics2 = configs.reduce(
-    (acc, config) => {
-      if (config.metric2) {
-        acc[`m2_${config.id}`] = config.metric2;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  const bivariateColorSchemes = configs.reduce(
-    (acc, config) => {
-      if (config.bivariateColorScheme) {
-        acc[`bcs_${config.id}`] = config.bivariateColorScheme;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  const activeFeatures = configs.reduce(
-    (acc, config) => {
-      if (config.activeFeature) {
-        acc[`af_${config.id}`] = config.activeFeature.geoid;
-      }
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-
-  return { maps, datasets, datasets2, metrics, metrics2, bivariateColorSchemes, activeFeatures };
-}
-
-export function deserializeMapConfigs(params: URLSearchParams): DeserializedState {
-  const layersParam = params.get("layers");
-  const pointLayers = layersParam ? layersParam.split(",").filter(Boolean) : [];
-
-  const hazardsParam = params.get("hazards");
-  const hazardLayers = hazardsParam ? hazardsParam.split(",").filter(Boolean) : [];
-
-  const rastersParam = params.get("rasters");
-  const rasterLayers = rastersParam ? rastersParam.split(",").filter(Boolean) : [];
-
-  const mapsParam = params.get("maps");
-
-  const activeParam = params.get("active") || undefined;
-
-  if (!mapsParam) {
-    return {
-      mapConfigs: [],
-      primaryMapId: activeParam,
-      pointLayers,
-      hazardLayers,
-      rasterLayers,
-    };
+  const layers = {} as UrlState["layers"];
+  for (const key of LAYER_LIST_KEYS) {
+    layers[key] = {};
+    for (const entry of (params.get(key) ?? "").split(",").filter(Boolean)) {
+      const parsed = parseLayerEntry(entry);
+      if (parsed) (layers[key][parsed.mapId] ??= []).push(parsed.layerId);
+    }
   }
 
-  const mapConfigs: Partial<MapConfig>[] = mapsParam.split(",").map((mapStr) => {
-    const [id, vis] = mapStr.split(":");
-    
-    const dataset2 = params.get(`d2_${id}`);
-    const metric2 = params.get(`m2_${id}`);
-    const bivariateColorScheme = params.get(`bcs_${id}`);
-    const config: Partial<MapConfig> = {
-      id,
-      visible: vis === "vis",
-      dataset: params.get(`d_${id}`) || "",
-      metric: params.get(`m_${id}`) || "",
-        ...(dataset2 ? { dataset2 } : {}),
-        ...(metric2 ? { metric2 } : {}),
-      ...(bivariateColorScheme ? { bivariateColorScheme } : {}),
-    };
+  return { mapConfigs, primaryMapId: params.get("active") || undefined, layers };
+}
 
-    const afParam = params.get(`af_${id}`);
-    if (afParam) {
-      config.activeFeature = { geoid: afParam };
+// The app's part of the address. One map with nothing chosen writes no map settings, so a fresh page has a clean link.
+export function writeUrl(
+  mapConfigs: MapConfig[],
+  primaryMapId: string,
+  layersOn: LayersOn,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  const isDefault = mapConfigs.length === 1 && !mapConfigs[0].dataset && !mapConfigs[0].metric;
+
+  if (!isDefault) {
+    params.set("maps", mapConfigs.map((c) => `${c.id}:${c.visible ? "vis" : "hid"}`).join(","));
+    for (const field of MAP_URL_FIELDS) {
+      for (const config of mapConfigs) {
+        const value = field.read(config);
+        if (value) params.set(`${field.prefix}_${config.id}`, value);
+      }
     }
+  }
 
-    return config;
-  });
+  for (const key of LAYER_LIST_KEYS) {
+    const entries = Object.entries(layersOn[key]).flatMap(([mapId, ids]) =>
+      Array.from(ids, (layerId) => layerEntry(mapId, layerId)),
+    );
+    if (entries.length > 0) params.set(key, entries.sort().join(","));
+  }
 
-  return { mapConfigs, primaryMapId: activeParam, pointLayers, hazardLayers, rasterLayers };
+  if (!isDefault && primaryMapId) params.set("active", primaryMapId);
+  return params;
 }
 
-export function validateAndNormalize(state: DeserializedState): DeserializedState {
-  const { mapConfigs, primaryMapId, pointLayers, hazardLayers, rasterLayers } = state;
-
-  // Validate map configs
-  const validMapConfigs = mapConfigs.filter((config) => {
-    // Ensure valid map ID format (map1, map2, etc.)
-    return config.id && /^map\d+$/.test(config.id);
-  });
-
-  // Limit to 4 maps maximum
-  const limitedMapConfigs = validMapConfigs.slice(0, 4);
-
-  return {
-    mapConfigs: limitedMapConfigs,
-    primaryMapId,
-    pointLayers,
-    hazardLayers,
-    rasterLayers,
-  };
-}
+// Whether a key in the address belongs to the app; others (e.g. from a hand-edited link) are left alone
+export const isUrlKey = (key: string) =>
+  key === "maps" ||
+  key === "active" ||
+  (LAYER_LIST_KEYS as readonly string[]).includes(key) ||
+  MAP_URL_FIELDS.some((field) => key.startsWith(`${field.prefix}_`));
