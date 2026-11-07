@@ -5,6 +5,8 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
 DATABASE_URL=${DATABASE_URL:?Need DATABASE_URL set in $REPO_ROOT/.env}
+HCDP_API_TOKEN=${HCDP_API_TOKEN:?Need HCDP_API_TOKEN set in $REPO_ROOT/.env}
+HCDP_EMAIL=${HCDP_EMAIL:?Need HCDP_EMAIL set in $REPO_ROOT/.env}
 
 if [[ ! -x "$PYTHON" ]]; then
     echo "ERROR: venv not found at $BACKEND_DIR/.venv"
@@ -15,6 +17,8 @@ fi
 # Write env file
 sudo tee /etc/ccsvi-api.env > /dev/null <<EOF
 DATABASE_URL=${DATABASE_URL}
+HCDP_API_TOKEN=${HCDP_API_TOKEN}
+HCDP_EMAIL=${HCDP_EMAIL}
 EOF
 sudo chmod 600 /etc/ccsvi-api.env
 

@@ -23,8 +23,9 @@ import {
 import { buildHcdpOverlayTitle, useHCDPStore } from "../../stores/useHCDPStore";
 import styles from "./HCDPLoad.module.scss";
 import { useRasterLayersStore } from "../../stores";
+import hcdpCatalog from "../../../config/hcdp_catalog.json";
 
-const RANGE_JSON = `${import.meta.env.BASE_URL || ""}data/HCDP_API/date_Range_Combined.json`;
+const HCDP_CATALOG = hcdpCatalog as HcdpRangeRow[];
 
 const DATA_TYPE_ORDER = [
   "rainfall",
@@ -67,9 +68,8 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const setRasterOverlay = useHCDPStore((s) => s.setRasterOverlay);
   const clearRasterOverlay = useHCDPStore((s) => s.clearRasterOverlay);
   const hasRasterOverlay = useHCDPStore((s) => s.overlaysByMap[mapId] != null);
-  const [catalog, setCatalog] = useState<HcdpRangeRow[] | null>(null);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [dataType, setDataType] = useState("");
+  const catalog = HCDP_CATALOG;
+  const [dataType, setDataType] = useState(() => getCustomSortedDataTypes(HCDP_CATALOG)[0]);
   const [period, setPeriod] = useState("");
   const [aggregation, setAggregation] = useState("");
   const [production, setProduction] = useState("");
@@ -84,31 +84,6 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const [apiMinDate, setApiMinDate] = useState<Dayjs>(dayjs("1990-01-01"));
   const [apiMaxDate, setApiMaxDate] = useState<Dayjs>(dayjs().subtract(1, "day"));
   const [loadingDates, setLoadingDates] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(RANGE_JSON);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as HcdpRangeRow[];
-        if (cancelled) return;
-        setCatalog(data);
-        setCatalogError(null);
-        //const types = uniqueSorted(data.map((r) => r.data_type));
-        const types = getCustomSortedDataTypes(data);
-        if (types.length) setDataType((t) => (t && types.includes(t) ? t : types[0]));
-      } catch (e) {
-        if (!cancelled) {
-          setCatalog(null);
-          setCatalogError(e instanceof Error ? e.message : "Failed to load HCDP catalog");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const dataTypes = useMemo(
     //() => uniqueSorted((catalog ?? []).map((r) => r.data_type)),
@@ -302,22 +277,6 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
       setFetching(false);
     }
   };
-
-  if (catalogError) {
-    return (
-      <Stack spacing={1} className={styles.root} data-map-id={mapId}>
-        <Alert severity="error">{catalogError}</Alert>
-      </Stack>
-    );
-  }
-
-  if (!catalog) {
-    return (
-      <Stack alignItems="center" className={styles.root} data-map-id={mapId} py={2}>
-        <CircularProgress size={28} />
-      </Stack>
-    );
-  }
 
   return (
     <Stack spacing={2} className={styles.root} data-map-id={mapId}>

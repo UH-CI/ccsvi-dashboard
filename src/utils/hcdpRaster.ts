@@ -4,7 +4,7 @@ export function cloneArrayBuffer(buffer: ArrayBuffer): ArrayBuffer {
   return buffer.slice(0);
 }
 
-/** One row from `public/data/HCDP_API/date_Range_Combined.json`. */
+/** One row from `config/hcdp_catalog.json`. */
 export interface HcdpRangeRow {
   data_type: string;
   period: string;

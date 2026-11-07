@@ -32,6 +32,9 @@ CENSUS_CLEANED_DIR = DATA_ROOT / "archived" / "cleaned-data"
 
 TILE_CACHE_DIR = Path(_SETTINGS["TILE_CACHE_DIR"])
 
+# HCDP files downloaded for the map, kept for a few days; not versioned with the data
+HCDP_CACHE_DIR = DATA_ROOT / "hcdp-cache"
+
 
 # The database address, read when connecting so tools that only use folders don't need it
 def database_url() -> str:
@@ -42,3 +45,15 @@ def database_url() -> str:
             "(env.sh loads it from the repo .env), or: export $(sudo cat /etc/ccsvi-api.env | xargs)"
         )
     return url
+
+
+# The HCDP API key and the email registered with it, read when HCDP is first asked for
+def hcdp_credentials() -> tuple[str, str]:
+    token = os.environ.get("HCDP_API_TOKEN")
+    email = os.environ.get("HCDP_EMAIL")
+    if not token or not email:
+        raise RuntimeError(
+            "HCDP_API_TOKEN and HCDP_EMAIL are not set. The API service reads them from /etc/ccsvi-api.env "
+            "(written by ops/api-install-service.sh from the repo .env)"
+        )
+    return token, email

@@ -8,7 +8,7 @@
 # a response and honor Range requests on it. PMTiles and COG tiffs rely on
 # Range requests for partial reads, so they must never match gzip_types.
 #
-# Also installs a proxy_cache in front of /api/tiles/cog/: tiles render once
+# Also installs a proxy_cache in front of /api/tiles/cog/ and /api/tiles/hcdp/: tiles render once
 # server-side and are served from cache on repeat requests. In 4-map mode,
 # the first map's tile request warms the cache for the other 3. 1-day TTL
 # (not indefinite) since tiles aren't yet covered by the versioning
@@ -37,6 +37,18 @@ server {
 
     location /api/tiles/cog/ {
         proxy_pass http://127.0.0.1:8000/api/tiles/cog/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+
+        proxy_cache tile_cache;
+        proxy_cache_key \$scheme\$host\$request_uri;
+        proxy_cache_valid 200 1d;
+        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+        add_header X-Cache-Status \$upstream_cache_status;
+    }
+
+    location /api/tiles/hcdp/ {
+        proxy_pass http://127.0.0.1:8000/api/tiles/hcdp/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
 
