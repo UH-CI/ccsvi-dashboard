@@ -33,8 +33,8 @@ function useMatchingIds(layerId: string): Set<string> | null {
 
   return useMemo(() => {
     if (criteria === null) return null;
-    // No neighborhoods matched, so show no points. Asking the server with no areas would return every point.
-    if (criteria?.geoids?.length === 0) return new Set();
+    // No neighborhoods matched, so show no points without asking the server
+    if (criteria?.noAreasMatched) return new Set();
     if (!points) return null;
     return new Set(
       points.features

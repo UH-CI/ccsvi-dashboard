@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 import { useFilterStore, type AppliedFilter } from "../../stores/useFilterStore";
-import type { BlockGroupResult } from "../../types";
+import type { AreaCriteria, BlockGroupResult } from "../../types";
 import { getFilterResults } from "../client";
 import { queryClient } from "../queryClient";
 
@@ -34,7 +34,8 @@ export function useAreaFilter() {
 export const useFilteredGeoids = () => useAreaFilter().data ?? null;
 
 export interface PointCriteria {
-  geoids: string[] | null; // null: anywhere
+  areas: AreaCriteria | null; // null: anywhere
+  noAreasMatched: boolean;
   hazards: string[];
   rasters: string[];
 }
@@ -48,10 +49,13 @@ export function usePointFilter(layerId: string): PointCriteria | null | undefine
     if (!applied) return null;
     const { hazards, rasters } = applied;
     if (applied.kind === "points") {
-      return applied.pointLayers.includes(layerId) ? { geoids: null, hazards, rasters } : null;
+      return applied.pointLayers.includes(layerId)
+        ? { areas: null, noAreasMatched: false, hazards, rasters }
+        : null;
     }
     if (!geoids || isPlaceholderData) return undefined;
-    return { geoids: [...geoids].sort(), hazards, rasters };
+    const areas = { homelands: applied.homelands, minimums: applied.minimums };
+    return { areas, noAreasMatched: geoids.size === 0, hazards, rasters };
   }, [applied, layerId, geoids, isPlaceholderData]);
 }
 

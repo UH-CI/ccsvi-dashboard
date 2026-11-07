@@ -1,5 +1,6 @@
 import { FeatureCollection, Point } from "geojson";
 import {
+  AreaCriteria,
   BlockGroupResult,
   DatasetCatalog,
   GeographiesData,
@@ -63,15 +64,24 @@ export const getHazardAreas = (hazards: string[]) => {
   return get<Record<string, string[]>>(`/api/v1/hazard-areas?${params}`);
 };
 
+// Adds each column's minimum as min_<column>, as both the filter and the points requests send them
+const setMinimums = (params: URLSearchParams, minimums: Record<string, number>) => {
+  for (const [column, value] of Object.entries(minimums))
+    params.set(`min_${column}`, String(value));
+};
+
 // Asks for one layer's points, limited to the given areas, hazards and rasters. No areas given means no area limit.
 export const getFilteredPoints = (
   layerId: string,
-  geoids: string[] | null,
+  areas: AreaCriteria | null,
   hazards: string[],
   rasters: string[],
 ) => {
   const params = new URLSearchParams({ layer_id: layerId });
-  for (const geoid of geoids ?? []) params.append("geoid", geoid);
+  if (areas) {
+    params.set("homelands", String(areas.homelands));
+    setMinimums(params, areas.minimums);
+  }
   for (const hazard of hazards) params.append("hazard", hazard);
   for (const raster of rasters) params.append("raster", raster);
   return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
@@ -85,8 +95,7 @@ export const getFilterResults = (
 ) => {
   const params = new URLSearchParams();
   for (const hazard of hazards) params.append("hazard", hazard);
-  for (const [column, value] of Object.entries(minimums))
-    params.set(`min_${column}`, String(value));
+  setMinimums(params, minimums);
   return get<BlockGroupResult[]>(
     `/api/v1/${homelands ? "hawaiian-homelands" : "block-groups"}?${params}`,
   );

@@ -150,6 +150,12 @@ export interface BlockGroupResult {
   [key: string]: number | string | null;
 }
 
+// Block groups or Homelands at or above each column's minimum
+export interface AreaCriteria {
+  homelands: boolean;
+  minimums: Record<string, number>;
+}
+
 export interface CatalogMetric {
   mvColumn: string | null;
 }

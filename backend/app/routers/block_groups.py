@@ -238,20 +238,17 @@ def hazard_branches(entries: list[str], params: list[Any]) -> str:
     return " OR ".join(branches)
 
 
-# Shared by both filter endpoints; homelands picks which view to search
-async def run_filter(
-    conn,
+# The view of block groups or Homelands, and the WHERE conditions keeping the areas in the county,
+# at or above each min_<col> and passing each any group; shared by the filter endpoints and /api/v1/points
+def area_conditions(
     request: Request,
     homelands: bool,
+    metric_cols: list[str],
     county: str | None,
-    hazard: list[str] | None,
     any_group: list[str] | None,
-) -> Any:
-    if homelands:
-        view, id_cols = "hawaiian_homeland_metrics", _HHM_ID_COLS
-    else:
-        view, id_cols = "block_group_metrics", _BGM_ID_COLS
-    metric_cols = await metric_columns(conn, homelands)
+    params: list[Any],
+) -> tuple[str, list[str]]:
+    view = "hawaiian_homeland_metrics" if homelands else "block_group_metrics"
     allowed_cols = frozenset(metric_cols)
 
     # Validate and collect min_<col> metric threshold params.
@@ -284,7 +281,6 @@ async def run_filter(
 
     # Build dynamic WHERE clause with asyncpg positional params ($1, $2, ...).
     conditions: list[str] = []
-    params: list[Any] = []
 
     def add_cond(condition: str, val: Any) -> None:
         params.append(val)
@@ -293,6 +289,35 @@ async def run_filter(
     if county:
         add_cond("v.county = ?", county)
 
+    for col, threshold in metric_filters:
+        # col has been validated against allowed_cols — safe to interpolate.
+        add_cond(f"v.{col} >= ?", threshold)
+
+    for group_entries in any_groups.values():
+        # Turn one group into one OR bracket, then add it to the same list as
+        # the metric filters
+        branches: list[str] = []
+        for col, threshold in group_entries:
+            params.append(threshold)
+            branches.append(f"v.{col} >= ${len(params)}")
+        conditions.append(f"({' OR '.join(branches)})")
+
+    return view, conditions
+
+
+# Shared by both filter endpoints; homelands picks which view to search
+async def run_filter(
+    conn,
+    request: Request,
+    homelands: bool,
+    county: str | None,
+    hazard: list[str] | None,
+    any_group: list[str] | None,
+) -> Any:
+    metric_cols = await metric_columns(conn, homelands)
+    params: list[Any] = []
+    view, conditions = area_conditions(request, homelands, metric_cols, county, any_group, params)
+
     if hazard:
         # An area matches if it touches any chosen hazard, read from the list worked out at rebuild time.
         conditions.append(
@@ -300,19 +325,7 @@ async def run_filter(
             f" AND ({hazard_branches(hazard, params)}))"
         )
 
-    for col, threshold in metric_filters:
-        # col has been validated against allowed_cols — safe to interpolate.
-        add_cond(f"v.{col} >= ?", threshold)
-
-    for group_entries in any_groups.values():
-        # Turn one group into one OR bracket, then add it to the same list as
-        # hazards and metric filters
-        branches: list[str] = []
-        for col, threshold in group_entries:
-            params.append(threshold)
-            branches.append(f"v.{col} >= ${len(params)}")
-        conditions.append(f"({' OR '.join(branches)})")
-
+    id_cols = _HHM_ID_COLS if homelands else _BGM_ID_COLS
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     id_select = ", ".join(f"v.{c}" for c in id_cols)
     metric_select = ", ".join(f"v.{c}::float" for c in metric_cols)

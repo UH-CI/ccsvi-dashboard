@@ -1,11 +1,11 @@
 import json
 from typing import Any, Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
 from ..db import ConnDep
-from .block_groups import hazard_branches
+from .block_groups import area_conditions, hazard_branches, metric_columns
 
 router = APIRouter()
 
@@ -41,8 +41,9 @@ class PointFeatureCollection(BaseModel):
         "Returns a GeoJSON FeatureCollection from the points table. "
         "Supports filtering by layer_id (exact match), full-text search on "
         "feature name via plainto_tsquery (uses the idx_points_name_fts GIN index), "
-        "and geoid (only points inside one of these block group / Hawaiian Homeland "
-        "areas; repeatable, matches any of them), and hazard (only points inside one of these "
+        "homelands with min_<col>=<value> params (only points inside a block group, or a Hawaiian "
+        "Homeland when true, at or above every minimum, the same areas /api/v1/block-groups and "
+        "/api/v1/hawaiian-homelands return), and hazard (only points inside one of these "
         "hazard layers, looked up in the pre-computed point_hazards table; repeatable, matches "
         "any of them), and raster (only points with a real value in one of these rasters, looked "
         "up in the pre-computed point_raster_values table; repeatable, matches any of them; "
@@ -52,9 +53,13 @@ class PointFeatureCollection(BaseModel):
 )
 async def get_points(
     conn: ConnDep,
+    request: Request,
     layer_id: str | None = Query(None, description="Layer ID, e.g. 'hospitals'"),
     q: str | None = Query(None, description="Full-text search term on feature name"),
-    geoid: list[str] | None = Query(None, description="Only points inside any of these geoids' areas"),
+    homelands: bool | None = Query(
+        None,
+        description="Only points inside a block group (false) or Hawaiian Homeland (true) at or above every min_<col>",
+    ),
     hazard: list[str] | None = Query(
         None, description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"
     ),
@@ -65,8 +70,6 @@ async def get_points(
 ) -> PointFeatureCollection:
     conditions: list[str] = []
     params: list[Any] = []
-    # Only joined against geographies when a geoid is actually requested
-    join = ""
 
     if layer_id:
         params.append(layer_id)
@@ -79,10 +82,14 @@ async def get_points(
             f"@@ plainto_tsquery('english', ${len(params)})"
         )
 
-    if geoid:
-        params.append(geoid)
-        join = "JOIN geographies g ON ST_Covers(g.geom, points.geom)"
-        conditions.append(f"g.geoid = ANY(${len(params)})")
+    if homelands is not None:
+        metric_cols = await metric_columns(conn, homelands)
+        view, area_where = area_conditions(request, homelands, metric_cols, None, None, params)
+        areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
+        conditions.append(
+            "EXISTS (SELECT 1 FROM geographies g WHERE ST_Covers(g.geom, points.geom)"
+            f" AND g.geoid IN ({areas}))"
+        )
 
     if hazard:
         conditions.append(
@@ -100,7 +107,7 @@ async def get_points(
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     sql = (
         f"SELECT points.id, points.layer_id, points.name, points.props, "
-        f"ST_AsGeoJSON(points.geom) AS geometry FROM points {join} {where}"
+        f"ST_AsGeoJSON(points.geom) AS geometry FROM points {where}"
     )
 
     rows = await conn.fetch(sql, *params)
