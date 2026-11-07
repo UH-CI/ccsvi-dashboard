@@ -3,9 +3,7 @@ import {
   usePointLayerStore,
   useHazardLayersStore,
   useRasterLayersStore,
-  DEFAULT_LAYER_OPACITIES,
 } from "../stores";
-import { DEFAULT_COLOR_SCHEME } from "../config";
 import { DeserializedState } from "./urlSerializer";
 
 /**
@@ -27,55 +25,12 @@ function initializeMapStore(
   primaryMapId?: string,
 ): void {
   const mapStore = useMapStore.getState();
-
   mapStore.reset();
-
-  // If no maps in URL, use default from reset()
-  if (mapConfigs.length === 0) {
-    if (primaryMapId) {
-      mapStore.setPrimaryMap(primaryMapId);
-    }
-    return;
-  }
-
-  // Build full MapConfig objects preserving original IDs from the URL.
-  // This ensures rasters/layers that reference e.g. "map6" still match.
-  const fullConfigs = mapConfigs.map((config) => ({
-    id: config.id!,
-    title: `Map ${config.id!.replace("map", "")}`,
-    dataset: config.dataset || "",
-    metric: config.metric || "",
-      ...(config.dataset2 ? { dataset2: config.dataset2 } : {}),
-      ...(config.metric2 ? { metric2: config.metric2 } : {}),
-    ...(config.bivariateColorScheme ? { bivariateColorScheme: config.bivariateColorScheme } : {}),
-    visible: config.visible ?? true,
-    colorScheme: DEFAULT_COLOR_SCHEME,
-    ...(config.activeFeature ? { activeFeature: config.activeFeature } : {}),
-  }));
-
-  const layerOpacities = fullConfigs.reduce(
-    (acc, config) => {
-      acc[config.id] = { ...DEFAULT_LAYER_OPACITIES };
-      return acc;
-    },
-    {} as Record<string, { census: number; hawaiianHomelands: number; countyBoundaries: number }>,
+  // The link's ids are kept, so layers listed for e.g. "map6" still match
+  mapStore.loadMaps(
+    mapConfigs.map((config) => ({ ...config, id: config.id! })),
+    primaryMapId,
   );
-
-  // Set nextMapId above the highest URL map number to prevent future collisions
-  const maxMapNum = fullConfigs.reduce((max, config) => {
-    const num = parseInt(config.id.replace("map", ""), 10);
-    return isNaN(num) ? max : Math.max(max, num);
-  }, 1);
-
-  useMapStore.setState({
-    mapConfigs: fullConfigs,
-    nextMapId: maxMapNum + 1,
-    layerOpacities,
-  });
-
-  if (primaryMapId) {
-    mapStore.setPrimaryMap(primaryMapId);
-  }
 }
 
 /**

@@ -125,13 +125,12 @@ const App: React.FC = () => {
   return (
     <div className={styles["app-container"]}>
       <ControlPanel
-        maxMaps={4}
         isGridView={isGridView}
         onToggleGridView={() => setIsGridView((v) => !v)}
         onSnapshot={handleSnapshot}
       />
       <div className={styles["map-section"]}>
-        <MultiMapContainer ref={multiMapContainerRef} maxMaps={4} isGridView={isGridView} />
+        <MultiMapContainer ref={multiMapContainerRef} isGridView={isGridView} />
         {isTableOpen && primaryDataset && (
           <div className={styles["table-resize-handle"]} onMouseDown={handleResizeStart} />
         )}

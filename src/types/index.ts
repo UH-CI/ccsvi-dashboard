@@ -8,7 +8,7 @@ export interface MapConfig {
   bivariateColorScheme?: string;
   visible: boolean;
   colorScheme: string;
-  baseMap?: string;
+  baseMap: string;
   activeFeature?: {
     geoid: string;
   };

@@ -15,6 +15,8 @@ interface HazardLayersState {
   // Actions
   toggleHazardLayerVisibility: (mapId: string, id: string) => void;
   toggleSubLayerVisibility: (mapId: string, parentId: string, subId: string) => void;
+  // Forgets everything kept for a map that's being removed
+  clearMap: (mapId: string) => void;
 
   // Initialization — configs come from TS import; this handles URL-initialized visible layers
   fetchHazardLayerConfigs: () => Promise<void>;
@@ -95,6 +97,14 @@ export const useHazardLayersStore = create<HazardLayersState>((set, get) => ({
     }
 
     setVisibleLayerIds(mapId, Array.from(newVisibleIds));
+  },
+
+  clearMap: (mapId) => {
+    set((state) => {
+      const visibleLayerIdsByMap = { ...state.visibleLayerIdsByMap };
+      delete visibleLayerIdsByMap[mapId];
+      return { visibleLayerIdsByMap };
+    });
   },
 
   fetchHazardLayerConfigs: async () => {

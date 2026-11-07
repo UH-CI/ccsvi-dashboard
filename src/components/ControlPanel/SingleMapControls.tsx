@@ -22,7 +22,6 @@ import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
 import { BaseMapMenu } from "./components/BaseMapMenu";
-import { DEFAULT_BASE_MAP_ID } from "../../config/basemaps";
 
 interface SingleMapControlsProps {
   mapId: string;
@@ -69,8 +68,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
       }, 0);
     }
   }, [isEditingTitle]);
-
-  const activeBaseMapId = config?.baseMap ?? DEFAULT_BASE_MAP_ID;
 
   if (!config) return null;
 
@@ -127,7 +124,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           open={Boolean(baseMapAnchor)}
           onClose={() => setBaseMapAnchor(null)}
           mapId={mapId}
-          activeBaseMapId={activeBaseMapId}
+          activeBaseMapId={config.baseMap}
           updateMapConfig={updateMapConfig}
         />
       </Box>

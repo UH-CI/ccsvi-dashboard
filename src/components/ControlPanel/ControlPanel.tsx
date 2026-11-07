@@ -26,14 +26,7 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
 } from "@mui/icons-material";
-import {
-  useMapStore,
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
-  useHCDPStore,
-  useFilterStore,
-} from "../../stores";
+import { useMapStore, useFilterStore } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";
@@ -45,7 +38,6 @@ import { LAYER_MENUS } from "../../config/layerMenus";
 import type { LayerMenuId } from "../../config/layerMenus";
 
 interface IntegratedControlPanelProps {
-  maxMaps: number;
   isGridView?: boolean;
   onToggleGridView?: () => void;
   onSnapshot?: () => void | Promise<void>;
@@ -60,17 +52,12 @@ const LAYER_MENU_ICONS: Record<LayerMenuId, React.ReactNode> = {
 };
 
 export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
-  maxMaps,
   isGridView = true,
   onToggleGridView,
   onSnapshot,
 }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const resetMapStore = useMapStore((state) => state.reset);
-  const setVisiblePointLayerIds = usePointLayerStore((state) => state.setVisibleLayerIds);
-  const setVisibleHazardLayerIds = useHazardLayersStore((state) => state.setVisibleLayerIds);
-  const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
-  const clearHCDP = useHCDPStore((s) => s.clearRasterOverlay);
   const clearFilter = useFilterStore((s) => s.clearFilter);
 
   // One anchor per nav button
@@ -118,22 +105,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
   const handleResetView = useCallback(() => {
     resetMapStore();
     clearFilter();
-
-    mapConfigs.forEach((map) => {
-      setVisiblePointLayerIds(map.id, []);
-      setVisibleHazardLayerIds(map.id, []);
-      setVisibleRasterLayerIds(map.id, []);
-      clearHCDP(map.id);
-    });
     setAnchors({});
-  }, [
-    resetMapStore,
-    clearFilter,
-    setVisiblePointLayerIds,
-    setVisibleHazardLayerIds,
-    setVisibleRasterLayerIds,
-    mapConfigs,
-  ]);
+  }, [resetMapStore, clearFilter]);
 
   const handleSnapshot = useCallback(() => {
     setAnchors({});
@@ -341,7 +314,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         anchorEl={anchors.maps ?? null}
         onClose={() => closeMenu("maps")}
         onInfoClick={(e) => handleInfoClick("maps", e)}
-        maxMaps={maxMaps}
       />
       <SviMenu
         open={Boolean(anchors.svi)}

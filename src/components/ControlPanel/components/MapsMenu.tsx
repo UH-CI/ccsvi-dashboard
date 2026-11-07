@@ -1,12 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
-import {
-  useMapStore,
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
-} from "../../../stores";
+import { useMapStore } from "../../../stores";
+import { MAX_MAPS } from "../../../config";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
@@ -18,38 +14,18 @@ interface MapsMenuProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
-  maxMaps: number;
 }
 
-export const MapsMenu: React.FC<MapsMenuProps> = ({
-  open,
-  anchorEl,
-  onClose,
-  onInfoClick,
-  maxMaps,
-}) => {
+export const MapsMenu: React.FC<MapsMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
   const mapConfigs = useMapStore((s) => s.mapConfigs);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
   const addMap = useMapStore((s) => s.addMap);
   const removeMap = useMapStore((s) => s.removeMap);
-  const setVisiblePointLayerIds = usePointLayerStore((s) => s.setVisibleLayerIds);
-  const setVisibleHazardLayerIds = useHazardLayersStore((s) => s.setVisibleLayerIds);
-  const setVisibleRasterLayerIds = useRasterLayersStore((s) => s.setVisibleLayerIds);
 
-  const canAddMap = mapConfigs.length < maxMaps;
+  const canAddMap = mapConfigs.length < MAX_MAPS;
   const canRemoveMap = mapConfigs.length > 1;
   const [mapsMapId, setMapsMapId] = useState<string>("");
   const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
-
-  const handleRemoveMap = useCallback(
-    (mapId: string) => {
-      setVisiblePointLayerIds(mapId, []);
-      setVisibleRasterLayerIds(mapId, []);
-      setVisibleHazardLayerIds(mapId, []);
-      removeMap(mapId);
-    },
-    [removeMap, setVisiblePointLayerIds, setVisibleRasterLayerIds, setVisibleHazardLayerIds],
-  );
 
   return (
     <MenuShell
@@ -80,7 +56,7 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({
         <SingleMapControls
           mapId={resolvedMapsMapId}
           canRemoveMap={canRemoveMap}
-          onRemove={handleRemoveMap}
+          onRemove={removeMap}
         />
       )}
     </MenuShell>

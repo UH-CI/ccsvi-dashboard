@@ -19,6 +19,8 @@ interface RasterLayersState {
   // Actions (mutual exclusivity: only one raster visible at a time)
   toggleRasterLayerVisibility: (mapId: string, id: string) => void;
   toggleSubRasterLayerVisibility: (mapId: string, parentId: string, subId: string) => void;
+  // Forgets everything kept for a map that's being removed
+  clearMap: (mapId: string) => void;
 
   // Data fetching
   fetchRasterLayerConfigs: () => void;
@@ -78,6 +80,16 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
       useHCDPStore.getState().clearRasterOverlay(mapId);
       setVisibleLayerIds(mapId, [parentId, fullId]);
     }
+  },
+
+  clearMap: (mapId) => {
+    set((state) => {
+      const visibleLayerIdsByMap = { ...state.visibleLayerIdsByMap };
+      const colormapOverrides = { ...state.colormapOverrides };
+      delete visibleLayerIdsByMap[mapId];
+      delete colormapOverrides[mapId];
+      return { visibleLayerIdsByMap, colormapOverrides };
+    });
   },
 
   // Synchronous — imports directly from the typed TS module, no network request.

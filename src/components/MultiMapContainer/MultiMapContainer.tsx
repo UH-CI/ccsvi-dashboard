@@ -4,12 +4,10 @@ import { useVisibleMaps, useMapStore } from "../../stores";
 import styles from "./MultiMapContainer.module.scss";
 
 interface MultiMapContainerProps {
-  maxMaps?: number;
   isGridView?: boolean;
 }
 
 export const MultiMapContainer = forwardRef<HTMLDivElement, MultiMapContainerProps>(({
-  maxMaps = 4,
   isGridView = true,
 }, ref) => {
   // Use visible maps from mapStore
