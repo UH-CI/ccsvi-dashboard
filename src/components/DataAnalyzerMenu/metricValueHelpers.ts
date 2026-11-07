@@ -13,9 +13,7 @@ export function pickValue(entry: MetricValue | undefined): number | null {
   return null;
 }
 
-export function formatValue(v: number, isPercentage: boolean, maxVal?: number): string {
-  if (!isPercentage) return v.toFixed(0);
-  // If max value is already > 1 the backend stored percentages in 0–100 form
-  const alreadyScaled = maxVal != null && maxVal > 1;
-  return alreadyScaled ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`;
+// Percentages (stored 0–100) with one decimal, counts as whole numbers
+export function formatValue(v: number, isPercentage: boolean): string {
+  return isPercentage ? `${v.toFixed(1)}%` : v.toFixed(0);
 }

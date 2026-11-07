@@ -35,9 +35,9 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   const cachedValues1 = useMetricValues(dataset, metric);
   const cachedValues2 = useMetricValues(dataset2, metric2);
 
-  const { points, activePoint, isPct1, isPct2, maxX, maxY } = useMemo(() => {
+  const { points, activePoint, isPct1, isPct2 } = useMemo(() => {
     if (!cachedValues1 || !cachedValues2) {
-      return { points: [], activePoint: null, isPct1: false, isPct2: false, maxX: 1, maxY: 1 };
+      return { points: [], activePoint: null, isPct1: false, isPct2: false };
     }
     const isPct1 = Object.values(cachedValues1).some((e) => e.percentage != null);
     const isPct2 = Object.values(cachedValues2).some((e) => e.percentage != null);
@@ -51,11 +51,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
       if (geoid === activeGeoid) active = point;
       else pts.push(point);
     }
-    const allX = active ? [...pts.map((p) => p.x), active.x] : pts.map((p) => p.x);
-    const allY = active ? [...pts.map((p) => p.y), active.y] : pts.map((p) => p.y);
-    const maxX = allX.length ? Math.max(...allX) : 1;
-    const maxY = allY.length ? Math.max(...allY) : 1;
-    return { points: pts, activePoint: active, isPct1, isPct2, maxX, maxY };
+    return { points: pts, activePoint: active, isPct1, isPct2 };
   }, [cachedValues1, cachedValues2, activeGeoid]);
 
   const label1 = metric ? sviLabel(dataset, metric) : undefined;
@@ -98,8 +94,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
 
       <ResponsiveContainer width="100%" height={200}>
         <ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <XAxis type="number" dataKey="x" tickFormatter={(v) => formatValue(v, isPct1, maxX)} tick={{ fontSize: 10 }} />
-          <YAxis type="number" dataKey="y" tickFormatter={(v) => formatValue(v, isPct2, maxY)} tick={{ fontSize: 10 }} width={40} />
+          <XAxis type="number" dataKey="x" tickFormatter={(v) => formatValue(v, isPct1)} tick={{ fontSize: 10 }} />
+          <YAxis type="number" dataKey="y" tickFormatter={(v) => formatValue(v, isPct2)} tick={{ fontSize: 10 }} width={40} />
           <RechartsTooltip
             cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
@@ -112,10 +108,10 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
                     {label}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {label1}: {formatValue(point.x, isPct1, maxX)}
+                    {label1}: {formatValue(point.x, isPct1)}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {label2}: {formatValue(point.y, isPct2, maxY)}
+                    {label2}: {formatValue(point.y, isPct2)}
                   </Typography>
                 </Box>
               );

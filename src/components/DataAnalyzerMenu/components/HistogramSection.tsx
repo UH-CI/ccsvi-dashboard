@@ -100,7 +100,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     const dataMax = Math.max(...allValues);
     const step = (dataMax - dataMin) / NUM_BINS || 1;
     const bins = Array.from({ length: NUM_BINS }, (_, i) => ({
-      label: formatValue(dataMin + i * step, isPercentage, dataMax),
+      label: formatValue(dataMin + i * step, isPercentage),
       start: dataMin + i * step,
       end: dataMin + (i + 1) * step,
       count: 0,
@@ -252,7 +252,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                   Selected area
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: CHART_COLORS.selected }}>
-                  {formatValue(activeValue, isPercentage, dataMax)}
+                  {formatValue(activeValue, isPercentage)}
                 </Typography>
               </Box>
             )}
@@ -261,11 +261,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 Mean
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.mean, isPercentage, dataMax) : "–"}
+                {matchedStats ? formatValue(matchedStats.mean, isPercentage) : "–"}
               </Typography>
               {matchedValues.length !== allValues.length && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.mean, isPercentage, dataMax)}
+                  all {formatValue(stats.mean, isPercentage)}
                 </Typography>
               )}
             </Box>
@@ -274,11 +274,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 Median
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.median, isPercentage, dataMax) : "–"}
+                {matchedStats ? formatValue(matchedStats.median, isPercentage) : "–"}
               </Typography>
               {matchedValues.length !== allValues.length && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.median, isPercentage, dataMax)}
+                  all {formatValue(stats.median, isPercentage)}
                 </Typography>
               )}
             </Box>
@@ -321,16 +321,16 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
               setFilterRange(r);
             }}
             valueLabelDisplay="auto"
-            valueLabelFormat={(v) => formatValue(v, isPercentage, dataMax)}
+            valueLabelFormat={(v) => formatValue(v, isPercentage)}
             size="small"
           />
         </Box>
         <Box display="flex" justifyContent="space-between">
           <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMin, isPercentage, dataMax)}
+            {formatValue(dataMin, isPercentage)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMax, isPercentage, dataMax)}
+            {formatValue(dataMax, isPercentage)}
           </Typography>
         </Box>
       </Box>
@@ -356,16 +356,16 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 setFilterRange2(r);
               }}
               valueLabelDisplay="auto"
-              valueLabelFormat={(v) => formatValue(v, isPercentage2, dataMax2)}
+              valueLabelFormat={(v) => formatValue(v, isPercentage2)}
               size="small"
             />
           </Box>
           <Box display="flex" justifyContent="space-between">
             <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMin2, isPercentage2, dataMax2)}
+              {formatValue(dataMin2, isPercentage2)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMax2, isPercentage2, dataMax2)}
+              {formatValue(dataMax2, isPercentage2)}
             </Typography>
           </Box>
         </Box>
