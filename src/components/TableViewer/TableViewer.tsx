@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Paper, Typography, Box, Collapse, Alert, IconButton } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
-import { TableData } from "./types";
 import { CatalogDataset } from "../../types";
-import { getDatasetTable } from "../../api/client";
 import { useTableResize } from "../../hooks/useTableResize";
-import { usePrimaryMapState, useFilterStore, useMapStore, useAppStore } from "../../stores";
-import { usePointNamesForTable } from "../../hooks/usePointCounts";
+import { usePrimaryMapState, useMapStore, useAppStore } from "../../stores";
+import { useDatasetTable } from "../../api/queries/datasetTable";
+import { useFilteredGeoids } from "../../api/queries/filter";
+import { usePointNamesForTable } from "../../api/queries/pointNames";
 import { usePointCountsForTable } from "../../api/queries/pointCounts";
 import { useSavedRasterForTable } from "../../api/queries/savedRaster";
-import { useHazardOverlapsForTable } from "../../hooks/useHazardOverlapsForTable";
+import { useHazardOverlapsForTable } from "../../api/queries/hazardAreas";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
 import { useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
@@ -36,15 +36,12 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   fullscreen,
 }) => {
   const { metric: primaryMapMetric } = usePrimaryMapState();
-  const filterResults = useFilterStore((s) => s.results);
-  const filteredGeoidsSet = useMemo(
-    () => (filterResults ? new Set(filterResults.map((r) => r.geoid)) : null),
-    [filterResults],
-  );
+  const filteredGeoidsSet = useFilteredGeoids();
 
-  const [tableData, setTableData] = useState<TableData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const table = useDatasetTable(activeDataset);
+  const tableData = table.data ?? null;
+  const loading = table.isFetching;
+  const error = table.error?.message ?? null;
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
   const apiRef = useGridApiRef();
@@ -85,32 +82,6 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   useEffect(() => {
     if (fullscreen !== undefined) setFullHeight(fullscreen);
   }, [fullscreen, setFullHeight]);
-
-  useEffect(() => {
-    const loadCsvData = async () => {
-      if (!activeDataset) {
-        setTableData(null);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getDatasetTable(activeDataset);
-        const headers = data.length > 0 ? Object.keys(data[0]) : [];
-        const rows = data.map((row) => headers.map((h) => String(row[h] ?? "")));
-        setTableData({ headers, rows });
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load data";
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCsvData();
-  }, [activeDataset]);
 
   const { columns, rows, geoidColIndex } = useDataGridColumns(tableData);
 

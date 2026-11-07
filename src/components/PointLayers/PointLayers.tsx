@@ -7,8 +7,9 @@ import L from "leaflet";
 import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
 import styles from "./PointLayers.module.scss";
-import { usePointLayerStore, useFilterStore } from "../../stores";
-import { getFilteredPoints } from "../../api/client";
+import { usePointLayerStore } from "../../stores";
+import { usePointFilter } from "../../api/queries/filter";
+import { useFilteredPoints, usePointFile } from "../../api/queries/points";
 
 interface GenericPointMarkersProps {
   layerId: string;
@@ -24,40 +25,23 @@ function pointId(properties: Feature["properties"], idFields: string[]): string 
 // Which of this layer's points passed the last Filter press.
 // Returns nothing when this layer isn't being filtered, meaning show all its points.
 function useMatchingIds(layerId: string): Set<string> | null {
-  const pointFilter = useFilterStore((state) => state.pointFilter);
+  const criteria = usePointFilter(layerId);
+  const points = useFilteredPoints(layerId, criteria);
   const idFields = usePointLayerStore(
     (state) => state.pointLayerConfigs.find((c) => c.id === layerId)!.idFields,
   );
-  const [ids, setIds] = useState<Set<string> | null>(null);
 
-  useEffect(() => {
-    if (!pointFilter || (pointFilter.layers && !pointFilter.layers.has(layerId))) {
-      setIds(null);
-      return;
-    }
+  return useMemo(() => {
+    if (criteria === null) return null;
     // No neighborhoods matched, so show no points. Asking the server with no areas would return every point.
-    if (pointFilter.geoids?.size === 0) {
-      setIds(new Set());
-      return;
-    }
-    let cancelled = false;
-    const geoids = pointFilter.geoids && Array.from(pointFilter.geoids);
-    getFilteredPoints(layerId, geoids, pointFilter.hazards, pointFilter.rasters).then((data) => {
-      if (cancelled) return;
-      setIds(
-        new Set(
-          data.features
-            .map((f) => pointId(f.properties, idFields))
-            .filter((id): id is string => id !== undefined),
-        ),
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [layerId, pointFilter, idFields]);
-
-  return ids;
+    if (criteria?.geoids?.length === 0) return new Set();
+    if (!points) return null;
+    return new Set(
+      points.features
+        .map((f) => pointId(f.properties, idFields))
+        .filter((id): id is string => id !== undefined),
+    );
+  }, [criteria, points, idFields]);
 }
 
 export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerId, mapId }) => {
@@ -68,7 +52,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
   const config = usePointLayerStore((state) =>
     state.pointLayerConfigs.find((c) => c.id === layerId),
   );
-  const data = usePointLayerStore((state) => state.pointLayerData.get(layerId));
+  const data = usePointFile(layerId);
   const matchingIds = useMatchingIds(layerId);
   // const isVisible = usePointLayerStore(state => state.visibleLayerIds.has(layerId));
   const isVisible = usePointLayerStore((state) => {

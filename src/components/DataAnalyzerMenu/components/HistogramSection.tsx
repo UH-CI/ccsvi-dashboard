@@ -10,7 +10,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { useAppStore, useFilteredGeoids } from "../../../stores";
+import { useAppStore } from "../../../stores";
+import { useFilteredGeoids } from "../../../api/queries/filter";
 import { useMetricValues } from "../../../api/queries/metricValues";
 import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";

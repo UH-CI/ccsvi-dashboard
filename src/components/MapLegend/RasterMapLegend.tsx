@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import TerrainIcon from "@mui/icons-material/Terrain";
 import { useRasterLayersStore } from "../../stores";
+import { useColormapGradient } from "../../api/queries/colormap";
 import {
   RASTER_LEGEND_DEFAULT_GRADIENT_HEIGHT_PX,
   RASTER_LEGEND_DEFAULT_WIDTH_PX,
@@ -15,40 +16,13 @@ function formatValue(v: number): string {
   return a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(2) : v.toFixed(3);
 }
 
-// Session-level gradient cache — avoids re-fetching the same colormap within a tab.
-const colormapGradientCache = new Map<string, string>();
-
-async function colormapToCss(name: string): Promise<string> {
-  if (colormapGradientCache.has(name)) return colormapGradientCache.get(name)!;
-  const res = await fetch(`/api/v1/rasters/colormap?name=${encodeURIComponent(name)}`);
-  if (!res.ok) throw new Error(`colormap fetch failed: ${res.status}`);
-  const entries: [number, number, number, number][] = await res.json();
-  const step = Math.max(1, Math.floor(entries.length / 16));
-  const sampled = entries.filter((_, i) => i % step === 0 || i === entries.length - 1);
-  const stops = sampled
-    .map(([r, g, b, a], i) => {
-      const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}${Math.round(a).toString(16).padStart(2, "0")}`;
-      return `${hex} ${(i / Math.max(1, sampled.length - 1)) * 100}%`;
-    })
-    .join(", ");
-  const css = `linear-gradient(to top, ${stops})`;
-  colormapGradientCache.set(name, css);
-  return css;
-}
-
 interface RasterMapLegendProps {
   mapId: string;
 }
 
 export const RasterMapLegend: React.FC<RasterMapLegendProps> = ({ mapId }) => {
   const info = useRasterLayersStore((s) => s.rasterLegendByMap[mapId] ?? null);
-
-  const [gradientCss, setGradientCss] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!info?.colormapName) { setGradientCss(null); return; }
-    colormapToCss(info.colormapName).then(setGradientCss).catch(() => setGradientCss(null));
-  }, [info?.colormapName]);
+  const gradientCss = useColormapGradient(info?.colormapName);
 
   if (!info || !gradientCss) return null;
 

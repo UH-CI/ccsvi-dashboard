@@ -1,3 +1,5 @@
+import { apiUrl } from "../api/client";
+
 export interface BaseMapOption {
   id: string;
   label: string;
@@ -17,7 +19,7 @@ export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_voyager_nolabels",
     label: "CartoDB Voyager (No Labels)",
-    url: "/api/tiles/carto/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
+    url: apiUrl("/api/tiles/carto/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"),
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' + 
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -26,7 +28,7 @@ export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_voyager_labels",
     label: "CartoDB Voyager (Labels)",
-    url: "/api/tiles/carto/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    url: apiUrl("/api/tiles/carto/rastertiles/voyager/{z}/{x}/{y}{r}.png"),
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -34,7 +36,7 @@ export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_positron_nolabels",
     label: "CartoDB Positron (No Labels)",
-    url: "/api/tiles/carto/light_nolabels/{z}/{x}/{y}{r}.png",
+    url: apiUrl("/api/tiles/carto/light_nolabels/{z}/{x}/{y}{r}.png"),
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -43,7 +45,7 @@ export const BASE_MAP_OPTIONS: BaseMapOption[] = [
   {
     id: "cartodb_positron_labels",
     label: "CartoDB Positron (Labels)",
-    url: "/api/tiles/carto/rastertiles/light_all/{z}/{x}/{y}{r}.png",
+    url: apiUrl("/api/tiles/carto/rastertiles/light_all/{z}/{x}/{y}{r}.png"),
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
       '&copy; <a href="https://carto.com/attributions">CARTO</a>',

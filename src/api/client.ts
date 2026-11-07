@@ -1,7 +1,20 @@
 import { FeatureCollection, Point } from "geojson";
-import { DatasetCatalog, GeographiesData, MetricValue } from "../types";
+import {
+  BlockGroupResult,
+  DatasetCatalog,
+  GeographiesData,
+  MetricValue,
+  RasterInfo,
+} from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const DATA_BASE_URL = import.meta.env.VITE_DATA_BASE_URL ?? "";
+
+// An address on the API server, e.g. "/api/tiles/carto/…" for map tiles
+export const apiUrl = (path: string) => `${BASE_URL}${path}`;
+
+// An address in the data folder, e.g. "hazards/flood.pmtiles"
+export const dataUrl = (path: string) => `${DATA_BASE_URL}/${path}`;
 
 // A failed request, with the server's status so callers can tell a bad request (4xx) from a server failure
 export class ApiError extends Error {
@@ -19,7 +32,7 @@ const fetchJson = async <T>(url: string): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
-const get = <T>(path: string): Promise<T> => fetchJson<T>(`${BASE_URL}${path}`);
+const get = <T>(path: string): Promise<T> => fetchJson<T>(apiUrl(path));
 
 // A file shipped with the app, e.g. "data/2020_Census_Block_Groups_Stripped.geojson"
 export const getAppFile = <T>(path: string): Promise<T> =>
@@ -63,3 +76,52 @@ export const getFilteredPoints = (
   for (const raster of rasters) params.append("raster", raster);
   return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
 };
+
+// The block groups or Homelands touching every given hazard, at or above each column's minimum
+export const getFilterResults = (
+  homelands: boolean,
+  hazards: string[],
+  minimums: Record<string, number>,
+) => {
+  const params = new URLSearchParams();
+  for (const hazard of hazards) params.append("hazard", hazard);
+  for (const [column, value] of Object.entries(minimums))
+    params.set(`min_${column}`, String(value));
+  return get<BlockGroupResult[]>(
+    `/api/v1/${homelands ? "hawaiian-homelands" : "block-groups"}?${params}`,
+  );
+};
+
+// One point layer's file from the data folder
+export const getPointFile = (filePath: string) =>
+  fetchJson<FeatureCollection<Point>>(dataUrl(`point_data/${filePath}`));
+
+// A raster's value range (for colouring its tiles) and its extent (so the map asks only for tiles inside it)
+export const getRasterInfo = async (rasterId: string): Promise<RasterInfo> => {
+  const id = encodeURIComponent(rasterId);
+  const [statistics, info] = await Promise.all([
+    get<{ b1: { min: number; max: number } }>(`/api/tiles/cog/statistics?raster_id=${id}`),
+    get<{ bounds: [number, number, number, number] }>(`/api/tiles/cog/info?raster_id=${id}`),
+  ]);
+  const [west, south, east, north] = info.bounds;
+  return {
+    min: statistics.b1.min,
+    max: statistics.b1.max,
+    bounds: [
+      [south, west],
+      [north, east],
+    ],
+  };
+};
+
+// A raster's value at one spot
+export const getRasterValue = (rasterId: string, lng: number, lat: number) =>
+  get<{ values?: (number | null)[] }>(
+    `/api/tiles/cog/point/${lng},${lat}?raster_id=${encodeURIComponent(rasterId)}`,
+  );
+
+// A colour bar's colours, bottom to top, as [red, green, blue, alpha]
+export const getColormap = (name: string) =>
+  get<[number, number, number, number][]>(
+    `/api/v1/rasters/colormap?name=${encodeURIComponent(name)}`,
+  );

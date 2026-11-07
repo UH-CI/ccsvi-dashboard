@@ -135,6 +135,13 @@ export interface RasterLayerConfig extends SubRasterLayerConfig {
   subLayers?: SubRasterLayerConfig[];
 }
 
+export interface RasterInfo {
+  min: number;
+  max: number;
+  // [[south, west], [north, east]]
+  bounds: [[number, number], [number, number]];
+}
+
 export interface BlockGroupResult {
   geoid: string;
   name: string | null;

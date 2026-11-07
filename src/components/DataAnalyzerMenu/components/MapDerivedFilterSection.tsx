@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { Stack, Button, IconButton, CircularProgress, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
-import { useAppStore, useFilterStore, useMapStore } from "../../../stores";
+import { useAppStore, useMapStore } from "../../../stores";
+import { applyFilter, useAreaFilter } from "../../../api/queries/filter";
 import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
 import { layerDatasetId } from "../../../utils/layerDatasets";
@@ -29,14 +30,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const filterRange2 = useAppStore((state) => state.filterRange2);
   const exportTable = useAppStore((state) => state.exportTable);
 
-  const setHazards = useFilterStore((state) => state.setHazards);
-  const setRasters = useFilterStore((state) => state.setRasters);
-  const setHomelands = useFilterStore((state) => state.setHomelands);
-  const setMetricFilter = useFilterStore((state) => state.setMetricFilter);
-  const metricFilters = useFilterStore((state) => state.metricFilters);
-  const applyFilter = useFilterStore((state) => state.applyFilter);
-  const applyPointHazardFilter = useFilterStore((state) => state.applyPointHazardFilter);
-  const isLoading = useFilterStore((state) => state.isLoading);
+  const isLoading = useAreaFilter().isFetching;
 
   // Every visible shape must overlap, every visible raster is checked, and every visible
   // point layer must have at least one point in the area, whichever menu each is in
@@ -74,26 +68,28 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
 
   const handleApply = () => {
     if (!sviShown) {
-      applyPointHazardFilter(hazardIds, rasterIds, new Set(pointLayerIds));
+      applyFilter({
+        kind: "points",
+        hazards: hazardIds,
+        rasters: rasterIds,
+        pointLayers: pointLayerIds,
+      });
       return;
     }
 
     const homelands =
       dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false;
-    setHomelands(homelands);
-    setHazards(hazardIds);
-    setRasters(rasterIds);
-    for (const col of Object.keys(metricFilters)) setMetricFilter(col, null);
-    if (hasMetricThreshold && mvColumn) setMetricFilter(mvColumn, filterRange![0]);
-    if (hasMetricThreshold2 && mvColumn2) setMetricFilter(mvColumn2, filterRange2![0]);
+    const minimums: Record<string, number> = {};
+    if (hasMetricThreshold && mvColumn) minimums[mvColumn] = filterRange![0];
+    if (hasMetricThreshold2 && mvColumn2) minimums[mvColumn2] = filterRange2![0];
 
     // At least one point of each visible point layer, on its count's filter column
     for (const id of pointLayerIds) {
       const pointDataset = layerDatasetId(datasetCatalog, id, homelands)!;
-      setMetricFilter(datasetCatalog![pointDataset].columnThresholds.Count.mvColumn!, 1);
+      minimums[datasetCatalog![pointDataset].columnThresholds.Count.mvColumn!] = 1;
     }
 
-    applyFilter();
+    applyFilter({ kind: "areas", homelands, hazards: hazardIds, rasters: rasterIds, minimums });
   };
 
   return (

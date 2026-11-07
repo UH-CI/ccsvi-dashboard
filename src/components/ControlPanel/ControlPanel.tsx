@@ -40,6 +40,7 @@ import { SviMenu } from "./components/SviMenu";
 import { LayerMenu } from "./components/LayerMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
 import { AnalyzerMenu } from "./components/AnalyzerMenu";
+import { FilterErrorToast } from "../DataAnalyzerMenu/components/FilterErrorToast";
 import { LAYER_MENUS } from "../../config/layerMenus";
 import type { LayerMenuId } from "../../config/layerMenus";
 
@@ -370,6 +371,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
         onClose={() => closeMenu("analyzer")}
         onInfoClick={(e) => handleInfoClick("analyzer", e)}
       />
+      <FilterErrorToast />
       {/* ── Info Popover ── */}
       <Popover
         open={Boolean(infoAnchor)}

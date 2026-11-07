@@ -4,12 +4,7 @@ import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
 import { MultiMapContainer } from "./components/MultiMapContainer";
 import { TableViewer } from "./components/TableViewer";
-import {
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
-  usePrimaryMapState,
-} from "./stores";
+import { useHazardLayersStore, useRasterLayersStore, usePrimaryMapState } from "./stores";
 import { useDatasets } from "./api/queries/datasets";
 import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
@@ -76,7 +71,6 @@ const App: React.FC = () => {
   const { dataset: primaryDataset } = usePrimaryMapState();
 
   // Get data from stores
-  const fetchPointLayerConfigs = usePointLayerStore((state) => state.fetchPointLayerConfigs);
   const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
   const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
   const rasterLoaded = useRasterLayersStore((state) => state.isLoaded);
@@ -99,10 +93,9 @@ const App: React.FC = () => {
 
   // Load the layer configs on mount
   useEffect(() => {
-    fetchPointLayerConfigs();
     fetchHazardLayerConfigs();
     fetchRasterLayerConfigs();
-  }, [fetchPointLayerConfigs, fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
+  }, [fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
 
   // === Error handling ===
   if (errors.length > 0) {

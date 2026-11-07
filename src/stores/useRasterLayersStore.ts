@@ -3,13 +3,6 @@ import { RASTER_LAYERS } from "../config/rasterLayers";
 import type { RasterLayerConfig } from "../types";
 import { useHCDPStore } from "./useHCDPStore";
 
-export interface COGInfo {
-  min: number;
-  max: number;
-  // Passed to L.tileLayer to prevent Leaflet requesting tiles outside the COG extent.
-  bounds?: [[number, number], [number, number]]; // [[south, west], [north, east]]
-}
-
 export interface RasterLegendInfo {
   layerId: string;
   title: string;
@@ -27,8 +20,6 @@ interface RasterLayersState {
   visibleLayerIdsByMap: Record<string, Set<string>>;
   // Per-map legend payload when a raster is visible; cleared when layer hides.
   rasterLegendByMap: Record<string, RasterLegendInfo | null>;
-  // Band min/max cached on first toggle-on; cleared only when the store resets
-  cogInfoCache: Map<string, COGInfo>;
   // Per-map, per-layer colormap overrides set by the user via the colormap picker
   colormapOverrides: Record<string, Record<string, string>>;
   isLoaded: boolean;
@@ -36,7 +27,6 @@ interface RasterLayersState {
   setVisibleLayerIds: (mapId: string, ids: string[]) => void;
   setRasterLegend: (mapId: string, info: RasterLegendInfo | null) => void;
   setIsLoaded: (loaded: boolean) => void;
-  setCOGInfo: (layerId: string, info: COGInfo) => void;
   setRasterColormap: (mapId: string, layerId: string, colormapName: string) => void;
 
   // Actions (mutual exclusivity: only one raster visible at a time)
@@ -45,7 +35,6 @@ interface RasterLayersState {
 
   // Data fetching
   fetchRasterLayerConfigs: () => void;
-  fetchCOGInfo: (layerId: string) => Promise<void>;
 }
 
 export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
@@ -53,7 +42,6 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   rasterLayerConfigs: [],
   visibleLayerIdsByMap: {},
   rasterLegendByMap: {},
-  cogInfoCache: new Map(),
   colormapOverrides: {},
   isLoaded: false,
 
@@ -74,14 +62,6 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
 
   setIsLoaded: (loaded) => set({ isLoaded: loaded }),
 
-  setCOGInfo: (layerId, info) => {
-    set((state) => {
-      const next = new Map(state.cogInfoCache);
-      next.set(layerId, info);
-      return { cogInfoCache: next };
-    });
-  },
-
   setRasterColormap: (mapId, layerId, colormapName) => {
     set((state) => ({
       colormapOverrides: {
@@ -92,7 +72,7 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   },
 
   toggleRasterLayerVisibility: (mapId, id) => {
-    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchCOGInfo } = get();
+    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds } = get();
     const layer = rasterLayerConfigs.find((l) => l.id === id);
     if (!layer || layer.subLayers?.length) return;
 
@@ -102,12 +82,11 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     } else {
       useHCDPStore.getState().clearRasterOverlay(mapId);
       setVisibleLayerIds(mapId, [id]);
-      fetchCOGInfo(id);
     }
   },
 
   toggleSubRasterLayerVisibility: (mapId, parentId, subId) => {
-    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds, fetchCOGInfo } = get();
+    const { rasterLayerConfigs, visibleLayerIdsByMap, setVisibleLayerIds } = get();
     const parent = rasterLayerConfigs.find((l) => l.id === parentId);
     if (!parent?.subLayers?.find((s) => s.id === subId)) return;
 
@@ -118,7 +97,6 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
     } else {
       useHCDPStore.getState().clearRasterOverlay(mapId);
       setVisibleLayerIds(mapId, [parentId, fullId]);
-      fetchCOGInfo(fullId);
     }
   },
 
@@ -126,35 +104,5 @@ export const useRasterLayersStore = create<RasterLayersState>((set, get) => ({
   fetchRasterLayerConfigs: () => {
     if (get().isLoaded) return;
     set({ rasterLayerConfigs: RASTER_LAYERS, isLoaded: true });
-  },
-
-  fetchCOGInfo: async (layerId) => {
-    const { cogInfoCache, setCOGInfo } = get();
-    if (cogInfoCache.has(layerId)) return;
-
-    try {
-      // Fetch statistics (min/max for rescale) and bounds (to constrain tile requests) in parallel.
-      const [statsRes, boundsRes] = await Promise.all([
-        fetch(`/api/tiles/cog/statistics?raster_id=${encodeURIComponent(layerId)}`),
-        fetch(`/api/tiles/cog/info?raster_id=${encodeURIComponent(layerId)}`),
-      ]);
-      if (!statsRes.ok) return;
-      const data = await statsRes.json();
-      // TiTiler returns bands keyed by "b1", "b2", etc. Fall back to first key for robustness.
-      const band = data.b1 ?? Object.values(data)[0];
-      if (band?.min == null || band?.max == null) return;
-
-      // TiTiler bounds are [west, south, east, north]; convert to Leaflet [[south, west], [north, east]].
-      let bounds: [[number, number], [number, number]] | undefined;
-      if (boundsRes.ok) {
-        const boundsData = await boundsRes.json();
-        const [west, south, east, north] = boundsData.bounds;
-        bounds = [[south, west], [north, east]];
-      }
-
-      setCOGInfo(layerId, { min: band.min as number, max: band.max as number, bounds });
-    } catch (err) {
-      console.error(`[useRasterLayersStore] fetchCOGInfo failed for ${layerId}:`, err);
-    }
   },
 }));

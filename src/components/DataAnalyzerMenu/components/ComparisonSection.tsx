@@ -8,7 +8,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useFilteredGeoids } from "../../../stores";
+import { useFilteredGeoids } from "../../../api/queries/filter";
 import { pickValue, formatValue } from "../metricValueHelpers";
 import { sviLabel } from "../../../config";
 import { useGeographies } from "../../../api/queries/geographies";

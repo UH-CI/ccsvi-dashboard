@@ -41,6 +41,7 @@ import { useDatasets } from "../../api/queries/datasets";
 import { useGeographies } from "../../api/queries/geographies";
 import { useBoundary } from "../../api/queries/boundaries";
 import { useMetricValues } from "../../api/queries/metricValues";
+import { useFilteredGeoids } from "../../api/queries/filter";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -267,19 +268,19 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       [mapId, config?.activeFeature?.geoid, updateMapActiveFeature, mapRef],
     );
 
-    const filterResults = useFilterStore((s) => s.results);
-    const filteredGeoids = useMemo(
-      () => (filterResults ? new Set(filterResults.map((r) => r.geoid)) : null),
-      [filterResults],
-    );
+    const filteredGeoids = useFilteredGeoids();
 
     // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
-    const filterHomelands = useFilterStore((s) => s.homelands);
+    const appliedFilter = useFilterStore((s) => s.applied);
     useEffect(() => {
-      if (isPrimary && filterResults && filterHomelands !== shouldShowHawaiianHomelands) {
+      if (
+        isPrimary &&
+        appliedFilter?.kind === "areas" &&
+        appliedFilter.homelands !== shouldShowHawaiianHomelands
+      ) {
         useFilterStore.getState().clearFilter();
       }
-    }, [isPrimary, filterResults, filterHomelands, shouldShowHawaiianHomelands]);
+    }, [isPrimary, appliedFilter, shouldShowHawaiianHomelands]);
 
     const shouldRenderCensus =
       effectiveDataset &&

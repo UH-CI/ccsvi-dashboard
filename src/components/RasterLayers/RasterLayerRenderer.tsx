@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { useRasterLayersStore } from "../../stores";
-
-const TILES_COG_BASE = "/api/tiles/cog";
+import { apiUrl, getRasterValue } from "../../api/client";
+import { useRasterInfo } from "../../api/queries/rasterInfo";
 
 interface RasterLayerRendererProps {
   parentId: string;
@@ -41,11 +41,10 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     return sub ?? parent;
   }, [rasterLayerConfigs, parentId, layerId]);
 
-  // Get visibility and COG info from store
   const isVisible = useRasterLayersStore(
     (s) => s.visibleLayerIdsByMap[mapId]?.has(activeLayerId) ?? false,
   );
-  const cogInfo = useRasterLayersStore((s) => s.cogInfoCache.get(activeLayerId));
+  const cogInfo = useRasterInfo(activeLayerId);
   const colormapOverride = useRasterLayersStore(
     (s) => s.colormapOverrides[mapId]?.[activeLayerId],
   );
@@ -66,7 +65,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     }
 
     const tileUrl =
-      `${TILES_COG_BASE}/tiles/WebMercatorQuad/{z}/{x}/{y}.webp` +
+      apiUrl("/api/tiles/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.webp") +
       `?raster_id=${encodeURIComponent(activeLayerId)}` +
       `&colormap_name=${encodeURIComponent(colormapName)}` +
       `&rescale=${cogInfo.min},${cogInfo.max}`;
@@ -77,7 +76,7 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       opacity,
       attribution: "",
       pane: "rasterPane",
-      ...(cogInfo.bounds ? { bounds: cogInfo.bounds } : {}),
+      bounds: cogInfo.bounds,
     });
     tileLayer.on("load", () => {
       tilesLoadedRef.current = true;
@@ -161,13 +160,8 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
       const { lng, lat } = latlng;
       try {
-        const res = await fetch(
-          `${TILES_COG_BASE}/point/${lng},${lat}` +
-            `?raster_id=${encodeURIComponent(activeLayerId)}`,
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const value: number | null = data.values?.[0] ?? null;
+        const data = await getRasterValue(activeLayerId, lng, lat);
+        const value = data.values?.[0] ?? null;
         if (value === null) return;
         const content = `<b>${layerName}</b><br/>${value.toFixed(2)}${units ? " " + units : ""}`;
         popupRef.current = L.popup().setLatLng(latlng).setContent(content).openOn(map);

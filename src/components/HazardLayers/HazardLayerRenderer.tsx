@@ -3,6 +3,7 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
 import { useHazardLayersStore } from "../../stores";
+import { dataUrl } from "../../api/client";
 import { FeaturePopup } from "../FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
 
@@ -66,8 +67,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       return clearLayer;
     }
 
-    const DATA_BASE = import.meta.env.VITE_DATA_BASE_URL ?? "";
-    const url = `${DATA_BASE}/hazards/${file}.pmtiles`;
+    const url = dataUrl(`hazards/${file}.pmtiles`);
 
     if (!map.getPane("hazardPane")) {
       const pane = map.createPane("hazardPane");

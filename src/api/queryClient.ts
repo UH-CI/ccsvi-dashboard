@@ -1,4 +1,4 @@
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { ApiError } from "./client";
 
 // The data only changes when the server is rebuilt or redeployed, so an answer is kept for the whole visit.
@@ -17,3 +17,6 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Each answer of a list of queries, in order; the same list until one of them changes
+export const dataOf = <T>(results: UseQueryResult<T>[]) => results.map((result) => result.data);
