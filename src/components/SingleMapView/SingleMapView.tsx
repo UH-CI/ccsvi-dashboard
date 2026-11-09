@@ -10,7 +10,7 @@ import {
   CountyBoundariesProperties,
 } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend, RasterMapLegend, HcdpMapLegend, LegendContainer } from "../MapLegend";
+import { MapLegend, RasterMapLegend, LegendContainer } from "../MapLegend";
 import {
   DEFAULT_BIVARIATE_SCHEME,
   DEFAULT_COLOR_SCHEME,
@@ -31,14 +31,12 @@ import {
   useHazardLayersStore,
   useRasterLayersStore,
   useSnapshotStore,
-  useHCDPStore,
   useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HazardLayerRenderer } from "../HazardLayers";
-import { RasterLayerRenderer } from "../RasterLayers";
-import { HCDPRasterLayer } from "../HCDP";
+import { CogRasterLayer, HcdpRasterLayer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
@@ -180,8 +178,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       () => visibleRasterLayerIdsByMap[mapId] ?? new Set<string>(),
       [visibleRasterLayerIdsByMap, mapId],
     );
-
-    const hcdpOverlayLoadId = useHCDPStore((s) => s.overlaysByMap[mapId]?.loadId);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -452,10 +448,10 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <React.Fragment key={layer.id}>
                 {/* Render parent layer if it is COG-backed (colormap set) and visible */}
                 {layer.colormap && visibleRasterIds.has(layer.id) && (
-                  <RasterLayerRenderer
+                  <CogRasterLayer
+                    id={layer.id}
                     mapId={mapId}
-                    parentId={layer.id}
-                    interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
+                    clickable={!effectiveMetric && !effectiveMetric2}
                   />
                 )}
 
@@ -463,12 +459,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 {layer.subLayers?.map((sub) => {
                   const compositeId = `${layer.id}.${sub.id}`;
                   return visibleRasterIds.has(compositeId) ? (
-                    <RasterLayerRenderer
+                    <CogRasterLayer
                       key={compositeId}
+                      id={compositeId}
                       mapId={mapId}
-                      parentId={layer.id}
-                      layerId={sub.id}
-                      interactionMode={effectiveMetric || effectiveMetric2 ? "social" : "raster"}
+                      clickable={!effectiveMetric && !effectiveMetric2}
                     />
                   ) : null;
                 })}
@@ -480,12 +475,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
             ))}
 
-            {hcdpOverlayLoadId != null && <HCDPRasterLayer mapId={mapId} />}
+            <HcdpRasterLayer mapId={mapId} />
           </MapContainer>
 
           <LegendContainer>
             <RasterMapLegend mapId={mapId} />
-            <HcdpMapLegend mapId={mapId} />
             {metricLabel && (
               <MapLegend
                 title={metricLabel2 ? `${metricLabel} × ${metricLabel2}` : metricLabel}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -16,48 +16,23 @@ import dayjs, { Dayjs } from "dayjs";
 import {
   formatHcdpDataTypeLabel,
   formatTimescaleLabel,
-  cloneArrayBuffer,
-  fetchHcdpRaster,
-  type HcdpRangeRow,
+  HCDP_CATALOG,
+  hcdpDataTypes,
+  hcdpFallbackRange,
+  hcdpSource,
+  uniqueSorted,
 } from "../../utils/hcdpRaster";
 import { buildHcdpOverlayTitle, useHCDPStore } from "../../stores/useHCDPStore";
 import styles from "./HCDPLoad.module.scss";
 import { useRasterLayersStore } from "../../stores";
-import hcdpCatalog from "../../../config/hcdp_catalog.json";
+import { ApiError } from "../../api/client";
+import { queryClient } from "../../api/queryClient";
+import { useHcdpDateRange } from "../../api/queries/hcdp";
+import { rasterInfoQuery } from "../../api/queries/rasterInfo";
 
-const HCDP_CATALOG = hcdpCatalog as HcdpRangeRow[];
-
-const DATA_TYPE_ORDER = [
-  "rainfall",
-  "temperature",
-  "relative_humidity",
-  "ndvi_modis",
-  "spi",
-  "ignition_probability"
-]
-
-function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
-  return [...new Set(values.filter((v): v is T => v != null && v !== ""))].sort() as T[];
-}
-
-function getCustomSortedDataTypes(catalog: HcdpRangeRow[] | null): string[] {
-  if (!catalog) return [];
-  
-  const unique = [...new Set(catalog.map((r) => r.data_type).filter((v): v is string => v != null && v !== ""))];
-  
-  return unique.sort((a, b) => {
-    const idxA = DATA_TYPE_ORDER.indexOf(a);
-    const idxB = DATA_TYPE_ORDER.indexOf(b);
-    
-    // If both are in the custom order list, sort by array index position
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    // If only 'a' is prioritized, move it up
-    if (idxA !== -1) return -1;
-    // If only 'b' is prioritized, move it up
-    if (idxB !== -1) return 1;
-    return a.localeCompare(b);
-  });
-}
+// The date picker's limits until a dataset's range is known
+const DEFAULT_MIN_DATE = dayjs("1990-01-01");
+const DEFAULT_MAX_DATE = dayjs().subtract(1, "day");
 
 
 export interface HCDPLoadProps {
@@ -69,7 +44,8 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const clearRasterOverlay = useHCDPStore((s) => s.clearRasterOverlay);
   const hasRasterOverlay = useHCDPStore((s) => s.overlaysByMap[mapId] != null);
   const catalog = HCDP_CATALOG;
-  const [dataType, setDataType] = useState(() => getCustomSortedDataTypes(HCDP_CATALOG)[0]);
+  const dataTypes = useMemo(() => hcdpDataTypes(), []);
+  const [dataType, setDataType] = useState(dataTypes[0]);
   const [period, setPeriod] = useState("");
   const [aggregation, setAggregation] = useState("");
   const [production, setProduction] = useState("");
@@ -78,17 +54,6 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   const [fetching, setFetching] = useState(false);
   const [fetchMessage, setFetchMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null,
-  );
-
-  // Dynamic Live Bounds State
-  const [apiMinDate, setApiMinDate] = useState<Dayjs>(dayjs("1990-01-01"));
-  const [apiMaxDate, setApiMaxDate] = useState<Dayjs>(dayjs().subtract(1, "day"));
-  const [loadingDates, setLoadingDates] = useState(false);
-
-  const dataTypes = useMemo(
-    //() => uniqueSorted((catalog ?? []).map((r) => r.data_type)),
-    () => getCustomSortedDataTypes(catalog),
-    [catalog],
   );
 
   const periodOptions = useMemo(() => {
@@ -140,101 +105,38 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   }, [cand, aggOpts, prodOpts, tsOpts, aggregation, production, timescale]);
 
 
-  //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  const dateRange = useHcdpDateRange(activeRow);
+  const loadingDates = dateRange.isFetching;
 
-  // LIVE DATE FETCHING: Triggers whenever a dropdown value changes
+  // HCDP's live dates, or the catalog's if they can't be fetched
+  const liveRange = useMemo(
+    () =>
+      dateRange.data && {
+        min: dayjs(dateRange.data[0]).startOf("day"),
+        max: dayjs(dateRange.data[1]).startOf("day"),
+      },
+    [dateRange.data],
+  );
+  const fallbackRange = useMemo(
+    () => (dateRange.isError && activeRow ? hcdpFallbackRange(activeRow) : undefined),
+    [dateRange.isError, activeRow],
+  );
+  const apiMinDate = liveRange?.min ?? fallbackRange?.min ?? DEFAULT_MIN_DATE;
+  const apiMaxDate = liveRange?.max ?? fallbackRange?.max ?? DEFAULT_MAX_DATE;
+
+  // Live dates select the latest day; catalog dates keep the chosen day if it's still in range
   useEffect(() => {
-    if (!dataType || !period) return;
+    if (liveRange) setSelectedDate(liveRange.max);
+  }, [liveRange]);
 
-    if (aggOpts.length > 0 && !aggOpts.includes(aggregation)) return;
-    if (prodOpts.length > 0 && !prodOpts.includes(production)) return;
-    if (tsOpts.length > 0 && !tsOpts.includes(timescale)) return;
-    
-    let cancelled = false;
-    
-    const fetchLiveDateRange = async () => {
-      setLoadingDates(true);
-      
-      try {
-        const params = new URLSearchParams();
-        params.append("datatype", dataType);
-        params.append("period", period);
-
-        
-        if (aggregation && aggOpts.includes(aggregation)) {
-          params.append("aggregation", aggregation);
-        }
-        
-        // EXCEPTION: Always force 'production=new' for Rainfall Day silently
-        if (dataType === "rainfall" && period === "day") {
-          params.append("production", "new");
-        } else if (production && prodOpts.includes(production)) {
-          params.append("production", production);
-        }
-
-        if (timescale && tsOpts.includes(timescale)) {
-          params.append("timescale", timescale);
-        }
-
-        const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
-        const url = `${appBase}api/datasets/date/range?${params.toString()}`;
-
-        //const url = `https://api.hcdp.ikewai.org/datasets/date/range?${params.toString()}`;
-        const res = await fetch(url);
-        
-        if (!res.ok) throw new Error("API Date Fetch Failed");
-        
-        const data = await res.json();
-        const dateRange = Array.isArray(data) ? data : Object.values(data);
-        
-        if (!cancelled && dateRange.length >= 2) {
-          let min = dayjs(dateRange[0]).startOf("day");
-          const max = dayjs(dateRange[1]).startOf("day");
-
-          // Keep SPI scale adjusting applied strictly to the 1990 base limit
-          // if (dataType === "spi") {
-          //   const scale = activeRow?.scale ?? (timescale ? parseInt(timescale.replace("timescale", ""), 10) : 1);
-          //   const baseDate = dayjs("1990-01-01").startOf("day");
-          //   min = scale === 12 ? baseDate.add(12, "month") : baseDate.add(scale - 1, "month");
-          // }
-
-          setApiMinDate(min);
-          setApiMaxDate(max);
-          
-          setSelectedDate(max);
-        }
-      } catch (err) {
-        console.warn("Falling back to local catalog dates:", err);
-        // Fallback safely to JSON catalog bounds if internet fails
-        if (!cancelled && activeRow?.date_range) {
-          let fallbackMin = dayjs(activeRow.date_range[0]).startOf("day");
-          let fallbackMax = dayjs(activeRow.date_range[1]).startOf("day");
-          
-          if (dataType === "spi") {
-            const scale = activeRow?.scale ?? (timescale ? parseInt(timescale.replace("timescale", ""), 10) : 1);
-            fallbackMin = scale === 12 ? dayjs("1990-01-01").add(12, "month") : dayjs("1990-01-01").add(scale - 1, "month");
-          }
-
-          setApiMinDate(fallbackMin);
-          setApiMaxDate(fallbackMax);
-          
-          setSelectedDate((prev) => {
-            if (!prev || !prev.isValid() || prev.isAfter(fallbackMax, "day")) return fallbackMax;
-            if (prev.isBefore(fallbackMin, "day")) return fallbackMin;
-            return prev;
-          });
-        }
-      } finally {
-        if (!cancelled) setLoadingDates(false);
-      }
-    };
-
-    fetchLiveDateRange();
-
-    return () => { cancelled = true; };
-  }, [dataType, period, aggregation, production, timescale, activeRow, aggOpts, prodOpts, tsOpts]);
-
-  //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  useEffect(() => {
+    if (!fallbackRange) return;
+    setSelectedDate((prev) => {
+      if (!prev || !prev.isValid() || prev.isAfter(fallbackRange.max, "day")) return fallbackRange.max;
+      if (prev.isBefore(fallbackRange.min, "day")) return fallbackRange.min;
+      return prev;
+    });
+  }, [fallbackRange]);
 
   const handleClearRaster = () => {
     clearRasterOverlay(mapId);
@@ -251,27 +153,24 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
     setFetching(true);
 
     try {
-      const arrayBuffer = await fetchHcdpRaster(activeRow, selectedDate);
+      // Asking for the range makes the server fetch the file, so a date with no file fails here
+      const source = hcdpSource(activeRow, selectedDate);
+      await queryClient.fetchQuery(rasterInfoQuery(source));
 
       useRasterLayersStore.getState().setVisibleLayerIds(mapId, []);
 
-      const dateStr = selectedDate.format("YYYY-MM-DD");
       setRasterOverlay(mapId, {
-        arrayBuffer: cloneArrayBuffer(arrayBuffer),
-        row: activeRow,
-        date: dateStr,
-        title: buildHcdpOverlayTitle(activeRow, dateStr),
-        loadId: Date.now(),
+        source,
+        title: buildHcdpOverlayTitle(activeRow, selectedDate.format("YYYY-MM-DD")),
       });
-      setFetchMessage({
-        type: "success",
-        text: `Raster added to map (${(arrayBuffer.byteLength / 1024).toFixed(0)} KB).`,
-      });
+      setFetchMessage({ type: "success", text: "Raster added to map." });
     } catch (e) {
-
       setFetchMessage({
         type: "error",
-        text: e instanceof Error ? e.message : "Raster request failed.",
+        text:
+          e instanceof ApiError && e.status === 404
+            ? "The requested file could not be found"
+            : "Raster request failed.",
       });
     } finally {
       setFetching(false);

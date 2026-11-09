@@ -12,7 +12,7 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
 
 const EMPTY_RASTER_LAYER_SET = new Set<string>();
-import { hcdpStatsForFeature } from "../../../utils/zonalStats.ts";
+import { getAreaStats } from "../../../api/client";
 import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
 import { useActiveRaster, useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
@@ -217,14 +217,17 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
 
       if (hcdpOverlay) {
         const overlay = useHCDPStore.getState().overlaysByMap[mapId];
-        if (overlay?.arrayBuffer) {
+        if (overlay) {
           hcdpField = { label: overlay.title, loading: true };
           render();
 
-          const stats = await hcdpStatsForFeature(overlay.arrayBuffer, overlay.loadId, feature);
+          const stats = await getAreaStats(overlay.source, feature).catch(() => ({
+            mean: null,
+            max: null,
+          }));
 
           const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
-          if (currentOverlay?.arrayBuffer) {
+          if (currentOverlay) {
             hcdpField = { label: currentOverlay.title, meanValue: stats.mean, maxValue: stats.max };
             render();
           }

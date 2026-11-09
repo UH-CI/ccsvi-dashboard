@@ -1,8 +1,6 @@
-import type { Dayjs } from "dayjs";
-
-export function cloneArrayBuffer(buffer: ArrayBuffer): ArrayBuffer {
-  return buffer.slice(0);
-}
+import dayjs, { type Dayjs } from "dayjs";
+import type { RasterSource } from "../types";
+import hcdpCatalog from "../../config/hcdp_catalog.json";
 
 /** One row from `config/hcdp_catalog.json`. */
 export interface HcdpRangeRow {
@@ -12,7 +10,66 @@ export interface HcdpRangeRow {
   aggregation?: string;
   production?: string;
   timescale?: string;
-  scale?: number;
+  // SPI's timescale in months, as text ("12")
+  scale?: string;
+}
+
+// The HCDP datasets the map offers
+export const HCDP_CATALOG = hcdpCatalog as HcdpRangeRow[];
+
+// Data types in this order first, then any others alphabetically
+const DATA_TYPE_ORDER = [
+  "rainfall",
+  "temperature",
+  "relative_humidity",
+  "ndvi_modis",
+  "spi",
+  "ignition_probability",
+];
+
+// The distinct non-empty values, sorted
+export function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
+  return [...new Set(values.filter((v): v is T => v != null && v !== ""))].sort() as T[];
+}
+
+// The catalog's data types in menu order
+export function hcdpDataTypes(): string[] {
+  const unique = [...new Set(HCDP_CATALOG.map((r) => r.data_type))];
+  return unique.sort((a, b) => {
+    const idxA = DATA_TYPE_ORDER.indexOf(a);
+    const idxB = DATA_TYPE_ORDER.indexOf(b);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+// One catalog row as the server's HCDP choice: datatype, period and the row's extra choices
+export function hcdpSelection(row: HcdpRangeRow): Record<string, string> {
+  return {
+    datatype: row.data_type,
+    period: row.period,
+    ...(row.aggregation ? { aggregation: row.aggregation } : {}),
+    ...(row.production ? { production: row.production } : {}),
+    ...(row.timescale ? { timescale: row.timescale } : {}),
+  };
+}
+
+// One row and date as a raster the tile server draws; a month is asked for by its first day
+export function hcdpSource(row: HcdpRangeRow, date: Dayjs): RasterSource {
+  const day = row.period === "month" ? date.startOf("month") : date;
+  return { kind: "hcdp", params: { ...hcdpSelection(row), date: day.format("YYYY-MM-DD") } };
+}
+
+// The catalog's dates, used when HCDP's live range can't be fetched. An SPI timescale of n months
+// starts n - 1 months after 1990-01-01 (12 months starts a full year later).
+export function hcdpFallbackRange(row: HcdpRangeRow): { min: Dayjs; max: Dayjs } {
+  const max = dayjs(row.date_range[1]).startOf("day");
+  if (row.data_type !== "spi") return { min: dayjs(row.date_range[0]).startOf("day"), max };
+  const scale = Number(row.scale ?? row.timescale?.replace("timescale", "") ?? 1);
+  const start = dayjs("1990-01-01");
+  return { min: scale === 12 ? start.add(12, "month") : start.add(scale - 1, "month"), max };
 }
 
 export function formatHcdpDataTypeLabel(dataType: string): string {
@@ -28,49 +85,3 @@ export function formatTimescaleLabel(timescale: string): string {
   return `${Number(m[1])}-month`;
 }
 
-
-export function hcdpRasterSearchParams(
-  row: HcdpRangeRow,
-  date: Dayjs,
-  extent: string = "statewide",
-): URLSearchParams {
-  const dateStr =
-    row.period === "month" ? date.startOf("month").format("YYYY-MM-DD") : date.format("YYYY-MM-DD");
-  const p = new URLSearchParams({
-    datatype: row.data_type,
-    period: row.period,
-    date: dateStr,
-    extent,
-  });
-  if (row.aggregation) p.set("aggregation", row.aggregation);
-  if (row.production) p.set("production", row.production);
-  if (row.timescale) p.set("timescale", row.timescale);
-  return p;
-}
-
-/**
- * Same-origin URL for the HCDP raster proxy (`/api/raster` → api.hcdp.ikewai.org).
- *
- * The Bearer token must never be set here. In local dev, Vite's dev server adds
- * `Authorization: Bearer …` from the project-root `.env` (`vite.config.ts`); on the VM, nginx adds it.
- * Never put the token under `public/`, which is published with the site.
- */
-export function hcdpRasterUrl(row: HcdpRangeRow, date: Dayjs, extent?: string): string {
-  const appBase = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
-  const qs = hcdpRasterSearchParams(row, date, extent).toString();
-  return `${appBase}api/raster?${qs}`;
-}
-
-/** Fetch GeoTIFF bytes through the proxy (token stays server-side). */
-export async function fetchHcdpRaster(
-  row: HcdpRangeRow,
-  date: Dayjs,
-  extent?: string,
-): Promise<ArrayBuffer> {
-  const res = await fetch(hcdpRasterUrl(row, date, extent));
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(errText || `HCDP raster request failed (${res.status})`);
-  }
-  return res.arrayBuffer();
-}

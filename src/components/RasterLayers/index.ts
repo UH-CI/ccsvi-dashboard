@@ -1,1 +1,1 @@
-export { RasterLayerRenderer } from "./RasterLayerRenderer";
+export { CogRasterLayer, HcdpRasterLayer } from "./RasterLayerRenderer";

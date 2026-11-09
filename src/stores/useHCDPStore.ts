@@ -1,13 +1,12 @@
 import { create } from "zustand";
+import type { RasterSource } from "../types";
 import type { HcdpRangeRow } from "../utils/hcdpRaster";
 import { formatHcdpDataTypeLabel } from "../utils/hcdpRaster";
 
+// The HCDP raster loaded on one map: what the tile server draws, and its legend and popup title
 export interface HcdpRasterOverlay {
-  arrayBuffer: ArrayBuffer;
-  row: HcdpRangeRow;
-  date: string;
+  source: RasterSource;
   title: string;
-  loadId: number;
 }
 
 interface HCDPState {

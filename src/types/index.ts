@@ -142,6 +142,12 @@ export interface RasterInfo {
   bounds: [[number, number], [number, number]];
 }
 
+// A raster the tile server draws: a layer from config/layers/rasters.json by id, or one HCDP
+// selection and date (datatype, period, date, and aggregation / production / timescale if it has one)
+export type RasterSource =
+  | { kind: "cog"; id: string }
+  | { kind: "hcdp"; params: Record<string, string> };
+
 export interface BlockGroupResult {
   geoid: string;
   name: string | null;

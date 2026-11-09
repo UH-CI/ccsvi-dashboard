@@ -68,9 +68,6 @@ export const RASTER_COLORMAPS: { name: string; label: string }[] = [
   { name: "magma", label: "Magma" },
 ];
 
-// HCDP rasters, lowest value first
-export const HCDP_PALETTE = ["#313695", "#74add1", "#fee090", "#f46d43", "#a50026"];
-
 // An area with no value for the metric
 export const NO_VALUE_COLOR = "#cccccc";
 

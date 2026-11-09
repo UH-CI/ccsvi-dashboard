@@ -6,28 +6,35 @@ import {
   rasterConfig,
   useRasterLayersStore,
 } from "../../stores/useRasterLayersStore";
-import { apiUrl, getRasterValue } from "../../api/client";
+import { useHcdpOverlay } from "../../stores/useHCDPStore";
+import { apiUrl, getRasterValue, rasterPath } from "../../api/client";
 import { useRasterInfo } from "../../api/queries/rasterInfo";
+import type { RasterSource } from "../../types";
+
+// HCDP layers: 75% layer opacity over colours at 85%
+const HCDP_OPACITY = 0.75 * 0.85;
 
 interface RasterLayerRendererProps {
-  parentId: string;
-  layerId?: string;
-  mapId: string;
-  interactionMode?: "raster" | "social";
+  // Kept the same object while the raster is unchanged, so the tiles aren't rebuilt on every render
+  source: RasterSource;
+  name: string;
+  units?: string;
+  colormap: string;
+  opacity: number;
+  // Whether a click on the raster shows the value there
+  clickable: boolean;
 }
 
+// One raster drawn from the tile server. It's mounted only while the raster is shown on the map.
 export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
-  parentId,
-  layerId,
-  mapId,
-  interactionMode = "raster",
+  source,
+  name,
+  units,
+  colormap,
+  opacity,
+  clickable,
 }) => {
   const map = useMap();
-
-  const activeLayerId = useMemo(
-    () => (layerId ? `${parentId}.${layerId}` : parentId),
-    [parentId, layerId],
-  );
 
   // References for layer management
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -35,30 +42,12 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   const popupRef = useRef<L.Popup | null>(null);
   const tilesLoadedRef = useRef(false);
 
-  // Get config from store
-  const rasterLayerConfigs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const cogInfo = useRasterInfo(source);
 
-  const layerConfig = useMemo(
-    () => rasterConfig(activeLayerId, rasterLayerConfigs),
-    [activeLayerId, rasterLayerConfigs],
-  );
-
-  const isVisible = useRasterLayersStore(
-    (s) => s.visibleLayerIdsByMap[mapId]?.has(activeLayerId) ?? false,
-  );
-  const cogInfo = useRasterInfo(activeLayerId);
-  const colormapOverrides = useRasterLayersStore((s) => s.colormapOverrides[mapId]);
-
-  // Every raster with a file has a colour bar; the layer check requires one
-  const colormapName = rasterColormap(activeLayerId, rasterLayerConfigs, colormapOverrides)!;
-  const opacity = layerConfig?.opacity ?? 0.7;
-  const units = layerConfig?.units;
-  const layerName = layerConfig?.name ?? activeLayerId;
-
-  // Build and add the tile layer when the layer becomes visible and COG info is available.
+  // Build and add the tile layer once the raster's range and extent are known.
   // Re-runs when colormap or opacity changes, replacing the tile layer with an updated URL.
   useEffect(() => {
-    if (!isVisible || !cogInfo) return;
+    if (!cogInfo) return;
 
     if (!map.getPane("rasterPane")) {
       const pane = map.createPane("rasterPane");
@@ -66,9 +55,8 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
     }
 
     const tileUrl =
-      apiUrl("/api/tiles/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.webp") +
-      `?raster_id=${encodeURIComponent(activeLayerId)}` +
-      `&colormap_name=${encodeURIComponent(colormapName)}` +
+      apiUrl(rasterPath(source, "tiles/WebMercatorQuad/{z}/{x}/{y}.webp")) +
+      `&colormap_name=${encodeURIComponent(colormap)}` +
       `&rescale=${cogInfo.min},${cogInfo.max}`;
 
     // bounds constrains Leaflet to only request tiles within the COG extent,
@@ -90,16 +78,12 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       tileLayerRef.current = null;
       tilesLoadedRef.current = false;
     };
-  }, [isVisible, cogInfo, colormapName, opacity, map, activeLayerId]);
+  }, [cogInfo, colormap, opacity, map, source]);
 
   // Capture-phase click handler: samples the rendered tile's alpha channel to check for raster
   // data before stopping propagation, mirroring the hazard layer's synchronous hit-test pattern.
   useEffect(() => {
-    if (!isVisible || !cogInfo) return;
-
-    if (interactionMode === "social") {
-      return;
-    }
+    if (!cogInfo || !clickable) return;
 
     // Sample the rendered tile's alpha at the click pixel — transparent means no-data.
     const hasRasterAtPoint = (latlng: L.LatLng): boolean => {
@@ -151,10 +135,10 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
 
       const { lng, lat } = latlng;
       try {
-        const data = await getRasterValue(activeLayerId, lng, lat);
+        const data = await getRasterValue(source, lng, lat);
         const value = data.values?.[0] ?? null;
         if (value === null) return;
-        const content = `<b>${layerName}</b><br/>${value.toFixed(2)}${units ? " " + units : ""}`;
+        const content = `<b>${name}</b><br/>${value.toFixed(2)}${units ? " " + units : ""}`;
         popupRef.current = L.popup().setLatLng(latlng).setContent(content).openOn(map);
       } catch {
         // silently ignore out-of-bounds or failed requests
@@ -168,20 +152,9 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
       map.getContainer().removeEventListener("click", handler);
       clickHandlerRef.current = null;
     };
-  }, [interactionMode, isVisible, cogInfo, map, activeLayerId, layerName, units]);
+  }, [clickable, cogInfo, map, source, name, units]);
 
-  // Remove tile layer and popup when visibility is toggled off
-  useEffect(() => {
-    if (isVisible) return;
-    tileLayerRef.current?.remove();
-    tileLayerRef.current = null;
-    if (popupRef.current) {
-      popupRef.current.close();
-      popupRef.current = null;
-    }
-  }, [isVisible]);
-
-  // Cleanup tile layer, popup, and click handler on unmount
+  // Cleanup tile layer, popup, and click handler on unmount (the raster was turned off)
   useEffect(() => {
     return () => {
       tileLayerRef.current?.remove();
@@ -195,4 +168,46 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   }, [map]);
 
   return null;
+};
+
+interface CogRasterLayerProps {
+  id: string;
+  mapId: string;
+  clickable: boolean;
+}
+
+// One layer from config/layers/rasters.json, in this map's colour bar for it
+export const CogRasterLayer: React.FC<CogRasterLayerProps> = ({ id, mapId, clickable }) => {
+  const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
+  const overrides = useRasterLayersStore((s) => s.colormapOverrides[mapId]);
+  const source = useMemo<RasterSource>(() => ({ kind: "cog", id }), [id]);
+  const config = rasterConfig(id, configs);
+
+  return (
+    <RasterLayerRenderer
+      source={source}
+      name={config?.name ?? id}
+      units={config?.units}
+      // Every raster with a file has a colour bar; the layer check requires one
+      colormap={rasterColormap(id, configs, overrides)!}
+      opacity={config?.opacity ?? 0.7}
+      clickable={clickable}
+    />
+  );
+};
+
+// The HCDP raster loaded on this map, if any
+export const HcdpRasterLayer: React.FC<{ mapId: string }> = ({ mapId }) => {
+  const overlay = useHcdpOverlay(mapId);
+  if (!overlay) return null;
+
+  return (
+    <RasterLayerRenderer
+      source={overlay.source}
+      name={overlay.title}
+      colormap="hcdp"
+      opacity={HCDP_OPACITY}
+      clickable={false}
+    />
+  );
 };

@@ -1,4 +1,4 @@
-import { FeatureCollection, Point } from "geojson";
+import { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import {
   AreaCriteria,
   BlockGroupResult,
@@ -6,6 +6,7 @@ import {
   GeographiesData,
   MetricValue,
   RasterInfo,
+  RasterSource,
 } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -27,13 +28,20 @@ export class ApiError extends Error {
   }
 }
 
-const fetchJson = async <T>(url: string): Promise<T> => {
-  const res = await fetch(url);
+const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
+  const res = await fetch(url, init);
   if (!res.ok) throw new ApiError(res.status, url);
   return res.json() as Promise<T>;
 };
 
 const get = <T>(path: string): Promise<T> => fetchJson<T>(apiUrl(path));
+
+const post = <T>(path: string, body: unknown): Promise<T> =>
+  fetchJson<T>(apiUrl(path), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 // A file shipped with the app, e.g. "data/2020_Census_Block_Groups_Stripped.geojson"
 export const getAppFile = <T>(path: string): Promise<T> =>
@@ -105,12 +113,23 @@ export const getFilterResults = (
 export const getPointFile = (filePath: string) =>
   fetchJson<FeatureCollection<Point>>(dataUrl(`point_data/${filePath}`));
 
+// The query that names a raster to its tile server, e.g. "raster_id=Landslide"
+export const rasterQuery = (source: RasterSource): string =>
+  source.kind === "cog"
+    ? `raster_id=${encodeURIComponent(source.id)}`
+    : Object.entries(source.params)
+        .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+        .join("&");
+
+// A path on a raster's tile server, e.g. rasterPath(source, "statistics")
+export const rasterPath = (source: RasterSource, path: string): string =>
+  `/api/tiles/${source.kind}/${path}?${rasterQuery(source)}`;
+
 // A raster's value range (for colouring its tiles) and its extent (so the map asks only for tiles inside it)
-export const getRasterInfo = async (rasterId: string): Promise<RasterInfo> => {
-  const id = encodeURIComponent(rasterId);
+export const getRasterInfo = async (source: RasterSource): Promise<RasterInfo> => {
   const [statistics, info] = await Promise.all([
-    get<{ b1: { min: number; max: number } }>(`/api/tiles/cog/statistics?raster_id=${id}`),
-    get<{ bounds: [number, number, number, number] }>(`/api/tiles/cog/info?raster_id=${id}`),
+    get<{ b1: { min: number; max: number } }>(rasterPath(source, "statistics")),
+    get<{ bounds: [number, number, number, number] }>(rasterPath(source, "info")),
   ]);
   const [west, south, east, north] = info.bounds;
   return {
@@ -124,10 +143,23 @@ export const getRasterInfo = async (rasterId: string): Promise<RasterInfo> => {
 };
 
 // A raster's value at one spot
-export const getRasterValue = (rasterId: string, lng: number, lat: number) =>
-  get<{ values?: (number | null)[] }>(
-    `/api/tiles/cog/point/${lng},${lat}?raster_id=${encodeURIComponent(rasterId)}`,
-  );
+export const getRasterValue = (source: RasterSource, lng: number, lat: number) =>
+  get<{ values?: (number | null)[] }>(rasterPath(source, `point/${lng},${lat}`));
+
+// A raster's mean and max over one area's shape; null where the area has no data
+export const getAreaStats = async (
+  source: RasterSource,
+  area: Feature<Geometry>,
+): Promise<{ mean: number | null; max: number | null }> => {
+  type AreaStatistics = { statistics: { b1: { mean: number | null; max: number | null } } };
+  const answer = await post<{ properties: AreaStatistics }>(rasterPath(source, "statistics"), area);
+  const { mean, max } = answer.properties.statistics.b1;
+  return { mean, max };
+};
+
+// The first and last date HCDP has for one dataset (datatype, period and its extra choices)
+export const getHcdpDateRange = (selection: Record<string, string>) =>
+  get<[string, string]>(`/api/v1/hcdp/date-range?${new URLSearchParams(selection)}`);
 
 // A colour bar's colours, bottom to top, as [red, green, blue, alpha]
 export const getColormap = (name: string) =>
