@@ -1,18 +1,20 @@
-"""Browser caching for API answers that change when the database is rebuilt."""
+"""Browser caching for the API's data answers."""
 
 import hashlib
-import json
-from typing import Any
 
 from fastapi import Request, Response
+from starlette.middleware.base import RequestResponseEndpoint
 
 
-# The answer as JSON, tagged with a fingerprint of its contents. The browser keeps it but asks
+# Tags each successful data answer with a fingerprint of its contents. The browser keeps it but asks
 # before each reuse; when its copy has the same fingerprint it gets a short "unchanged" reply (304)
-def revalidated_json(request: Request, data: Any) -> Response:
-    body = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()
+async def revalidate_data_answers(request: Request, call_next: RequestResponseEndpoint) -> Response:
+    response = await call_next(request)
+    if request.method != "GET" or not request.url.path.startswith("/api/v1/") or response.status_code != 200:
+        return response
+    body = b"".join([chunk async for chunk in response.body_iterator])
     etag = f'"{hashlib.sha256(body).hexdigest()[:32]}"'
-    headers = {"Cache-Control": "no-cache", "ETag": etag}
+    headers = {"cache-control": "no-cache", "etag": etag}
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers=headers)
-    return Response(body, media_type="application/json", headers=headers)
+    return Response(body, headers={**response.headers, **headers})

@@ -67,7 +67,7 @@ async def get_points(
         list[str] | None,
         Query(description="Raster layer IDs, e.g. 'stormSurge.inundation_category1'. Only points with a value in any of them"),
     ] = None,
-) -> PointFeatureCollection:
+) -> Any:
     conditions: list[str] = []
     params = QueryParams()
 
@@ -103,31 +103,27 @@ async def get_points(
 
     rows = await conn.fetch(sql, *params)
 
-    features = []
-    for row in rows:
-        props = json.loads(row["props"]) if row["props"] else {}
-        # Drop these so they can't collide with the same keyword args below
-        props.pop("id", None)
-        props.pop("layer_id", None)
-        props.pop("name", None)
-        features.append(
-            PointFeature(
-                type="Feature",
-                geometry=json.loads(row["geometry"]),
-                properties=PointProperties(
-                    id=row["id"],
-                    layer_id=row["layer_id"],
-                    name=row["name"],
-                    **props,
-                ),
-            )
-        )
-
-    return PointFeatureCollection(type="FeatureCollection", features=features)
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": json.loads(row["geometry"]),
+                "properties": {
+                    **(json.loads(row["props"]) if row["props"] else {}),
+                    "id": row["id"],
+                    "layer_id": row["layer_id"],
+                    "name": row["name"],
+                },
+            }
+            for row in rows
+        ],
+    }
 
 
 @router.get(
     "/api/v1/points/by-geoid",
+    response_model=dict[str, list[str]],
     summary="List one layer's point names, grouped by the block group / Hawaiian Homeland area they're in",
     description=(
         "Returns every geoid for the chosen area type paired with the names of that "

@@ -1,10 +1,9 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
 from ..area_query import QueryParams, area_conditions, hazard_branches, metric_columns
-from ..caching import revalidated_json
 from ..db import ConnDep
 from ..request_params import read_minimums
 
@@ -53,11 +52,11 @@ _HHM_ID_COLS = ["geoid", "name", "population"]
     response_model=dict[str, GeographyRecord],
     summary="Location metadata for all block groups / homelands",
 )
-async def get_geographies(conn: ConnDep, request: Request) -> Response:
+async def get_geographies(conn: ConnDep) -> Any:
     rows = await conn.fetch(
         "SELECT geoid, name, block_group, census_tract, county FROM geographies"
     )
-    return revalidated_json(request, {
+    return {
         row["geoid"]: {
             "name": row["name"],
             "block_group": row["block_group"],
@@ -65,7 +64,7 @@ async def get_geographies(conn: ConnDep, request: Request) -> Response:
             "county": row["county"],
         }
         for row in rows
-    })
+    }
 
 
 @router.get(

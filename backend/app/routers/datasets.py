@@ -1,24 +1,13 @@
 import json
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ..caching import revalidated_json
 from ..db import ConnDep
 from ..reliability import reliability
 
 router = APIRouter()
-
-# Order for the metric dropdowns. 
-CATALOG_METRIC_ORDER = "column_order"
-
-_CATALOG_ORDER_SQL = {
-# Preserves metric order as they appear in dataset as columns
-    "column_order": "m.display_order NULLS LAST, m.name",
-# Alphabetic order
-    "name": "m.name",
-}
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
@@ -65,13 +54,13 @@ class MetricValueRecord(BaseModel):
     response_model=dict[str, DatasetRecord],
     summary="Dataset catalog with metric metadata",
 )
-async def get_datasets(conn: ConnDep, request: Request) -> Response:
+async def get_datasets(conn: ConnDep) -> Any:
     rows = await conn.fetch(
-        f"""
+        """
         SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata, m.name, m.mv_column
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
-        ORDER BY d.id, {_CATALOG_ORDER_SQL[CATALOG_METRIC_ORDER]}
+        ORDER BY d.id, m.display_order NULLS LAST, m.name
         """
     )
     result: dict[str, Any] = {}
@@ -87,16 +76,15 @@ async def get_datasets(conn: ConnDep, request: Request) -> Response:
                 "columnThresholds": {},
             }
         result[dataset_id]["columnThresholds"][row["name"]] = {"mvColumn": row["mv_column"]}
-    return revalidated_json(request, result)
+    return result
 
 
 @router.get(
     "/api/v1/datasets/{dataset_id}/table",
+    response_model=list[dict[str, str | int | float | None]],
     summary="Full dataset rows for TableViewer",
 )
-async def get_dataset_table(
-    dataset_id: str, conn: ConnDep, request: Request
-) -> Response:
+async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
 
     metric_rows = await conn.fetch(
         """
@@ -182,7 +170,7 @@ async def get_dataset_table(
                 row["absolute"], row["margin_of_error"], row["cv"], True
             )["label"]
 
-    return revalidated_json(request, list(geoid_data.values()))
+    return list(geoid_data.values())
 
 
 @router.get(
@@ -190,7 +178,7 @@ async def get_dataset_table(
     response_model=dict[str, MetricValueRecord],
     summary="Per-geoid values for one dataset + metric combination",
 )
-async def get_metric_values(conn: ConnDep, request: Request, dataset: str, metric: str) -> Response:
+async def get_metric_values(conn: ConnDep, dataset: str, metric: str) -> Any:
     rows = await conn.fetch(
         """
         SELECT mv.geoid,
@@ -213,7 +201,7 @@ async def get_metric_values(conn: ConnDep, request: Request, dataset: str, metri
             status_code=404,
             detail=f"No data for dataset='{dataset}' metric='{metric}'",
         )
-    return revalidated_json(request, {
+    return {
         row["geoid"]: {
             "absolute": row["absolute"],
             "margin_of_error": row["margin_of_error"],
@@ -223,4 +211,4 @@ async def get_metric_values(conn: ConnDep, request: Request, dataset: str, metri
             "moe_derived": row["moe_derived"],
         }
         for row in rows
-    })
+    }
