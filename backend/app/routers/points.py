@@ -79,8 +79,8 @@ async def get_points(
         view, area_where = area_conditions(homelands, read_minimums(request, metric_cols), params)
         areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
         conditions.append(
-            "EXISTS (SELECT 1 FROM geographies g WHERE ST_Covers(g.geom, points.geom)"
-            f" AND g.geoid IN ({areas}))"
+            "EXISTS (SELECT 1 FROM point_geographies pg WHERE pg.point_id = points.id"
+            f" AND pg.geoid IN ({areas}))"
         )
 
     if hazard:
@@ -141,7 +141,8 @@ async def get_points_by_geoid(
         """
         SELECT g.geoid, p.name
         FROM geographies g
-        LEFT JOIN points p ON ST_Covers(g.geom, p.geom) AND p.layer_id = $1
+        LEFT JOIN point_geographies pg ON pg.geoid = g.geoid
+        LEFT JOIN points p ON p.id = pg.point_id AND p.layer_id = $1
         WHERE g.type = $2
         """,
         layer_id,

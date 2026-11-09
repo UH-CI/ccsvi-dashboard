@@ -1,4 +1,4 @@
--- Spatial tables: points, hazards, hazard overlaps and raster values at points.
+-- Spatial tables: points, hazards, hazard overlaps, each point's areas and raster values at points.
 -- Area shapes live on geographies (01_schema.sql).
 -- The wide metric views are in 03_metric_views.sql, generated from db/mv_columns.py.
 
@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS points (
 );
 CREATE INDEX IF NOT EXISTS idx_points_geom     ON points USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_points_layer_id ON points (layer_id);
-CREATE INDEX IF NOT EXISTS idx_points_name_fts ON points USING GIN (to_tsvector('english', coalesce(name, '')));
 
 
 -- ── Hazards ──────────────────────────────────────────────────────────────────
@@ -52,6 +51,18 @@ CREATE TABLE IF NOT EXISTS point_hazards (
     sub_id    TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_point_hazards_hazard ON point_hazards (hazard_id, sub_id);
+
+-- ── Each point's areas ───────────────────────────────────────────────────────
+-- Which block group / Homeland area each point is in, worked out once per rebuild by
+-- ingest/load_point_areas.py. A point can be in both kinds of area, or in none.
+-- No foreign key to points, for the same reason as point_hazards.
+
+CREATE TABLE IF NOT EXISTS point_geographies (
+    point_id INTEGER NOT NULL,
+    geoid    TEXT    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_point_geographies_point ON point_geographies (point_id);
+CREATE INDEX IF NOT EXISTS idx_point_geographies_geoid ON point_geographies (geoid);
 
 -- ── Raster values at points ──────────────────────────────────────────────────
 -- The value of each raster at each point. A point with no real value there (no-data

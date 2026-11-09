@@ -1,7 +1,7 @@
 """Counts each point layer's points per block group / Hawaiian Homeland area
 and loads it as a metric.
 
-Run after ingest.load_postgis, before the view refresh, in both rebuild.sh
+Run after ingest.load_point_areas, before the view refresh, in both rebuild.sh
 modes:
     python -m ingest.load_point_counts
 
@@ -39,7 +39,8 @@ async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
             """
             SELECT g.geoid, count(p.id) AS cnt
             FROM geographies g
-            LEFT JOIN points p ON ST_Covers(g.geom, p.geom) AND p.layer_id = $1
+            LEFT JOIN point_geographies pg ON pg.geoid = g.geoid
+            LEFT JOIN points p ON p.id = pg.point_id AND p.layer_id = $1
             WHERE g.type = $2
             GROUP BY g.geoid
             """,
