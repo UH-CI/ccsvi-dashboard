@@ -8,9 +8,10 @@ import settings
 _pool: asyncpg.Pool | None = None
 
 
+# Any query running longer than 5 seconds is cancelled
 async def create_pool() -> None:
     global _pool
-    _pool = await asyncpg.create_pool(settings.database_url())
+    _pool = await asyncpg.create_pool(settings.database_url(), server_settings={"statement_timeout": "5000"})
 
 
 async def close_pool() -> None:

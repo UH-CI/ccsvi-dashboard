@@ -43,6 +43,21 @@ class DatasetRecord(BaseModel):
     columnThresholds: dict[str, MetricConfig]
 
 
+class ReliabilityRecord(BaseModel):
+    label: str
+    tier: str
+
+
+class MetricValueRecord(BaseModel):
+    absolute: float | None
+    margin_of_error: float | None
+    percentage: float | None
+
+    moe_percentage_points: float | None
+    reliability: ReliabilityRecord
+    moe_derived: bool | None
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get(
@@ -168,3 +183,44 @@ async def get_dataset_table(
             )["label"]
 
     return revalidated_json(request, list(geoid_data.values()))
+
+
+@router.get(
+    "/api/v1/metric-values",
+    response_model=dict[str, MetricValueRecord],
+    summary="Per-geoid values for one dataset + metric combination",
+)
+async def get_metric_values(conn: ConnDep, request: Request, dataset: str, metric: str) -> Response:
+    rows = await conn.fetch(
+        """
+        SELECT mv.geoid,
+               mv.absolute::float,
+               mv.margin_of_error::float,
+               mv.percentage::float,
+               mv.moe_percentage_points::float,
+               mv.cv::float,
+               mv.moe_derived,
+               m.has_moe
+        FROM metric_values mv
+        JOIN metrics m ON m.id = mv.metric_id
+        WHERE m.dataset_id = $1 AND m.name = $2
+        """,
+        dataset,
+        metric,
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No data for dataset='{dataset}' metric='{metric}'",
+        )
+    return revalidated_json(request, {
+        row["geoid"]: {
+            "absolute": row["absolute"],
+            "margin_of_error": row["margin_of_error"],
+            "percentage": row["percentage"],
+            "moe_percentage_points": row["moe_percentage_points"],
+            "reliability": reliability(row["absolute"], row["margin_of_error"], row["cv"], row["has_moe"]),
+            "moe_derived": row["moe_derived"],
+        }
+        for row in rows
+    })

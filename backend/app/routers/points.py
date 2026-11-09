@@ -1,11 +1,12 @@
 import json
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
+from ..area_query import QueryParams, area_conditions, hazard_branches, metric_columns
 from ..db import ConnDep
-from .block_groups import area_conditions, hazard_branches, metric_columns
+from ..request_params import read_minimums
 
 router = APIRouter()
 
@@ -36,11 +37,10 @@ class PointFeatureCollection(BaseModel):
 @router.get(
     "/api/v1/points",
     response_model=PointFeatureCollection,
-    summary="Query point features by layer and/or full-text search",
+    summary="Query point features by layer, area, hazard and raster",
     description=(
         "Returns a GeoJSON FeatureCollection from the points table. "
-        "Supports filtering by layer_id (exact match), full-text search on "
-        "feature name via plainto_tsquery (uses the idx_points_name_fts GIN index), "
+        "Supports filtering by layer_id (exact match), "
         "homelands with min_<col>=<value> params (only points inside a block group, or a Hawaiian "
         "Homeland when true, at or above every minimum, the same areas /api/v1/block-groups and "
         "/api/v1/hawaiian-homelands return), and hazard (only points inside one of these "
@@ -54,37 +54,29 @@ class PointFeatureCollection(BaseModel):
 async def get_points(
     conn: ConnDep,
     request: Request,
-    layer_id: str | None = Query(None, description="Layer ID, e.g. 'hospitals'"),
-    q: str | None = Query(None, description="Full-text search term on feature name"),
-    homelands: bool | None = Query(
-        None,
-        description="Only points inside a block group (false) or Hawaiian Homeland (true) at or above every min_<col>",
-    ),
-    hazard: list[str] | None = Query(
-        None, description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"
-    ),
-    raster: list[str] | None = Query(
-        None,
-        description="Raster layer IDs, e.g. 'stormSurge.inundation_category1'. Only points with a value in any of them",
-    ),
+    layer_id: Annotated[str | None, Query(description="Layer ID, e.g. 'hospitals'")] = None,
+    homelands: Annotated[
+        bool | None,
+        Query(description="Only points inside a block group (false) or Hawaiian Homeland (true) at or above every min_<col>"),
+    ] = None,
+    hazard: Annotated[
+        list[str] | None,
+        Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"),
+    ] = None,
+    raster: Annotated[
+        list[str] | None,
+        Query(description="Raster layer IDs, e.g. 'stormSurge.inundation_category1'. Only points with a value in any of them"),
+    ] = None,
 ) -> PointFeatureCollection:
     conditions: list[str] = []
-    params: list[Any] = []
+    params = QueryParams()
 
     if layer_id:
-        params.append(layer_id)
-        conditions.append(f"points.layer_id = ${len(params)}")
-
-    if q:
-        params.append(q)
-        conditions.append(
-            f"to_tsvector('english', coalesce(points.name, '')) "
-            f"@@ plainto_tsquery('english', ${len(params)})"
-        )
+        conditions.append(f"points.layer_id = {params.bind(layer_id)}")
 
     if homelands is not None:
         metric_cols = await metric_columns(conn, homelands)
-        view, area_where = area_conditions(request, homelands, metric_cols, None, None, params)
+        view, area_where = area_conditions(homelands, read_minimums(request, metric_cols), params)
         areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
         conditions.append(
             "EXISTS (SELECT 1 FROM geographies g WHERE ST_Covers(g.geom, points.geom)"
@@ -98,10 +90,9 @@ async def get_points(
         )
 
     if raster:
-        params.append(raster)
         conditions.append(
             "EXISTS (SELECT 1 FROM point_raster_values r WHERE r.point_id = points.id"
-            f" AND r.raster_id = ANY(${len(params)}))"
+            f" AND r.raster_id = ANY({params.bind(raster)}))"
         )
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
@@ -146,8 +137,8 @@ async def get_points(
 )
 async def get_points_by_geoid(
     conn: ConnDep,
-    layer_id: str = Query(..., description="Layer ID, e.g. 'hospitals'"),
-    homelands: bool = Query(False, description="Hawaiian Homelands instead of block groups"),
+    layer_id: Annotated[str, Query(description="Layer ID, e.g. 'hospitals'")],
+    homelands: Annotated[bool, Query(description="Hawaiian Homelands instead of block groups")] = False,
 ) -> dict[str, list[str]]:
     geo_type = "hawaiian_homeland" if homelands else "block_group"
     rows = await conn.fetch(
