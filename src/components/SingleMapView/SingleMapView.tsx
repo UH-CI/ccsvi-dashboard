@@ -203,12 +203,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     }, [blockGroupData, effectiveDataset]);
 
     const shouldShowHawaiianHomelands = useMemo(() => {
-      return activeDatasetObject?.hawaiianHomelands || false;
+      return activeDatasetObject?.hawaiian_homelands || false;
     }, [activeDatasetObject]);
 
     const activeDatasetMetricObject = useMemo(() => {
       if (!activeDatasetObject || !effectiveMetric) return null;
-      return activeDatasetObject.columnThresholds[effectiveMetric];
+      return activeDatasetObject.metrics[effectiveMetric];
     }, [activeDatasetObject, effectiveMetric]);
 
     const cachedMetric1 = useMetricValues(effectiveDataset, effectiveMetric);
@@ -322,7 +322,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               {effectiveDataset && effectiveMetric ? (
                 <>
                   <span className={styles["dataset-name"]}>
-                    {activeDatasetObject?.metricLabel || effectiveDataset.replace(/_/g, " ")}
+                    {activeDatasetObject?.label || effectiveDataset.replace(/_/g, " ")}
                   </span>
                   <span className={styles["metric-name"]}>
                     {sviLabel(effectiveDataset, effectiveMetric)}

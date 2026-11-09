@@ -13,7 +13,7 @@ from titiler.core.factory import TilerFactory
 from ..colormaps import ColorMapParams
 from ..hcdp_data import available_dates, cleaned_file
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/hcdp")
 
 # The datasets the map offers; each row is one data type and period, with its extra choices
 CATALOG: list[dict] = json.loads(
@@ -71,7 +71,7 @@ hcdp = TilerFactory(
 
 
 @router.get(
-    "/api/v1/hcdp/date-range",
+    "/date-range",
     response_model=list[str],
     summary="First and last date HCDP has for one dataset",
 )

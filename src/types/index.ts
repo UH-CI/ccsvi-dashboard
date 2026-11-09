@@ -148,10 +148,9 @@ export type RasterSource =
   | { kind: "cog"; id: string }
   | { kind: "hcdp"; params: Record<string, string> };
 
-export interface BlockGroupResult {
+export interface AreaResult {
   geoid: string;
   name: string | null;
-  county: string | null;
   population: number | null;
   [key: string]: number | string | null;
 }
@@ -163,18 +162,18 @@ export interface AreaCriteria {
 }
 
 export interface CatalogMetric {
-  mvColumn: string | null;
+  mv_column: string | null;
 }
 
 export interface CatalogDataset {
-  metricLabel: string;
-  hawaiianHomelands: boolean;
+  label: string;
+  hawaiian_homelands: boolean;
   // 'census', 'point' or 'raster'
-  sourceType: string;
+  source_type: string;
   // The map layer a point or raster dataset belongs to; null for census
-  layerId: string | null;
+  layer_id: string | null;
   metadata?: DatasetMetadata | null;
-  columnThresholds: Record<string, CatalogMetric>;
+  metrics: Record<string, CatalogMetric>;
 }
 
 export type DatasetCatalog = Record<string, CatalogDataset>;

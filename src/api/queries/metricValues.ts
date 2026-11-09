@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getMetricValues } from "../client";
 import { queryClient } from "../queryClient";
 
-// One metric's value for every area, from /api/v1/metric-values
+// One metric's value for every area, from /api/v1/datasets/{id}/values
 export const metricValuesQuery = (dataset: string, metric: string) =>
   queryOptions({
     queryKey: ["metric-values", dataset, metric],

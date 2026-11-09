@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 import { useFilterStore, type AppliedFilter } from "../../stores/useFilterStore";
-import type { AreaCriteria, BlockGroupResult } from "../../types";
+import type { AreaCriteria, AreaResult } from "../../types";
 import { getFilterResults } from "../client";
 import { queryClient } from "../queryClient";
 
@@ -16,7 +16,7 @@ export const filterQuery = (
     queryFn: () => getFilterResults(homelands, hazards, minimums),
   });
 
-const geoidsOf = (results: BlockGroupResult[]) => new Set(results.map((result) => result.geoid));
+const geoidsOf = (results: AreaResult[]) => new Set(results.map((result) => result.geoid));
 
 // The areas of the last Filter press. While a new filter loads, the previous one's areas stay on screen.
 export function useAreaFilter() {

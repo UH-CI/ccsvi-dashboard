@@ -1,6 +1,14 @@
 """Query-building shared by the routes that look up areas and points."""
 
-from typing import Any
+from typing import Any, Literal
+
+# The kinds of area, as geographies.type holds them
+AreaType = Literal["block_group", "hawaiian_homeland"]
+
+AREA_VIEWS: dict[AreaType, str] = {
+    "block_group": "block_group_metrics",
+    "hawaiian_homeland": "hawaiian_homeland_metrics",
+}
 
 
 # The values of one query. bind() stores a value and gives the $n that refers to it
@@ -11,12 +19,12 @@ class QueryParams(list):
 
 
 # View metric columns from metrics.mv_column — also the allowlist for min_<col> params
-async def metric_columns(conn, homelands: bool) -> list[str]:
+async def metric_columns(conn, area_type: AreaType) -> list[str]:
     rows = await conn.fetch(
         "SELECT m.mv_column FROM metrics m JOIN datasets d ON d.id = m.dataset_id"
         " WHERE m.mv_column IS NOT NULL AND d.hawaiian_homelands = $1"
         " ORDER BY m.dataset_id, m.display_order",
-        homelands,
+        area_type == "hawaiian_homeland",
     )
     return [r["mv_column"] for r in rows]
 
@@ -35,9 +43,8 @@ def hazard_branches(entries: list[str], params: QueryParams) -> str:
 
 # The view of block groups or Homelands, and the WHERE conditions keeping the areas at or above each minimum
 def area_conditions(
-    homelands: bool,
+    area_type: AreaType,
     minimums: list[tuple[str, float]],
     params: QueryParams,
 ) -> tuple[str, list[str]]:
-    view = "hawaiian_homeland_metrics" if homelands else "block_group_metrics"
-    return view, [f"v.{col} >= {params.bind(minimum)}" for col, minimum in minimums]
+    return AREA_VIEWS[area_type], [f"v.{col} >= {params.bind(minimum)}" for col, minimum in minimums]

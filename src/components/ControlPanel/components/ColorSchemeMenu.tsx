@@ -47,7 +47,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
 
         {config.dataset &&
           dataset?.[config.dataset] &&
-          !dataset[config.dataset].hawaiianHomelands && (
+          !dataset[config.dataset].hawaiian_homelands && (
             <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">
                 Census Blocks
@@ -65,7 +65,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
             </Box>
           )}
 
-        {config.dataset && dataset?.[config.dataset]?.hawaiianHomelands && (
+        {config.dataset && dataset?.[config.dataset]?.hawaiian_homelands && (
           <>
             <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">

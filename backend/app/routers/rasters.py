@@ -8,7 +8,7 @@ from pipeline.check_layers import rasters
 
 from ..colormaps import COLORMAPS, ColorMapParams
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/rasters")
 
 # Raster id -> COG file name, from config/layers/rasters.json. A sub-layer's id is "<parent id>.<sub id>"
 RASTER_CATALOG: dict[str, str] = {raster.id: raster.file for raster in rasters()}
@@ -35,7 +35,7 @@ def raster_path_dep(
 cog = TilerFactory(path_dependency=raster_path_dep, colormap_dependency=ColorMapParams)
 
 
-@router.get("/api/v1/rasters/colormap", response_model=list[list[int]])
+@router.get("/colormap", response_model=list[list[int]])
 async def get_colormap(name: str) -> list[list[int]]:
     """Return the 256 RGBA entries for a named TiTiler/rio-tiler colormap."""
     try:

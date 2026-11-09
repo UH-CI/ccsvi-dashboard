@@ -4,11 +4,11 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from ..area_query import QueryParams, area_conditions, hazard_branches, metric_columns
+from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, metric_columns
 from ..db import ConnDep
 from ..request_params import read_minimums
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/points")
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
@@ -35,15 +35,15 @@ class PointFeatureCollection(BaseModel):
 # ── Endpoint ──────────────────────────────────────────────────────────────────
 
 @router.get(
-    "/api/v1/points",
+    "",
     response_model=PointFeatureCollection,
     summary="Query point features by layer, area, hazard and raster",
     description=(
         "Returns a GeoJSON FeatureCollection from the points table. "
         "Supports filtering by layer_id (exact match), "
-        "homelands with min_<col>=<value> params (only points inside a block group, or a Hawaiian "
-        "Homeland when true, at or above every minimum, the same areas /api/v1/block-groups and "
-        "/api/v1/hawaiian-homelands return), and hazard (only points inside one of these "
+        "area_type with min_<col>=<value> params (only points inside an area of that type "
+        "at or above every minimum, the same areas /api/v1/geographies/filter "
+        "returns), and hazard (only points inside one of these "
         "hazard layers, looked up in the pre-computed point_hazards table; repeatable, matches "
         "any of them), and raster (only points with a real value in one of these rasters, looked "
         "up in the pre-computed point_raster_values table; repeatable, matches any of them; "
@@ -55,9 +55,9 @@ async def get_points(
     conn: ConnDep,
     request: Request,
     layer_id: Annotated[str | None, Query(description="Layer ID, e.g. 'hospitals'")] = None,
-    homelands: Annotated[
-        bool | None,
-        Query(description="Only points inside a block group (false) or Hawaiian Homeland (true) at or above every min_<col>"),
+    area_type: Annotated[
+        AreaType | None,
+        Query(description="Only points inside an area of this type at or above every min_<col>"),
     ] = None,
     hazard: Annotated[
         list[str] | None,
@@ -74,9 +74,9 @@ async def get_points(
     if layer_id:
         conditions.append(f"points.layer_id = {params.bind(layer_id)}")
 
-    if homelands is not None:
-        metric_cols = await metric_columns(conn, homelands)
-        view, area_where = area_conditions(homelands, read_minimums(request, metric_cols), params)
+    if area_type:
+        metric_cols = await metric_columns(conn, area_type)
+        view, area_where = area_conditions(area_type, read_minimums(request, metric_cols), params)
         areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
         conditions.append(
             "EXISTS (SELECT 1 FROM point_geographies pg WHERE pg.point_id = points.id"
@@ -122,7 +122,7 @@ async def get_points(
 
 
 @router.get(
-    "/api/v1/points/by-geoid",
+    "/by-geoid",
     response_model=dict[str, list[str]],
     summary="List one layer's point names, grouped by the block group / Hawaiian Homeland area they're in",
     description=(
@@ -134,9 +134,8 @@ async def get_points(
 async def get_points_by_geoid(
     conn: ConnDep,
     layer_id: Annotated[str, Query(description="Layer ID, e.g. 'hospitals'")],
-    homelands: Annotated[bool, Query(description="Hawaiian Homelands instead of block groups")] = False,
+    area_type: Annotated[AreaType, Query(description="'block_group' or 'hawaiian_homeland'")],
 ) -> dict[str, list[str]]:
-    geo_type = "hawaiian_homeland" if homelands else "block_group"
     rows = await conn.fetch(
         """
         SELECT g.geoid, p.name
@@ -146,7 +145,7 @@ async def get_points_by_geoid(
         WHERE g.type = $2
         """,
         layer_id,
-        geo_type,
+        area_type,
     )
 
     result: dict[str, list[str]] = {}

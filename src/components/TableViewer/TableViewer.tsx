@@ -93,7 +93,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
   // Point counts: one extra column per currently-visible point layer
   const primaryMapId = useMapStore((state) => state.primaryMapId);
-  const isHomelands = Boolean(datasetInfo?.hawaiianHomelands);
+  const isHomelands = Boolean(datasetInfo?.hawaiian_homelands);
   const { layers: pointLayers, getCount } = usePointCountsForTable(isHomelands, primaryMapId);
   const { getNames } = usePointNamesForTable(isHomelands, primaryMapId);
 
@@ -209,7 +209,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
   const datasetLabel = useMemo(() => {
     if (!datasetInfo || !activeDataset) return activeDataset;
-    return datasetInfo.metricLabel || activeDataset.replace(/_/g, " ").toUpperCase();
+    return datasetInfo.label || activeDataset.replace(/_/g, " ").toUpperCase();
   }, [activeDataset, datasetInfo]);
 
   const metadata = datasetInfo?.metadata;

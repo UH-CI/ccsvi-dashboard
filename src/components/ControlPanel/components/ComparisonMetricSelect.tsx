@@ -48,12 +48,12 @@ export const ComparisonMetricSelect: React.FC<ComparisonMetricSelectProps> = ({
         {datasets &&
           (() => {
             const primaryIsHawaiian = dataset
-              ? (datasets[dataset]?.hawaiianHomelands ?? false)
+              ? (datasets[dataset]?.hawaiian_homelands ?? false)
               : false;
             return SVI_CATEGORIES.map((category) => {
               const indicators = category.indicators.filter(
                 (ind) =>
-                  (datasets[ind.dataset]?.hawaiianHomelands ?? false) === primaryIsHawaiian &&
+                  (datasets[ind.dataset]?.hawaiian_homelands ?? false) === primaryIsHawaiian &&
                   !(ind.dataset === dataset && ind.metric === metric),
               );
               if (indicators.length === 0) return [];

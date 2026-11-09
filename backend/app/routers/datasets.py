@@ -7,13 +7,13 @@ from pydantic import BaseModel
 from ..db import ConnDep
 from ..reliability import reliability
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/datasets")
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
 
 class MetricConfig(BaseModel):
-    mvColumn: str | None = None
+    mv_column: str | None = None
 
 
 class DatasetMetadata(BaseModel):
@@ -24,12 +24,12 @@ class DatasetMetadata(BaseModel):
 
 
 class DatasetRecord(BaseModel):
-    metricLabel: str
-    hawaiianHomelands: bool
-    sourceType: str
-    layerId: str | None
+    label: str
+    hawaiian_homelands: bool
+    source_type: str
+    layer_id: str | None
     metadata: DatasetMetadata | None
-    columnThresholds: dict[str, MetricConfig]
+    metrics: dict[str, MetricConfig]
 
 
 class ReliabilityRecord(BaseModel):
@@ -50,7 +50,7 @@ class MetricValueRecord(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get(
-    "/api/v1/datasets",
+    "",
     response_model=dict[str, DatasetRecord],
     summary="Dataset catalog with metric metadata",
 )
@@ -68,19 +68,19 @@ async def get_datasets(conn: ConnDep) -> Any:
         dataset_id = row["id"]
         if dataset_id not in result:
             result[dataset_id] = {
-                "metricLabel": row["label"],
-                "hawaiianHomelands": row["hawaiian_homelands"],
-                "sourceType": row["source_type"],
-                "layerId": row["layer_id"],
+                "label": row["label"],
+                "hawaiian_homelands": row["hawaiian_homelands"],
+                "source_type": row["source_type"],
+                "layer_id": row["layer_id"],
                 "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
-                "columnThresholds": {},
+                "metrics": {},
             }
-        result[dataset_id]["columnThresholds"][row["name"]] = {"mvColumn": row["mv_column"]}
+        result[dataset_id]["metrics"][row["name"]] = {"mv_column": row["mv_column"]}
     return result
 
 
 @router.get(
-    "/api/v1/datasets/{dataset_id}/table",
+    "/{dataset_id}/table",
     response_model=list[dict[str, str | int | float | None]],
     summary="Full dataset rows for TableViewer",
 )
@@ -174,11 +174,11 @@ async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
 
 
 @router.get(
-    "/api/v1/metric-values",
+    "/{dataset_id}/values",
     response_model=dict[str, MetricValueRecord],
-    summary="Per-geoid values for one dataset + metric combination",
+    summary="Per-geoid values for one metric of a dataset",
 )
-async def get_metric_values(conn: ConnDep, dataset: str, metric: str) -> Any:
+async def get_metric_values(conn: ConnDep, dataset_id: str, metric: str) -> Any:
     rows = await conn.fetch(
         """
         SELECT mv.geoid,
@@ -193,13 +193,13 @@ async def get_metric_values(conn: ConnDep, dataset: str, metric: str) -> Any:
         JOIN metrics m ON m.id = mv.metric_id
         WHERE m.dataset_id = $1 AND m.name = $2
         """,
-        dataset,
+        dataset_id,
         metric,
     )
     if not rows:
         raise HTTPException(
             status_code=404,
-            detail=f"No data for dataset='{dataset}' metric='{metric}'",
+            detail=f"No data for dataset='{dataset_id}' metric='{metric}'",
         )
     return {
         row["geoid"]: {

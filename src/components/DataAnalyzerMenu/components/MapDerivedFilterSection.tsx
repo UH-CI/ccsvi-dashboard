@@ -47,13 +47,13 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   // Primary metric threshold, from the Explore section's "Filter range" slider
   const mvColumn =
     dataset && metric && datasetCatalog
-      ? (datasetCatalog[dataset]?.columnThresholds[metric]?.mvColumn ?? null)
+      ? (datasetCatalog[dataset]?.metrics[metric]?.mv_column ?? null)
       : null;
 
   // Comparison metric threshold, from the Explore section's "Comparison Metric Filter Range" slider
   const mvColumn2 =
     dataset2 && metric2 && datasetCatalog
-      ? (datasetCatalog[dataset2]?.columnThresholds[metric2]?.mvColumn ?? null)
+      ? (datasetCatalog[dataset2]?.metrics[metric2]?.mv_column ?? null)
       : null;
 
   // With no SVI on the map, neighborhoods aren't part of the analysis:
@@ -78,7 +78,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     }
 
     const homelands =
-      dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiianHomelands ?? false) : false;
+      dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiian_homelands ?? false) : false;
     const minimums: Record<string, number> = {};
     if (hasMetricThreshold && mvColumn) minimums[mvColumn] = filterRange![0];
     if (hasMetricThreshold2 && mvColumn2) minimums[mvColumn2] = filterRange2![0];
@@ -86,7 +86,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     // At least one point of each visible point layer, on its count's filter column
     for (const id of pointLayerIds) {
       const pointDataset = layerDatasetId(datasetCatalog, id, homelands)!;
-      minimums[datasetCatalog![pointDataset].columnThresholds.Count.mvColumn!] = 1;
+      minimums[datasetCatalog![pointDataset].metrics.Count.mv_column!] = 1;
     }
 
     applyFilter({ kind: "areas", homelands, hazards: hazardIds, rasters: rasterIds, minimums });

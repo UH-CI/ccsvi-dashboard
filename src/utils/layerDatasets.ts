@@ -7,7 +7,7 @@ export function layerDatasetId(
   homelands: boolean,
 ): string | null {
   const match = Object.entries(catalog ?? {}).find(
-    ([, dataset]) => dataset.layerId === layerId && dataset.hawaiianHomelands === homelands,
+    ([, dataset]) => dataset.layer_id === layerId && dataset.hawaiian_homelands === homelands,
   );
   return match?.[0] ?? null;
 }

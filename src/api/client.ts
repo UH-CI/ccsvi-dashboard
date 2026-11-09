@@ -1,7 +1,7 @@
 import { Feature, FeatureCollection, Geometry, Point } from "geojson";
 import {
   AreaCriteria,
-  BlockGroupResult,
+  AreaResult,
   DatasetCatalog,
   GeographiesData,
   MetricValue,
@@ -56,20 +56,23 @@ export const getDatasetTable = (dataset: string) =>
 
 export const getMetricValues = (dataset: string, metric: string) =>
   get<Record<string, MetricValue>>(
-    `/api/v1/metric-values?dataset=${encodeURIComponent(dataset)}&metric=${encodeURIComponent(metric)}`,
+    `/api/v1/datasets/${encodeURIComponent(dataset)}/values?metric=${encodeURIComponent(metric)}`,
   );
+
+// The server's name for the kind of area
+const areaType = (homelands: boolean) => (homelands ? "hawaiian_homeland" : "block_group");
 
 // One layer's point names, grouped by the geoid of the area they're in
 export const getPointsByGeoid = (layerId: string, homelands: boolean) =>
   get<Record<string, string[]>>(
-    `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&homelands=${homelands}`,
+    `/api/v1/points/by-geoid?layer_id=${encodeURIComponent(layerId)}&area_type=${areaType(homelands)}`,
   );
 
 // The block groups and Homelands touching each hazard; hazards with no data loaded are left out
 export const getHazardAreas = (hazards: string[]) => {
   const params = new URLSearchParams();
   for (const hazard of hazards) params.append("hazard", hazard);
-  return get<Record<string, string[]>>(`/api/v1/hazard-areas?${params}`);
+  return get<Record<string, string[]>>(`/api/v1/geographies/by-hazard?${params}`);
 };
 
 // Adds each column's minimum as min_<column>, as both the filter and the points requests send them
@@ -87,7 +90,7 @@ export const getFilteredPoints = (
 ) => {
   const params = new URLSearchParams({ layer_id: layerId });
   if (areas) {
-    params.set("homelands", String(areas.homelands));
+    params.set("area_type", areaType(areas.homelands));
     setMinimums(params, areas.minimums);
   }
   for (const hazard of hazards) params.append("hazard", hazard);
@@ -101,12 +104,10 @@ export const getFilterResults = (
   hazards: string[],
   minimums: Record<string, number>,
 ) => {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ area_type: areaType(homelands) });
   for (const hazard of hazards) params.append("hazard", hazard);
   setMinimums(params, minimums);
-  return get<BlockGroupResult[]>(
-    `/api/v1/${homelands ? "hawaiian-homelands" : "block-groups"}?${params}`,
-  );
+  return get<AreaResult[]>(`/api/v1/geographies/filter?${params}`);
 };
 
 // One point layer's file from the data folder
