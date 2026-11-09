@@ -5,11 +5,10 @@ Run after ingest.load_postgis, before the view refresh, in both rebuild.sh
 modes:
     python -m ingest.load_raster_means
 
-Matches the map popup (src/utils/zonalStats.ts): the mean skips the file's
-no-data pixels, and an area with no data pixels gets no row, so it shows empty
-rather than 0. A pixel counts when its centre is inside the area. The rasters
-are NAD83 and the shapes WGS84; neither this nor the popup reprojects (under a
-metre in Hawaii).
+The mean skips the file's no-data pixels, and an area with no data pixels gets
+no row, so it shows empty rather than 0. A pixel counts when its centre is
+inside the area. The rasters are NAD83 and the shapes WGS84; this doesn't
+reproject (under a metre in Hawaii).
 """
 
 import asyncio

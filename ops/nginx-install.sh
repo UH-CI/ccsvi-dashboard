@@ -16,8 +16,6 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
-HCDP_API_TOKEN=${HCDP_API_TOKEN:?Need HCDP_API_TOKEN set in $REPO_ROOT/.env}
-HCDP_EMAIL=${HCDP_EMAIL:?Need HCDP_EMAIL set in $REPO_ROOT/.env}
 CARTO_API_KEY=${CARTO_API_KEY:-${VITE_CARTO_API_KEY:-}}
 CARTO_API_KEY=${CARTO_API_KEY:?Need CARTO_API_KEY set in $REPO_ROOT/.env}
 
@@ -65,6 +63,8 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
     }
 
+    # Hostname held in a variable so nginx looks it up per-request, not at
+    # startup. A failed startup lookup stops nginx from starting.
     location /api/tiles/carto/ {
         resolver 127.0.0.53 valid=300s ipv6=off;
         set \$carto_host "basemaps.cartocdn.com";
@@ -86,19 +86,6 @@ server {
         gzip_types application/json application/geo+json text/csv;
 
         add_header Cache-Control "public, max-age=86400";
-    }
-
-    # Hostname held in a variable so nginx looks it up per-request, not at
-    # startup. A failed startup lookup stops nginx from starting.
-    location /ccsvi-dashboard/api/ {
-        resolver 127.0.0.53 valid=300s ipv6=off;
-        set \$hcdp_host "api.hcdp.ikewai.org";
-        rewrite ^/ccsvi-dashboard/api/(.*)\$ /\$1 break;
-        proxy_pass https://\$hcdp_host;
-        proxy_set_header Host api.hcdp.ikewai.org;
-        proxy_set_header Authorization "Bearer ${HCDP_API_TOKEN}";
-        proxy_set_header User-Agent "${HCDP_EMAIL}";
-        proxy_ssl_server_name on;
     }
 
     location /ccsvi-dashboard/ {

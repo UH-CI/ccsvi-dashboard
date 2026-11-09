@@ -10,11 +10,10 @@ const gitBranch =
   process.env.GITHUB_REF_NAME ?? execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
 const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
 
-// The site's routes: the API (raster and basemap tiles included), HCDP, and the map files.
-// nginx on the VM adds the HCDP and basemap keys
+// The site's routes: the API (raster and basemap tiles included) and the map files.
+// The VM adds the HCDP and basemap keys
 const proxy = {
   "/api": DATA_SERVER,
-  "/ccsvi-dashboard/api": DATA_SERVER,
   "/data": DATA_SERVER,
 };
 
