@@ -12,7 +12,7 @@ import { useVisiblePointCounts } from "../../api/queries/pointCounts";
 import { useSavedRaster } from "../../api/queries/savedRaster";
 import { useHazardOverlapsForTable } from "../../api/queries/hazardAreas";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
-import { useDataGridColumns, type TableGridRow } from "./hooks/useDataGridColumns";
+import { useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
 import styles from "./TableViewer.module.scss";
 
@@ -83,13 +83,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
     if (fullscreen !== undefined) setFullHeight(fullscreen);
   }, [fullscreen, setFullHeight]);
 
-  const { columns, rows, geoidColIndex } = useDataGridColumns(tableData);
-
-  const geoidFromRow = (row: TableGridRow): string => {
-    if (geoidColIndex < 0) return "";
-    const raw = String(row[`col_${geoidColIndex}`] ?? "");
-    return raw.replace(/^\d+US/i, "");
-  };
+  const { columns, rows } = useDataGridColumns(tableData);
 
   // Point counts: one extra column per currently-visible point layer
   const primaryMapId = useMapStore((state) => state.primaryMapId);
@@ -174,7 +168,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   const mergedRows = useMemo(() => {
     if (pointLayers.length === 0 && !savedRaster && hazards.length === 0) return rows;
     return rows.map((row) => {
-      const geoid = geoidFromRow(row);
+      const geoid = row.id;
       const extra: Record<string, number | string> = {};
       for (const layer of pointLayers) {
         extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid) ?? "";
@@ -189,19 +183,17 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       }
       return { ...row, ...extra };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, pointLayers, getCount, getNames, savedRaster, hazards, touches, geoidColIndex]);
+  }, [rows, pointLayers, getCount, getNames, savedRaster, hazards, touches]);
 
-  const displayRows = useMemo(() => {
-    if (!filteredGeoidsSet || geoidColIndex < 0) return mergedRows;
-    return mergedRows.filter((row) => filteredGeoidsSet.has(geoidFromRow(row)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mergedRows, filteredGeoidsSet, geoidColIndex]);
+  const displayRows = useMemo(
+    () =>
+      filteredGeoidsSet ? mergedRows.filter((row) => filteredGeoidsSet.has(row.id)) : mergedRows,
+    [mergedRows, filteredGeoidsSet],
+  );
 
   const { activeRowId, handleRowClick } = useActiveRowSync({
     apiRef,
     rows: displayRows,
-    geoidColIndex,
     paginationModel,
     setPaginationModel,
     setCollapsed,
@@ -284,14 +276,14 @@ export const TableViewer: React.FC<TableViewerProps> = ({
                 getRowClassName={(params) =>
                   params.row.id === activeRowId ? styles["active-row"] : ""
                 }
-                onRowClick={geoidColIndex >= 0 && !!primaryMapMetric ? handleRowClick : undefined}
+                onRowClick={primaryMapMetric ? handleRowClick : undefined}
                 hideFooter={false}
                 disableColumnMenu={false}
                 disableColumnFilter={false}
                 disableColumnSelector={false}
                 className={[
                   styles["data-grid"],
-                  geoidColIndex >= 0 && !!primaryMapMetric ? styles["data-grid--clickable"] : null,
+                  primaryMapMetric ? styles["data-grid--clickable"] : null,
                 ]
                   .filter(Boolean)
                   .join(" ")}

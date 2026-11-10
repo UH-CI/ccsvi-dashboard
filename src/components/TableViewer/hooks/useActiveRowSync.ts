@@ -11,23 +11,21 @@ interface PaginationModel {
 interface UseActiveRowSyncArgs {
   apiRef: ReturnType<typeof useGridApiRef>;
   rows: TableGridRow[];
-  geoidColIndex: number;
   paginationModel: PaginationModel;
   setPaginationModel: React.Dispatch<React.SetStateAction<PaginationModel>>;
   setCollapsed: (collapsed: boolean) => void;
 }
 
 interface ActiveRowSync {
-  activeRowId: number | null;
-  handleRowClick: (params: { row: Record<string, unknown> }) => void;
+  activeRowId: string | null;
+  handleRowClick: (params: { row: TableGridRow }) => void;
 }
 
-// Two-way link between the map's active feature and the table:
+// Two-way link between the map's active feature and the table, by geoid (each row's id):
 // map selection → highlight + paginate + scroll the matching row; row click → map selection.
 export const useActiveRowSync = ({
   apiRef,
   rows,
-  geoidColIndex,
   paginationModel,
   setPaginationModel,
   setCollapsed,
@@ -36,33 +34,22 @@ export const useActiveRowSync = ({
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
   const { activeFeature } = usePrimaryMapState();
 
-  const [activeRowId, setActiveRowId] = useState<number | null>(null);
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const pendingScrollRowRef = useRef<number | null>(null);
 
   // Sync map active feature → table row highlight + scroll
   useEffect(() => {
     const activeGeoid = activeFeature?.geoid;
-    if (!activeGeoid || geoidColIndex < 0 || rows.length === 0) {
+    if (!activeGeoid || !rows.some((row) => row.id === activeGeoid)) {
       setActiveRowId(null);
       return;
     }
 
-    const rowIndex = rows.findIndex((row) => {
-      const rawGeoid = String(row[`col_${geoidColIndex}`] ?? "");
-      return rawGeoid.replace(/^\d+US/i, "") === activeGeoid;
-    });
-
-    if (rowIndex < 0) {
-      setActiveRowId(null);
-      return;
-    }
-
-    const rowId = rows[rowIndex].id as number;
-    setActiveRowId(rowId);
+    setActiveRowId(activeGeoid);
     setCollapsed(false);
 
     // Position in the grid's own sorted + filtered order; a row hidden by a column filter isn't jumped to
-    const visibleIndex = gridExpandedSortedRowIdsSelector(apiRef).indexOf(rowId);
+    const visibleIndex = gridExpandedSortedRowIdsSelector(apiRef).indexOf(activeGeoid);
     if (visibleIndex < 0) return;
 
     const targetPage = Math.floor(visibleIndex / paginationModel.pageSize);
@@ -77,7 +64,7 @@ export const useActiveRowSync = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFeature?.geoid, geoidColIndex, rows, setCollapsed]);
+  }, [activeFeature?.geoid, rows, setCollapsed]);
 
   // After a page change triggered by the above effect, execute the pending scroll
   useEffect(() => {
@@ -91,15 +78,9 @@ export const useActiveRowSync = ({
   }, [paginationModel.page]);
 
   const handleRowClick = useCallback(
-    (params: { row: Record<string, unknown> }) => {
-      if (geoidColIndex < 0) return;
-      const rawGeoid = String(params.row[`col_${geoidColIndex}`] ?? "");
-      // Census full GEOIDs look like "1500000US150010201001" or "2500000US5003".
-      // Strip the numeric prefix + "US" to get the bare geoid used by the map layers.
-      const geoid = rawGeoid.replace(/^\d+US/i, "");
-      if (geoid) updateMapActiveFeature(primaryMapId, { geoid });
-    },
-    [geoidColIndex, primaryMapId, updateMapActiveFeature],
+    (params: { row: TableGridRow }) =>
+      updateMapActiveFeature(primaryMapId, { geoid: params.row.id }),
+    [primaryMapId, updateMapActiveFeature],
   );
 
   return { activeRowId, handleRowClick };

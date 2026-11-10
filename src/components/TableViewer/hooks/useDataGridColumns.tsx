@@ -70,33 +70,31 @@ export const tableColumn = ({
 const roundForTable = (value: number) =>
   Number.isInteger(value) ? value : Math.round(value * 10) / 10;
 
-export type TableGridRow = Record<string, string | number | null>;
+// One grid row: its id is the area's geoid, then one cell per column
+export type TableGridRow = { id: string } & Record<string, string | number | null>;
 
 interface DataGridColumns {
   columns: GridColDef[];
   rows: TableGridRow[];
-  geoidColIndex: number;
 }
 
-// The grid's columns and rows from the server's table, plus where the Geography column is
+// The grid's columns and rows from the server's table
 export const useDataGridColumns = (table: DatasetTable | null): DataGridColumns => {
   return useMemo(() => {
-    if (!table) return { columns: [], rows: [], geoidColIndex: -1 };
+    if (!table) return { columns: [], rows: [] };
 
     const columns = table.columns.map((column, index) =>
       tableColumn({ field: `col_${index}`, heading: column.heading, type: column.type }),
     );
 
-    const rows = table.rows.map((row, index) => {
-      const gridRow: TableGridRow = { id: index };
+    const rows = table.rows.map((row) => {
+      const gridRow: TableGridRow = { id: row.geoid };
       row.cells.forEach((cell, cellIndex) => {
         gridRow[`col_${cellIndex}`] = typeof cell === "number" ? roundForTable(cell) : cell;
       });
       return gridRow;
     });
 
-    const geoidColIndex = table.columns.findIndex((column) => column.heading === "Geography");
-
-    return { columns, rows, geoidColIndex };
+    return { columns, rows };
   }, [table]);
 };
