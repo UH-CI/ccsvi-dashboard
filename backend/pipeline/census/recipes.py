@@ -21,7 +21,7 @@ def _total_universe_col(df: pd.DataFrame):
     for col in df.columns:
         if len(col) == 2 and col[1] == "Estimate!!Total:":
             return col
-    return None
+    raise ValueError("Raw table has no 'Estimate!!Total:' column, which its recipe needs as the percentage denominator")
 
 
 # Finds the "Margin of Error!!..." column matching an estimate column, if the source has one
@@ -114,9 +114,7 @@ def _add_total(target_df: pd.DataFrame, df: pd.DataFrame, name: str, estimate_co
 # percentage denominator
 def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    total_col = _total_universe_col(df)
-    if total_col is not None:
-        _carry_with_moe(cleaned_df, df, total_col)
+    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
 
     cols_before_1970, cols_before_1990 = [], []
     for col in _estimate_total_cols(df):
@@ -144,9 +142,7 @@ def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
 # so it can be used as a percentage denominator
 def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    total_col = _total_universe_col(df)
-    if total_col is not None:
-        _carry_with_moe(cleaned_df, df, total_col)
+    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
 
     overcrowded_cols = []
     for col in _estimate_total_cols(df):
@@ -169,9 +165,7 @@ def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
 # the raw total-families column so it can be used as a percentage denominator
 def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    total_col = _total_universe_col(df)
-    if total_col is not None:
-        _carry_with_moe(cleaned_df, df, total_col)
+    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
 
     single_parent_labels = (
         "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
@@ -187,9 +181,7 @@ def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
 # Adds a single "No Health Insurance Coverage" column
 def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    total_col = _total_universe_col(df)
-    if total_col is not None:
-        _carry_with_moe(cleaned_df, df, total_col)
+    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
     cols_to_sum = _estimate_total_cols(df)
     _add_total(cleaned_df, df, "No Health Insurance Coverage", cols_to_sum)
     return cleaned_df
@@ -214,9 +206,7 @@ def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
 # Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns
 def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    total_col = _total_universe_col(df)
-    if total_col is not None:
-        _carry_with_moe(cleaned_df, df, total_col)
+    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
 
     under_1_cols, under_1_5_cols, under_2_cols = [], [], []
 
@@ -275,8 +265,7 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     total_col = _total_universe_col(df)
 
     genders_df = df.iloc[:, :2].copy()
-    if total_col is not None:
-        _carry_with_moe(genders_df, df, total_col)
+    _carry_with_moe(genders_df, df, total_col)
     _carry_with_moe(genders_df, df, ("B01001_002E", "Estimate!!Total:!!Male:"))
     _carry_with_moe(genders_df, df, ("B01001_026E", "Estimate!!Total:!!Female:"))
 
@@ -285,8 +274,7 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
 
     # Combined (male + female) age-bucket totals — the consolidated SVI indicators.
     total_df = df.iloc[:, :2].copy()
-    if total_col is not None:
-        _carry_with_moe(total_df, df, total_col)
+    _carry_with_moe(total_df, df, total_col)
     under_5_cols = males_under_5 + females_under_5
     under_18_cols = males_under_18 + females_under_18
     over_65_cols = males_over_65 + females_over_65
@@ -297,15 +285,13 @@ def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
     # Segregated male/female age-bucket totals — kept for reference, no longer
     # exposed as SVI indicators (see sviCategories.ts).
     males_df = df.iloc[:, :2].copy()
-    if total_col is not None:
-        _carry_with_moe(males_df, df, total_col)
+    _carry_with_moe(males_df, df, total_col)
     _add_total(males_df, df, "Males Under 5", males_under_5)
     _add_total(males_df, df, "Males Under 18", males_under_18)
     _add_total(males_df, df, "Males Over 65", males_over_65)
 
     females_df = df.iloc[:, :2].copy()
-    if total_col is not None:
-        _carry_with_moe(females_df, df, total_col)
+    _carry_with_moe(females_df, df, total_col)
     _add_total(females_df, df, "Females Under 5", females_under_5)
     _add_total(females_df, df, "Females Under 18", females_under_18)
     _add_total(females_df, df, "Females Over 65", females_over_65)
@@ -370,10 +356,8 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
 # Matched by geography ID, not row order.
 def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
     tenure_df = _rows_matching_geoids(vehicles_df, tenure_raw_df)
-    total_col = _total_universe_col(tenure_df)
     merged = vehicles_df.copy()
-    if total_col is not None:
-        _carry_with_moe(merged, tenure_df, total_col)
+    _carry_with_moe(merged, tenure_df, _total_universe_col(tenure_df))
     return merged
 
 

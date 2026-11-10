@@ -75,7 +75,9 @@ def add_percentages_to_csv(
     existing_derived_cols = [col for col in df.columns if col.endswith(DERIVED_ENDINGS)]
     df = df.drop(columns=existing_derived_cols)
 
-    if denominator_column and denominator_column in df.columns:
+    if denominator_column:
+        if denominator_column not in df.columns:
+            raise ValueError(f"{filename}: percent_denominator {denominator_column!r} is not a column in the file")
         denominator = pd.to_numeric(df[denominator_column], errors="coerce")
         print(f"  → Using '{denominator_column}' as the percentage denominator instead of population")
     else:

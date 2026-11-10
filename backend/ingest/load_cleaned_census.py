@@ -81,25 +81,22 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
         and not col.endswith(DERIVED_ENDINGS)
     ]
     col_to_metric = {col: metric_name_for(col) for col in base_cols}
+    names = list(col_to_metric.values())
+    if repeated := {name for name in names if names.count(name) > 1}:
+        clashing = [col for col in base_cols if col_to_metric[col] in repeated]
+        raise ValueError(f"{os.path.basename(csv_path)}: columns {clashing} clean to the same metric name")
 
-    # One metric per name: column position, and which derived values it has.
-    # Two source columns can clean down to the same name, so merge those.
-    metrics: dict[str, Metric] = {}
-    for order, col in enumerate(base_cols):
-        metric = Metric(
+    # One metric per column: its position, and which derived values it has
+    metrics = [
+        Metric(
             name=col_to_metric[col],
             display_order=order,
             has_moe=_column_has_values(df, moe_column_name(col)),
             has_percentage=_column_has_values(df, col + PERCENT),
             has_moe_pp=_column_has_values(df, col + MOE_PP),
         )
-        existing = metrics.get(metric.name)
-        if existing is None:
-            metrics[metric.name] = metric
-        else:
-            existing.has_moe = existing.has_moe or metric.has_moe
-            existing.has_percentage = existing.has_percentage or metric.has_percentage
-            existing.has_moe_pp = existing.has_moe_pp or metric.has_moe_pp
+        for order, col in enumerate(base_cols)
+    ]
 
     def numeric_or_none(row, col):
         return None if col not in df.columns or pd.isna(row[col]) else float(row[col])
@@ -125,14 +122,11 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
             )
         )
 
-        # Keyed by metric name, so a later column that cleans to the same name replaces the earlier one
-        row_values: dict[str, Value] = {}
         for col in base_cols:
-            name = col_to_metric[col]
             moe_derived_col = col + MOE_DERIVED
-            row_values[name] = Value(
+            values.append(Value(
                 geoid=geoid,
-                metric=name,
+                metric=col_to_metric[col],
                 absolute=None if pd.isna(row[col]) else float(row[col]),
                 margin_of_error=numeric_or_none(row, moe_column_name(col)),
                 percentage=numeric_or_none(row, col + PERCENT),
@@ -143,10 +137,9 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
                     if moe_derived_col not in df.columns or pd.isna(row[moe_derived_col])
                     else bool(row[moe_derived_col])
                 ),
-            )
-        values.extend(row_values.values())
+            ))
 
-    return list(metrics.values()), values, geo_rows
+    return metrics, values, geo_rows
 
 
 # output is one record from clean.dataset_outputs; its name is the dataset id and the CSV file name
