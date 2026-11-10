@@ -1,13 +1,12 @@
 import React, { useCallback } from "react";
 import type { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import type { LeafletMouseEvent } from "leaflet";
-import { useShallow } from "zustand/react/shallow";
 import { GenericPolygonLayer, type StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer";
 import { AreaPopupContent } from "../../FeaturePopup/AreaPopupContent";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import { useBoundary } from "../../../api/queries/boundaries";
 import { useFilteredGeoids } from "../../../api/queries/filter";
-import { useAppStore } from "../../../stores/useAppStore";
+import { useFilterStore } from "../../../stores/useFilterStore";
 import { DEFAULT_LAYER_OPACITIES, useMapConfig, useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore } from "../../../stores/useMapLayersStore";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
@@ -42,8 +41,8 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
     | FeatureCollection<Geometry, GeoJsonProperties>
     | undefined;
   const filteredGeoids = useFilteredGeoids();
-  const { filterRange, filterRange2 } = useAppStore(
-    useShallow((state) => ({ filterRange: state.filterRange, filterRange2: state.filterRange2 })),
+  const { primary: filterRange, comparison: filterRange2 } = useFilterStore(
+    (state) => state.ranges,
   );
   const activeFeatureGeoid = useMapConfig(mapId)?.activeFeature?.geoid;
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);

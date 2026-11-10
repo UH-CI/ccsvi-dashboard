@@ -26,7 +26,7 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
 } from "@mui/icons-material";
-import { useMapStore, useFilterStore } from "../../stores";
+import { useMapStore } from "../../stores";
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";
@@ -58,7 +58,6 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 }) => {
   const mapConfigs = useMapStore((state) => state.mapConfigs);
   const resetMapStore = useMapStore((state) => state.reset);
-  const clearFilter = useFilterStore((s) => s.clearFilter);
 
   // One anchor per nav button
   const [anchors, setAnchors] = useState<Partial<Record<NonNullable<PopoverKey>, HTMLElement>>>({});
@@ -104,9 +103,8 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
 
   const handleResetView = useCallback(() => {
     resetMapStore();
-    clearFilter();
     setAnchors({});
-  }, [resetMapStore, clearFilter]);
+  }, [resetMapStore]);
 
   const handleSnapshot = useCallback(() => {
     setAnchors({});

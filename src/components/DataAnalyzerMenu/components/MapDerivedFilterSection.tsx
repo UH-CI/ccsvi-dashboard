@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Stack, Button, IconButton, CircularProgress, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
-import { useAppStore, useMapStore } from "../../../stores";
+import { useAppStore, useFilterStore, useMapStore } from "../../../stores";
 import { applyFilter, useAreaFilter } from "../../../api/queries/filter";
 import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
@@ -27,8 +27,8 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const menuTrees = useVisibleMenuTrees(primaryMapId);
   const datasetCatalog = useDatasets();
-  const filterRange = useAppStore((state) => state.filterRange);
-  const filterRange2 = useAppStore((state) => state.filterRange2);
+  const filterRange = useFilterStore((state) => state.ranges.primary);
+  const filterRange2 = useFilterStore((state) => state.ranges.comparison);
   const exportTable = useAppStore((state) => state.exportTable);
 
   const isLoading = useAreaFilter().isFetching;

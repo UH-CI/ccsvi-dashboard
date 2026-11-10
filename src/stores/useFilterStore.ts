@@ -15,15 +15,24 @@ export type AppliedFilter =
     }
   | { kind: "points"; hazards: string[]; rasters: string[]; pointLayers: string[] };
 
+// One Data Analyzer slider's chosen [min, max]; null is the indicator's whole range
+export type SliderRange = [number, number] | null;
+
 interface FilterState {
   // Nothing while no filter is applied
   applied: AppliedFilter | null;
+  // The sliders for the main map's indicator and its comparison indicator
+  ranges: { primary: SliderRange; comparison: SliderRange };
   apply: (filter: AppliedFilter) => void;
-  clearFilter: () => void;
+  setRange: (slider: "primary" | "comparison", range: SliderRange) => void;
+  // Empties the applied filter and both sliders
+  clear: () => void;
 }
 
 export const useFilterStore = create<FilterState>((set) => ({
   applied: null,
+  ranges: { primary: null, comparison: null },
   apply: (filter) => set({ applied: filter }),
-  clearFilter: () => set({ applied: null }),
+  setRange: (slider, range) => set((state) => ({ ranges: { ...state.ranges, [slider]: range } })),
+  clear: () => set({ applied: null, ranges: { primary: null, comparison: null } }),
 }));

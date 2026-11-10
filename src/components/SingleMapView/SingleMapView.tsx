@@ -18,13 +18,7 @@ import styles from "./SingleMapView.module.scss";
 import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
-import {
-  useMapStore,
-  useMapConfig,
-  useSnapshotStore,
-  useFilterStore,
-  DEFAULT_LAYER_OPACITIES,
-} from "../../stores";
+import { useMapStore, useMapConfig, useSnapshotStore, DEFAULT_LAYER_OPACITIES } from "../../stores";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
@@ -207,18 +201,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       isCount: metricIsCount,
       noValueFill: noValueFill(mapId),
     });
-
-    // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
-    const appliedFilter = useFilterStore((s) => s.applied);
-    useEffect(() => {
-      if (
-        isPrimary &&
-        appliedFilter?.kind === "areas" &&
-        appliedFilter.homelands !== shouldShowHawaiianHomelands
-      ) {
-        useFilterStore.getState().clearFilter();
-      }
-    }, [isPrimary, appliedFilter, shouldShowHawaiianHomelands]);
 
     const shouldRenderCountyBoundariesBackground =
       effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && countyBoundaries;

@@ -4,6 +4,7 @@ import { MapConfig } from "../types";
 import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
 import { DEFAULT_COLOR_SCHEME } from "../config";
 import { useMapLayersStore } from "./useMapLayersStore";
+import { useFilterStore } from "./useFilterStore";
 
 interface MapState {
   // Map configurations
@@ -165,9 +166,27 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   reset: () => {
     get().mapConfigs.forEach((config) => useMapLayersStore.getState().clearMap(config.id));
+    useFilterStore.getState().clear();
     set(startingMaps());
   },
 }));
+
+// The main map's indicator and comparison indicator, as one key
+const indicatorKey = ({ mapConfigs, primaryMapId }: MapState) => {
+  const primary = mapConfigs.find((c) => c.id === primaryMapId);
+  return [
+    primaryMapId,
+    primary?.dataset,
+    primary?.metric,
+    primary?.dataset2,
+    primary?.metric2,
+  ].join("|");
+};
+
+// A Data Analyzer filter and its sliders belong to one indicator: a new one on the main map starts them over
+useMapStore.subscribe((state, previous) => {
+  if (indicatorKey(state) !== indicatorKey(previous)) useFilterStore.getState().clear();
+});
 
 // Selectors for computed state
 export const useVisibleMaps = () => {

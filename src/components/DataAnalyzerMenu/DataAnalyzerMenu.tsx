@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
 import { useMapStore, useFilterStore } from "../../stores";
 import { useMetricValues } from "../../api/queries/metricValues";
@@ -20,17 +20,9 @@ export const DataAnalyzerMenu = () => {
   const activeGeoid = primaryConfig?.activeFeature?.geoid ?? null;
   const cachedValues = useMetricValues(dataset, metric);
 
-  const [resetKey, setResetKey] = useState(0);
-
-  const handleClearAll = () => {
-    useFilterStore.getState().clearFilter();
-    setResetKey((k) => k + 1);
-  };
-
   return (
     <Stack spacing={2}>
       <HistogramSection
-        key={`histogram-${resetKey}`}
         metric={metric}
         cachedValues={cachedValues}
         activeGeoid={activeGeoid}
@@ -54,12 +46,11 @@ export const DataAnalyzerMenu = () => {
       </Typography>
 
       <MapDerivedFilterSection
-        key={`filter-${resetKey}`}
         dataset={dataset}
         metric={metric}
         dataset2={dataset2}
         metric2={metric2}
-        onClearAll={handleClearAll}
+        onClearAll={() => useFilterStore.getState().clear()}
       />
     </Stack>
   );

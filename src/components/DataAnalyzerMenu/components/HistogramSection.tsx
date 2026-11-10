@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Box, Slider, Typography, Stack, Divider, Tooltip, IconButton } from "@mui/material";
 import { InfoOutlined } from "@mui/icons-material";
 import {
@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { useAppStore } from "../../../stores";
+import { useFilterStore, type SliderRange } from "../../../stores/useFilterStore";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 import { useMetricKind } from "../../../api/queries/datasets";
@@ -21,8 +21,9 @@ import { ComparisonSection } from "./ComparisonSection";
 
 const NUM_BINS = 20;
 
-function inRange(value: number | null, range: [number, number] | null): boolean {
-  return range === null || value === null || (value >= range[0] && value <= range[1]);
+// Whether a value passes a slider: no range passes everything; an area with no value never passes a range
+function inRange(value: number | null, range: SliderRange): boolean {
+  return range === null || (value !== null && value >= range[0] && value <= range[1]);
 }
 
 function meanMedian(values: number[]): { mean: number; median: number } | null {
@@ -51,8 +52,10 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   dataset2,
   metric2,
 }) => {
-  const setFilterRange = useAppStore((state) => state.setFilterRange);
-  const setFilterRange2 = useAppStore((state) => state.setFilterRange2);
+  const setRange = useFilterStore((state) => state.setRange);
+  const { primary: filterRange, comparison: filterRange2 } = useFilterStore(
+    (state) => state.ranges,
+  );
   const cachedValues2 = useMetricValues(dataset2, metric2);
   const kind = useMetricKind(dataset, metric);
   const kind2 = useMetricKind(dataset2, metric2);
@@ -66,13 +69,6 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     return { dataMin2: Math.min(...vals), dataMax2: Math.max(...vals) };
   }, [cachedValues2, kind2]);
 
-  const [range2, setRange2] = useState<[number, number]>([0, 1]);
-
-  useEffect(() => {
-    setRange2([dataMin2, dataMax2]);
-    setFilterRange2(null);
-  }, [dataMin2, dataMax2, setFilterRange2]);
-
   const allValues = useMemo(() => {
     if (!cachedValues || !kind) return [];
     return Object.values(cachedValues)
@@ -82,8 +78,6 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
 
   // Values of the areas the map currently shows as matching
   const filteredGeoids = useFilteredGeoids();
-  const filterRange = useAppStore((state) => state.filterRange);
-  const filterRange2 = useAppStore((state) => state.filterRange2);
   const matchedValues = useMemo(() => {
     if (!cachedValues || !kind) return [];
     return Object.entries(cachedValues)
@@ -131,13 +125,6 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
 
   const stats = useMemo(() => meanMedian(allValues), [allValues]);
   const matchedStats = useMemo(() => meanMedian(matchedValues), [matchedValues]);
-
-  const [range, setRange] = useState<[number, number]>([0, 1]);
-
-  useEffect(() => {
-    setRange([dataMin, dataMax]);
-    setFilterRange(null);
-  }, [dataMin, dataMax, setFilterRange]);
 
   if (!metric) {
     return (
@@ -314,14 +301,13 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
         </Typography>
         <Box sx={{ px: 1, mt: 1 }}>
           <Slider
-            value={range}
+            value={filterRange ?? [dataMin, dataMax]}
             min={dataMin}
             max={dataMax}
             step={(dataMax - dataMin) / 100}
             onChange={(_, v) => {
               const r = v as [number, number];
-              setRange(r);
-              setFilterRange(r);
+              setRange("primary", r);
             }}
             valueLabelDisplay="auto"
             valueLabelFormat={(v) => formatValue(v, kind!)}
@@ -349,14 +335,13 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
           </Typography>
           <Box sx={{ px: 1, mt: 1 }}>
             <Slider
-              value={range2}
+              value={filterRange2 ?? [dataMin2, dataMax2]}
               min={dataMin2}
               max={dataMax2}
               step={(dataMax2 - dataMin2) / 100 || 1}
               onChange={(_, v) => {
                 const r = v as [number, number];
-                setRange2(r);
-                setFilterRange2(r);
+                setRange("comparison", r);
               }}
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => formatValue(v, kind2!)}
