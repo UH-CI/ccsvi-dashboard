@@ -37,8 +37,6 @@ export interface GenericPolygonLayerProps<
   ) => StyleConfig;
   onFeatureClick?: (feature: Feature<Geometry, T>, e: LeafletMouseEvent) => void;
   renderPopup?: (feature: Feature<Geometry, T>) => string | null;
-  /** Whether click events should be consumed so raster layers do not receive them. */
-  stopClickPropagation?: boolean;
   /** Runs on popupopen when provided (e.g. async HCDP zonal stats). */
   enrichPopupOnOpen?: (
     feature: Feature<Geometry, T>,
@@ -59,7 +57,6 @@ export const GenericPolygonLayer = memo(
     onFeatureClick,
     renderPopup,
     enrichPopupOnOpen,
-    stopClickPropagation = true,
     ...geoJsonProps
   }: GenericPolygonLayerProps<T>) => {
     const map = useMap();
@@ -257,13 +254,6 @@ export const GenericPolygonLayer = memo(
         data={featureCollection}
         style={styleCallback}
         onEachFeature={onEachFeature}
-        eventHandlers={{
-          click: (e) => {
-            if (stopClickPropagation) {
-              e.originalEvent.stopPropagation();
-            }
-          },
-        }}
         {...geoJsonProps}
       />
     );

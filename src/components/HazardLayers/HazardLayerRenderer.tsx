@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { useMap } from "react-leaflet";
-import L from "leaflet";
 import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
+import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
+import { ensurePane } from "../../utils/mapPanes";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
 import { dataUrl } from "../../api/client";
@@ -37,43 +38,15 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
   const color = activeLayer?.color;
   const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
 
+  // Draws the layer while it's on, and offers its popup for clicks on its shapes
   useEffect(() => {
-    if (!map) return;
-
-    let proLayer: ReturnType<typeof leafletLayer> | null = null;
-    let domClickHandler: ((e: MouseEvent) => void) | null = null;
-    let currentPopup: L.Popup | null = null;
-    let isMounted = true;
-
-    const clearLayer = () => {
-      if (domClickHandler) {
-        map.getContainer().removeEventListener("click", domClickHandler, true);
-        domClickHandler = null;
-      }
-      if (currentPopup) {
-        currentPopup.close();
-        currentPopup = null;
-      }
-      if (proLayer) {
-        proLayer.remove();
-        proLayer = null;
-      }
-    };
-
-    if (!isVisible || !file) {
-      return clearLayer;
-    }
+    if (!isVisible || !file) return;
 
     const url = dataUrl(`hazards/${file}.pmtiles`);
 
-    if (!map.getPane("hazardPane")) {
-      const pane = map.createPane("hazardPane");
-      pane.style.zIndex = "450";
-    }
-
-    proLayer = leafletLayer({
+    const proLayer = leafletLayer({
       sources: { [file]: { url, maxDataZoom: 14 } },
-      pane: "hazardPane",
+      pane: ensurePane(map, "hazardPane"),
       maxZoom: 18,
       paintRules: [
         {
@@ -95,27 +68,16 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       labelRules: [],
     });
 
-    if (!isMounted) return clearLayer;
-
     proLayer.addTo(map);
 
-    domClickHandler = (e: MouseEvent) => {
-      if (!proLayer) return;
-      // Points are drawn above hazards, so a click on a point or cluster icon is theirs
-      if ((e.target as HTMLElement).closest(".leaflet-marker-icon")) return;
-      const latlng = map.mouseEventToLatLng(e);
-      const results = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5);
-      const features = results.get(file) ?? [];
-      if (features.length === 0) return;
-      e.stopImmediatePropagation();
-      const content = popupHtml(features[0].feature.props, popup, layerName);
-      currentPopup = L.popup().setLatLng(latlng).setContent(content).openOn(map);
-    };
-    map.getContainer().addEventListener("click", domClickHandler, true);
+    const removeClick = addClickTarget(map, CLICK_ORDER.hazard, (latlng) => {
+      const features = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5).get(file) ?? [];
+      return features.length > 0 ? popupHtml(features[0].feature.props, popup, layerName) : null;
+    });
 
     return () => {
-      isMounted = false;
-      clearLayer();
+      removeClick();
+      proLayer.remove();
     };
   }, [map, file, isVisible, popup, color, layerName]);
 
