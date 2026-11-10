@@ -26,7 +26,7 @@ SHAPES = {"polygons": "MultiPolygon", "lines": "MultiLineString"}
 
 # The census menu's fields, as (required, optional)
 CATEGORY_FIELDS = ({"id", "label", "indicators"}, {"description"})
-INDICATOR_FIELDS = ({"dataset", "metric", "label"}, {"description", "calculationDescription", "isCount", "off"})
+INDICATOR_FIELDS = ({"dataset", "metric", "label"}, {"description", "calculationDescription", "off"})
 
 # Per layer file, the fields each kind of entry must have and may have, as (required, optional).
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields

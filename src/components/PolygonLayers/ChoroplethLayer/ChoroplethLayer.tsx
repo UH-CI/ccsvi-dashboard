@@ -82,6 +82,7 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
           (metricValue2 < filterRange2[0] || metricValue2 > filterRange2[1]));
 
       const fillColor = outOfRange ? OUTSIDE_RANGE_FILL : getColor(metricValue, metricValue2);
+      const noValue = metricValue === null || (metric2 !== null && metricValue2 == null);
 
       if (filteredGeoids != null) {
         if (filteredGeoids.has(geoid)) {
@@ -91,7 +92,8 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
             ...config.styles.filterMatch,
           } as StyleConfig;
         }
-        return { ...config.styles.disabled } as StyleConfig;
+        // Left out by the Filter; an area with no value keeps its hatch so it still reads as "no value"
+        return { ...config.styles.disabled, ...(noValue && { fillColor }) } as StyleConfig;
       }
 
       // With a raster under it, the area is an outline so the raster shows through

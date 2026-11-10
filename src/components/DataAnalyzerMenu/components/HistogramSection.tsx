@@ -12,10 +12,11 @@ import {
 } from "recharts";
 import { useAppStore } from "../../../stores";
 import { useFilteredGeoids } from "../../../api/queries/filter";
-import { useMetricValues } from "../../../api/queries/metricValues";
+import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
+import { useMetricKind } from "../../../api/queries/datasets";
 import { CHART_COLORS, sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
-import { pickValue, formatValue } from "../metricValueHelpers";
+import { formatValue } from "../metricValueHelpers";
 import { ComparisonSection } from "./ComparisonSection";
 
 const NUM_BINS = 20;
@@ -53,15 +54,17 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   const setFilterRange = useAppStore((state) => state.setFilterRange);
   const setFilterRange2 = useAppStore((state) => state.setFilterRange2);
   const cachedValues2 = useMetricValues(dataset2, metric2);
+  const kind = useMetricKind(dataset, metric);
+  const kind2 = useMetricKind(dataset2, metric2);
 
-  const { isPercentage2, dataMin2, dataMax2 } = useMemo(() => {
-    if (!cachedValues2) return { isPercentage2: false, dataMin2: 0, dataMax2: 1 };
-    const entries = Object.values(cachedValues2);
-    const isPercentage2 = entries.some((e) => e.percentage != null);
-    const vals = entries.map(pickValue).filter((v): v is number => v !== null);
-    if (vals.length === 0) return { isPercentage2, dataMin2: 0, dataMax2: 1 };
-    return { isPercentage2, dataMin2: Math.min(...vals), dataMax2: Math.max(...vals) };
-  }, [cachedValues2]);
+  const { dataMin2, dataMax2 } = useMemo(() => {
+    if (!cachedValues2 || !kind2) return { dataMin2: 0, dataMax2: 1 };
+    const vals = Object.values(cachedValues2)
+      .map((e) => metricNumber(e, kind2))
+      .filter((v): v is number => v !== null);
+    if (vals.length === 0) return { dataMin2: 0, dataMax2: 1 };
+    return { dataMin2: Math.min(...vals), dataMax2: Math.max(...vals) };
+  }, [cachedValues2, kind2]);
 
   const [range2, setRange2] = useState<[number, number]>([0, 1]);
 
@@ -70,29 +73,28 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     setFilterRange2(null);
   }, [dataMin2, dataMax2, setFilterRange2]);
 
-  const { allValues, isPercentage } = useMemo(() => {
-    if (!cachedValues) return { allValues: [], isPercentage: false };
-    const entries = Object.values(cachedValues);
-    const usePct = entries.some((e) => e.percentage != null);
-    const vals = entries.map(pickValue).filter((v): v is number => v !== null);
-    return { allValues: vals, isPercentage: usePct };
-  }, [cachedValues]);
+  const allValues = useMemo(() => {
+    if (!cachedValues || !kind) return [];
+    return Object.values(cachedValues)
+      .map((e) => metricNumber(e, kind))
+      .filter((v): v is number => v !== null);
+  }, [cachedValues, kind]);
 
   // Values of the areas the map currently shows as matching
   const filteredGeoids = useFilteredGeoids();
   const filterRange = useAppStore((state) => state.filterRange);
   const filterRange2 = useAppStore((state) => state.filterRange2);
   const matchedValues = useMemo(() => {
-    if (!cachedValues) return [];
+    if (!cachedValues || !kind) return [];
     return Object.entries(cachedValues)
       .filter(
         ([geoid]) =>
           (!filteredGeoids || filteredGeoids.has(geoid)) &&
-          inRange(pickValue(cachedValues2?.[geoid]), filterRange2),
+          inRange(kind2 ? metricNumber(cachedValues2?.[geoid], kind2) : null, filterRange2),
       )
-      .map(([, entry]) => pickValue(entry))
+      .map(([, entry]) => metricNumber(entry, kind))
       .filter((v): v is number => v !== null && inRange(v, filterRange));
-  }, [filteredGeoids, filterRange, filterRange2, cachedValues, cachedValues2]);
+  }, [filteredGeoids, filterRange, filterRange2, cachedValues, cachedValues2, kind, kind2]);
 
   const { bins, dataMin, dataMax } = useMemo(() => {
     if (allValues.length === 0) return { bins: [], dataMin: 0, dataMax: 1 };
@@ -100,7 +102,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     const dataMax = Math.max(...allValues);
     const step = (dataMax - dataMin) / NUM_BINS || 1;
     const bins = Array.from({ length: NUM_BINS }, (_, i) => ({
-      label: formatValue(dataMin + i * step, isPercentage),
+      label: formatValue(dataMin + i * step, kind!),
       start: dataMin + i * step,
       end: dataMin + (i + 1) * step,
       count: 0,
@@ -112,11 +114,12 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     for (const v of matchedValues ?? []) bins[binIndex(v)].matched++;
     for (const bin of bins) bin.rest = bin.count - bin.matched;
     return { bins, dataMin, dataMax };
-  }, [allValues, matchedValues, isPercentage]);
+  }, [allValues, matchedValues, kind]);
 
   const activeValue = useMemo(
-    () => (activeGeoid && cachedValues ? pickValue(cachedValues[activeGeoid]) : null),
-    [activeGeoid, cachedValues],
+    () =>
+      activeGeoid && cachedValues && kind ? metricNumber(cachedValues[activeGeoid], kind) : null,
+    [activeGeoid, cachedValues, kind],
   );
 
   const activeBinLabel = useMemo(() => {
@@ -252,7 +255,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                   Selected area
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: CHART_COLORS.selected }}>
-                  {formatValue(activeValue, isPercentage)}
+                  {formatValue(activeValue, kind!)}
                 </Typography>
               </Box>
             )}
@@ -261,11 +264,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 Mean
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.mean, isPercentage) : "–"}
+                {matchedStats ? formatValue(matchedStats.mean, kind!) : "–"}
               </Typography>
               {matchedValues.length !== allValues.length && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.mean, isPercentage)}
+                  all {formatValue(stats.mean, kind!)}
                 </Typography>
               )}
             </Box>
@@ -274,11 +277,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 Median
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.median, isPercentage) : "–"}
+                {matchedStats ? formatValue(matchedStats.median, kind!) : "–"}
               </Typography>
               {matchedValues.length !== allValues.length && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.median, isPercentage)}
+                  all {formatValue(stats.median, kind!)}
                 </Typography>
               )}
             </Box>
@@ -321,16 +324,16 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
               setFilterRange(r);
             }}
             valueLabelDisplay="auto"
-            valueLabelFormat={(v) => formatValue(v, isPercentage)}
+            valueLabelFormat={(v) => formatValue(v, kind!)}
             size="small"
           />
         </Box>
         <Box display="flex" justifyContent="space-between">
           <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMin, isPercentage)}
+            {formatValue(dataMin, kind!)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMax, isPercentage)}
+            {formatValue(dataMax, kind!)}
           </Typography>
         </Box>
       </Box>
@@ -356,16 +359,16 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
                 setFilterRange2(r);
               }}
               valueLabelDisplay="auto"
-              valueLabelFormat={(v) => formatValue(v, isPercentage2)}
+              valueLabelFormat={(v) => formatValue(v, kind2!)}
               size="small"
             />
           </Box>
           <Box display="flex" justifyContent="space-between">
             <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMin2, isPercentage2)}
+              {formatValue(dataMin2, kind2!)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMax2, isPercentage2)}
+              {formatValue(dataMax2, kind2!)}
             </Typography>
           </Box>
         </Box>

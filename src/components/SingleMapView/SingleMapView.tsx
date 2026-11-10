@@ -10,9 +10,10 @@ import {
   DEFAULT_BIVARIATE_SCHEME,
   DEFAULT_COLOR_SCHEME,
   MAP_CONFIG,
-  sviIsCount,
+  noValueFill,
   sviLabel,
 } from "../../config";
+import { NoValuePattern } from "./NoValuePattern";
 import styles from "./SingleMapView.module.scss";
 import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
@@ -34,7 +35,7 @@ import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
-import { useDatasets } from "../../api/queries/datasets";
+import { useDatasets, useMetricKind } from "../../api/queries/datasets";
 import { useBoundary } from "../../api/queries/boundaries";
 import { useMetricValues } from "../../api/queries/metricValues";
 
@@ -119,7 +120,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const effectiveMetric = config?.metric;
     const effectiveMetric2 = config?.metric2;
     const metricLabel = effectiveMetric ? sviLabel(effectiveDataset, effectiveMetric) : undefined;
-    const metricIsCount = effectiveMetric ? sviIsCount(effectiveDataset, effectiveMetric) : false;
+    const kind1 = useMetricKind(effectiveDataset, effectiveMetric);
+    const kind2 = useMetricKind(effectiveDataset2, effectiveMetric2);
+    const metricIsCount = kind1 === "count";
     const metricLabel2 = effectiveMetric2
       ? sviLabel(effectiveDataset2, effectiveMetric2)
       : undefined;
@@ -185,8 +188,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
       cachedMetric1,
       cachedMetric2,
-      effectiveMetric,
-      effectiveMetric2,
+      kind1,
+      kind2,
     );
 
     const activeColorScheme = config?.colorScheme || DEFAULT_COLOR_SCHEME;
@@ -202,6 +205,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       hasSecondMetric: Boolean(effectiveMetric2),
       datasetMetricObject: activeDatasetMetricObject,
       isCount: metricIsCount,
+      noValueFill: noValueFill(mapId),
     });
 
     // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
@@ -272,6 +276,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           className={styles["map-container"]}
           style={{ position: "relative", zIndex: 1 }}
         >
+          <NoValuePattern mapId={mapId} />
           <MapContainer
             center={MAP_CONFIG.center}
             zoom={MAP_CONFIG.zoom}
@@ -353,6 +358,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
                 metric1Label={metricLabel}
                 metric2Label={metricLabel2}
                 isCount={metricIsCount}
+                noValueFill={noValueFill(mapId)}
               />
             )}
           </LegendContainer>

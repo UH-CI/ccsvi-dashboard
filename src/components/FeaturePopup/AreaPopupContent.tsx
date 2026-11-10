@@ -32,12 +32,11 @@ interface AreaPopupContentProps {
 // Never asked for; stands in while the map has no HCDP raster
 const NO_HCDP: RasterSource = { kind: "hcdp", params: {} };
 
-// An indicator's row, or nothing where the area has no value
+// An indicator's row when the map shows one; an area with no value keeps the row, showing N/A
 function metricDisplay(name: string | undefined, lookup: MetricLookup | null, geoid: string) {
-  const data = lookup?.getData(geoid);
-  if (!name || !data || data.value === null) return undefined;
-  const { value, isPercentage, moePp, reliability } = data;
-  return { name, value, isPercentage, moePp, reliability } satisfies MetricDisplay;
+  if (!name || !lookup) return undefined;
+  const { value, moePp, reliability } = lookup.getData(geoid);
+  return { name, value, kind: lookup.kind, moePp, reliability } satisfies MetricDisplay;
 }
 
 // A block group's or Homelands area's popup: where it is, its indicators, and the map's raster and

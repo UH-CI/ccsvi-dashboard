@@ -183,8 +183,12 @@ export interface AreaCriteria {
   ranges: Record<string, ValueRange>;
 }
 
+// Whether a metric is shown as its percentage or as its count, as the server says
+export type MetricKind = "percentage" | "count";
+
 export interface CatalogMetric {
   mv_column: string | null;
+  kind: MetricKind;
 }
 
 export interface CatalogDataset {

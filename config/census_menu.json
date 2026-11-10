@@ -24,7 +24,6 @@
           "metric": "Institutionalized population",
           "label": "Population in Group Quarters",
           "calculationDescription": "Number of people living in institutional group quarters.",
-          "isCount": true,
           "description": "Shared or institutional settings can create greater challenges during evacuation and sheltering due to facility-specific procedures, living arrangements, and support needs."
         },
         {

@@ -29,8 +29,10 @@ class DatasetTable(BaseModel):
     columns: list[TableColumn]
     rows: list[TableRow]
 
+# A metric's filter column, and whether the map and filter show its percentage or its count
 class MetricConfig(BaseModel):
     mv_column: str | None = None
+    kind: Literal["percentage", "count"]
 
 
 class DatasetMetadata(BaseModel):
@@ -74,7 +76,8 @@ class MetricValueRecord(BaseModel):
 async def get_datasets(conn: ConnDep) -> Any:
     rows = await conn.fetch(
         """
-        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata, m.name, m.mv_column
+        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata,
+               m.name, m.mv_column, m.has_percentage
         FROM datasets d
         JOIN metrics m ON m.dataset_id = d.id
         ORDER BY d.id, m.display_order NULLS LAST, m.name
@@ -92,7 +95,10 @@ async def get_datasets(conn: ConnDep) -> Any:
                 "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
                 "metrics": {},
             }
-        result[dataset_id]["metrics"][row["name"]] = {"mv_column": row["mv_column"]}
+        result[dataset_id]["metrics"][row["name"]] = {
+            "mv_column": row["mv_column"],
+            "kind": "percentage" if row["has_percentage"] else "count",
+        }
     return result
 
 

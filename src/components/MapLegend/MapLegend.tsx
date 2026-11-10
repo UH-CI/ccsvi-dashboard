@@ -13,7 +13,19 @@ interface MapLegendProps {
   metric1Label?: string;
   metric2Label?: string;
   isCount?: boolean;
+  // The map's fill for an area with no value, shown as the legend's last entry
+  noValueFill: string;
 }
+
+// The "No value" entry: a swatch in the map's hatch
+const NoValueItem = ({ fill }: { fill: string }) => (
+  <div className={styles.legend__item}>
+    <svg className={styles["legend__item-color"]}>
+      <rect width="100%" height="100%" fill={fill} />
+    </svg>
+    <span>No value</span>
+  </div>
+);
 
 export const MapLegend: React.FC<MapLegendProps> = ({
   title,
@@ -23,6 +35,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   metric1Label,
   metric2Label,
   isCount,
+  noValueFill,
 }) => {
   const [labelsHovered, setLabelsHovered] = useState(false);
 
@@ -88,10 +101,14 @@ export const MapLegend: React.FC<MapLegendProps> = ({
                 {metric1Label ?? "Metric 1"}
               </span>
             </Tooltip>
+            <NoValueItem fill={noValueFill} />
           </div>
         </div>
       ) : (
-        <div className={styles.legend__items}>{legendLevels}</div>
+        <div className={styles.legend__items}>
+          {legendLevels}
+          <NoValueItem fill={noValueFill} />
+        </div>
       )}
     </CollapsibleLegend>
   );

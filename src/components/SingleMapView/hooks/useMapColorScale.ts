@@ -6,7 +6,6 @@ import {
   ComputedBivariateColorScale,
 } from "../../../utils/colorThresholds";
 import { CatalogMetric } from "../../../types";
-import { NO_VALUE_COLOR } from "../../../config";
 
 interface UseMapColorScaleArgs {
   allMetricValues: number[];
@@ -16,6 +15,8 @@ interface UseMapColorScaleArgs {
   hasSecondMetric: boolean;
   datasetMetricObject: CatalogMetric | null;
   isCount: boolean;
+  // The fill for an area with no value: the map's hatch
+  noValueFill: string;
 }
 
 interface MapColorScale {
@@ -33,6 +34,7 @@ export function useMapColorScale({
   hasSecondMetric,
   datasetMetricObject,
   isCount,
+  noValueFill,
 }: UseMapColorScaleArgs): MapColorScale {
   const colorScale = useMemo(() => {
     if (!datasetMetricObject) return null;
@@ -47,13 +49,15 @@ export function useMapColorScale({
   const getColor = useMemo(() => {
     if (bivariateColorScale) {
       return (value1: number | null, value2?: number | null): string =>
-        bivariateColorScale.getColor(value1, value2 ?? null);
+        value1 === null || value2 == null
+          ? noValueFill
+          : bivariateColorScale.getColor(value1, value2);
     }
     return (value: number | null): string => {
-      if (value === null || !colorScale) return NO_VALUE_COLOR;
+      if (value === null || !colorScale) return noValueFill;
       return colorScale.getColor(value);
     };
-  }, [colorScale, bivariateColorScale]);
+  }, [colorScale, bivariateColorScale, noValueFill]);
 
   return { colorScale, bivariateColorScale, getColor };
 }

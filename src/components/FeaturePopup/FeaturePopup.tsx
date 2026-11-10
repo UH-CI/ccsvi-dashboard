@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./FeaturePopup.module.scss";
-import type { PointLayerConfig, Reliability, ReliabilityTier } from "../../types";
+import type { MetricKind, PointLayerConfig, Reliability, ReliabilityTier } from "../../types";
 import { PointLayerIcon } from "../../utils/pointLayerIcon";
 
 const RELIABILITY_TIER_CLASS: Record<ReliabilityTier, string> = {
@@ -38,10 +38,11 @@ export interface PointCountsPopupField {
   items: { layer: PointLayerConfig; value: number | null }[];
 }
 
+// An indicator's row; a value of null means the area has none and shows N/A
 export interface MetricDisplay {
   name: string;
-  value: number;
-  isPercentage: boolean;
+  value: number | null;
+  kind: MetricKind;
   moePp: number | null;
   reliability: Reliability | null;
 }
@@ -84,8 +85,12 @@ const RasterStatsRows = ({ field }: { field: HcdpPopupField | OverlayPopupField 
 const MetricRows = ({ metric }: { metric: MetricDisplay }) => (
   <>
     <Row label={metric.name}>
-      {metric.isPercentage ? `${metric.value.toFixed(1)}%` : metric.value.toFixed(0)}
-      {metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}
+      {metric.value === null
+        ? "N/A"
+        : metric.kind === "percentage"
+          ? `${metric.value.toFixed(1)}%`
+          : metric.value.toFixed(0)}
+      {metric.value !== null && metric.moePp !== null ? ` ± ${metric.moePp} pp` : ""}
     </Row>
     {metric.reliability && (
       <div className={`${styles["popup-field"]} ${styles["popup-reliability"]}`}>

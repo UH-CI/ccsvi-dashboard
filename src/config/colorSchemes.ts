@@ -71,6 +71,13 @@ export const RASTER_COLORMAPS: { name: string; label: string }[] = [
 // An area with no value for the metric
 export const NO_VALUE_COLOR = "#cccccc";
 
+// The hatch drawn over an area with no value for the indicator shown: pale ground, grey diagonal stripes
+export const NO_VALUE_HATCH = { ground: "#f5f5f5", stripe: "#9e9e9e" };
+
+// The id of one map's hatch pattern, and the fill that draws it
+export const noValuePatternId = (mapId: string) => `no-value-${mapId}`;
+export const noValueFill = (mapId: string) => `url(#${noValuePatternId(mapId)})`;
+
 // An area outside the Data Analyzer's range
 export const OUTSIDE_RANGE_FILL = "#e0e0e0";
 export const OUTSIDE_RANGE_OUTLINE = "#cccccc";

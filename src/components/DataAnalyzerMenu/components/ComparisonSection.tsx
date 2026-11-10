@@ -9,10 +9,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useFilteredGeoids } from "../../../api/queries/filter";
-import { pickValue, formatValue } from "../metricValueHelpers";
+import { formatValue } from "../metricValueHelpers";
 import { CHART_COLORS, sviLabel } from "../../../config";
 import { useGeographies } from "../../../api/queries/geographies";
-import { useMetricValues } from "../../../api/queries/metricValues";
+import { useMetricKind } from "../../../api/queries/datasets";
+import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 
 interface ComparisonSectionProps {
   dataset: string | undefined;
@@ -35,24 +36,25 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   const cachedValues1 = useMetricValues(dataset, metric);
   const cachedValues2 = useMetricValues(dataset2, metric2);
 
-  const { points, activePoint, isPct1, isPct2 } = useMemo(() => {
-    if (!cachedValues1 || !cachedValues2) {
-      return { points: [], activePoint: null, isPct1: false, isPct2: false };
+  const kind1 = useMetricKind(dataset, metric);
+  const kind2 = useMetricKind(dataset2, metric2);
+
+  const { points, activePoint } = useMemo(() => {
+    if (!cachedValues1 || !cachedValues2 || !kind1 || !kind2) {
+      return { points: [], activePoint: null };
     }
-    const isPct1 = Object.values(cachedValues1).some((e) => e.percentage != null);
-    const isPct2 = Object.values(cachedValues2).some((e) => e.percentage != null);
     const pts: { geoid: string; x: number; y: number }[] = [];
     let active: { geoid: string; x: number; y: number } | null = null;
     for (const geoid of Object.keys(cachedValues1)) {
-      const x = pickValue(cachedValues1[geoid]);
-      const y = pickValue(cachedValues2[geoid]);
+      const x = metricNumber(cachedValues1[geoid], kind1);
+      const y = metricNumber(cachedValues2[geoid], kind2);
       if (x === null || y === null) continue;
       const point = { geoid, x, y };
       if (geoid === activeGeoid) active = point;
       else pts.push(point);
     }
-    return { points: pts, activePoint: active, isPct1, isPct2 };
-  }, [cachedValues1, cachedValues2, activeGeoid]);
+    return { points: pts, activePoint: active };
+  }, [cachedValues1, cachedValues2, kind1, kind2, activeGeoid]);
 
   const label1 = metric ? sviLabel(dataset, metric) : undefined;
   const label2 = metric2 ? sviLabel(dataset2, metric2) : undefined;
@@ -94,8 +96,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
 
       <ResponsiveContainer width="100%" height={200}>
         <ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <XAxis type="number" dataKey="x" tickFormatter={(v) => formatValue(v, isPct1)} tick={{ fontSize: 10 }} />
-          <YAxis type="number" dataKey="y" tickFormatter={(v) => formatValue(v, isPct2)} tick={{ fontSize: 10 }} width={40} />
+          <XAxis type="number" dataKey="x" tickFormatter={(v) => formatValue(v, kind1!)} tick={{ fontSize: 10 }} />
+          <YAxis type="number" dataKey="y" tickFormatter={(v) => formatValue(v, kind2!)} tick={{ fontSize: 10 }} width={40} />
           <RechartsTooltip
             cursor={{ strokeDasharray: "3 3" }}
             content={({ active, payload }) => {
@@ -108,10 +110,10 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
                     {label}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {label1}: {formatValue(point.x, isPct1)}
+                    {label1}: {formatValue(point.x, kind1!)}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    {label2}: {formatValue(point.y, isPct2)}
+                    {label2}: {formatValue(point.y, kind2!)}
                   </Typography>
                 </Box>
               );

@@ -7,7 +7,6 @@ export interface SviIndicator {
   label: string;
   description?: string; //description for UI
   calculationDescription?: string;
-  isCount?: boolean; //raw counts, mostly 0s: legend shows whole numbers and 0 gets its own bin
   // Switched off: kept in the file, left out of the menu
   off?: boolean;
 }
@@ -35,8 +34,3 @@ export const sviCalculationDescription = (
   SVI_CATEGORIES.flatMap((c) => c.indicators).find(
     (i) => i.dataset === dataset && i.metric === metric,
   )?.calculationDescription;
-
-export const sviIsCount = (dataset: string | undefined, metric: string): boolean =>
-  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
-    (i) => i.dataset === dataset && i.metric === metric,
-  )?.isCount ?? false;
