@@ -1,14 +1,9 @@
 import React, { useMemo, useCallback, useRef, useEffect, memo } from "react";
-import { useShallow } from "zustand/react/shallow";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import { Feature, FeatureCollection, Geometry } from "geojson";
-import L, { LeafletMouseEvent } from "leaflet";
-import {
-  BlockGroupProperties,
-  HawaiianHomelandProperties,
-  CountyBoundariesProperties,
-} from "../../types";
+import { FeatureCollection, Geometry } from "geojson";
+import L from "leaflet";
+import { CountyBoundariesProperties } from "../../types";
 import { GenericPointMarkers } from "../PointLayers";
 import { MapLegend, RasterMapLegend, LegendContainer } from "../MapLegend";
 import {
@@ -19,12 +14,10 @@ import {
   sviLabel,
 } from "../../config";
 import styles from "./SingleMapView.module.scss";
-import { CensusPolygonLayer } from "../PolygonLayers/CensusPolygonLayer";
-import { HawaiianHomelandsPolygonLayer } from "../PolygonLayers/HawaiianHomelandsPolygonLayer";
+import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
 import {
-  useAppStore,
   useMapStore,
   useMapConfig,
   useSnapshotStore,
@@ -41,10 +34,8 @@ import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
 import { useDatasets } from "../../api/queries/datasets";
-import { useGeographies } from "../../api/queries/geographies";
 import { useBoundary } from "../../api/queries/boundaries";
 import { useMetricValues } from "../../api/queries/metricValues";
-import { useFilteredGeoids } from "../../api/queries/filter";
 
 interface SingleMapViewProps {
   mapId: string;
@@ -114,19 +105,9 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const { filterRange, filterRange2 } = useAppStore(
-      useShallow((state) => ({
-        filterRange: state.filterRange,
-        filterRange2: state.filterRange2,
-      })),
-    );
     const blockGroupData = useDatasets();
-    const geographiesData = useGeographies();
-    const censusBlockGroups = useBoundary("blockGroups");
-    const hawaiianHomelands = useBoundary("homelands");
     const countyBoundaries = useBoundary("counties");
 
-    const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
     const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
     const mapOpacities = useMapStore(
       (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
@@ -222,42 +203,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       isCount: metricIsCount,
     });
 
-    const handleFeatureClick = useCallback(
-      (
-        feature: Feature<Geometry, BlockGroupProperties | HawaiianHomelandProperties> | null,
-        e: LeafletMouseEvent,
-      ) => {
-        const layer = e.target;
-        layer.bringToFront();
-
-        if (!feature) return;
-
-        // Extract geoid - check both census and homelands properties
-        const geoid =
-          (feature.properties as BlockGroupProperties)?.geoid20 ||
-          (feature.properties as HawaiianHomelandProperties)?.GEOID10;
-        if (!geoid) return;
-
-        if (config?.activeFeature?.geoid === geoid) {
-          updateMapActiveFeature(mapId, undefined);
-          return;
-        }
-
-        const map = mapRef.current;
-        if (!map) return;
-
-        updateMapActiveFeature(mapId, { geoid });
-
-        const bounds = layer.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [20, 20] });
-        }
-      },
-      [mapId, config?.activeFeature?.geoid, updateMapActiveFeature, mapRef],
-    );
-
-    const filteredGeoids = useFilteredGeoids();
-
     // A filter for block groups can't match Homelands (and vice versa), so drop it when the primary map switches
     const appliedFilter = useFilterStore((s) => s.applied);
     useEffect(() => {
@@ -269,21 +214,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
         useFilterStore.getState().clearFilter();
       }
     }, [isPrimary, appliedFilter, shouldShowHawaiianHomelands]);
-
-    const shouldRenderCensus =
-      effectiveDataset &&
-      effectiveMetric &&
-      censusBlockGroups &&
-      cachedMetric1 &&
-      blockGroupData &&
-      !shouldShowHawaiianHomelands;
-
-    const shouldRenderHawaiianHomelands =
-      effectiveDataset &&
-      effectiveMetric &&
-      shouldShowHawaiianHomelands &&
-      hawaiianHomelands &&
-      cachedMetric1;
 
     const shouldRenderCountyBoundariesBackground =
       effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && countyBoundaries;
@@ -368,41 +298,15 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               />
             )}
 
-            {shouldRenderCensus && (
-              <CensusPolygonLayer
-                data={censusBlockGroups as FeatureCollection<Geometry, BlockGroupProperties>}
-                geographiesData={geographiesData}
+            {metricLabel && cachedMetric1 && (
+              <ChoroplethLayer
+                mapId={mapId}
+                homelands={shouldShowHawaiianHomelands}
                 metric1={metric1}
                 metric2={metric2}
-                mapId={config.id}
-                activeMetric={sviLabel(effectiveDataset, effectiveMetric)}
-                activeMetric2={metricLabel2}
-                activeFeatureGeoid={config.activeFeature?.geoid}
-                layerOpacity={mapOpacities.census}
-                filterRange={filterRange}
-                filterRange2={filterRange2}
+                label1={metricLabel}
+                label2={metricLabel2}
                 getColor={getColor}
-                filteredGeoids={filteredGeoids}
-                onFeatureClick={handleFeatureClick}
-              />
-            )}
-
-            {shouldRenderHawaiianHomelands && (
-              <HawaiianHomelandsPolygonLayer
-                data={hawaiianHomelands as FeatureCollection<Geometry, HawaiianHomelandProperties>}
-                geographiesData={geographiesData}
-                metric1={metric1}
-                metric2={metric2}
-                mapId={config.id}
-                activeMetric={sviLabel(effectiveDataset, effectiveMetric)}
-                activeMetric2={metricLabel2}
-                activeFeatureGeoid={config.activeFeature?.geoid}
-                layerOpacity={filteredGeoids != null ? undefined : mapOpacities.hawaiianHomelands}
-                filterRange={filterRange}
-                filterRange2={filterRange2}
-                getColor={getColor}
-                filteredGeoids={filteredGeoids}
-                onFeatureClick={handleFeatureClick}
               />
             )}
 

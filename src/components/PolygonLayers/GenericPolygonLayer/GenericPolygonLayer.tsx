@@ -37,7 +37,6 @@ export interface GenericPolygonLayerProps<
   ) => StyleConfig;
   onFeatureClick?: (feature: Feature<Geometry, T>, e: LeafletMouseEvent) => void;
   renderPopup?: (feature: Feature<Geometry, T>) => string | null;
-  getLayerOpacity?: (feature: Feature<Geometry, T> | undefined) => StyleConfig;
   /** Whether click events should be consumed so raster layers do not receive them. */
   stopClickPropagation?: boolean;
   /** Runs on popupopen when provided (e.g. async HCDP zonal stats). */

@@ -115,6 +115,13 @@ export const POLYGON_LAYERS = {
         opacity: 1,
         fillOpacity: 0.85,
       },
+      background: {
+        fillColor: "#ff6b00",
+        weight: 2,
+        opacity: 1,
+        color: "#333333",
+        fillOpacity: 0.1,
+      },
     },
   } satisfies PolygonLayerConfig,
 
