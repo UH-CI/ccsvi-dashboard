@@ -3,9 +3,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, metric_columns
+from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, metric_columns, touches_every_hazard
 from ..db import ConnDep
-from ..request_params import read_minimums
+from ..request_params import read_ranges
 
 router = APIRouter(prefix="/api/v1/geographies")
 
@@ -65,10 +65,11 @@ async def get_geographies(conn: ConnDep) -> Any:
     summary="Filter block groups or Hawaiian Homelands by hazard and metric thresholds",
     description=(
         "Returns the areas of the chosen type matching all specified filters. Supports "
-        "a unioned hazard filter (looked up in the pre-computed geography_hazards table — an "
-        "area matches if it touches ANY of the repeatable ?hazard=<id>[.<sub_id>] params) "
-        "and numeric lower-bound thresholds on any metric column of that area type via "
-        "min_<col>=<value> query params (ANDed together)."
+        "a hazard filter (looked up in the pre-computed geography_hazards table — an area "
+        "matches if it touches EVERY hazard named in the repeatable ?hazard=<id>[.<sub_id>] "
+        "params, where touching any one chosen sub-layer of a hazard counts) and an inclusive "
+        "range on any metric column of that area type via min_<col>=<value> and "
+        "max_<col>=<value> query params (ANDed together)."
     ),
 )
 async def filter_areas(
@@ -77,19 +78,15 @@ async def filter_areas(
     area_type: Annotated[AreaType, Query(description="'block_group' or 'hawaiian_homeland'")],
     hazard: Annotated[
         list[str] | None,
-        Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; unioned."),
+        Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; every hazard must match, any chosen sub-layer of it counts."),
     ] = None,
 ) -> Any:
     metric_cols = await metric_columns(conn, area_type)
     params = QueryParams()
-    view, conditions = area_conditions(area_type, read_minimums(request, metric_cols), params)
+    view, conditions = area_conditions(area_type, read_ranges(request, metric_cols), params)
 
     if hazard:
-        # An area matches if it touches any chosen hazard, read from the list worked out at rebuild time.
-        conditions.append(
-            "EXISTS (SELECT 1 FROM geography_hazards h WHERE h.geoid = v.geoid"
-            f" AND ({hazard_branches(hazard, params)}))"
-        )
+        conditions += touches_every_hazard("geography_hazards", "h.geoid = v.geoid", hazard, params)
 
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     id_select = ", ".join(f"v.{c}" for c in _ID_COLS[area_type])

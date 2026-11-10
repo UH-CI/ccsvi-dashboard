@@ -4,9 +4,9 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, metric_columns
+from ..area_query import AreaType, QueryParams, area_conditions, metric_columns, touches_every_hazard
 from ..db import ConnDep
-from ..request_params import read_minimums
+from ..request_params import read_ranges
 
 router = APIRouter(prefix="/api/v1/points")
 
@@ -41,11 +41,11 @@ class PointFeatureCollection(BaseModel):
     description=(
         "Returns a GeoJSON FeatureCollection from the points table. "
         "Supports filtering by layer_id (exact match), "
-        "area_type with min_<col>=<value> params (only points inside an area of that type "
-        "at or above every minimum, the same areas /api/v1/geographies/filter "
-        "returns), and hazard (only points inside one of these "
-        "hazard layers, looked up in the pre-computed point_hazards table; repeatable, matches "
-        "any of them), and raster (only points with a real value in one of these rasters, looked "
+        "area_type with min_<col>=<value> and max_<col>=<value> params (only points inside an "
+        "area of that type within every range, the same areas /api/v1/geographies/filter "
+        "returns), and hazard (only points inside every one of these hazards, where any chosen "
+        "sub-layer of a hazard counts, looked up in the pre-computed point_hazards table; "
+        "repeatable), and raster (only points with a real value in one of these rasters, looked "
         "up in the pre-computed point_raster_values table; repeatable, matches any of them; "
         "combined with hazard, a point must match both). All params are optional; omitting "
         "them all returns every point."
@@ -57,11 +57,11 @@ async def get_points(
     layer_id: Annotated[str | None, Query(description="Layer ID, e.g. 'hospitals'")] = None,
     area_type: Annotated[
         AreaType | None,
-        Query(description="Only points inside an area of this type at or above every min_<col>"),
+        Query(description="Only points inside an area of this type within every min_<col> and max_<col>"),
     ] = None,
     hazard: Annotated[
         list[str] | None,
-        Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside any of them"),
+        Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Only points inside every hazard; any chosen sub-layer of it counts"),
     ] = None,
     raster: Annotated[
         list[str] | None,
@@ -76,7 +76,7 @@ async def get_points(
 
     if area_type:
         metric_cols = await metric_columns(conn, area_type)
-        view, area_where = area_conditions(area_type, read_minimums(request, metric_cols), params)
+        view, area_where = area_conditions(area_type, read_ranges(request, metric_cols), params)
         areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
         conditions.append(
             "EXISTS (SELECT 1 FROM point_geographies pg WHERE pg.point_id = points.id"
@@ -84,10 +84,7 @@ async def get_points(
         )
 
     if hazard:
-        conditions.append(
-            "EXISTS (SELECT 1 FROM point_hazards h WHERE h.point_id = points.id"
-            f" AND ({hazard_branches(hazard, params)}))"
-        )
+        conditions += touches_every_hazard("point_hazards", "h.point_id = points.id", hazard, params)
 
     if raster:
         conditions.append(

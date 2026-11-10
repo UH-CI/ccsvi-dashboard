@@ -1,8 +1,9 @@
 import { create } from "zustand";
+import type { ValueRange } from "../types";
 
 // What the last Filter press asked for.
-// "areas": with an indicator on the map, the block groups or Homelands touching every hazard and at or above
-// each column's minimum, and every shown point layer's points inside them that also sit in the hazards and rasters.
+// "areas": with an indicator on the map, the block groups or Homelands touching every hazard and within
+// each column's range, and every shown point layer's points inside them that also sit in the hazards and rasters.
 // "points": with no indicator, just the listed point layers' points that sit inside the hazards and rasters.
 export type AppliedFilter =
   | {
@@ -10,7 +11,7 @@ export type AppliedFilter =
       homelands: boolean;
       hazards: string[];
       rasters: string[];
-      minimums: Record<string, number>;
+      ranges: Record<string, ValueRange>;
     }
   | { kind: "points"; hazards: string[]; rasters: string[]; pointLayers: string[] };
 

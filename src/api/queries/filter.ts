@@ -1,19 +1,19 @@
 import { useMemo } from "react";
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 import { useFilterStore, type AppliedFilter } from "../../stores/useFilterStore";
-import type { AreaCriteria, AreaResult } from "../../types";
+import type { AreaCriteria, AreaResult, ValueRange } from "../../types";
 import { getFilterResults } from "../client";
 import { queryClient } from "../queryClient";
 
-// The areas touching every hazard and at or above each column's minimum
+// The areas touching every hazard and within each column's range
 export const filterQuery = (
   homelands: boolean,
   hazards: string[],
-  minimums: Record<string, number>,
+  ranges: Record<string, ValueRange>,
 ) =>
   queryOptions({
-    queryKey: ["filter", homelands, [...hazards].sort(), minimums],
-    queryFn: () => getFilterResults(homelands, hazards, minimums),
+    queryKey: ["filter", homelands, [...hazards].sort(), ranges],
+    queryFn: () => getFilterResults(homelands, hazards, ranges),
     meta: { failureMessage: "The filter couldn't be applied. Please try again." },
   });
 
@@ -24,7 +24,7 @@ export function useAreaFilter() {
   const applied = useFilterStore((state) => state.applied);
   const areas = applied?.kind === "areas" ? applied : null;
   return useQuery({
-    ...filterQuery(areas?.homelands ?? false, areas?.hazards ?? [], areas?.minimums ?? {}),
+    ...filterQuery(areas?.homelands ?? false, areas?.hazards ?? [], areas?.ranges ?? {}),
     enabled: areas !== null,
     placeholderData: areas ? keepPreviousData : undefined,
     select: geoidsOf,
@@ -55,7 +55,7 @@ export function usePointFilter(layerId: string): PointCriteria | null | undefine
         : null;
     }
     if (!geoids || isPlaceholderData) return undefined;
-    const areas = { homelands: applied.homelands, minimums: applied.minimums };
+    const areas = { homelands: applied.homelands, ranges: applied.ranges };
     return { areas, noAreasMatched: geoids.size === 0, hazards, rasters };
   }, [applied, layerId, geoids, isPlaceholderData]);
 }
@@ -64,7 +64,7 @@ export function usePointFilter(layerId: string): PointCriteria | null | undefine
 export function applyFilter(filter: AppliedFilter) {
   useFilterStore.getState().apply(filter);
   if (filter.kind === "areas") {
-    const { queryKey } = filterQuery(filter.homelands, filter.hazards, filter.minimums);
+    const { queryKey } = filterQuery(filter.homelands, filter.hazards, filter.ranges);
     queryClient.resetQueries({
       queryKey,
       exact: true,

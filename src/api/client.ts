@@ -7,6 +7,7 @@ import {
   MetricValue,
   RasterInfo,
   RasterSource,
+  ValueRange,
 } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -75,10 +76,12 @@ export const getHazardAreas = (hazards: string[]) => {
   return get<Record<string, string[]>>(`/api/v1/geographies/by-hazard?${params}`);
 };
 
-// Adds each column's minimum as min_<column>, as both the filter and the points requests send them
-const setMinimums = (params: URLSearchParams, minimums: Record<string, number>) => {
-  for (const [column, value] of Object.entries(minimums))
-    params.set(`min_${column}`, String(value));
+// Adds each column's range as min_<column> and, when it has one, max_<column>, as both the filter and the points requests send them
+const setRanges = (params: URLSearchParams, ranges: Record<string, ValueRange>) => {
+  for (const [column, { min, max }] of Object.entries(ranges)) {
+    params.set(`min_${column}`, String(min));
+    if (max !== undefined) params.set(`max_${column}`, String(max));
+  }
 };
 
 // Asks for one layer's points, limited to the given areas, hazards and rasters. No areas given means no area limit.
@@ -91,22 +94,22 @@ export const getFilteredPoints = (
   const params = new URLSearchParams({ layer_id: layerId });
   if (areas) {
     params.set("area_type", areaType(areas.homelands));
-    setMinimums(params, areas.minimums);
+    setRanges(params, areas.ranges);
   }
   for (const hazard of hazards) params.append("hazard", hazard);
   for (const raster of rasters) params.append("raster", raster);
   return get<FeatureCollection<Point>>(`/api/v1/points?${params}`);
 };
 
-// The block groups or Homelands touching every given hazard, at or above each column's minimum
+// The block groups or Homelands touching every given hazard, within each column's range
 export const getFilterResults = (
   homelands: boolean,
   hazards: string[],
-  minimums: Record<string, number>,
+  ranges: Record<string, ValueRange>,
 ) => {
   const params = new URLSearchParams({ area_type: areaType(homelands) });
   for (const hazard of hazards) params.append("hazard", hazard);
-  setMinimums(params, minimums);
+  setRanges(params, ranges);
   return get<AreaResult[]>(`/api/v1/geographies/filter?${params}`);
 };
 

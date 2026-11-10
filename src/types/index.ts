@@ -155,10 +155,16 @@ export interface AreaResult {
   [key: string]: number | string | null;
 }
 
-// Block groups or Homelands at or above each column's minimum
+// A column's allowed values, both ends included; no max means no upper limit
+export interface ValueRange {
+  min: number;
+  max?: number;
+}
+
+// Block groups or Homelands within each column's range
 export interface AreaCriteria {
   homelands: boolean;
-  minimums: Record<string, number>;
+  ranges: Record<string, ValueRange>;
 }
 
 export interface CatalogMetric {

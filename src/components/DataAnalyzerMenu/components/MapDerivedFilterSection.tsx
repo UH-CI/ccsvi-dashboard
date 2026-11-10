@@ -7,6 +7,7 @@ import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
 import { layerDatasetId } from "../../../utils/layerDatasets";
 import { useDatasets } from "../../../api/queries/datasets";
+import type { ValueRange } from "../../../types";
 
 interface MapDerivedFilterSectionProps {
   dataset: string | undefined;
@@ -79,17 +80,19 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
 
     const homelands =
       dataset && datasetCatalog ? (datasetCatalog[dataset]?.hawaiian_homelands ?? false) : false;
-    const minimums: Record<string, number> = {};
-    if (hasMetricThreshold && mvColumn) minimums[mvColumn] = filterRange![0];
-    if (hasMetricThreshold2 && mvColumn2) minimums[mvColumn2] = filterRange2![0];
+    const ranges: Record<string, ValueRange> = {};
+    if (hasMetricThreshold && mvColumn)
+      ranges[mvColumn] = { min: filterRange![0], max: filterRange![1] };
+    if (hasMetricThreshold2 && mvColumn2)
+      ranges[mvColumn2] = { min: filterRange2![0], max: filterRange2![1] };
 
     // At least one point of each visible point layer, on its count's filter column
     for (const id of pointLayerIds) {
       const pointDataset = layerDatasetId(datasetCatalog, id, homelands)!;
-      minimums[datasetCatalog![pointDataset].metrics.Count.mv_column!] = 1;
+      ranges[datasetCatalog![pointDataset].metrics.Count.mv_column!] = { min: 1 };
     }
 
-    applyFilter({ kind: "areas", homelands, hazards: hazardIds, rasters: rasterIds, minimums });
+    applyFilter({ kind: "areas", homelands, hazards: hazardIds, rasters: rasterIds, ranges });
   };
 
   return (
