@@ -155,6 +155,22 @@ export interface AreaResult {
   [key: string]: number | string | null;
 }
 
+// A dataset's table as the server sends it: its columns, then one row per area with its cells in column order
+export interface TableColumn {
+  heading: string;
+  type: "number" | "text";
+}
+
+export interface TableRow {
+  geoid: string;
+  cells: (string | number | null)[];
+}
+
+export interface DatasetTable {
+  columns: TableColumn[];
+  rows: TableRow[];
+}
+
 // A column's allowed values, both ends included; no max means no upper limit
 export interface ValueRange {
   min: number;

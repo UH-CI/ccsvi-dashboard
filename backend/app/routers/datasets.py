@@ -1,5 +1,6 @@
 import json
-from typing import Any
+from collections.abc import Callable
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -11,6 +12,22 @@ router = APIRouter(prefix="/api/v1/datasets")
 
 
 # ── Pydantic models ──────────────────────────────────────────────────────────
+
+# One table column: its heading and whether its cells are numbers or text
+class TableColumn(BaseModel):
+    heading: str
+    type: Literal["number", "text"]
+
+
+# One area's row: its geoid and its cells, in column order
+class TableRow(BaseModel):
+    geoid: str
+    cells: list[str | int | float | None]
+
+
+class DatasetTable(BaseModel):
+    columns: list[TableColumn]
+    rows: list[TableRow]
 
 class MetricConfig(BaseModel):
     mv_column: str | None = None
@@ -81,8 +98,8 @@ async def get_datasets(conn: ConnDep) -> Any:
 
 @router.get(
     "/{dataset_id}/table",
-    response_model=list[dict[str, str | int | float | None]],
-    summary="Full dataset rows for TableViewer",
+    response_model=DatasetTable,
+    summary="A dataset's table: its columns (heading and type), then one row per area with its cells in column order",
 )
 async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
 
@@ -106,24 +123,31 @@ async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
             return f"Total ({r['universe']})"
         return r["name"].replace(" (calc.)", "")
 
-    metric_id_to_name = {r["id"]: display_name(r) for r in metric_rows}
-    metric_id_has_moe = {r["id"]: r["has_moe"] for r in metric_rows}
-
-    column_template: dict[str, Any] = {
-        "Geography": None,
-        "Geographic Area Name": None,
-        "Census Population": None,
-    }
+    # The columns in order as (heading, type); each metric's own columns also say how to read their cell
+    columns: list[tuple[str, str]] = [
+        ("Geography", "text"),
+        ("Geographic Area Name", "text"),
+        ("Census Population", "number"),
+    ]
+    readers: dict[int, list[tuple[int, Callable[[Any], Any]]]] = {}
     for r in metric_rows:
-        name = metric_id_to_name[r["id"]]
-        column_template[f"Estimate!!{name}"] = None
+        name = display_name(r)
+        parts: list[tuple[str, str, Callable[[Any], Any]]] = [(f"Estimate!!{name}", "number", lambda v: v["absolute"])]
         if r["has_moe"]:
-            column_template[f"Margin of Error!!{name}"] = None
-            column_template[f"Reliability!!{name}"] = None
+            parts += [
+                (f"Margin of Error!!{name}", "number", lambda v: v["margin_of_error"]),
+                (
+                    f"Reliability!!{name}",
+                    "text",
+                    lambda v: reliability(v["absolute"], v["margin_of_error"], v["cv"], True)["label"],
+                ),
+            ]
         if r["has_percentage"]:
-            column_template[f"{name} (%)"] = None
+            parts.append((f"{name} (%)", "number", lambda v: v["percentage"]))
         if r["has_moe_pp"]:
-            column_template[f"Margin of Error!!{name} (pp)"] = None
+            parts.append((f"Margin of Error!!{name} (pp)", "number", lambda v: v["moe_percentage_points"]))
+        readers[r["id"]] = [(len(columns) + i, read) for i, (_, _, read) in enumerate(parts)]
+        columns += [(heading, kind) for heading, kind, _ in parts]
 
     value_rows = await conn.fetch(
         """
@@ -139,38 +163,22 @@ async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
         WHERE mv.metric_id = ANY($1::int[])
         ORDER BY g.geoid
         """,
-        list(metric_id_to_name.keys()),
+        list(readers),
     )
 
-    geoid_data: dict[str, dict[str, Any]] = {}
-    for row in value_rows:
-        geoid = row["geoid"]
-        if geoid not in geoid_data:
-            # Prefix matches Census block-group GEOID format (summary level 150).
-            # The TableViewer strips this prefix for map-sync; it also prevents
-            # the all-digit geoid from being misclassified as a numeric column.
-            geoid_data[geoid] = dict(column_template)
-            geoid_data[geoid]["Geography"] = f"1500000US{geoid}"
-            geoid_data[geoid]["Geographic Area Name"] = row["name"]
-            geoid_data[geoid]["Census Population"] = row["population"]
+    rows: dict[str, list[Any]] = {}
+    for v in value_rows:
+        if v["geoid"] not in rows:
+            # Geography reads "1500000US<geoid>" on every row, the Census code form for a block group
+            rows[v["geoid"]] = [f"1500000US{v['geoid']}", v["name"], v["population"]] + [None] * (len(columns) - 3)
+        cells = rows[v["geoid"]]
+        for position, read in readers[v["metric_id"]]:
+            cells[position] = read(v)
 
-        metric_name = metric_id_to_name[row["metric_id"]]
-        # A column we planned above is always filled in, even when empty.
-        # Any other column is only added if it has a value.
-        for label, value in (
-            (f"Estimate!!{metric_name}", row["absolute"]),
-            (f"Margin of Error!!{metric_name}", row["margin_of_error"]),
-            (f"{metric_name} (%)", row["percentage"]),
-            (f"Margin of Error!!{metric_name} (pp)", row["moe_percentage_points"]),
-        ):
-            if label in column_template or value is not None:
-                geoid_data[geoid][label] = value
-        if metric_id_has_moe[row["metric_id"]]:
-            geoid_data[geoid][f"Reliability!!{metric_name}"] = reliability(
-                row["absolute"], row["margin_of_error"], row["cv"], True
-            )["label"]
-
-    return list(geoid_data.values())
+    return {
+        "columns": [{"heading": heading, "type": kind} for heading, kind in columns],
+        "rows": [{"geoid": geoid, "cells": cells} for geoid, cells in rows.items()],
+    }
 
 
 @router.get(

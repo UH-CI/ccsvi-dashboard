@@ -1,16 +1,7 @@
 import { useMemo } from "react";
 import { GridColDef } from "@mui/x-data-grid";
-import { TableData } from "../types";
+import type { DatasetTable, TableColumn } from "../../../types";
 import styles from "../TableViewer.module.scss";
-
-const PLACEHOLDER_VALUES = new Set(["", "—", "-", "**", "N/A", "n/a", "x", "null", "NULL", "na"]);
-
-const detectColumnType = (columnData: string[]): "number" | "string" => {
-  const realValues = columnData.filter((val) => !PLACEHOLDER_VALUES.has(val.trim()));
-  if (realValues.length === 0) return "string";
-  const allNumeric = realValues.every((val) => !isNaN(Number(val.replace(/[,$%]/g, ""))));
-  return allNumeric ? "number" : "string";
-};
 
 const cleanHeaderForDisplay = (header: string): string => {
   return header.replace(/!!/g, " → ").trim();
@@ -29,83 +20,83 @@ const calculateColumnWidth = (header: string): number => {
   return Math.min(Math.max(baseWidth, minWidth), maxWidth);
 };
 
+// One grid column, built the same way for every column in the table: the heading with " → ", a width
+// from the heading, "—" for an empty cell, commas for whole numbers and one decimal otherwise, and substring search
+export const tableColumn = ({
+  field,
+  heading,
+  type,
+  sortable = true,
+}: {
+  field: string;
+  heading: string;
+  type: TableColumn["type"];
+  sortable?: boolean;
+}): GridColDef => {
+  const displayHeader = cleanHeaderForDisplay(heading);
+  return {
+    field,
+    headerName: displayHeader,
+    type: type === "number" ? "number" : "string",
+    flex: 1,
+    minWidth: calculateColumnWidth(heading),
+    resizable: true,
+    sortable,
+    filterable: true,
+    hideable: true,
+    renderHeader: () => (
+      <div title={displayHeader} className={styles["custom-header"]}>
+        {displayHeader}
+      </div>
+    ),
+    valueFormatter: (value: unknown) => {
+      if (value == null) return "—";
+      if (typeof value !== "number") return String(value);
+      return Number.isInteger(value) ? value.toLocaleString() : value.toFixed(1);
+    },
+    // Substring search for every column; MUI's own matches numbers exactly and text by its start
+    getApplyQuickFilterFn: (filterValue: string) => {
+      if (filterValue == null || filterValue === "") return null;
+      const search = String(filterValue).toLowerCase();
+      return (cellValue: unknown) => {
+        if (cellValue == null) return false;
+        return String(cellValue).toLowerCase().includes(search);
+      };
+    },
+  };
+};
+
+// A number as the table holds it: whole numbers as they are, others to one decimal, as the backend stores them
+const roundForTable = (value: number) =>
+  Number.isInteger(value) ? value : Math.round(value * 10) / 10;
+
+export type TableGridRow = Record<string, string | number | null>;
+
 interface DataGridColumns {
   columns: GridColDef[];
-  rows: Record<string, string | number>[];
+  rows: TableGridRow[];
   geoidColIndex: number;
 }
 
-// Builds DataGrid columns + rows from the table's headers and rows: per-column type detection,
-// number formatting, substring quick-filter, and the geography column index.
-export const useDataGridColumns = (tableData: TableData | null): DataGridColumns => {
+// The grid's columns and rows from the server's table, plus where the Geography column is
+export const useDataGridColumns = (table: DatasetTable | null): DataGridColumns => {
   return useMemo(() => {
-    if (!tableData) return { columns: [], rows: [], geoidColIndex: -1 };
+    if (!table) return { columns: [], rows: [], geoidColIndex: -1 };
 
-    const columnTypes = tableData.headers.map((_: string, index: number) => {
-      const columnData = tableData.rows.map((row: string[]) => row[index] || "");
-      return detectColumnType(columnData);
-    });
-
-    const cols: GridColDef[] = tableData.headers.map((header: string, index: number) => {
-      const displayHeader = cleanHeaderForDisplay(header);
-      const columnWidth = calculateColumnWidth(header);
-
-      return {
-        field: `col_${index}`,
-        headerName: displayHeader,
-        type: columnTypes[index],
-        flex: 1,
-        minWidth: columnWidth,
-        resizable: true,
-        sortable: true,
-        filterable: true,
-        hideable: true, // Allow columns to be hidden via toolbar
-        renderHeader: () => (
-          <div title={displayHeader} className={styles["custom-header"]}>
-            {displayHeader}
-          </div>
-        ),
-        valueFormatter:
-          columnTypes[index] === "number"
-            ? (value: unknown) => {
-                if (value === null || value === undefined || value === "—") return "—";
-                const num = parseFloat(String(value).replace(/[,$%]/g, ""));
-                if (isNaN(num)) return String(value);
-                // Counts get comma separators; decimals match the one place the backend stores.
-                return Number.isInteger(num) ? num.toLocaleString() : num.toFixed(1);
-              }
-            : undefined,
-        // Override quick filter to use substring matching for all columns.
-        // MUI's default does exact equality for numbers and prefix matching for strings.
-        getApplyQuickFilterFn: (filterValue: string) => {
-          if (filterValue == null || filterValue === "") return null;
-          const search = String(filterValue).toLowerCase();
-          return (cellValue: unknown) => {
-            if (cellValue == null) return false;
-            return String(cellValue).toLowerCase().includes(search);
-          };
-        },
-      };
-    });
-
-    const rowData = tableData.rows.map((row: string[], index: number) => {
-      const rowObj: Record<string, string | number> = { id: index };
-      row.forEach((cell: string, cellIndex: number) => {
-        if (columnTypes[cellIndex] === "number" && cell && !PLACEHOLDER_VALUES.has(cell.trim())) {
-          const num = parseFloat(cell.replace(/[,$%]/g, ""));
-          const rounded = Number.isInteger(num) ? num : Math.round(num * 10) / 10;
-          rowObj[`col_${cellIndex}`] = isNaN(num) ? cell || "—" : rounded;
-        } else {
-          rowObj[`col_${cellIndex}`] = cell || "—";
-        }
-      });
-      return rowObj;
-    });
-
-    const geoidColIndex = tableData.headers.findIndex(
-      (h: string) => h.trim().toLowerCase() === "geography",
+    const columns = table.columns.map((column, index) =>
+      tableColumn({ field: `col_${index}`, heading: column.heading, type: column.type }),
     );
 
-    return { columns: cols, rows: rowData, geoidColIndex };
-  }, [tableData]);
+    const rows = table.rows.map((row, index) => {
+      const gridRow: TableGridRow = { id: index };
+      row.cells.forEach((cell, cellIndex) => {
+        gridRow[`col_${cellIndex}`] = typeof cell === "number" ? roundForTable(cell) : cell;
+      });
+      return gridRow;
+    });
+
+    const geoidColIndex = table.columns.findIndex((column) => column.heading === "Geography");
+
+    return { columns, rows, geoidColIndex };
+  }, [table]);
 };

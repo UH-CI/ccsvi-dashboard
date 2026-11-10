@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { gridExpandedSortedRowIdsSelector, useGridApiRef } from "@mui/x-data-grid";
 import { useMapStore, usePrimaryMapState } from "../../../stores";
+import type { TableGridRow } from "./useDataGridColumns";
 
 interface PaginationModel {
   page: number;
@@ -9,7 +10,7 @@ interface PaginationModel {
 
 interface UseActiveRowSyncArgs {
   apiRef: ReturnType<typeof useGridApiRef>;
-  rows: Record<string, string | number>[];
+  rows: TableGridRow[];
   geoidColIndex: number;
   paginationModel: PaginationModel;
   setPaginationModel: React.Dispatch<React.SetStateAction<PaginationModel>>;

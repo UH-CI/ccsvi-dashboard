@@ -12,7 +12,7 @@ import { useVisiblePointCounts } from "../../api/queries/pointCounts";
 import { useSavedRaster } from "../../api/queries/savedRaster";
 import { useHazardOverlapsForTable } from "../../api/queries/hazardAreas";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
-import { useDataGridColumns } from "./hooks/useDataGridColumns";
+import { useDataGridColumns, type TableGridRow } from "./hooks/useDataGridColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
 import styles from "./TableViewer.module.scss";
 
@@ -85,7 +85,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
   const { columns, rows, geoidColIndex } = useDataGridColumns(tableData);
 
-  const geoidFromRow = (row: Record<string, string | number>): string => {
+  const geoidFromRow = (row: TableGridRow): string => {
     if (geoidColIndex < 0) return "";
     const raw = String(row[`col_${geoidColIndex}`] ?? "");
     return raw.replace(/^\d+US/i, "");

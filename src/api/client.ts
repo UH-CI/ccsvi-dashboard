@@ -3,6 +3,7 @@ import {
   AreaCriteria,
   AreaResult,
   DatasetCatalog,
+  DatasetTable,
   GeographiesData,
   MetricValue,
   RasterInfo,
@@ -53,7 +54,7 @@ export const getDatasets = () => get<DatasetCatalog>("/api/v1/datasets");
 export const getGeographies = () => get<GeographiesData>("/api/v1/geographies");
 
 export const getDatasetTable = (dataset: string) =>
-  get<Record<string, string | number | null>[]>(`/api/v1/datasets/${dataset}/table`);
+  get<DatasetTable>(`/api/v1/datasets/${dataset}/table`);
 
 export const getMetricValues = (dataset: string, metric: string) =>
   get<Record<string, MetricValue>>(
