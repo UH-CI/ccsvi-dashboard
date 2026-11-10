@@ -7,12 +7,9 @@ import { useTableResize } from "../../hooks/useTableResize";
 import { usePrimaryMapState, useMapStore, useAppStore } from "../../stores";
 import { useDatasetTable } from "../../api/queries/datasetTable";
 import { useFilteredGeoids } from "../../api/queries/filter";
-import { usePointNamesForTable } from "../../api/queries/pointNames";
-import { useVisiblePointCounts } from "../../api/queries/pointCounts";
-import { useSavedRaster } from "../../api/queries/savedRaster";
-import { useHazardOverlapsForTable } from "../../api/queries/hazardAreas";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
-import { useDataGridColumns } from "./hooks/useDataGridColumns";
+import { tableCell, tableColumn, useDataGridColumns } from "./hooks/useDataGridColumns";
+import { useExtraColumns } from "./hooks/useExtraColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
 import styles from "./TableViewer.module.scss";
 
@@ -85,105 +82,29 @@ export const TableViewer: React.FC<TableViewerProps> = ({
 
   const { columns, rows } = useDataGridColumns(tableData);
 
-  // Point counts: one extra column per currently-visible point layer
+  // Columns from what's on the main map (point layers, hazards, the saved raster), built like the dataset's own
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const isHomelands = Boolean(datasetInfo?.hawaiian_homelands);
-  const { layers: pointLayers, getCount } = useVisiblePointCounts(isHomelands, primaryMapId);
-  const { getNames } = usePointNamesForTable(isHomelands, primaryMapId);
-
-  const pointCountColumns = useMemo(
-    () =>
-      pointLayers.map((layer) => ({
-        field: `pointcount_${layer.id}`,
-        headerName: layer.name,
-        type: "number" as const,
-        flex: 1,
-        minWidth: 120,
-        sortable: true,
-        filterable: true,
-        hideable: true,
-      })),
-    [pointLayers],
-  );
-
-  const pointNameColumns = useMemo(
-    () =>
-      pointLayers.map((layer) => ({
-        field: `pointnames_${layer.id}`,
-        headerName: `${layer.name} (names)`,
-        flex: 1,
-        minWidth: 200,
-        sortable: false,
-        filterable: true,
-        hideable: true,
-      })),
-    [pointLayers],
-  );
-
-  // Raster mean and max: two extra columns for the raster currently visible on the map
-  const savedRaster = useSavedRaster(isHomelands, primaryMapId);
-
-  const rasterColumns = useMemo(
-    () =>
-      savedRaster
-        ? [
-            ["raster_mean", "mean"],
-            ["raster_max", "max"],
-          ].map(([field, stat]) => ({
-            field,
-            headerName: `${savedRaster.name} (${stat}${savedRaster.units ? `, ${savedRaster.units}` : ""})`,
-            type: "number" as const,
-            flex: 1,
-            minWidth: 160,
-            sortable: true,
-            filterable: true,
-            hideable: true,
-          }))
-        : [],
-    [savedRaster?.name, savedRaster?.units],
-  );
-
-  // Hazard overlap: one Yes/No column per hazard or sub-layer currently visible on the map
-  const { hazards, touches } = useHazardOverlapsForTable(primaryMapId);
-
-  const hazardColumns = useMemo(
-    () =>
-      hazards.map((hazard) => ({
-        field: `hazard_${hazard.key}`,
-        headerName: `${hazard.label} (overlaps)`,
-        flex: 1,
-        minWidth: 160,
-        sortable: true,
-        filterable: true,
-        hideable: true,
-      })),
-    [hazards],
-  );
+  const extraColumns = useExtraColumns(isHomelands, primaryMapId);
 
   const mergedColumns = useMemo(
-    () => [...columns, ...pointCountColumns, ...pointNameColumns, ...hazardColumns, ...rasterColumns],
-    [columns, pointCountColumns, pointNameColumns, hazardColumns, rasterColumns],
+    () => [...columns, ...extraColumns.map(tableColumn)],
+    [columns, extraColumns],
   );
 
-  const mergedRows = useMemo(() => {
-    if (pointLayers.length === 0 && !savedRaster && hazards.length === 0) return rows;
-    return rows.map((row) => {
-      const geoid = row.id;
-      const extra: Record<string, number | string> = {};
-      for (const layer of pointLayers) {
-        extra[`pointcount_${layer.id}`] = getCount(layer.id, geoid) ?? "";
-        extra[`pointnames_${layer.id}`] = getNames(layer.id, geoid).join(", ") || "—";
-      }
-      if (savedRaster) {
-        extra.raster_mean = savedRaster.getMean(geoid) ?? "";
-        extra.raster_max = savedRaster.getMax(geoid) ?? "";
-      }
-      for (const hazard of hazards) {
-        extra[`hazard_${hazard.key}`] = touches(hazard.key, geoid) ? "Yes" : "No";
-      }
-      return { ...row, ...extra };
-    });
-  }, [rows, pointLayers, getCount, getNames, savedRaster, hazards, touches]);
+  const mergedRows = useMemo(
+    () =>
+      extraColumns.length === 0
+        ? rows
+        : rows.map((row) => {
+            const extra = extraColumns.map((column) => [
+              column.field,
+              tableCell(column.value(row.id)),
+            ]);
+            return { ...row, ...Object.fromEntries(extra) };
+          }),
+    [rows, extraColumns],
+  );
 
   const displayRows = useMemo(
     () =>

@@ -66,9 +66,9 @@ export const tableColumn = ({
   };
 };
 
-// A number as the table holds it: whole numbers as they are, others to one decimal, as the backend stores them
-const roundForTable = (value: number) =>
-  Number.isInteger(value) ? value : Math.round(value * 10) / 10;
+// A cell as the table holds it: whole numbers as they are, other numbers to one decimal, anything else unchanged
+export const tableCell = (value: string | number | null) =>
+  typeof value === "number" && !Number.isInteger(value) ? Math.round(value * 10) / 10 : value;
 
 // One grid row: its id is the area's geoid, then one cell per column
 export type TableGridRow = { id: string } & Record<string, string | number | null>;
@@ -90,7 +90,7 @@ export const useDataGridColumns = (table: DatasetTable | null): DataGridColumns 
     const rows = table.rows.map((row) => {
       const gridRow: TableGridRow = { id: row.geoid };
       row.cells.forEach((cell, cellIndex) => {
-        gridRow[`col_${cellIndex}`] = typeof cell === "number" ? roundForTable(cell) : cell;
+        gridRow[`col_${cellIndex}`] = tableCell(cell);
       });
       return gridRow;
     });
