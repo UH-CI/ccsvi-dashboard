@@ -66,6 +66,10 @@ async def main() -> None:
             r["layer_id"]
             for r in await conn.fetch("SELECT DISTINCT layer_id FROM points ORDER BY 1")
         ]
+        if not layer_ids:
+            raise SystemExit("No points in the database; run ingest.load_postgis first")
+        if not await conn.fetchval("SELECT EXISTS (SELECT 1 FROM point_geographies)"):
+            raise SystemExit("No point has an area yet; run ingest.load_point_areas first")
         print(f"Found {len(layer_ids)} point layer(s): {', '.join(layer_ids)}")
         for layer_id in layer_ids:
             await load_layer(conn, layer_id)

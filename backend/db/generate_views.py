@@ -21,64 +21,6 @@ HEADER = """-- GENERATED FILE — do not edit.
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 """
 
-BLOCK_GROUP_SQL = """
-
-DROP MATERIALIZED VIEW IF EXISTS block_group_metrics;
-CREATE MATERIALIZED VIEW block_group_metrics AS
-SELECT
-    g.geoid,
-    g.name,
-    g.county,
-    g.population,
-    g.geom,
-    ST_Centroid(g.geom) AS centroid,
-
-{columns}
-
-FROM geographies g
-LEFT JOIN metric_values mv ON mv.geoid = g.geoid
-LEFT JOIN metrics m ON m.id = mv.metric_id
-WHERE EXISTS (
-    SELECT 1
-    FROM metric_values mv2
-    JOIN metrics m2 ON m2.id = mv2.metric_id
-    JOIN datasets d2 ON d2.id = m2.dataset_id
-    WHERE mv2.geoid = g.geoid
-      AND d2.hawaiian_homelands = false
-)
-GROUP BY g.geoid, g.name, g.county, g.population, g.geom;
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bgm_geoid    ON block_group_metrics (geoid);
-CREATE INDEX        IF NOT EXISTS idx_bgm_geom     ON block_group_metrics USING GIST (geom);
-CREATE INDEX        IF NOT EXISTS idx_bgm_centroid ON block_group_metrics USING GIST (centroid);
-CREATE INDEX        IF NOT EXISTS idx_bgm_county   ON block_group_metrics (county);
-"""
-
-HAWAIIAN_HOMELAND_SQL = """
-
-DROP MATERIALIZED VIEW IF EXISTS hawaiian_homeland_metrics;
-CREATE MATERIALIZED VIEW hawaiian_homeland_metrics AS
-SELECT
-    g.geoid,
-    g.name,
-    g.population,
-    g.geom,
-    ST_Centroid(g.geom) AS centroid,
-
-{columns}
-
-FROM geographies g
-JOIN metric_values mv ON mv.geoid = g.geoid
-JOIN metrics m ON m.id = mv.metric_id
-JOIN datasets d ON d.id = m.dataset_id AND d.hawaiian_homelands = true
-GROUP BY g.geoid, g.name, g.population, g.geom;
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid    ON hawaiian_homeland_metrics (geoid);
-CREATE INDEX        IF NOT EXISTS idx_hhlm_geom     ON hawaiian_homeland_metrics USING GIST (geom);
-CREATE INDEX        IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics USING GIST (centroid);
-"""
-
-
 # One filtered aggregate per column, holding the number the map shows: the percentage when the
 # metric has one, otherwise the count
 def columns_sql(rows: list[tuple[str, str, str]]) -> str:
@@ -92,11 +34,44 @@ def columns_sql(rows: list[tuple[str, str, str]]) -> str:
     return ",\n".join(lines)
 
 
+# One area type's view: a row per area of that type (geographies.type), with its filter columns.
+# extra_ids are id columns only that type has; each gets an index.
+def view_sql(view: str, index_prefix: str, area_type: str, extra_ids: list[str], rows: list[tuple[str, str, str]]) -> str:
+    ids = ["geoid", "name", *extra_ids, "population", "geom"]
+    id_select = "".join(f"    g.{col},\n" for col in ids)
+    group_by = ", ".join(f"g.{col}" for col in ids)
+    indexes = "\n".join(
+        [
+            f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{index_prefix}_geoid ON {view} (geoid);",
+            f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_geom ON {view} USING GIST (geom);",
+            f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_centroid ON {view} USING GIST (centroid);",
+            *(f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_{col} ON {view} ({col});" for col in extra_ids),
+        ]
+    )
+    return f"""
+
+DROP MATERIALIZED VIEW IF EXISTS {view};
+CREATE MATERIALIZED VIEW {view} AS
+SELECT
+{id_select}    ST_Centroid(g.geom) AS centroid,
+
+{columns_sql(rows)}
+
+FROM geographies g
+LEFT JOIN metric_values mv ON mv.geoid = g.geoid
+LEFT JOIN metrics m ON m.id = mv.metric_id
+WHERE g.type = '{area_type}'
+GROUP BY {group_by};
+
+{indexes}
+"""
+
+
 def render() -> str:
     return (
         HEADER
-        + BLOCK_GROUP_SQL.format(columns=columns_sql(BLOCK_GROUP_COLUMNS))
-        + HAWAIIAN_HOMELAND_SQL.format(columns=columns_sql(HAWAIIAN_HOMELAND_COLUMNS))
+        + view_sql("block_group_metrics", "bgm", "block_group", ["county"], BLOCK_GROUP_COLUMNS)
+        + view_sql("hawaiian_homeland_metrics", "hhlm", "hawaiian_homeland", [], HAWAIIAN_HOMELAND_COLUMNS)
     )
 
 

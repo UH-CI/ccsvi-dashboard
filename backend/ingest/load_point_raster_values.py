@@ -2,7 +2,7 @@
 Reads each raster's value at every point and loads it, so a point filter can check
 if a point is affected by a raster area
 
-Run after ingest.load_postgis (rebuild.sh --full does this):
+Run after ingest.load_postgis, in both rebuild.sh modes, so a raster built since the last full rebuild is included:
     python -m ingest.load_point_raster_values
 
 A point gets a row only where the raster has a real value. The file's no-data
@@ -41,6 +41,8 @@ async def main() -> None:
         async with conn.transaction():
             await conn.execute("TRUNCATE point_raster_values")
             points = await conn.fetch("SELECT id, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM points")
+            if not points:
+                raise SystemExit("No points in the database; run ingest.load_postgis first")
             print(f"Sampling {len(found)} raster(s) at {len(points)} points")
             for raster in found:
                 await load_raster(conn, raster, points)

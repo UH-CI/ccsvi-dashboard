@@ -59,6 +59,10 @@ async def main() -> None:
                 """
             )
             layers = await conn.fetch("SELECT DISTINCT hazard_id, sub_id FROM hazards ORDER BY 1, 2")
+            if not layers:
+                raise SystemExit("No hazard shapes in the database; run ingest.load_postgis first")
+            if not await conn.fetchval("SELECT EXISTS (SELECT 1 FROM geographies WHERE geom IS NOT NULL)"):
+                raise SystemExit("No area shapes in the database; run ingest.load_postgis first")
             print(f"Found {len(layers)} hazard layer(s)")
             for layer in layers:
                 await load_layer(conn, layer["hazard_id"], layer["sub_id"])

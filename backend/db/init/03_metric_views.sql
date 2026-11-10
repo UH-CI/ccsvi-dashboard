@@ -113,20 +113,13 @@ SELECT
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
 LEFT JOIN metrics m ON m.id = mv.metric_id
-WHERE EXISTS (
-    SELECT 1
-    FROM metric_values mv2
-    JOIN metrics m2 ON m2.id = mv2.metric_id
-    JOIN datasets d2 ON d2.id = m2.dataset_id
-    WHERE mv2.geoid = g.geoid
-      AND d2.hawaiian_homelands = false
-)
+WHERE g.type = 'block_group'
 GROUP BY g.geoid, g.name, g.county, g.population, g.geom;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bgm_geoid    ON block_group_metrics (geoid);
-CREATE INDEX        IF NOT EXISTS idx_bgm_geom     ON block_group_metrics USING GIST (geom);
-CREATE INDEX        IF NOT EXISTS idx_bgm_centroid ON block_group_metrics USING GIST (centroid);
-CREATE INDEX        IF NOT EXISTS idx_bgm_county   ON block_group_metrics (county);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_bgm_geoid ON block_group_metrics (geoid);
+CREATE INDEX IF NOT EXISTS idx_bgm_geom ON block_group_metrics USING GIST (geom);
+CREATE INDEX IF NOT EXISTS idx_bgm_centroid ON block_group_metrics USING GIST (centroid);
+CREATE INDEX IF NOT EXISTS idx_bgm_county ON block_group_metrics (county);
 
 
 DROP MATERIALIZED VIEW IF EXISTS hawaiian_homeland_metrics;
@@ -178,11 +171,11 @@ SELECT
         FILTER (WHERE m.dataset_id = 'small_boat_harbors_points_homelands' AND m.name = 'Count') AS small_boat_harbors_points_homelands__count
 
 FROM geographies g
-JOIN metric_values mv ON mv.geoid = g.geoid
-JOIN metrics m ON m.id = mv.metric_id
-JOIN datasets d ON d.id = m.dataset_id AND d.hawaiian_homelands = true
+LEFT JOIN metric_values mv ON mv.geoid = g.geoid
+LEFT JOIN metrics m ON m.id = mv.metric_id
+WHERE g.type = 'hawaiian_homeland'
 GROUP BY g.geoid, g.name, g.population, g.geom;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid    ON hawaiian_homeland_metrics (geoid);
-CREATE INDEX        IF NOT EXISTS idx_hhlm_geom     ON hawaiian_homeland_metrics USING GIST (geom);
-CREATE INDEX        IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics USING GIST (centroid);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid ON hawaiian_homeland_metrics (geoid);
+CREATE INDEX IF NOT EXISTS idx_hhlm_geom ON hawaiian_homeland_metrics USING GIST (geom);
+CREATE INDEX IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics USING GIST (centroid);

@@ -25,7 +25,10 @@ async def main() -> None:
                 FROM points p JOIN geographies g ON ST_Covers(g.geom, p.geom)
                 """
             )
-        print(f"Done. {status.split()[-1]} point/area pairs.")
+            pairs = int(status.split()[-1])
+            if pairs == 0:
+                raise SystemExit("No point is inside any area; run ingest.load_postgis first")
+        print(f"Done. {pairs} point/area pairs.")
     finally:
         await conn.close()
 
