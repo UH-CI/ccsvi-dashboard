@@ -124,8 +124,8 @@ export interface SubRasterLayerConfig {
   // TiTiler built-in colormap name; set on every layer that has a file
   colormap?: string;
   // Shown on the map legend, popup and table
-  units?: string;
-  opacity?: number;
+  units: string;
+  opacity: number;
   // Switched off: kept in the file, left out of the app
   off?: boolean;
 }

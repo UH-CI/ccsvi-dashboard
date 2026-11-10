@@ -27,16 +27,15 @@ import {
   useAppStore,
   useMapStore,
   useMapConfig,
-  usePointLayerStore,
-  useHazardLayersStore,
-  useRasterLayersStore,
   useSnapshotStore,
   useFilterStore,
   DEFAULT_LAYER_OPACITIES,
 } from "../../stores";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
+import { HAZARD_LAYERS } from "../../config/hazardLayers";
 import { HazardLayerRenderer } from "../HazardLayers";
-import { CogRasterLayer, HcdpRasterLayer } from "../RasterLayers";
+import { MapRasterLayer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
@@ -101,9 +100,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     // Wrapper ref so snapshot includes legend and any overlays in this container
     const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
-    const handleMapRef = useCallback((map: L.Map | null) => {
-      mapRef.current = map;
-    }, [mapRef]);
+    const handleMapRef = useCallback(
+      (map: L.Map | null) => {
+        mapRef.current = map;
+      },
+      [mapRef],
+    );
 
     // Snapshot registry store
     const registerSnapshot = useSnapshotStore((s) => s.register);
@@ -165,19 +167,8 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       effectiveMetric,
     ]);
 
-    const visiblePointLayerIdsByMap = usePointLayerStore((state) => state.visibleLayerIdsByMap);
-
-    // Get hazard layer configs and visible IDs from refactored store
-    const hazardLayerConfigs = useHazardLayersStore((state) => state.hazardLayerConfigs);
-    const visibleLayerIdsByMap = useHazardLayersStore((state) => state.visibleLayerIdsByMap);
-
-    // Get raster layer configs and visible IDs from refactored store
-    const rasterLayerConfigs = useRasterLayersStore((state) => state.rasterLayerConfigs);
-    const visibleRasterLayerIdsByMap = useRasterLayersStore((state) => state.visibleLayerIdsByMap);
-    const visibleRasterIds = useMemo(
-      () => visibleRasterLayerIdsByMap[mapId] ?? new Set<string>(),
-      [visibleRasterLayerIdsByMap, mapId],
-    );
+    const visiblePointLayerIds = useMapLayersStore((state) => state.points[mapId]);
+    const visibleHazardIds = useMapLayersStore((state) => state.hazards[mapId]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -191,11 +182,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
       return () => clearTimeout(timeoutId);
     }, [mapConfigsLength, mapRef]);
-
-    const visiblePointLayerIds = useMemo(
-      () => visiblePointLayerIdsByMap[mapId] ?? new Set<string>(),
-      [visiblePointLayerIdsByMap, mapId],
-    );
 
     const activeDatasetObject = useMemo(() => {
       if (!blockGroupData || !effectiveDataset) return null;
@@ -421,17 +407,17 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             )}
 
             {/* Render hazard layers based on visibility state */}
-            {hazardLayerConfigs.map((layer) => (
+            {HAZARD_LAYERS.map((layer) => (
               <React.Fragment key={layer.id}>
                 {/* Render parent layer if it has a file and is visible */}
-                {layer.file && visibleLayerIdsByMap[mapId]?.has(layer.id) && (
+                {layer.file && visibleHazardIds?.has(layer.id) && (
                   <HazardLayerRenderer mapId={mapId} parentId={layer.id} />
                 )}
 
                 {/* Render sublayers that are visible */}
                 {layer.subLayers?.map((sub) => {
                   const compositeId = `${layer.id}.${sub.id}`;
-                  return visibleLayerIdsByMap[mapId]?.has(compositeId) ? (
+                  return visibleHazardIds?.has(compositeId) ? (
                     <HazardLayerRenderer
                       key={compositeId}
                       mapId={mapId}
@@ -443,39 +429,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               </React.Fragment>
             ))}
 
-            {/* Render raster layers based on visibility state */}
-            {rasterLayerConfigs.map((layer) => (
-              <React.Fragment key={layer.id}>
-                {/* Render parent layer if it is COG-backed (colormap set) and visible */}
-                {layer.colormap && visibleRasterIds.has(layer.id) && (
-                  <CogRasterLayer
-                    id={layer.id}
-                    mapId={mapId}
-                    clickable={!effectiveMetric && !effectiveMetric2}
-                  />
-                )}
-
-                {/* Render sublayers that are visible */}
-                {layer.subLayers?.map((sub) => {
-                  const compositeId = `${layer.id}.${sub.id}`;
-                  return visibleRasterIds.has(compositeId) ? (
-                    <CogRasterLayer
-                      key={compositeId}
-                      id={compositeId}
-                      mapId={mapId}
-                      clickable={!effectiveMetric && !effectiveMetric2}
-                    />
-                  ) : null;
-                })}
-              </React.Fragment>
-            ))}
+            <MapRasterLayer mapId={mapId} clickable={!effectiveMetric && !effectiveMetric2} />
 
             {/* Render point layers - components fetch their own data from store */}
-            {Array.from(visiblePointLayerIds).map((layerId) => (
+            {Array.from(visiblePointLayerIds ?? []).map((layerId) => (
               <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
             ))}
-
-            <HcdpRasterLayer mapId={mapId} />
           </MapContainer>
 
           <LegendContainer>

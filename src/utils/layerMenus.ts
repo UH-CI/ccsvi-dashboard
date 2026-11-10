@@ -11,6 +11,10 @@ export type MenuLayer =
   | { kind: "raster"; layer: RasterLayerConfig };
 export type MenuGroupEntry = { kind: "group"; group: LayerMenuGroup; layers: MenuLayer[] };
 export type MenuEntry = MenuLayer | MenuGroupEntry;
+export type LayerKind = MenuLayer["kind"];
+
+// The ids on one map, per kind of layer; a sub-layer is "<id>.<subId>"
+export type VisibleIds = Record<LayerKind, ReadonlySet<string>>;
 
 export interface VisibleLeaf {
   kind: "point" | "shape" | "raster";
@@ -41,61 +45,30 @@ export interface VisibleGroup {
 
 export type VisibleNode = VisibleLeaf | VisibleParent | VisibleGroup;
 
-function findLayer(
-  id: string,
-  points: PointLayerConfig[],
-  shapes: HazardLayerConfig[],
-  rasters: RasterLayerConfig[],
-): MenuLayer | null {
-  const point = points.find((layer) => layer.id === id);
-  if (point) return { kind: "point", layer: point };
-  const shape = shapes.find((layer) => layer.id === id);
-  if (shape) return { kind: "shape", layer: shape };
-  const raster = rasters.find((layer) => layer.id === id);
-  if (raster) return { kind: "raster", layer: raster };
-  return null;
-}
+// Every layer by id, with its kind
+const LAYERS_BY_ID = new Map<string, MenuLayer>();
+for (const layer of POINT_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "point", layer });
+for (const layer of HAZARD_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "shape", layer });
+for (const layer of RASTER_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "raster", layer });
 
-// Swaps one menu's ids for the layers' configs, taken from the stores. An id with no config is
-// skipped: that only happens to rasters before their store has loaded, since checkLayerMenus
-// makes sure every id exists.
-export function resolveLayerMenu(
-  menu: LayerMenu,
-  points: PointLayerConfig[],
-  shapes: HazardLayerConfig[],
-  rasters: RasterLayerConfig[],
-): MenuEntry[] {
-  const entries: MenuEntry[] = [];
-  for (const item of menu.items) {
-    if (typeof item === "string") {
-      const layer = findLayer(item, points, shapes, rasters);
-      if (layer) entries.push(layer);
-      continue;
-    }
-    const layers = item.items
-      .map((id) => findLayer(id, points, shapes, rasters))
-      .filter((layer): layer is MenuLayer => layer !== null);
-    if (layers.length > 0) entries.push({ kind: "group", group: item, layers });
-  }
-  return entries;
+// Swaps one menu's ids for the layers' configs; checkLayerMenus makes sure every id exists
+export function resolveLayerMenu(menu: LayerMenu): MenuEntry[] {
+  return menu.items.map((item) =>
+    typeof item === "string"
+      ? LAYERS_BY_ID.get(item)!
+      : { kind: "group", group: item, layers: item.items.map((id) => LAYERS_BY_ID.get(id)!) },
+  );
 }
 
 function visibleLayerNode(
   entry: MenuLayer,
-  visiblePointIds: ReadonlySet<string> | undefined,
-  visibleShapeIds: ReadonlySet<string> | undefined,
-  visibleRasterIds: ReadonlySet<string> | undefined,
+  visible: VisibleIds,
 ): VisibleLeaf | VisibleParent | null {
-  const visibleIds =
-    entry.kind === "point"
-      ? visiblePointIds
-      : entry.kind === "shape"
-        ? visibleShapeIds
-        : visibleRasterIds;
+  const visibleIds = visible[entry.kind];
   const { layer } = entry;
 
   if (entry.kind === "point" || !entry.layer.subLayers?.length) {
-    if (!visibleIds?.has(layer.id)) return null;
+    if (!visibleIds.has(layer.id)) return null;
     return {
       kind: entry.kind,
       key: layer.id,
@@ -106,7 +79,7 @@ function visibleLayerNode(
   }
 
   const subLayers: VisibleLeaf[] = entry.layer.subLayers
-    .filter((sub) => visibleIds?.has(`${layer.id}.${sub.id}`))
+    .filter((sub) => visibleIds.has(`${layer.id}.${sub.id}`))
     .map((sub) => ({ kind: entry.kind, key: `${layer.id}.${sub.id}`, label: sub.name }));
   if (subLayers.length === 0) return null;
   return {
@@ -121,21 +94,16 @@ function visibleLayerNode(
 }
 
 // What is visible in one menu, in menu order, keeping its groups and parents
-export function visibleMenuTree(
-  entries: MenuEntry[],
-  visiblePointIds: ReadonlySet<string> | undefined,
-  visibleShapeIds: ReadonlySet<string> | undefined,
-  visibleRasterIds: ReadonlySet<string> | undefined,
-): VisibleNode[] {
+export function visibleMenuTree(entries: MenuEntry[], visible: VisibleIds): VisibleNode[] {
   const nodes: VisibleNode[] = [];
   for (const entry of entries) {
     if (entry.kind !== "group") {
-      const node = visibleLayerNode(entry, visiblePointIds, visibleShapeIds, visibleRasterIds);
+      const node = visibleLayerNode(entry, visible);
       if (node) nodes.push(node);
       continue;
     }
     const children = entry.layers
-      .map((layer) => visibleLayerNode(layer, visiblePointIds, visibleShapeIds, visibleRasterIds))
+      .map((layer) => visibleLayerNode(layer, visible))
       .filter((node): node is VisibleLeaf | VisibleParent => node !== null);
     if (children.length === 0) continue;
     nodes.push({

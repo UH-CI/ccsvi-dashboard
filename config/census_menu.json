@@ -265,7 +265,7 @@
         {
           "dataset": "2022_census_hawaiian_homelands",
           "metric": "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
-          "label": "Hawaiian Homelands: Limited English Proficiency",
+          "label": "Hawaiian Homelands - Limited English Proficiency",
           "calculationDescription": "Percentage of households on Hawaiian homelands with limited English proficiency.",
           "description": "Language barriers can reduce access to warnings, assistance, and recovery information."
         }

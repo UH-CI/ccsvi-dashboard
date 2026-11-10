@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { queryOptions, useQueries } from "@tanstack/react-query";
 import { POINT_LAYERS } from "../../config/pointLayers";
-import { usePointLayerStore } from "../../stores/usePointLayersStore";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import type { PointLayerConfig } from "../../types";
 import { getPointsByGeoid } from "../client";
 import { dataOf } from "../queryClient";
@@ -20,7 +20,7 @@ export interface TablePointNames {
 
 // Point names for every geoid, across whichever layers are currently toggled on map
 export function usePointNamesForTable(isHomelands: boolean, mapId: string): TablePointNames {
-  const visibleIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
+  const visibleIds = useMapLayersStore((state) => state.points[mapId]);
   const layers = useMemo(
     () => POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id)),
     [visibleIds],

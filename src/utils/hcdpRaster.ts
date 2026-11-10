@@ -57,9 +57,22 @@ export function hcdpSelection(row: HcdpRangeRow): Record<string, string> {
 }
 
 // One row and date as a raster the tile server draws; a month is asked for by its first day
-export function hcdpSource(row: HcdpRangeRow, date: Dayjs): RasterSource {
+export function hcdpSource(
+  row: HcdpRangeRow,
+  date: Dayjs,
+): Extract<RasterSource, { kind: "hcdp" }> {
   const day = row.period === "month" ? date.startOf("month") : date;
   return { kind: "hcdp", params: { ...hcdpSelection(row), date: day.format("YYYY-MM-DD") } };
+}
+
+// The HCDP raster's name in its legend and popup: dataset, its extra choices, period and date
+export function buildHcdpOverlayTitle(row: HcdpRangeRow, date: string): string {
+  const extras = [
+    row.aggregation,
+    row.production,
+    row.timescale?.replace(/^timescale/i, "TS "),
+  ].filter(Boolean);
+  return [formatHcdpDataTypeLabel(row.data_type), ...extras, row.period, date].join(" · ");
 }
 
 // The catalog's dates, used when HCDP's live range can't be fetched. An SPI timescale of n months
@@ -84,4 +97,3 @@ export function formatTimescaleLabel(timescale: string): string {
   if (!m) return timescale;
   return `${Number(m[1])}-month`;
 }
-

@@ -3,10 +3,7 @@ import { useShallow } from "zustand/react/shallow";
 import { MapConfig } from "../types";
 import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
 import { DEFAULT_COLOR_SCHEME } from "../config";
-import { usePointLayerStore } from "./usePointLayersStore";
-import { useHazardLayersStore } from "./useHazardLayersStore";
-import { useRasterLayersStore } from "./useRasterLayersStore";
-import { useHCDPStore } from "./useHCDPStore";
+import { useMapLayersStore } from "./useMapLayersStore";
 
 interface MapState {
   // Map configurations
@@ -61,14 +58,6 @@ export const newMapConfig = (id: string): MapConfig => ({
   colorScheme: DEFAULT_COLOR_SCHEME,
   baseMap: DEFAULT_BASE_MAP_ID,
 });
-
-// Clears what every other store keeps for one map, so a later map with the same id starts clean
-function forgetMap(mapId: string) {
-  usePointLayerStore.getState().clearMap(mapId);
-  useHazardLayersStore.getState().clearMap(mapId);
-  useRasterLayersStore.getState().clearMap(mapId);
-  useHCDPStore.getState().clearRasterOverlay(mapId);
-}
 
 // One fresh map, as on first load and after Reset View
 const startingMaps = () => ({
@@ -130,7 +119,7 @@ export const useMapStore = create<MapState>((set, get) => ({
           layerOpacities: restOpacities,
         };
       });
-      forgetMap(mapId);
+      useMapLayersStore.getState().clearMap(mapId);
     }
   },
 
@@ -175,7 +164,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   reset: () => {
-    get().mapConfigs.forEach((config) => forgetMap(config.id));
+    get().mapConfigs.forEach((config) => useMapLayersStore.getState().clearMap(config.id));
     set(startingMaps());
   },
 }));

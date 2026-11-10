@@ -21,10 +21,10 @@ import {
   hcdpFallbackRange,
   hcdpSource,
   uniqueSorted,
+  buildHcdpOverlayTitle,
 } from "../../utils/hcdpRaster";
-import { buildHcdpOverlayTitle, useHCDPStore } from "../../stores/useHCDPStore";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import styles from "./HCDPLoad.module.scss";
-import { useRasterLayersStore } from "../../stores";
 import { ApiError } from "../../api/client";
 import { queryClient } from "../../api/queryClient";
 import { useHcdpDateRange } from "../../api/queries/hcdp";
@@ -40,9 +40,8 @@ export interface HCDPLoadProps {
 }
 
 export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
-  const setRasterOverlay = useHCDPStore((s) => s.setRasterOverlay);
-  const clearRasterOverlay = useHCDPStore((s) => s.clearRasterOverlay);
-  const hasRasterOverlay = useHCDPStore((s) => s.overlaysByMap[mapId] != null);
+  const setRaster = useMapLayersStore((s) => s.setRaster);
+  const hasRasterOverlay = useMapLayersStore((s) => s.rasters[mapId]?.kind === "hcdp");
   const catalog = HCDP_CATALOG;
   const dataTypes = useMemo(() => hcdpDataTypes(), []);
   const [dataType, setDataType] = useState(dataTypes[0]);
@@ -139,7 +138,7 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
   }, [fallbackRange]);
 
   const handleClearRaster = () => {
-    clearRasterOverlay(mapId);
+    setRaster(mapId, null);
     setFetchMessage({ type: "success", text: "HCDP raster removed from map." });
   };
 
@@ -157,10 +156,8 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
       const source = hcdpSource(activeRow, selectedDate);
       await queryClient.fetchQuery(rasterInfoQuery(source));
 
-      useRasterLayersStore.getState().setVisibleLayerIds(mapId, []);
-
-      setRasterOverlay(mapId, {
-        source,
+      setRaster(mapId, {
+        ...source,
         title: buildHcdpOverlayTitle(activeRow, selectedDate.format("YYYY-MM-DD")),
       });
       setFetchMessage({ type: "success", text: "Raster added to map." });

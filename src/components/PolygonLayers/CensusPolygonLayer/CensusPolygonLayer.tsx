@@ -10,13 +10,10 @@ import {
 } from "../../../utils/renderPolygonPopup.ts";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
-
-const EMPTY_RASTER_LAYER_SET = new Set<string>();
 import { getAreaStats } from "../../../api/client";
 import { savedRasterStats } from "../../../api/queries/savedRaster";
-import { useHCDPStore, useHcdpOverlay } from "../../../stores/useHCDPStore.ts";
-import { useActiveRaster, useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
-import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
+import { useMapLayersStore } from "../../../stores/useMapLayersStore";
+import { rasterConfig } from "../../../config/rasterLayers";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../api/queries/pointCounts";
@@ -57,19 +54,16 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
   filteredGeoids,
   onFeatureClick,
 }) => {
-  const hcdpOverlay = useHcdpOverlay(mapId);
-  const visibleRasterLayerIds = useRasterLayersStore(
-    (s) => s.visibleLayerIdsByMap[mapId] ?? EMPTY_RASTER_LAYER_SET,
-  );
-  const hasActiveRasterLayer = (visibleRasterLayerIds?.size ?? 0) > 0;
+  const raster = useMapLayersStore((s) => s.rasters[mapId]);
+  const hcdpOverlay = raster?.kind === "hcdp" ? raster : null;
+  const hasActiveRasterLayer = raster?.kind === "cog";
   const hasSocialDataActive = Boolean(activeMetric?.trim()) || Boolean(activeMetric2?.trim());
   const shouldUseBackgroundStyle = Boolean(hcdpOverlay || hasActiveRasterLayer);
   const shouldShowPolygonPopup = Boolean(hcdpOverlay || hasSocialDataActive);
   const shouldConsumePolygonClicks = shouldShowPolygonPopup;
 
-  const activeRaster = useActiveRaster(mapId);
-  const activeRasterLayerId = activeRaster?.id ?? null;
-  const activeRasterLayerConfig = activeRaster?.config ?? null;
+  const activeRasterLayerId = raster?.kind === "cog" ? raster.id : null;
+  const activeRasterLayerConfig = activeRasterLayerId ? rasterConfig(activeRasterLayerId) : null;
 
   const popupContext = useMemo<PolygonPopupContext>(
     () => ({
@@ -203,7 +197,7 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         render();
 
         const counts = await fetchPointCounts(String(geoid), false);
-        const visibleIds = usePointLayerStore.getState().visibleLayerIdsByMap[mapId];
+        const visibleIds = useMapLayersStore.getState().points[mapId];
         const items = POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id))
           .map((layer) => ({
             label: layer.name,
@@ -215,19 +209,25 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         render();
       }
 
+      const currentRaster = () => useMapLayersStore.getState().rasters[mapId];
+      const savedStillShown = () => {
+        const now = currentRaster();
+        return now?.kind === "cog" && now.id === activeRasterLayerId;
+      };
+
       if (hcdpOverlay) {
-        const overlay = useHCDPStore.getState().overlaysByMap[mapId];
-        if (overlay) {
+        const overlay = currentRaster();
+        if (overlay?.kind === "hcdp") {
           hcdpField = { label: overlay.title, loading: true };
           render();
 
-          const stats = await getAreaStats(overlay.source, feature).catch(() => ({
+          const stats = await getAreaStats(overlay, feature).catch(() => ({
             mean: null,
             max: null,
           }));
 
-          const currentOverlay = useHCDPStore.getState().overlaysByMap[mapId];
-          if (currentOverlay) {
+          const currentOverlay = currentRaster();
+          if (currentOverlay?.kind === "hcdp") {
             hcdpField = { label: currentOverlay.title, meanValue: stats.mean, maxValue: stats.max };
             render();
           }
@@ -238,13 +238,11 @@ export const CensusPolygonLayer: React.FC<CensusPolygonLayerProps> = ({
         overlayField = { label: overlayLabel, loading: true, suffix: overlaySuffix };
         render();
 
-        const currentVisibleIds = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-        if (currentVisibleIds?.has(activeRasterLayerId)) {
+        if (savedStillShown()) {
           try {
             const stats = await savedRasterStats(activeRasterLayerId, String(geoid), false);
 
-            const currentRasterId = useRasterLayersStore.getState().visibleLayerIdsByMap[mapId];
-            if (currentRasterId?.has(activeRasterLayerId)) {
+            if (savedStillShown()) {
               overlayField = { label: overlayLabel, meanValue: stats.mean, maxValue: stats.max, suffix: overlaySuffix };
               render();
             }

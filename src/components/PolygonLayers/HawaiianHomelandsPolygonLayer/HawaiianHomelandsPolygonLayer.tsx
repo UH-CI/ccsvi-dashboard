@@ -13,8 +13,8 @@ import type { OverlayPopupField, PointCountsPopupField } from "../../FeaturePopu
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 import { POINT_LAYERS } from "../../../config/pointLayers";
 import { fetchPointCounts } from "../../../api/queries/pointCounts";
-import { usePointLayerStore } from "../../../stores/usePointLayersStore.ts";
-import { useActiveRaster, useRasterLayersStore } from "../../../stores/useRasterLayersStore.ts";
+import { useMapLayersStore } from "../../../stores/useMapLayersStore";
+import { rasterConfig } from "../../../config/rasterLayers";
 import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { pointLayerIconHtml } from "../../../utils/pointLayerIcon.tsx";
 
@@ -56,7 +56,8 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
   filteredGeoids,
   onFeatureClick,
 }) => {
-  const activeRaster = useActiveRaster(mapId);
+  const raster = useMapLayersStore((s) => s.rasters[mapId]);
+  const savedRasterId = raster?.kind === "cog" ? raster.id : null;
 
   const getStyle = useCallback(
     (feature: Feature<Geometry, HawaiianHomelandProperties> | undefined): StyleConfig => {
@@ -171,7 +172,7 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       render();
 
       const counts = await fetchPointCounts(String(geoid), true);
-      const visibleIds = usePointLayerStore.getState().visibleLayerIdsByMap[mapId];
+      const visibleIds = useMapLayersStore.getState().points[mapId];
       const items = POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id))
         .map((layer) => ({
           label: layer.name,
@@ -182,25 +183,27 @@ export const HawaiianHomelandsPolygonLayer: React.FC<HawaiianHomelandsPolygonLay
       pointCountsField = { loading: false, items };
       render();
 
-      if (activeRaster) {
-        const label = activeRaster.config?.name ?? "Raster layer";
-        const suffix = activeRaster.config?.units ? ` ${activeRaster.config.units}` : "";
+      if (savedRasterId) {
+        const config = rasterConfig(savedRasterId);
+        const label = config.name;
+        const suffix = config.units ? ` ${config.units}` : "";
         overlayField = { label, loading: true, suffix };
         render();
 
         let stats: { mean: number | null; max: number | null } = { mean: null, max: null };
         try {
-          stats = await savedRasterStats(activeRaster.id, String(geoid), true);
+          stats = await savedRasterStats(savedRasterId, String(geoid), true);
         } catch {
           // keep the empty stats
         }
-        if (useRasterLayersStore.getState().visibleLayerIdsByMap[mapId]?.has(activeRaster.id)) {
+        const now = useMapLayersStore.getState().rasters[mapId];
+        if (now?.kind === "cog" && now.id === savedRasterId) {
           overlayField = { label, meanValue: stats.mean, maxValue: stats.max, suffix };
           render();
         }
       }
     };
-  }, [popupContext, mapId, activeRaster]);
+  }, [popupContext, mapId, savedRasterId]);
 
   return (
     <GenericPolygonLayer

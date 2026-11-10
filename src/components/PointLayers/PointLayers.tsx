@@ -7,7 +7,8 @@ import L from "leaflet";
 import "leaflet.markercluster";
 import { Feature, Point } from "geojson";
 import styles from "./PointLayers.module.scss";
-import { usePointLayerStore } from "../../stores";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
+import { POINT_LAYERS } from "../../config/pointLayers";
 import { usePointFilter } from "../../api/queries/filter";
 import { useFilteredPoints, usePointFile } from "../../api/queries/points";
 
@@ -27,9 +28,7 @@ function pointId(properties: Feature["properties"], idFields: string[]): string 
 function useMatchingIds(layerId: string): Set<string> | null {
   const criteria = usePointFilter(layerId);
   const points = useFilteredPoints(layerId, criteria);
-  const idFields = usePointLayerStore(
-    (state) => state.pointLayerConfigs.find((c) => c.id === layerId)!.idFields,
-  );
+  const { idFields } = POINT_LAYERS.find((c) => c.id === layerId)!;
 
   return useMemo(() => {
     if (criteria === null) return null;
@@ -48,17 +47,10 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
   const map = useMap() as L.Map;
   const [zoom, setZoom] = useState(map.getZoom());
 
-  // Get data from store
-  const config = usePointLayerStore((state) =>
-    state.pointLayerConfigs.find((c) => c.id === layerId),
-  );
+  const config = POINT_LAYERS.find((c) => c.id === layerId);
   const data = usePointFile(layerId);
   const matchingIds = useMatchingIds(layerId);
-  // const isVisible = usePointLayerStore(state => state.visibleLayerIds.has(layerId));
-  const isVisible = usePointLayerStore((state) => {
-    const mapLayers = state.visibleLayerIdsByMap[mapId];
-    return mapLayers ? mapLayers.has(layerId) : false;
-  });
+  const isVisible = useMapLayersStore((state) => state.points[mapId]?.has(layerId) ?? false);
 
   // Calculate icon size based on zoom
   const getIconSize = (currentZoom: number): number => {

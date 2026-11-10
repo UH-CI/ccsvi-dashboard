@@ -1,18 +1,10 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import {
-  rasterColormap,
-  rasterConfig,
-  useRasterLayersStore,
-} from "../../stores/useRasterLayersStore";
-import { useHcdpOverlay } from "../../stores/useHCDPStore";
+import { useMapRaster } from "../../stores/useMapLayersStore";
 import { apiUrl, getRasterValue, rasterPath } from "../../api/client";
 import { useRasterInfo } from "../../api/queries/rasterInfo";
 import type { RasterSource } from "../../types";
-
-// HCDP layers: 75% layer opacity over colours at 85%
-const HCDP_OPACITY = 0.75 * 0.85;
 
 interface RasterLayerRendererProps {
   // Kept the same object while the raster is unchanged, so the tiles aren't rebuilt on every render
@@ -170,44 +162,25 @@ export const RasterLayerRenderer: React.FC<RasterLayerRendererProps> = ({
   return null;
 };
 
-interface CogRasterLayerProps {
-  id: string;
+interface MapRasterLayerProps {
   mapId: string;
+  // Whether a click on a saved raster shows the value there; HCDP never does
   clickable: boolean;
 }
 
-// One layer from config/layers/rasters.json, in this map's colour bar for it
-export const CogRasterLayer: React.FC<CogRasterLayerProps> = ({ id, mapId, clickable }) => {
-  const configs = useRasterLayersStore((s) => s.rasterLayerConfigs);
-  const overrides = useRasterLayersStore((s) => s.colormapOverrides[mapId]);
-  const source = useMemo<RasterSource>(() => ({ kind: "cog", id }), [id]);
-  const config = rasterConfig(id, configs);
+// The map's raster, saved or HCDP, if it has one
+export const MapRasterLayer: React.FC<MapRasterLayerProps> = ({ mapId, clickable }) => {
+  const shown = useMapRaster(mapId);
+  if (!shown) return null;
 
   return (
     <RasterLayerRenderer
-      source={source}
-      name={config?.name ?? id}
-      units={config?.units}
-      // Every raster with a file has a colour bar; the layer check requires one
-      colormap={rasterColormap(id, configs, overrides)!}
-      opacity={config?.opacity ?? 0.7}
-      clickable={clickable}
-    />
-  );
-};
-
-// The HCDP raster loaded on this map, if any
-export const HcdpRasterLayer: React.FC<{ mapId: string }> = ({ mapId }) => {
-  const overlay = useHcdpOverlay(mapId);
-  if (!overlay) return null;
-
-  return (
-    <RasterLayerRenderer
-      source={overlay.source}
-      name={overlay.title}
-      colormap="hcdp"
-      opacity={HCDP_OPACITY}
-      clickable={false}
+      source={shown.source}
+      name={shown.name}
+      units={shown.units}
+      colormap={shown.colormap}
+      opacity={shown.opacity}
+      clickable={clickable && shown.raster.kind === "cog"}
     />
   );
 };

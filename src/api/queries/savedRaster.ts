@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useActiveRaster } from "../../stores/useRasterLayersStore";
+import { useMapRaster } from "../../stores/useMapLayersStore";
 import { layerDatasetId } from "../../utils/layerDatasets";
 import { queryClient } from "../queryClient";
 import { datasetsQuery, useDatasets } from "./datasets";
@@ -26,18 +26,19 @@ export async function savedRasterStats(
 // The visible raster's saved means and maxes for the table: its name and lookups of one area's values
 export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
   const datasets = useDatasets();
-  const active = useActiveRaster(mapId);
-  const dataset = active ? layerDatasetId(datasets, active.id, isHomelands) : null;
+  const shown = useMapRaster(mapId);
+  const savedId = shown?.raster.kind === "cog" ? shown.raster.id : null;
+  const dataset = savedId ? layerDatasetId(datasets, savedId, isHomelands) : null;
   const means = useMetricValues(dataset, "Mean");
   const maxes = useMetricValues(dataset, "Max");
 
   return useMemo(() => {
-    if (!active?.config) return null;
+    if (!savedId) return null;
     return {
-      name: active.config.name,
-      units: active.config.units,
+      name: shown!.name,
+      units: shown!.units,
       getMean: (geoid: string): number | null => means?.[geoid]?.absolute ?? null,
       getMax: (geoid: string): number | null => maxes?.[geoid]?.absolute ?? null,
     };
-  }, [active, means, maxes]);
+  }, [savedId, shown, means, maxes]);
 }

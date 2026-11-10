@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
-import { useHazardLayersStore } from "../../stores";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
+import { HAZARD_LAYERS } from "../../config/hazardLayers";
 import { dataUrl } from "../../api/client";
 import { FeaturePopup } from "../FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
@@ -20,8 +21,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 }) => {
   const map = useMap();
 
-  const hazardLayers = useHazardLayersStore((state) => state.hazardLayerConfigs);
-  const parentLayer = hazardLayers.find((h) => h.id === parentId);
+  const parentLayer = HAZARD_LAYERS.find((h) => h.id === parentId);
   const subLayer =
     layerId && parentLayer?.subLayers
       ? parentLayer.subLayers.find((sub) => sub.id === layerId)
@@ -30,10 +30,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
   const activeLayer = subLayer ?? parentLayer;
   const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
 
-  const isVisible = useHazardLayersStore((state) => {
-    const mapLayers = state.visibleLayerIdsByMap[mapId];
-    return mapLayers ? mapLayers.has(activeLayerId) : false;
-  });
+  const isVisible = useMapLayersStore((state) => state.hazards[mapId]?.has(activeLayerId) ?? false);
 
   const file = activeLayer?.file;
   const popup = activeLayer?.popup;

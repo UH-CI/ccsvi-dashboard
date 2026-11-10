@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { POINT_LAYERS } from "../../config/pointLayers";
-import { usePointLayerStore } from "../../stores/usePointLayersStore";
+import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import type { PointLayerConfig } from "../../types";
 import { layerDatasetId } from "../../utils/layerDatasets";
 import { dataOf, queryClient } from "../queryClient";
@@ -38,7 +38,7 @@ export interface TablePointCounts {
 // Point counts for every geoid, across whichever layers are currently toggled on map; blank where a layer has none saved
 export function usePointCountsForTable(isHomelands: boolean, mapId: string): TablePointCounts {
   const catalog = useDatasets();
-  const visibleIds = usePointLayerStore((state) => state.visibleLayerIdsByMap[mapId]);
+  const visibleIds = useMapLayersStore((state) => state.points[mapId]);
 
   const layers = useMemo(
     () => POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id)),

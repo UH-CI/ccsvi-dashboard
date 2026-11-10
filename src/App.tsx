@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
 import { MultiMapContainer } from "./components/MultiMapContainer";
 import { TableViewer } from "./components/TableViewer";
-import { useHazardLayersStore, useRasterLayersStore, usePrimaryMapState } from "./stores";
+import { usePrimaryMapState } from "./stores";
 import { useDatasets } from "./api/queries/datasets";
 import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
@@ -66,22 +66,11 @@ const App: React.FC = () => {
   // Get the active/primary map's dataset for the table viewer
   const { dataset: primaryDataset } = usePrimaryMapState();
 
-  // Get data from stores
-  const fetchHazardLayerConfigs = useHazardLayersStore((state) => state.fetchHazardLayerConfigs);
-  const fetchRasterLayerConfigs = useRasterLayersStore((state) => state.fetchRasterLayerConfigs);
-  const rasterLoaded = useRasterLayersStore((state) => state.isLoaded);
-
   const { ready, errors } = useStartupData();
   const datasets = useDatasets();
 
   // Reads the shared link into the stores, then keeps it in step with them
   useUrlSync();
-
-  // Load the layer configs on mount
-  useEffect(() => {
-    fetchHazardLayerConfigs();
-    fetchRasterLayerConfigs();
-  }, [fetchHazardLayerConfigs, fetchRasterLayerConfigs]);
 
   // === Error handling ===
   if (errors.length > 0) {
@@ -97,7 +86,7 @@ const App: React.FC = () => {
   }
 
   // === Loading ===
-  if (!ready || !rasterLoaded) {
+  if (!ready) {
     return (
       <div className={styles["loading-container"]}>
         <div>Loading data...</div>

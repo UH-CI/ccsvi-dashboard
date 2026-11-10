@@ -11,13 +11,8 @@ import {
   Map,
 } from "@mui/icons-material";
 // Management actions for each map
-import {
-  useMapStore,
-  useMapConfig,
-  DEFAULT_LAYER_OPACITIES,
-  useActiveRaster,
-  useRasterLayersStore,
-} from "../../stores";
+import { useMapStore, useMapConfig, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useMapLayersStore, useMapRaster } from "../../stores/useMapLayersStore";
 import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
@@ -49,8 +44,10 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState("");
-  const activeRaster = useActiveRaster(mapId);
-  const setRasterColormap = useRasterLayersStore((s) => s.setRasterColormap);
+  // Only a saved raster's colour bar can be changed
+  const shownRaster = useMapRaster(mapId);
+  const savedRasterId = shownRaster?.raster.kind === "cog" ? shownRaster.raster.id : null;
+  const setRasterColormap = useMapLayersStore((s) => s.setRasterColormap);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -109,13 +106,14 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           updateMapConfig={updateMapConfig}
           setLayerOpacity={setLayerOpacity}
         />
-        {activeRaster && (
+        {savedRasterId && (
           <RasterColormapMenu
             anchorEl={rasterColorSchemeAnchor}
             open={Boolean(rasterColorSchemeAnchor)}
             onClose={() => setRasterColorSchemeAnchor(null)}
             mapId={mapId}
-            activeRaster={activeRaster}
+            rasterId={savedRasterId}
+            colormap={shownRaster!.colormap}
             setRasterColormap={setRasterColormap}
           />
         )}
@@ -168,7 +166,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             </MenuItem>
           </span>
         </Tooltip>
-        {activeRaster && (
+        {savedRasterId && (
           <MenuItem
             onClick={(e) => setRasterColorSchemeAnchor(e.currentTarget)}
             className={styles["single-map-item"]}
