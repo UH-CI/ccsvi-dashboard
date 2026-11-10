@@ -1,42 +1,30 @@
 import { useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { POINT_LAYERS } from "../../config/pointLayers";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
-import type { PointLayerConfig } from "../../types";
+import type { MetricValue, PointLayerConfig } from "../../types";
 import { layerDatasetId } from "../../utils/layerDatasets";
-import { dataOf, queryClient } from "../queryClient";
-import { datasetsQuery, useDatasets } from "./datasets";
-import { fetchMetricValues, metricValuesQuery } from "./metricValues";
+import { useDatasets } from "./datasets";
+import { metricValuesQuery } from "./metricValues";
 
-// Every point layer's count for one block group / Hawaiian Homeland area, for the popups.
-// A layer whose counts can't be fetched counts as none.
-export async function fetchPointCounts(
-  geoid: string,
-  isHomelands: boolean,
-): Promise<Record<string, number | null>> {
-  const catalog = await queryClient.fetchQuery(datasetsQuery);
-  const results = await Promise.allSettled(
-    POINT_LAYERS.map((layer) => {
-      const dataset = layerDatasetId(catalog, layer.id, isHomelands);
-      return dataset ? fetchMetricValues(dataset, "Count") : Promise.resolve(null);
-    }),
-  );
-  const counts: Record<string, number | null> = {};
-  POINT_LAYERS.forEach((layer, i) => {
-    const result = results[i];
-    counts[layer.id] =
-      result.status === "fulfilled" ? (result.value?.[geoid]?.absolute ?? null) : null;
-  });
-  return counts;
-}
-
-export interface TablePointCounts {
+export interface VisiblePointCounts {
   layers: PointLayerConfig[]; // currently visible on the map
   getCount: (layerId: string, geoid: string) => number | null;
+  // Whether any count is still on its way
+  loading: boolean;
+  // Whether a layer's counts couldn't be fetched
+  failed: (layerId: string) => boolean;
 }
 
+// The answers in order, whether any is still loading, and which failed; the same object until one changes
+const countsOf = (results: UseQueryResult<Record<string, MetricValue>>[]) => ({
+  data: results.map((result) => result.data),
+  loading: results.some((result) => result.isPending && result.fetchStatus !== "idle"),
+  failed: results.map((result) => result.isError),
+});
+
 // Point counts for every geoid, across whichever layers are currently toggled on map; blank where a layer has none saved
-export function usePointCountsForTable(isHomelands: boolean, mapId: string): TablePointCounts {
+export function useVisiblePointCounts(isHomelands: boolean, mapId: string): VisiblePointCounts {
   const catalog = useDatasets();
   const visibleIds = useMapLayersStore((state) => state.points[mapId]);
 
@@ -51,13 +39,17 @@ export function usePointCountsForTable(isHomelands: boolean, mapId: string): Tab
       ...metricValuesQuery(dataset ?? "", "Count"),
       enabled: dataset !== null,
     })),
-    combine: dataOf,
+    combine: countsOf,
   });
 
   return useMemo(() => {
-    const byLayer = new Map(layers.map((layer, i) => [layer.id, counts[i]]));
-    const getCount = (layerId: string, geoid: string): number | null =>
-      byLayer.get(layerId)?.[geoid]?.absolute ?? null;
-    return { layers, getCount };
+    const byLayer = new Map(layers.map((layer, i) => [layer.id, counts.data[i]]));
+    const failedIds = new Set(layers.filter((_, i) => counts.failed[i]).map((layer) => layer.id));
+    return {
+      layers,
+      getCount: (layerId, geoid) => byLayer.get(layerId)?.[geoid]?.absolute ?? null,
+      loading: counts.loading,
+      failed: (layerId) => failedIds.has(layerId),
+    };
   }, [layers, counts]);
 }

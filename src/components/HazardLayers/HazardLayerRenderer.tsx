@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { useMap } from "react-leaflet";
+import { useQuery } from "@tanstack/react-query";
 import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leaflet";
+import { hazardFileQuery } from "../../api/queries/hazardFile";
 import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
 import { ensurePane } from "../../utils/mapPanes";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
@@ -37,6 +40,9 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
   const popup = activeLayer?.popup;
   const color = activeLayer?.color;
   const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
+
+  // Only layers with a file are drawn, so file and name are set
+  useQuery({ ...hazardFileQuery(file!, layerName!), enabled: isVisible });
 
   // Draws the layer while it's on, and offers its popup for clicks on its shapes
   useEffect(() => {
@@ -97,9 +103,11 @@ const popupHtml = (
     .filter((key) => props[key] != null && key !== popup?.title)
     .filter((key) => !listed.some((field) => field.key === key))
     .map((key) => ({ key, label: key }));
-  return FeaturePopup({
-    metadata: [String(title || layerName)],
-    properties: props,
-    fields: [...listed, ...rest],
-  });
+  return renderToStaticMarkup(
+    <FeaturePopup
+      metadata={[String(title || layerName)]}
+      properties={props}
+      fields={[...listed, ...rest]}
+    />,
+  );
 };

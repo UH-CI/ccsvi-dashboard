@@ -1,6 +1,5 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { getMetricValues } from "../client";
-import { queryClient } from "../queryClient";
 
 // One metric's value for every area, from /api/v1/datasets/{id}/values
 export const metricValuesQuery = (dataset: string, metric: string) =>
@@ -18,7 +17,3 @@ export const useMetricValues = (
     ...metricValuesQuery(dataset ?? "", metric ?? ""),
     enabled: Boolean(dataset && metric),
   }).data;
-
-// For code outside React components, such as the popups
-export const fetchMetricValues = (dataset: string, metric: string) =>
-  queryClient.fetchQuery(metricValuesQuery(dataset, metric));

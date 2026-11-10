@@ -100,18 +100,20 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
   // Don't render if not visible, no config, or no data
   if (!isVisible || !config || !data) return null;
 
-  const renderPopupContent = (feature: Feature<Point>) => {
-    const title = feature.properties?.[config.popupConfig.titleField] || "";
-    const fields = Object.entries(feature.properties ?? {})
-      .map(([key, value]) => {
-        if (value === null || value === undefined || value === "") return null;
-        return `<strong>${key}:</strong> ${value}<br/>`;
-      })
-      .filter(Boolean)
-      .join("");
-
-    return `<h3>${title}</h3>${fields}`;
-  };
+  // The title column's value, then every column with a value
+  const renderPopupContent = (feature: Feature<Point>) => (
+    <div>
+      <h3>{String(feature.properties?.[config.popupConfig.titleField] || "")}</h3>
+      {Object.entries(feature.properties ?? {})
+        .filter(([, value]) => value !== null && value !== undefined && value !== "")
+        .map(([key, value]) => (
+          <React.Fragment key={key}>
+            <strong>{key}:</strong> {String(value)}
+            <br />
+          </React.Fragment>
+        ))}
+    </div>
+  );
 
   // const createClusterIcon = (cluster: L.MarkerCluster) =>
   //     L.divIcon({
@@ -217,13 +219,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
                 position={[latitude, longitude]}
                 icon={customIcon}
               >
-                <Popup>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: renderPopupContent(feature),
-                    }}
-                  />
-                </Popup>
+                <Popup>{renderPopupContent(feature)}</Popup>
               </Marker>
             );
           })}

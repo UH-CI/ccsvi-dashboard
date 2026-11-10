@@ -1,13 +1,17 @@
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
 import { POINT_LAYERS } from "../../config/pointLayers";
 import { getFilteredPoints, getPointFile } from "../client";
+import { layerFailureMessage } from "../queryClient";
 import type { PointCriteria } from "./filter";
+
+const pointLayer = (layerId: string) => POINT_LAYERS.find((layer) => layer.id === layerId)!;
 
 // One point layer's file, with every one of its points
 export const pointFileQuery = (layerId: string) =>
   queryOptions({
     queryKey: ["point-file", layerId],
-    queryFn: () => getPointFile(POINT_LAYERS.find((layer) => layer.id === layerId)!.filePath),
+    queryFn: () => getPointFile(pointLayer(layerId).filePath),
+    meta: { failureMessage: layerFailureMessage(pointLayer(layerId).name) },
   });
 
 export const usePointFile = (layerId: string) => useQuery(pointFileQuery(layerId)).data;
@@ -17,6 +21,7 @@ export const filteredPointsQuery = (layerId: string, { areas, hazards, rasters }
   queryOptions({
     queryKey: ["filtered-points", layerId, areas, hazards, rasters],
     queryFn: () => getFilteredPoints(layerId, areas, hazards, rasters),
+    meta: { failureMessage: layerFailureMessage(pointLayer(layerId).name) },
   });
 
 // Matches no areas, so it's never asked

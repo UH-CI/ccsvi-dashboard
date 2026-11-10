@@ -1,44 +1,32 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useMapRaster } from "../../stores/useMapLayersStore";
 import { layerDatasetId } from "../../utils/layerDatasets";
-import { queryClient } from "../queryClient";
-import { datasetsQuery, useDatasets } from "./datasets";
-import { fetchMetricValues, useMetricValues } from "./metricValues";
+import { useDatasets } from "./datasets";
+import { metricValuesQuery } from "./metricValues";
 
-// A raster's saved mean and max for one area; null where it has none
-export async function savedRasterStats(
-  rasterId: string,
-  geoid: string,
-  homelands: boolean,
-): Promise<{ mean: number | null; max: number | null }> {
-  const dataset = layerDatasetId(await queryClient.fetchQuery(datasetsQuery), rasterId, homelands);
-  if (!dataset) return { mean: null, max: null };
-  const [mean, max] = await Promise.all([
-    fetchMetricValues(dataset, "Mean"),
-    fetchMetricValues(dataset, "Max"),
-  ]);
-  return {
-    mean: mean[geoid]?.absolute ?? null,
-    max: max[geoid]?.absolute ?? null,
-  };
-}
-
-// The visible raster's saved means and maxes for the table: its name and lookups of one area's values
-export function useSavedRasterForTable(isHomelands: boolean, mapId: string) {
+// The map's saved raster: its name and lookups of one area's saved mean and max, for the table and the
+// popups; null when the map has no saved raster. A value that's missing or couldn't be fetched is null.
+export function useSavedRaster(isHomelands: boolean, mapId: string) {
   const datasets = useDatasets();
   const shown = useMapRaster(mapId);
   const savedId = shown?.raster.kind === "cog" ? shown.raster.id : null;
   const dataset = savedId ? layerDatasetId(datasets, savedId, isHomelands) : null;
-  const means = useMetricValues(dataset, "Mean");
-  const maxes = useMetricValues(dataset, "Max");
+  const means = useQuery({
+    ...metricValuesQuery(dataset ?? "", "Mean"),
+    enabled: dataset !== null,
+  });
+  const maxes = useQuery({ ...metricValuesQuery(dataset ?? "", "Max"), enabled: dataset !== null });
+  const loading = dataset !== null && (means.isPending || maxes.isPending);
 
   return useMemo(() => {
     if (!savedId) return null;
     return {
       name: shown!.name,
       units: shown!.units,
-      getMean: (geoid: string): number | null => means?.[geoid]?.absolute ?? null,
-      getMax: (geoid: string): number | null => maxes?.[geoid]?.absolute ?? null,
+      getMean: (geoid: string): number | null => means.data?.[geoid]?.absolute ?? null,
+      getMax: (geoid: string): number | null => maxes.data?.[geoid]?.absolute ?? null,
+      loading,
     };
-  }, [savedId, shown, means, maxes]);
+  }, [savedId, shown, means.data, maxes.data, loading]);
 }

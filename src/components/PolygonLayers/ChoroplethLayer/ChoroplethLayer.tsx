@@ -1,28 +1,16 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import type { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import type { LeafletMouseEvent } from "leaflet";
 import { useShallow } from "zustand/react/shallow";
 import { GenericPolygonLayer, type StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer";
-import {
-  buildPolygonPopupHtml,
-  renderPolygonPopup,
-  type PolygonPopupContext,
-} from "../../../utils/renderPolygonPopup";
+import { AreaPopupContent } from "../../FeaturePopup/AreaPopupContent";
 import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
-import type { HcdpPopupField, OverlayPopupField, PointCountsPopupField } from "../../FeaturePopup";
-import { getAreaStats } from "../../../api/client";
 import { useBoundary } from "../../../api/queries/boundaries";
 import { useFilteredGeoids } from "../../../api/queries/filter";
-import { useGeographies } from "../../../api/queries/geographies";
-import { fetchPointCounts } from "../../../api/queries/pointCounts";
-import { savedRasterStats } from "../../../api/queries/savedRaster";
 import { useAppStore } from "../../../stores/useAppStore";
 import { DEFAULT_LAYER_OPACITIES, useMapConfig, useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore } from "../../../stores/useMapLayersStore";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
-import { POINT_LAYERS } from "../../../config/pointLayers";
-import { rasterConfig } from "../../../config/rasterLayers";
-import { pointLayerIconHtml } from "../../../utils/pointLayerIcon";
 
 type AreaFeature = Feature<Geometry, GeoJsonProperties>;
 
@@ -53,7 +41,6 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
   const data = useBoundary(homelands ? "homelands" : "blockGroups") as
     | FeatureCollection<Geometry, GeoJsonProperties>
     | undefined;
-  const geographiesData = useGeographies();
   const filteredGeoids = useFilteredGeoids();
   const { filterRange, filterRange2 } = useAppStore(
     useShallow((state) => ({ filterRange: state.filterRange, filterRange2: state.filterRange2 })),
@@ -67,7 +54,6 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
       ],
   );
   const raster = useMapLayersStore((state) => state.rasters[mapId]);
-  const savedRasterId = raster?.kind === "cog" ? raster.id : null;
 
   const geoidOf = useCallback(
     (feature: AreaFeature) => String(feature.properties?.[config.geoidProperty] ?? ""),
@@ -155,98 +141,24 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
     [isMatched, geoidOf, updateMapActiveFeature, mapId, activeFeatureGeoid],
   );
 
-  const popupContext = useMemo<PolygonPopupContext>(
-    () => ({
-      config: { fields: config.popup.fields, geoidProperty: config.geoidProperty },
-      activeMetric: label1,
-      metric1,
-      geographiesData,
-      activeMetric2: label2,
-      metric2,
-    }),
-    [config, label1, label2, metric1, metric2, geographiesData],
+  // An area the Filter left out has no popup
+  const renderPopup = useCallback(
+    (feature: AreaFeature) =>
+      isMatched(feature) ? (
+        <AreaPopupContent
+          feature={feature}
+          mapId={mapId}
+          homelands={homelands}
+          fields={config.popup.fields}
+          geoidProperty={config.geoidProperty}
+          label1={label1}
+          metric1={metric1}
+          label2={label2}
+          metric2={metric2}
+        />
+      ) : null,
+    [isMatched, mapId, homelands, config, label1, metric1, label2, metric2],
   );
-
-  const renderPopup = useMemo(() => {
-    const render = renderPolygonPopup(popupContext);
-    return (feature: AreaFeature) => (isMatched(feature) ? render(feature) : null);
-  }, [popupContext, isMatched]);
-
-  // The popup's numbers that need a request: point counts, and the map's raster for this area
-  const enrichPopupOnOpen = useMemo(() => {
-    return async (feature: AreaFeature, setContent: (html: string) => void) => {
-      const geoid = geoidOf(feature);
-      if (!geoid) return;
-
-      // Tracks the latest known value of each optional field, so every redraw
-      // includes all of them together
-      let hcdpField: HcdpPopupField | undefined;
-      let overlayField: OverlayPopupField | undefined;
-      let pointCountsField: PointCountsPopupField = { loading: true, items: [] };
-
-      const render = () => {
-        const html = buildPolygonPopupHtml(
-          feature,
-          popupContext,
-          hcdpField,
-          overlayField,
-          pointCountsField,
-        );
-        if (html) setContent(html);
-      };
-      render();
-
-      const counts = await fetchPointCounts(geoid, homelands);
-      const visibleIds = useMapLayersStore.getState().points[mapId];
-      const items = POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id))
-        .map((layer) => ({
-          label: layer.name,
-          value: counts[layer.id] ?? 0,
-          iconHtml: pointLayerIconHtml(layer),
-        }))
-        .filter((item) => item.value > 0);
-      pointCountsField = { loading: false, items };
-      render();
-
-      const currentRaster = () => useMapLayersStore.getState().rasters[mapId];
-
-      if (raster?.kind === "hcdp") {
-        const overlay = currentRaster();
-        if (overlay?.kind !== "hcdp") return;
-        hcdpField = { label: overlay.title, loading: true };
-        render();
-
-        const stats = await getAreaStats(overlay, feature).catch(() => ({ mean: null, max: null }));
-
-        const currentOverlay = currentRaster();
-        if (currentOverlay?.kind === "hcdp") {
-          hcdpField = { label: currentOverlay.title, meanValue: stats.mean, maxValue: stats.max };
-          render();
-        }
-      } else if (savedRasterId) {
-        const savedStillShown = () => {
-          const now = currentRaster();
-          return now?.kind === "cog" && now.id === savedRasterId;
-        };
-        const { name, units } = rasterConfig(savedRasterId);
-        const suffix = units ? ` ${units}` : "";
-        overlayField = { label: name, loading: true, suffix };
-        render();
-
-        if (!savedStillShown()) return;
-        try {
-          const stats = await savedRasterStats(savedRasterId, geoid, homelands);
-          if (savedStillShown()) {
-            overlayField = { label: name, meanValue: stats.mean, maxValue: stats.max, suffix };
-            render();
-          }
-        } catch {
-          overlayField = { label: name, meanValue: null, maxValue: null, suffix };
-          render();
-        }
-      }
-    };
-  }, [geoidOf, popupContext, homelands, mapId, raster, savedRasterId]);
 
   return (
     <GenericPolygonLayer
@@ -261,7 +173,6 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
       activeFeatureGeoid={activeFeatureGeoid}
       onFeatureClick={handleClick}
       renderPopup={renderPopup}
-      enrichPopupOnOpen={enrichPopupOnOpen}
     />
   );
 };

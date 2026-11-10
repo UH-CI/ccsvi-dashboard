@@ -14,6 +14,7 @@ export const filterQuery = (
   queryOptions({
     queryKey: ["filter", homelands, [...hazards].sort(), minimums],
     queryFn: () => getFilterResults(homelands, hazards, minimums),
+    meta: { failureMessage: "The filter couldn't be applied. Please try again." },
   });
 
 const geoidsOf = (results: AreaResult[]) => new Set(results.map((result) => result.geoid));

@@ -8,8 +8,8 @@ import { usePrimaryMapState, useMapStore, useAppStore } from "../../stores";
 import { useDatasetTable } from "../../api/queries/datasetTable";
 import { useFilteredGeoids } from "../../api/queries/filter";
 import { usePointNamesForTable } from "../../api/queries/pointNames";
-import { usePointCountsForTable } from "../../api/queries/pointCounts";
-import { useSavedRasterForTable } from "../../api/queries/savedRaster";
+import { useVisiblePointCounts } from "../../api/queries/pointCounts";
+import { useSavedRaster } from "../../api/queries/savedRaster";
 import { useHazardOverlapsForTable } from "../../api/queries/hazardAreas";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
 import { useDataGridColumns } from "./hooks/useDataGridColumns";
@@ -94,7 +94,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   // Point counts: one extra column per currently-visible point layer
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const isHomelands = Boolean(datasetInfo?.hawaiian_homelands);
-  const { layers: pointLayers, getCount } = usePointCountsForTable(isHomelands, primaryMapId);
+  const { layers: pointLayers, getCount } = useVisiblePointCounts(isHomelands, primaryMapId);
   const { getNames } = usePointNamesForTable(isHomelands, primaryMapId);
 
   const pointCountColumns = useMemo(
@@ -127,7 +127,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   );
 
   // Raster mean and max: two extra columns for the raster currently visible on the map
-  const savedRaster = useSavedRasterForTable(isHomelands, primaryMapId);
+  const savedRaster = useSavedRaster(isHomelands, primaryMapId);
 
   const rasterColumns = useMemo(
     () =>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { useMapRaster } from "../../stores/useMapLayersStore";
@@ -112,11 +113,13 @@ const tileKey = ({ x, y, z }: { x: number; y: number; z: number }) => `${x}:${y}
 
 // The raster's name, then its value at the clicked point
 const valuePopup = (name: string, units: string | undefined, value: number) =>
-  FeaturePopup({
-    metadata: [name],
-    properties: { value: `${value.toFixed(2)}${units ? ` ${units}` : ""}` },
-    fields: [{ key: "value", label: "Value" }],
-  });
+  renderToStaticMarkup(
+    <FeaturePopup
+      metadata={[name]}
+      properties={{ value: `${value.toFixed(2)}${units ? ` ${units}` : ""}` }}
+      fields={[{ key: "value", label: "Value" }]}
+    />,
+  );
 
 interface MapRasterLayerProps {
   mapId: string;

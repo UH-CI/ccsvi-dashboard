@@ -114,6 +114,14 @@ export const getFilterResults = (
 export const getPointFile = (filePath: string) =>
   fetchJson<FeatureCollection<Point>>(dataUrl(`point_data/${filePath}`));
 
+// Fails when a hazard layer's map file can't be reached, without downloading it
+export const checkHazardFile = async (file: string): Promise<null> => {
+  const url = dataUrl(`hazards/${file}.pmtiles`);
+  const res = await fetch(url, { method: "HEAD" });
+  if (!res.ok) throw new ApiError(res.status, url);
+  return null;
+};
+
 // The query that names a raster to its tile server, e.g. "raster_id=Landslide"
 export const rasterQuery = (source: RasterSource): string =>
   source.kind === "cog"
