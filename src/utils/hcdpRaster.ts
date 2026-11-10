@@ -28,8 +28,50 @@ const DATA_TYPE_ORDER = [
 ];
 
 // The distinct non-empty values, sorted
-export function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
+function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
   return [...new Set(values.filter((v): v is T => v != null && v !== ""))].sort() as T[];
+}
+
+// What the user has chosen in the HCDP form
+export interface HcdpPicks {
+  dataType: string;
+  period: string;
+  aggregation: string;
+  production: string;
+  timescale: string;
+}
+
+// The choices only some datasets have
+export const HCDP_EXTRA_CHOICES = ["aggregation", "production", "timescale"] as const;
+export type HcdpExtraChoice = (typeof HCDP_EXTRA_CHOICES)[number];
+
+// The form's options for the user's picks, each pick kept while it's an option and otherwise the first
+// option, and the catalog row the picks name. A choice with no options doesn't narrow the rows.
+export function hcdpChoices(wanted: HcdpPicks) {
+  const pick = (options: string[], want: string) =>
+    options.includes(want) ? want : (options[0] ?? "");
+  const forType = HCDP_CATALOG.filter((row) => row.data_type === wanted.dataType);
+  const periods = uniqueSorted(forType.map((row) => row.period));
+  const period = pick(periods, wanted.period);
+  const forPeriod = forType.filter((row) => row.period === period);
+  const extraOptions = (key: HcdpExtraChoice) => uniqueSorted(forPeriod.map((row) => row[key]));
+  const options = {
+    period: periods,
+    aggregation: extraOptions("aggregation"),
+    production: extraOptions("production"),
+    timescale: extraOptions("timescale"),
+  };
+  const picks: HcdpPicks = {
+    dataType: wanted.dataType,
+    period,
+    aggregation: pick(options.aggregation, wanted.aggregation),
+    production: pick(options.production, wanted.production),
+    timescale: pick(options.timescale, wanted.timescale),
+  };
+  const row = forPeriod.find((r) =>
+    HCDP_EXTRA_CHOICES.every((key) => options[key].length === 0 || r[key] === picks[key]),
+  );
+  return { options, picks, row };
 }
 
 // The catalog's data types in menu order
