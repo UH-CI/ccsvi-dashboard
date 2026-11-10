@@ -1,6 +1,7 @@
 """HCDP climate rasters (rainfall, temperature, SPI, ...). Each file is downloaded from the HCDP API once,
 cleaned and kept on disk."""
 
+import contextlib
 import fcntl
 import hashlib
 import json
@@ -25,6 +26,10 @@ MAX_AGE_SECONDS = 7 * 24 * 3600
 MAX_CACHE_BYTES = 2 * 1024**3
 # What every cleaned file marks as empty
 NODATA = -9999.0
+# Lock and part files older than this, with no finished file, were left by a download that failed or was cut off
+LEFTOVER_AGE_SECONDS = 3600
+# Held by the one worker tidying the cache; not named *.lock, so the tidy-up never takes it for a leftover
+TRIM_LOCK = ".trim-lock"
 
 
 # HCDP has no file or dates for what was asked
@@ -55,41 +60,51 @@ def _hcdp_get(path: str, params: dict[str, str]) -> bytes:
 # Writes the downloaded file as a cloud-optimised GeoTIFF whose empty pixels all hold NODATA.
 # HCDP marks empty pixels as NaN, -9999 or about -3.4e38, not always the value the file declares.
 def _save_cleaned(raw: bytes, path: Path) -> None:
-    raw_part = path.with_suffix(".raw.part")
-    clean_part = path.with_suffix(".clean.part")
-    cog_part = path.with_suffix(".cog.part")
-    raw_part.write_bytes(raw)
-    with rasterio.open(raw_part) as src:
-        band = src.read(1).astype("float32")
-        empty = np.isnan(band) | (band == -9999) | (band <= -3.0e38)
-        if src.nodata is not None:
-            empty |= band == src.nodata
-        band[empty] = NODATA
-        profile = src.profile | {"driver": "GTiff", "dtype": "float32", "nodata": NODATA, "compress": "deflate"}
-    with rasterio.open(clean_part, "w", **profile) as dst:
-        dst.write(band, 1)
-    rasterio.shutil.copy(
-        clean_part, cog_part, driver="COG", compress="DEFLATE", blocksize=512, overview_resampling="average"
-    )
-    os.replace(cog_part, path)
-    raw_part.unlink()
-    clean_part.unlink()
+    parts = [path.with_suffix(f".{step}.part") for step in ("raw", "clean", "cog")]
+    raw_part, clean_part, cog_part = parts
+    try:
+        raw_part.write_bytes(raw)
+        with rasterio.open(raw_part) as src:
+            band = src.read(1).astype("float32")
+            empty = np.isnan(band) | (band == -9999) | (band <= -3.0e38)
+            if src.nodata is not None:
+                empty |= band == src.nodata
+            band[empty] = NODATA
+            profile = src.profile | {"driver": "GTiff", "dtype": "float32", "nodata": NODATA, "compress": "deflate"}
+        with rasterio.open(clean_part, "w", **profile) as dst:
+            dst.write(band, 1)
+        rasterio.shutil.copy(
+            clean_part, cog_part, driver="COG", compress="DEFLATE", blocksize=512, overview_resampling="average"
+        )
+        os.replace(cog_part, path)
+    finally:
+        for part in parts:
+            part.unlink(missing_ok=True)
 
 
-# Deletes files past their age, then the oldest until the folder is under its size limit, and lock files
-# left by downloads that failed (no file, over an hour old)
+# Deletes files past their age, then the oldest until under the size limit, then download leftovers; one worker at a time
 def _trim_cache() -> None:
-    files = sorted(settings.HCDP_CACHE_DIR.glob("*.tif"), key=lambda f: f.stat().st_mtime)
-    total = sum(f.stat().st_size for f in files)
-    now = time.time()
-    for f in files:
-        if now - f.stat().st_mtime > MAX_AGE_SECONDS or total > MAX_CACHE_BYTES:
-            total -= f.stat().st_size
-            f.unlink()
-            f.with_suffix(".lock").unlink(missing_ok=True)
-    for lock in settings.HCDP_CACHE_DIR.glob("*.lock"):
-        if not lock.with_suffix(".tif").exists() and now - lock.stat().st_mtime > 3600:
-            lock.unlink(missing_ok=True)
+    with open(settings.HCDP_CACHE_DIR / TRIM_LOCK, "w") as trim_lock:
+        try:
+            fcntl.flock(trim_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return
+        now = time.time()
+        files = sorted(((f, f.stat()) for f in settings.HCDP_CACHE_DIR.glob("*.tif")), key=lambda item: item[1].st_mtime)
+        total = sum(stat.st_size for _, stat in files)
+        for f, stat in files:
+            if now - stat.st_mtime > MAX_AGE_SECONDS or total > MAX_CACHE_BYTES:
+                total -= stat.st_size
+                f.unlink()
+                f.with_suffix(".lock").unlink(missing_ok=True)
+        for lock in settings.HCDP_CACHE_DIR.glob("*.lock"):
+            if not lock.with_suffix(".tif").exists() and now - lock.stat().st_mtime > LEFTOVER_AGE_SECONDS:
+                lock.unlink()
+        # A part file can vanish here: the worker downloading it finishes and removes it
+        for part in settings.HCDP_CACHE_DIR.glob("*.part"):
+            with contextlib.suppress(FileNotFoundError):
+                if now - part.stat().st_mtime > LEFTOVER_AGE_SECONDS:
+                    part.unlink()
 
 
 # The cleaned file for one HCDP selection and date, downloaded on first use. A lock file per download,

@@ -117,7 +117,14 @@ def field_problems(kind, entry, required, optional):
     return problems
 
 
-# Problems found in the files alone; switched-off entries only need a unique id
+# A comma or colon in an id would break the shared link; a dot in a parent id would break splitting "<parent>.<sub>"
+def id_problems(entry, parent):
+    banned = ",:" if parent else ",:."
+    found = [char for char in banned if char in str(entry.get("id"))]
+    return [f"id contains {' '.join(repr(char) for char in found)}"] if found else []
+
+
+# Problems found in the files alone; switched-off entries only need a unique, well-formed id
 def static_problems(files):
     found = {kind: list(walk(layers)) for kind, layers in files.items()}
     all_ids = [id_ for entries in found.values() for id_, _, _ in entries]
@@ -125,6 +132,7 @@ def static_problems(files):
     for kind, entries in found.items():
         fields = FIELDS[kind]
         for id_, entry, parent in entries:
+            problems += [f"{id_}: {problem}" for problem in id_problems(entry, parent)]
             if is_off(entry, parent):
                 continue
             required, optional = fields["sub"] if parent else fields["layer"]

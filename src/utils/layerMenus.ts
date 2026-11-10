@@ -2,6 +2,7 @@ import { LAYER_MENUS } from "../config/layerMenus";
 import type { LayerMenu, LayerMenuGroup } from "../config/layerMenus";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { HAZARD_LAYERS } from "../config/hazardLayers";
+import { subLayerId } from "../config/layerFiles";
 import { RASTER_LAYERS } from "../config/rasterLayers";
 import type { HazardLayerConfig, PointLayerConfig, RasterLayerConfig } from "../types";
 
@@ -79,8 +80,8 @@ function visibleLayerNode(
   }
 
   const subLayers: VisibleLeaf[] = entry.layer.subLayers
-    .filter((sub) => visibleIds.has(`${layer.id}.${sub.id}`))
-    .map((sub) => ({ kind: entry.kind, key: `${layer.id}.${sub.id}`, label: sub.name }));
+    .filter((sub) => visibleIds.has(subLayerId(layer.id, sub.id)))
+    .map((sub) => ({ kind: entry.kind, key: subLayerId(layer.id, sub.id), label: sub.name }));
   if (subLayers.length === 0) return null;
   return {
     kind: "parent",

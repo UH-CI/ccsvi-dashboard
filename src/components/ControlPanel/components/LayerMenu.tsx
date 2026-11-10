@@ -10,6 +10,7 @@ import { LayerToggleItem } from "./LayerToggleItem";
 import { LayerToggleGroup } from "./LayerToggleGroup";
 import { useResolvedMapId } from "../hooks/useResolvedMapId";
 import type { LayerMenu as LayerMenuConfig } from "../../../config/layerMenus";
+import { subLayerId } from "../../../config/layerFiles";
 import { resolveLayerMenu } from "../../../utils/layerMenus";
 import type { LayerKind, MenuGroupEntry, MenuLayer } from "../../../utils/layerMenus";
 
@@ -41,7 +42,7 @@ const MENU_ACTIONS: Record<
     fallbackIcon: "FaMap",
     toggle: (mapId, id) => useMapLayersStore.getState().toggleRaster(mapId, id),
     toggleSub: (mapId, parentId, subId) =>
-      useMapLayersStore.getState().toggleRaster(mapId, `${parentId}.${subId}`),
+      useMapLayersStore.getState().toggleRaster(mapId, subLayerId(parentId, subId)),
   },
 };
 
@@ -95,7 +96,7 @@ export const LayerMenu: React.FC<LayerMenuProps> = ({
 
     const { subLayers } = entry.layer;
     const visibleSubCount = subLayers.filter((sub) =>
-      visibleIds.has(`${layer.id}.${sub.id}`),
+      visibleIds.has(subLayerId(layer.id, sub.id)),
     ).length;
     const allSubsVisible = visibleSubCount === subLayers.length;
     return (
@@ -121,7 +122,7 @@ export const LayerMenu: React.FC<LayerMenuProps> = ({
             key={sub.id}
             label={sub.name}
             description={sub.description}
-            checked={visibleIds.has(`${layer.id}.${sub.id}`)}
+            checked={visibleIds.has(subLayerId(layer.id, sub.id))}
             indented
             labelMl={hide ? 0 : undefined}
             onToggle={() => toggleSub!(mapId, layer.id, sub.id)}

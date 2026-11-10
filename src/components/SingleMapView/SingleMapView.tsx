@@ -27,6 +27,7 @@ import {
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
+import { subLayerId } from "../../config/layerFiles";
 import { HazardLayerRenderer } from "../HazardLayers";
 import { MapRasterLayer } from "../RasterLayers";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
@@ -320,7 +321,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
                 {/* Render sublayers that are visible */}
                 {layer.subLayers?.map((sub) => {
-                  const compositeId = `${layer.id}.${sub.id}`;
+                  const compositeId = subLayerId(layer.id, sub.id);
                   return visibleHazardIds?.has(compositeId) ? (
                     <HazardLayerRenderer
                       key={compositeId}

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { create } from "zustand";
 import { HAZARD_LAYERS } from "../config/hazardLayers";
-import { HCDP_OPACITY, rasterColormap, rasterConfig, splitRasterId } from "../config/rasterLayers";
+import { splitLayerId, subLayerId } from "../config/layerFiles";
+import { HCDP_OPACITY, rasterColormap, rasterConfig } from "../config/rasterLayers";
 import type { VisibleIds } from "../utils/layerMenus";
 import type { RasterSource } from "../types";
 
@@ -57,7 +58,7 @@ export const useMapLayersStore = create<MapLayersState>((set, get) => ({
   toggleHazard: (mapId, id) => {
     const ids = new Set(get().hazards[mapId]);
     const layer = HAZARD_LAYERS.find((l) => l.id === id)!;
-    const subIds = (layer.subLayers ?? []).map((sub) => `${id}.${sub.id}`);
+    const subIds = (layer.subLayers ?? []).map((sub) => subLayerId(id, sub.id));
     if (ids.has(id)) [id, ...subIds].forEach((each) => ids.delete(each));
     else [id, ...subIds].forEach((each) => ids.add(each));
     get().setVisible("hazards", mapId, ids);
@@ -66,10 +67,11 @@ export const useMapLayersStore = create<MapLayersState>((set, get) => ({
   toggleHazardSub: (mapId, parentId, subId) => {
     const ids = new Set(get().hazards[mapId]);
     const layer = HAZARD_LAYERS.find((l) => l.id === parentId)!;
-    if (ids.delete(`${parentId}.${subId}`)) {
-      if (!layer.subLayers!.some((sub) => ids.has(`${parentId}.${sub.id}`))) ids.delete(parentId);
+    if (ids.delete(subLayerId(parentId, subId))) {
+      if (!layer.subLayers!.some((sub) => ids.has(subLayerId(parentId, sub.id))))
+        ids.delete(parentId);
     } else {
-      ids.add(`${parentId}.${subId}`);
+      ids.add(subLayerId(parentId, subId));
       ids.add(parentId);
     }
     get().setVisible("hazards", mapId, ids);
@@ -105,7 +107,7 @@ export const useMapLayersStore = create<MapLayersState>((set, get) => ({
 // the layer's id; none for HCDP
 export function visibleRasterIds(raster: MapRaster | undefined): ReadonlySet<string> {
   if (raster?.kind !== "cog") return NO_IDS;
-  const [layerId, subId] = splitRasterId(raster.id);
+  const [layerId, subId] = splitLayerId(raster.id);
   return new Set(subId ? [layerId, raster.id] : [layerId]);
 }
 

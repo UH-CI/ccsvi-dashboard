@@ -4,6 +4,7 @@ import { useMapStore } from "../stores";
 import { useMapLayersStore, visibleRasterIds } from "../stores/useMapLayersStore";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { HAZARD_LAYERS } from "../config/hazardLayers";
+import { subLayerId } from "../config/layerFiles";
 import { RASTER_IDS } from "../config/rasterLayers";
 import {
   LAYER_LIST_KEYS,
@@ -27,7 +28,7 @@ const LINK_LISTS: Record<
     knownIds: new Set(
       HAZARD_LAYERS.flatMap((layer) => [
         layer.id,
-        ...(layer.subLayers ?? []).map((sub) => `${layer.id}.${sub.id}`),
+        ...(layer.subLayers ?? []).map((sub) => subLayerId(layer.id, sub.id)),
       ]),
     ),
     restore: (mapId, ids) => useMapLayersStore.getState().setVisible("hazards", mapId, ids),

@@ -8,6 +8,7 @@ import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
 import { ensurePane } from "../../utils/mapPanes";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
+import { subLayerId } from "../../config/layerFiles";
 import { dataUrl } from "../../api/client";
 import { FeaturePopup } from "../FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
@@ -32,7 +33,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
       : undefined;
 
   const activeLayer = subLayer ?? parentLayer;
-  const activeLayerId = layerId ? `${parentId}.${layerId}` : parentId;
+  const activeLayerId = layerId ? subLayerId(parentId, layerId) : parentId;
 
   const isVisible = useMapLayersStore((state) => state.hazards[mapId]?.has(activeLayerId) ?? false);
 
