@@ -15,8 +15,8 @@ import zipfile
 import settings
 from pipeline.build_tools import run
 from pipeline.census.census_transform import metric_columns
-from pipeline.census.clean import dataset_outputs, load_dataset_config
-from registry import CENSUS_CONFIG, census_indicators, census_problems, rasters, shape_layers, stop_on
+from pipeline.census.clean import dataset_outputs
+from registry import CENSUS_CONFIG, census_indicators, census_problems, load_dataset_config, rasters, shape_layers, stop_on
 
 
 # The names inside a zip, or inside a zip within it; each zip is read once per run

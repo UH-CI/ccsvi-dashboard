@@ -22,7 +22,7 @@ from ingest.writer import Dataset, Metric, Value, save_dataset
 from pipeline.census import clean, proportions
 from pipeline.census.census_transform import metric_columns
 from pipeline.census.csv_format import CV, MISSING_VALUES, MOE_DERIVED, MOE_PP, PERCENT, moe_column_name
-from registry import census_indicators
+from registry import census_indicators, load_dataset_config
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
@@ -182,7 +182,7 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
 
 # Loads one CSV per config output from cleaned_dir, in name order, then stops if a menu indicator matched no metric
 async def main(cleaned_dir: str, config_path: str) -> None:
-    outputs = sorted(clean.dataset_outputs(clean.load_dataset_config(config_path)), key=lambda output: output["name"])
+    outputs = sorted(clean.dataset_outputs(load_dataset_config(config_path)), key=lambda output: output["name"])
     menu = {(indicator["dataset"], indicator["metric"]): indicator["key"] for indicator in census_indicators()}
     print(f"Loading {len(outputs)} CSV file(s) from {cleaned_dir}")
 

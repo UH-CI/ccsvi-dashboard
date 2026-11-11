@@ -207,12 +207,23 @@ def layer_metric_key(layer_id: str, metric: str, homelands: bool) -> str:
     return f"{key}_homelands" if homelands else key
 
 
-# Every census dataset id, an entry's alias or the names of its outputs when it is split into several,
-# with whether it is a Hawaiian Homelands dataset
+# The entries of a census dataset list
+def load_dataset_config(config_path) -> list:
+    return json.loads(Path(config_path).expanduser().read_text())["datasets"]
+
+
+# Each output file of a census dataset list as (entry, output): an entry's "outputs", else the entry itself named by its alias
+def dataset_entries(dataset_configs: list) -> list:
+    return [
+        (config, output)
+        for config in dataset_configs
+        for output in config.get("outputs", [dict(config, name=config["alias"])])
+    ]
+
+
+# Every census dataset id, with whether it is a Hawaiian Homelands dataset
 def census_datasets():
-    entries = json.loads(CENSUS_CONFIG.read_text())["datasets"]
-    split = {output["name"]: output["hawaiian_homelands"] for entry in entries for output in entry.get("outputs", [])}
-    return split | {entry["alias"]: entry["hawaiian_homelands"] for entry in entries if "outputs" not in entry}
+    return {output["name"]: output["hawaiian_homelands"] for _, output in dataset_entries(load_dataset_config(CENSUS_CONFIG))}
 
 
 def census_categories():

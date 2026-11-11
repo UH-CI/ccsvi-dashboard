@@ -1,19 +1,13 @@
 """Runs every dataset in a config file through the census_transform steps."""
 
-import json
 import os
 import re
 
 from openpyxl import load_workbook
 
+from registry import dataset_entries, load_dataset_config
+
 from . import census_transform, io_utils, proportions, recipes
-
-
-# Reads the dataset list from a config file
-def load_dataset_config(config_path: str) -> list:
-    with open(os.path.expanduser(config_path), "r") as f:
-        config = json.load(f)
-    return config["datasets"]
 
 
 # Where a dataset's raw file sits: raw_dir/<alias>/<file name from original_file_path>
@@ -108,29 +102,24 @@ def census_metadata(file_name: str) -> dict:
     }
 
 
-# One record per output file, from the config
-# A normal entry is one file named after its alias
-# An entry with "outputs" lists its files. 
+# One record per output file, with its source details read from the raw file's name
 def dataset_outputs(dataset_configs: list) -> list:
-    outputs = []
-    for config in dataset_configs:
-        for output in config.get("outputs", [dict(config, name=config["alias"])]):
-            outputs.append(
-                {
-                    "name": output["name"],
-                    "label": output["label"],
-                    "universe": output["universe"],
-                    "hawaiian_homelands": output["hawaiian_homelands"],
-                    "percent_denominator": output["percent_denominator"],
-                    "skip_metric_column": output.get("skip_metric_column"),
-                    "metadata": census_metadata(os.path.basename(config["original_file_path"])),
-                    "counts_only": output.get("counts_only", False),
-                    "population_column": output.get("population_column"),
-                    "values_are_percentages": output.get("values_are_percentages", False),
-                    "no_percentage_columns": output.get("no_percentage_columns", []),
-                }
-            )
-    return outputs
+    return [
+        {
+            "name": output["name"],
+            "label": output["label"],
+            "universe": output["universe"],
+            "hawaiian_homelands": output["hawaiian_homelands"],
+            "percent_denominator": output["percent_denominator"],
+            "skip_metric_column": output.get("skip_metric_column"),
+            "metadata": census_metadata(os.path.basename(config["original_file_path"])),
+            "counts_only": output.get("counts_only", False),
+            "population_column": output.get("population_column"),
+            "values_are_percentages": output.get("values_are_percentages", False),
+            "no_percentage_columns": output.get("no_percentage_columns", []),
+        }
+        for config, output in dataset_entries(dataset_configs)
+    ]
 
 
 """
