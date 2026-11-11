@@ -38,7 +38,8 @@
       "label": "Aggregate number of vehicles available by tenure",
       "universe": "Occupied housing units",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "counts_only": true
     },
     {
       "key": "health_insurance_coverage_by_age",
@@ -270,7 +271,10 @@
       "hawaiian_homelands": true,
       "percent_denominator": "Estimate!!Total!!Total population",
       "population_column": "Estimate!!Total!!Total population",
-      "values_are_percentages": true
+      "values_are_percentages": true,
+      "no_percentage_columns": [
+        "Estimate!!Total!!INDIVIDUALS' INCOME IN THE PAST 12 MONTHS (IN 2022 INFLATION-ADJUSTED DOLLARS)!!Population 15 years and over!!Median income (dollars)"
+      ]
     }
   ]
 }

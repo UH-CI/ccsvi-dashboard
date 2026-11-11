@@ -127,6 +127,7 @@ def dataset_outputs(dataset_configs: list) -> list:
                     "counts_only": output.get("counts_only", False),
                     "population_column": output.get("population_column"),
                     "values_are_percentages": output.get("values_are_percentages", False),
+                    "no_percentage_columns": output.get("no_percentage_columns", []),
                 }
             )
     return outputs
@@ -198,5 +199,6 @@ def add_percentages_to_directory(
             counts_only=output["counts_only"],
             population_column=output["population_column"],
             values_are_percentages=output["values_are_percentages"],
+            no_percentage_columns=output["no_percentage_columns"],
         )
         df_with_props.to_csv(csv_file, index=False)

@@ -40,6 +40,7 @@ def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
 # counts_only skips "(%)" and "(MOE pp)" so the app shows the raw counts instead.
 # population_column, if given, is read as Census_Population in place of the 2020 block-group population.
 # values_are_percentages keeps each value and margin as they are, rounded, instead of dividing them.
+# no_percentage_columns names columns that are never turned into percentages (medians, averages, rates).
 def add_percentages_to_csv(
     csv_path: str,
     block_group_populations: dict,
@@ -47,10 +48,13 @@ def add_percentages_to_csv(
     counts_only: bool = False,
     population_column: str | None = None,
     values_are_percentages: bool = False,
+    no_percentage_columns: tuple | list = (),
 ) -> pd.DataFrame:
     df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
     filename = os.path.basename(csv_path)
+    if missing := [col for col in no_percentage_columns if col not in df.columns]:
+        raise ValueError(f"{filename}: no_percentage_columns {missing} are not columns in the file")
 
     if population_column:
         block_populations = df[population_column]
@@ -94,8 +98,7 @@ def add_percentages_to_csv(
         for col in df.columns
         if col not in ["Geography", "Geographic Area Name", "Census_Population", denominator_column]
         and not col.startswith(MOE_PREFIX)
-        and "(Per Capita)" not in col
-        and "Median" not in col
+        and col not in no_percentage_columns
     ]
 
     pct_cols = {}
