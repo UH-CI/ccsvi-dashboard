@@ -151,9 +151,8 @@ def run_full_cleaning(
     duplicates = sorted({alias for alias in aliases if aliases.count(alias) > 1})
     if duplicates:
         raise ValueError(f"Duplicate alias in config: {duplicates}")
-    for alias, (_, borrowed) in recipes.CODED_RECIPES.items():
-        if missing := [name for name in [alias, *borrowed] if name not in aliases]:
-            raise ValueError(f"CODED_RECIPES[{alias!r}] names {missing}, which are not config aliases")
+    if missing := sorted(set(recipes.CODED_RECIPES) - set(aliases)):
+        raise ValueError(f"CODED_RECIPES names {missing}, which are not config aliases")
     for config in dataset_configs:
         if config["key"] not in file_blocks:
             raise ValueError(
@@ -165,7 +164,7 @@ def run_full_cleaning(
 
     cleaned = {}
     for config in dataset_configs:
-        cleaned.update(recipes.cleaned_tables(config, datasets))
+        cleaned.update(recipes.cleaned_tables(config, datasets[config["alias"]]))
 
     expected = [output["name"] for output in dataset_outputs(dataset_configs)]
     if sorted(cleaned) != sorted(expected):

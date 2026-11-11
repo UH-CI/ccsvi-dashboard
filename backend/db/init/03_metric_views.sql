@@ -82,8 +82,6 @@ SELECT
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'no_computer') AS no_computer,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.key = 'no_vehicle') AS no_vehicle,
-    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'fire_stations_count') AS fire_stations_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'hospitals_count') AS hospitals_count,

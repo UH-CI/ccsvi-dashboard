@@ -326,14 +326,6 @@
           "label": "Households Without a Computer or Smartphone",
           "calculationDescription": "Percentage of households without a computer or smartphone.",
           "description": "Limited access to digital devices can reduce access to information and resources for hazard preparedness, response, and recovery."
-        },
-        {
-          "key": "no_vehicle",
-          "dataset": "aggregate_vehicles",
-          "metric": "Aggregate number of vehicles available",
-          "label": "Households Without a Vehicle",
-          "calculationDescription": "Percentage of households without a vehicle.",
-          "description": "Lack of vehicle access can create barriers to preparedness, evacuation, access to essential services, and recovery during hazards."
         }
       ]
     }

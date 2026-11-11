@@ -42,12 +42,6 @@ def _carry_with_moe(cleaned_df: pd.DataFrame, df: pd.DataFrame, estimate_col) ->
         cleaned_df[moe_col] = df[moe_col]
 
 
-# Lines up another table's rows with df's rows by geography ID; errors if a place is missing
-def _rows_matching_geoids(df: pd.DataFrame, other: pd.DataFrame) -> pd.DataFrame:
-    geo_col = ("GEO_ID", "Geography")
-    return other.set_axis(other[geo_col], axis=0).loc[df[geo_col]].set_axis(df.index, axis=0)
-
-
 # Sums estimate columns into a CALCULATED total. Stays blank when every input is blank, so
 # places the Census left empty aren't reported as 0.
 def _sum_estimates(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
@@ -168,32 +162,18 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([cleaned_df, df.iloc[:, first_kept:]], axis=1)
 
 
-# aggregate_vehicles' own raw table has no household-count column (it only has the vehicle
-# sums, split by owner/renter occupied) — borrow tenure's total occupied housing units,
-# since that's the same owner/renter-occupied universe this dataset is split by.
-# Matched by geography ID, not row order.
-def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
-    tenure_df = _rows_matching_geoids(vehicles_df, tenure_raw_df)
-    merged = vehicles_df.copy()
-    _carry_with_moe(merged, tenure_df, _column(tenure_df, "Estimate!!Total:"))
-    return merged
-
-
-# Datasets cleaned by code, by alias: the recipe (returning one table, or {output file name: table}) and other datasets' raw tables it borrows
+# Datasets cleaned by code, by alias; a recipe returns one table, or {output file name: table}
 CODED_RECIPES = {
-    "aggregate_vehicles": (merge_tenure_households, ["tenure"]),
-    "person_under_5_65": (recipe_person_under_5_65, []),
-    "2022_census_hawaiian_homelands": (recipe_hawaiian_homelands, []),
+    "person_under_5_65": recipe_person_under_5_65,
+    "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
 }
 
 
 # One dataset's cleaned tables as {output file name: table}: its coded recipe, else its config totals, else its raw table as is
-def cleaned_tables(config: dict, raw_tables: dict) -> dict:
+def cleaned_tables(config: dict, df: pd.DataFrame) -> dict:
     alias = config["alias"]
-    df = raw_tables[alias]
     if alias in CODED_RECIPES:
-        recipe, borrowed = CODED_RECIPES[alias]
-        result = recipe(df, *(raw_tables[name] for name in borrowed))
+        result = CODED_RECIPES[alias](df)
         return result if isinstance(result, dict) else {alias: result}
     if "totals" in config:
         return {alias: add_totals(df, config["totals"], config["percent_denominator"], config.get("keep_raw_columns", False))}
