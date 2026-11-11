@@ -125,6 +125,8 @@ def dataset_outputs(dataset_configs: list) -> list:
                     "skip_metric_column": output.get("skip_metric_column"),
                     "metadata": census_metadata(os.path.basename(config["original_file_path"])),
                     "counts_only": output.get("counts_only", False),
+                    "population_column": output.get("population_column"),
+                    "values_are_percentages": output.get("values_are_percentages", False),
                 }
             )
     return outputs
@@ -148,15 +150,9 @@ def run_full_cleaning(
     duplicates = sorted({alias for alias in aliases if aliases.count(alias) > 1})
     if duplicates:
         raise ValueError(f"Duplicate alias in config: {duplicates}")
-    if set(aliases) != set(recipes.RECIPES):
-        raise ValueError(
-            f"Config and RECIPES list different datasets. Only in config: {sorted(set(aliases) - set(recipes.RECIPES))}. "
-            f"Only in RECIPES: {sorted(set(recipes.RECIPES) - set(aliases))}"
-        )
-    for alias, (_, extra_inputs) in recipes.RECIPES.items():
-        missing = [name for name in extra_inputs if name not in aliases]
-        if missing:
-            raise ValueError(f"RECIPES[{alias!r}] needs {missing}, which are not config aliases")
+    for alias, (_, borrowed) in recipes.CODED_RECIPES.items():
+        if missing := [name for name in [alias, *borrowed] if name not in aliases]:
+            raise ValueError(f"CODED_RECIPES[{alias!r}] names {missing}, which are not config aliases")
     for config in dataset_configs:
         if config["key"] not in file_blocks:
             raise ValueError(
@@ -167,13 +163,8 @@ def run_full_cleaning(
     datasets = load_and_process_all_datasets(config_path, file_blocks, raw_dir)
 
     cleaned = {}
-    for alias in aliases:
-        recipe, extra_inputs = recipes.RECIPES[alias]
-        result = datasets[alias] if recipe is None else recipe(datasets[alias], *(datasets[name] for name in extra_inputs))
-        if isinstance(result, dict):
-            cleaned.update(result)
-        else:
-            cleaned[alias] = result
+    for config in dataset_configs:
+        cleaned.update(recipes.cleaned_tables(config, datasets))
 
     expected = [output["name"] for output in dataset_outputs(dataset_configs)]
     if sorted(cleaned) != sorted(expected):
@@ -203,8 +194,9 @@ def add_percentages_to_directory(
         df_with_props = proportions.add_percentages_to_csv(
             csv_file,
             block_group_populations,
-            output["hawaiian_homelands"],
             denominator_column=output["percent_denominator"],
             counts_only=output["counts_only"],
+            population_column=output["population_column"],
+            values_are_percentages=output["values_are_percentages"],
         )
         df_with_props.to_csv(csv_file, index=False)

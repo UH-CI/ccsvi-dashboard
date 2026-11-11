@@ -38,21 +38,22 @@ def _coefficient_of_variation(estimate: pd.Series, moe: pd.Series) -> pd.Series:
 # Adds Census_Population and, per numeric metric column, "(%)" / "(MOE pp)" / "(CV)" /
 # "(MOE derived)". denominator_column, if given, replaces population as the divisor.
 # counts_only skips "(%)" and "(MOE pp)" so the app shows the raw counts instead.
-# Hawaiian Homelands take Census_Population from their own data file's 2022 total, since
-# the only boundary file with populations is from 2010.
+# population_column, if given, is read as Census_Population in place of the 2020 block-group population.
+# values_are_percentages keeps each value and margin as they are, rounded, instead of dividing them.
 def add_percentages_to_csv(
     csv_path: str,
     block_group_populations: dict,
-    is_hawaiian_homelands: bool,
     denominator_column: str | None = None,
     counts_only: bool = False,
+    population_column: str | None = None,
+    values_are_percentages: bool = False,
 ) -> pd.DataFrame:
     df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
     filename = os.path.basename(csv_path)
 
-    if is_hawaiian_homelands:
-        block_populations = df["Estimate!!Total!!Total population"]
+    if population_column:
+        block_populations = df[population_column]
     else:
         block_populations = df["Geography"].map(block_group_populations)
 
@@ -108,9 +109,7 @@ def add_percentages_to_csv(
 
         values = df[col]
 
-        already_pct = is_hawaiian_homelands
-
-        if already_pct:
+        if values_are_percentages:
             pct_cols[col] = values.round(1)
         else:
             pct_cols[col] = ((values / denominator) * 100).round(1)
@@ -120,7 +119,7 @@ def add_percentages_to_csv(
             continue
         moe_values = pd.to_numeric(df[moe_col], errors="coerce")
 
-        if already_pct:
+        if values_are_percentages:
             # margin already a percentage
             moe_pp_cols[col] = moe_values.round(1)
         else:

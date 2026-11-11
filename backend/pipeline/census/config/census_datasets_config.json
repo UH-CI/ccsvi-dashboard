@@ -7,7 +7,29 @@
       "label": "Housing units by year structure was built",
       "universe": "Housing units",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "Total Housing Built Before 1990",
+          "columns": [
+            "Estimate!!Total:!!Built 1980 to 1989",
+            "Estimate!!Total:!!Built 1970 to 1979",
+            "Estimate!!Total:!!Built 1960 to 1969",
+            "Estimate!!Total:!!Built 1950 to 1959",
+            "Estimate!!Total:!!Built 1940 to 1949",
+            "Estimate!!Total:!!Built 1939 or earlier"
+          ]
+        },
+        {
+          "name": "Total Housing Built Before 1970",
+          "columns": [
+            "Estimate!!Total:!!Built 1960 to 1969",
+            "Estimate!!Total:!!Built 1950 to 1959",
+            "Estimate!!Total:!!Built 1940 to 1949",
+            "Estimate!!Total:!!Built 1939 or earlier"
+          ]
+        }
+      ]
     },
     {
       "key": "aggregate_number_of_vehicles_available_by_tenure",
@@ -25,7 +47,18 @@
       "label": "Health insurance coverage status by age",
       "universe": "Civilian noninstitutionalized population",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "No Health Insurance Coverage",
+          "columns": [
+            "Estimate!!Total:!!Under 19 years:!!No health insurance coverage",
+            "Estimate!!Total:!!19 to 34 years:!!No health insurance coverage",
+            "Estimate!!Total:!!35 to 64 years:!!No health insurance coverage",
+            "Estimate!!Total:!!65 years and over:!!No health insurance coverage"
+          ]
+        }
+      ]
     },
     {
       "key": "households_with_a_computer",
@@ -52,7 +85,19 @@
       "label": "Households with limited English speaking ability",
       "universe": "Households",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "keep_raw_columns": true,
+      "totals": [
+        {
+          "name": "Total Limited English Speaking Households",
+          "columns": [
+            "Estimate!!Total:!!Spanish:!!Limited English speaking household",
+            "Estimate!!Total:!!Other Indo-European languages:!!Limited English speaking household",
+            "Estimate!!Total:!!Asian and Pacific Island languages:!!Limited English speaking household",
+            "Estimate!!Total:!!Other languages:!!Limited English speaking household"
+          ]
+        }
+      ]
     },
     {
       "key": "living_arragements_including_living_alone_by_sex_and_relationship",
@@ -61,7 +106,17 @@
       "label": "Living arrangements including living alone by sex and relationship",
       "universe": "Households",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:!!In households:!!Householder:"
+      "percent_denominator": "Estimate!!Total:!!In households:!!Householder:",
+      "keep_raw_columns": true,
+      "totals": [
+        {
+          "name": "Total Living alone",
+          "columns": [
+            "Estimate!!Total:!!In households:!!Householder:!!Male:!!Living alone",
+            "Estimate!!Total:!!In households:!!Householder:!!Female:!!Living alone"
+          ]
+        }
+      ]
     },
     {
       "key": "income_share_of_fpl",
@@ -70,7 +125,36 @@
       "label": "Ratio of income to poverty level",
       "universe": "Population for whom poverty status has been determined",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "Total Under 100% FPL",
+          "columns": [
+            "Estimate!!Total:!!Under .50",
+            "Estimate!!Total:!!.50 to .99"
+          ]
+        },
+        {
+          "name": "Total Under 150% FPL",
+          "columns": [
+            "Estimate!!Total:!!Under .50",
+            "Estimate!!Total:!!.50 to .99",
+            "Estimate!!Total:!!1.00 to 1.24",
+            "Estimate!!Total:!!1.25 to 1.49"
+          ]
+        },
+        {
+          "name": "Total Under 200% FPL",
+          "columns": [
+            "Estimate!!Total:!!Under .50",
+            "Estimate!!Total:!!.50 to .99",
+            "Estimate!!Total:!!1.00 to 1.24",
+            "Estimate!!Total:!!1.25 to 1.49",
+            "Estimate!!Total:!!1.50 to 1.84",
+            "Estimate!!Total:!!1.85 to 1.99"
+          ]
+        }
+      ]
     },
     {
       "key": "persons_under_5_65_years_table",
@@ -144,7 +228,20 @@
       "label": "Tenure by occupants per room (overcrowding)",
       "universe": "Occupied housing units",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "Total Overcrowded Housing Units",
+          "columns": [
+            "Estimate!!Total:!!Owner occupied:!!1.01 to 1.50 occupants per room",
+            "Estimate!!Total:!!Owner occupied:!!1.51 to 2.00 occupants per room",
+            "Estimate!!Total:!!Owner occupied:!!2.01 or more occupants per room",
+            "Estimate!!Total:!!Renter occupied:!!1.01 to 1.50 occupants per room",
+            "Estimate!!Total:!!Renter occupied:!!1.51 to 2.00 occupants per room",
+            "Estimate!!Total:!!Renter occupied:!!2.01 or more occupants per room"
+          ]
+        }
+      ]
     },
     {
       "key": "family_type_by_presence_and_age_of_own_children",
@@ -153,7 +250,16 @@
       "label": "Family type by presence and age of own children (single-parent households)",
       "universe": "Families",
       "hawaiian_homelands": false,
-      "percent_denominator": "Estimate!!Total:"
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "Total Single-Parent Households With Children",
+          "columns": [
+            "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
+            "Estimate!!Total:!!Other family:!!Female householder, no spouse present:!!With own children of the householder under 18 years:"
+          ]
+        }
+      ]
     },
     {
       "key": "2022_census_hawaiian_homelands",
@@ -162,7 +268,9 @@
       "label": "Selected characteristics of the total and Native Hawaiian population in Hawaiian Homelands",
       "universe": "Total population",
       "hawaiian_homelands": true,
-      "percent_denominator": "Estimate!!Total!!Total population"
+      "percent_denominator": "Estimate!!Total!!Total population",
+      "population_column": "Estimate!!Total!!Total population",
+      "values_are_percentages": true
     }
   ]
 }

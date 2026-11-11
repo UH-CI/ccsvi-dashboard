@@ -1,10 +1,9 @@
 """
-Per-dataset totals ("JPL Notes Cleaning" steps) — each sums a specific set of
-estimate columns into CALCULATED totals. RECIPES at the bottom list every dataset
-by alias; the pipeline calls each recipe with the dataset's own raw table, then any
-other raw tables its RECIPES line names, and saves what it returns: one table, or
-several tables keyed by output file name when one dataset makes several files.
-Recipes only read raw tables and never change a table they are given, so order does not matter.
+Per-dataset totals ("JPL Notes Cleaning" steps): each total is the sum of named raw estimate
+columns, saved as a CALCULATED column with its margin of error. Most datasets list their totals
+in the config and add_totals builds them; CODED_RECIPES holds the few that need code.
+cleaned_tables picks which applies to a dataset. Recipes only read raw tables and never change
+a table they are given, so order does not matter.
 """
 
 import pandas as pd
@@ -12,16 +11,12 @@ import pandas as pd
 from .csv_format import ESTIMATE_PREFIX, moe_column_name
 
 
-def _estimate_total_cols(df: pd.DataFrame) -> list:
-    return [col for col in df.columns if len(col) == 2 and col[1].startswith("Estimate!!Total:!!")]
-
-
-# Finds the raw "Estimate!!Total:" universe column (not a "!!" subcategory of it)
-def _total_universe_col(df: pd.DataFrame):
+# The raw column with exactly this name; stops if the table has none
+def _column(df: pd.DataFrame, name: str):
     for col in df.columns:
-        if len(col) == 2 and col[1] == "Estimate!!Total:":
+        if len(col) == 2 and col[1] == name:
             return col
-    raise ValueError("Raw table has no 'Estimate!!Total:' column, which its recipe needs as the percentage denominator")
+    raise ValueError(f"Raw table has no column {name!r}")
 
 
 # Finds the "Margin of Error!!..." column matching an estimate column, if the source has one
@@ -97,257 +92,80 @@ def _sum_moe(df: pd.DataFrame, estimate_cols: list) -> pd.Series:
     return pd.Series([combine(i) for i in range(len(df))], index=df.index)
 
 
-# Adds a CALCULATED total of estimate_cols and its margin of error to target_df, at position if given, else at the end
-def _add_total(target_df: pd.DataFrame, df: pd.DataFrame, name: str, estimate_cols: list, position: int | None = None) -> None:
-    estimate_col = ("CALCULATED", name)
-    moe_col = ("CALCULATED", moe_column_name(name))
-    if position is None:
-        target_df[estimate_col] = _sum_estimates(df, estimate_cols)
-        target_df[moe_col] = _sum_moe(df, estimate_cols)
-    else:
-        target_df.insert(position, estimate_col, _sum_estimates(df, estimate_cols))
-        target_df.insert(position + 1, moe_col, _sum_moe(df, estimate_cols))
+# Adds a CALCULATED total of estimate_cols and its margin of error to the end of target_df
+def _add_total(target_df: pd.DataFrame, df: pd.DataFrame, name: str, estimate_cols: list) -> None:
+    target_df[("CALCULATED", name)] = _sum_estimates(df, estimate_cols)
+    target_df[("CALCULATED", moe_column_name(name))] = _sum_moe(df, estimate_cols)
 
 
-# Adds "Total Housing Built Before 1990" and "Total Housing Built Before 1970" columns,
-# and carries through the raw total-housing-units column so it can be used as a
-# percentage denominator
-def recipe_age_of_structure(df: pd.DataFrame) -> pd.DataFrame:
+# Builds a dataset from its config totals: place columns, the denominator column, then each total; keep_raw_columns puts the totals first and keeps every raw column after them
+def add_totals(df: pd.DataFrame, totals: list, denominator: str, keep_raw_columns: bool) -> pd.DataFrame:
     cleaned_df = df.iloc[:, :2].copy()
-    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
+    if not keep_raw_columns:
+        _carry_with_moe(cleaned_df, df, _column(df, denominator))
 
-    cols_before_1970, cols_before_1990 = [], []
-    for col in _estimate_total_cols(df):
-        col_alias = col[1]
+    for total in totals:
+        _add_total(cleaned_df, df, total["name"], [_column(df, name) for name in total["columns"]])
 
-        if (
-            "1960 to 1969" in col_alias
-            or "1950 to 1959" in col_alias
-            or "1940 to 1949" in col_alias
-            or "1939 or earlier" in col_alias
-        ):
-            cols_before_1970.append(col)
-            cols_before_1990.append(col)
-        elif "1970 to 1979" in col_alias or "1980 to 1989" in col_alias:
-            cols_before_1990.append(col)
-
-    _add_total(cleaned_df, df, "Total Housing Built Before 1990", cols_before_1990)
-    _add_total(cleaned_df, df, "Total Housing Built Before 1970", cols_before_1970)
-
+    if keep_raw_columns:
+        cleaned_df = pd.concat([cleaned_df, df.iloc[:, 2:]], axis=1)
     return cleaned_df
 
 
-# Adds a "Total Overcrowded Housing Units" column (owner + renter households above
-# 1.0 occupants per room), and carries through the raw total-occupied-units column
-# so it can be used as a percentage denominator
-def recipe_tenure_by_occupants_per_room(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.iloc[:, :2].copy()
-    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
-
-    overcrowded_cols = []
-    for col in _estimate_total_cols(df):
-        col_alias = col[1]
-
-        if (
-            "1.01 to 1.50 occupants per room" in col_alias
-            or "1.51 to 2.00 occupants per room" in col_alias
-            or "2.01 or more occupants per room" in col_alias
-        ):
-            overcrowded_cols.append(col)
-
-    _add_total(cleaned_df, df, "Total Overcrowded Housing Units", overcrowded_cols)
-
-    return cleaned_df
+# Age labels in the age-by-sex table, by the total they add up to
+AGE_GROUPS = {
+    "Under 5": ["Under 5 years"],
+    "Under 18": ["Under 5 years", "5 to 9 years", "10 to 14 years", "15 to 17 years"],
+    "Over 65": ["65 and 66 years", "67 to 69 years", "70 to 74 years", "75 to 79 years", "80 to 84 years", "85 years and over"],
+}
 
 
-# Adds a "Total Single-Parent Households With Children" column (male + female
-# householder, no spouse present, with own children under 18), and carries through
-# the raw total-families column so it can be used as a percentage denominator
-def recipe_family_type_by_children(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.iloc[:, :2].copy()
-    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
-
-    single_parent_labels = (
-        "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
-        "Estimate!!Total:!!Other family:!!Female householder, no spouse present:!!With own children of the householder under 18 years:",
-    )
-    single_parent_cols = [col for col in _estimate_total_cols(df) if col[1] in single_parent_labels]
-
-    _add_total(cleaned_df, df, "Total Single-Parent Households With Children", single_parent_cols)
-
-    return cleaned_df
-
-
-# Adds a single "No Health Insurance Coverage" column
-def recipe_health_insurance(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.iloc[:, :2].copy()
-    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
-    cols_to_sum = _estimate_total_cols(df)
-    _add_total(cleaned_df, df, "No Health Insurance Coverage", cols_to_sum)
-    return cleaned_df
-
-
-# Inserts a "Total Limited English Speaking Households" column after the first two columns
-def recipe_limited_english_speaking(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.copy()
-    cols_to_sum = _estimate_total_cols(df)
-    _add_total(cleaned_df, df, "Total Limited English Speaking Households", cols_to_sum, position=2)
-    return cleaned_df
-
-
-# Inserts a 'Total "Living alone"' column after the first two columns
-def recipe_living_arrangements(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.copy()
-    cols_to_sum = [col for col in _estimate_total_cols(df) if col[1].endswith("!!Living alone")]
-    _add_total(cleaned_df, df, 'Total "Living alone"', cols_to_sum, position=2)
-    return cleaned_df
-
-
-# Adds Under 100% / 150% / 200% FPL totals, bucketing the income-to-poverty-ratio columns
-def recipe_income_share_of_fpl(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.iloc[:, :2].copy()
-    _carry_with_moe(cleaned_df, df, _total_universe_col(df))
-
-    under_1_cols, under_1_5_cols, under_2_cols = [], [], []
-
-    for col in _estimate_total_cols(df):
-        col_alias = col[1]
-
-        if "Under .50" in col_alias or ".50 to .99" in col_alias:
-            under_1_cols.append(col)
-            under_1_5_cols.append(col)
-            under_2_cols.append(col)
-        elif "1.00 to 1.24" in col_alias or "1.25 to 1.49" in col_alias:
-            under_1_5_cols.append(col)
-            under_2_cols.append(col)
-        elif "1.50 to 1.84" in col_alias or "1.85 to 1.99" in col_alias:
-            under_2_cols.append(col)
-
-    _add_total(cleaned_df, df, "Total Under 100% FPL", under_1_cols)
-    _add_total(cleaned_df, df, "Total Under 150% FPL", under_1_5_cols)
-    _add_total(cleaned_df, df, "Total Under 200% FPL", under_2_cols)
-
-    return cleaned_df
-
-
-def _age_bucket_cols(df: pd.DataFrame, sex_prefix: str) -> tuple:
-    under_5_cols, under_18_cols, over_65_cols = [], [], []
-
-    for col in df.columns:
-        if len(col) == 2 and col[1].startswith(sex_prefix):
-            col_alias = col[1]
-
-            if "Under 5" in col_alias:
-                under_5_cols.append(col)
-                under_18_cols.append(col)
-            elif "5 to 9" in col_alias or "10 to 14" in col_alias or "15 to 17" in col_alias:
-                under_18_cols.append(col)
-            elif (
-                "65 and 66" in col_alias
-                or "67 to 69" in col_alias
-                or "70 to 74" in col_alias
-                or "75 to 79" in col_alias
-                or "80 to 84" in col_alias
-                or "85" in col_alias
-            ):
-                over_65_cols.append(col)
-
-    return under_5_cols, under_18_cols, over_65_cols
-
-"""
-Splits the persons-under-5/65 dataset into outputs: overall gender totals,
-combined (male + female) age-bucket totals (under 5, under 18, over 65), and
-the original male-only/female-only age-bucket totals (kept for reference,
-no longer exposed as SVI indicators). Returns a dict of {output_name:
-dataframe} since one dataset produces multiple separate CSVs.
-"""
+# The age-by-sex table's four files: total, male and female counts; age-group totals for both sexes; and the same for each sex alone (off the menu)
 def recipe_person_under_5_65(df: pd.DataFrame) -> dict:
-    total_col = _total_universe_col(df)
+    total_col = _column(df, "Estimate!!Total:")
 
     genders_df = df.iloc[:, :2].copy()
-    _carry_with_moe(genders_df, df, total_col)
-    _carry_with_moe(genders_df, df, ("B01001_002E", "Estimate!!Total:!!Male:"))
-    _carry_with_moe(genders_df, df, ("B01001_026E", "Estimate!!Total:!!Female:"))
+    for name in ["Estimate!!Total:", "Estimate!!Total:!!Male:", "Estimate!!Total:!!Female:"]:
+        _carry_with_moe(genders_df, df, _column(df, name))
+    tables = {"genders": genders_df}
 
-    males_under_5, males_under_18, males_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Male:!!")
-    females_under_5, females_under_18, females_over_65 = _age_bucket_cols(df, "Estimate!!Total:!!Female:!!")
-
-    # Combined (male + female) age-bucket totals — the consolidated SVI indicators.
-    total_df = df.iloc[:, :2].copy()
-    _carry_with_moe(total_df, df, total_col)
-    under_5_cols = males_under_5 + females_under_5
-    under_18_cols = males_under_18 + females_under_18
-    over_65_cols = males_over_65 + females_over_65
-    _add_total(total_df, df, "Total Under 5", under_5_cols)
-    _add_total(total_df, df, "Total Under 18", under_18_cols)
-    _add_total(total_df, df, "Total Over 65", over_65_cols)
-
-    # Segregated male/female age-bucket totals — kept for reference, no longer
-    # exposed as SVI indicators (see sviCategories.ts).
-    males_df = df.iloc[:, :2].copy()
-    _carry_with_moe(males_df, df, total_col)
-    _add_total(males_df, df, "Males Under 5", males_under_5)
-    _add_total(males_df, df, "Males Under 18", males_under_18)
-    _add_total(males_df, df, "Males Over 65", males_over_65)
-
-    females_df = df.iloc[:, :2].copy()
-    _carry_with_moe(females_df, df, total_col)
-    _add_total(females_df, df, "Females Under 5", females_under_5)
-    _add_total(females_df, df, "Females Under 18", females_under_18)
-    _add_total(females_df, df, "Females Over 65", females_over_65)
-
-    return {
-        "genders": genders_df,
-        "person_under_5_65_total": total_df,
-        "person_under_5_65_males": males_df,
-        "person_under_5_65_females": females_df,
-    }
+    for file_name, prefix, sexes in [
+        ("person_under_5_65_total", "Total", ["Male", "Female"]),
+        ("person_under_5_65_males", "Males", ["Male"]),
+        ("person_under_5_65_females", "Females", ["Female"]),
+    ]:
+        table = df.iloc[:, :2].copy()
+        _carry_with_moe(table, df, total_col)
+        for group, ages in AGE_GROUPS.items():
+            columns = [_column(df, f"Estimate!!Total:!!{sex}:!!{age}") for sex in sexes for age in ages]
+            _add_total(table, df, f"{prefix} {group}", columns)
+        tables[file_name] = table
+    return tables
 
 
-"""
-Adds Under 5 / Under 18 / Over 65 population totals for Hawaiian Homelands, plus an
-Under 150% FPL total so the poverty bands nest like income_share_of_fpl's do.
-"""
+HOMELANDS_AGE = "Estimate!!Total!!Total population!!AGE!!"
+HOMELANDS_POVERTY = "Estimate!!Total!!POVERTY STATUS IN THE PAST 12 MONTHS!!Population for whom poverty status is determined!!"
+
+# Homelands totals; its values are already percentages of one universe, so they add directly
+HOMELANDS_TOTALS = [
+    {"name": "Total Population Under 5", "columns": [HOMELANDS_AGE + "Under 5 years"]},
+    {"name": "Total Population Under 18", "columns": [HOMELANDS_AGE + "Under 5 years", HOMELANDS_AGE + "5 to 17 years"]},
+    {"name": "Total Population Over 65", "columns": [HOMELANDS_AGE + "65 to 74 years", HOMELANDS_AGE + "75 years and over"]},
+    {
+        "name": "Total Under 150% FPL",
+        "columns": [
+            HOMELANDS_POVERTY + "Below 100 percent of the poverty level",
+            HOMELANDS_POVERTY + "100 to 149 percent of the poverty level",
+        ],
+    },
+]
+
+
+# Homelands: its total population and totals, then its raw columns from the 75-and-over age column on
 def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
-    cleaned_df = df.iloc[:, :2].copy()
-
-    for col in df.columns:
-        if len(col) == 2 and col[1] == "Estimate!!Total!!Total population":
-            _carry_with_moe(cleaned_df, df, col)
-            break
-
-    under_5_cols, under_18_cols, over_65_cols = [], [], []
-
-    for col in df.columns:
-        if len(col) == 2 and col[1].startswith("Estimate!!Total!!Total population!!"):
-            col_alias = col[1]
-
-            if "Under 5" in col_alias:
-                under_5_cols.append(col)
-                under_18_cols.append(col)
-            elif "5 to 17" in col_alias:
-                under_18_cols.append(col)
-            elif "65 to 74" in col_alias or "75" in col_alias:
-                over_65_cols.append(col)
-
-    _add_total(cleaned_df, df, "Total Population Under 5", under_5_cols)
-    _add_total(cleaned_df, df, "Total Population Under 18", under_18_cols)
-    _add_total(cleaned_df, df, "Total Population Over 65", over_65_cols)
-
-    # Both bands are already percentages of the same poverty universe, so they add directly
-    under_1_5_cols = [
-        col
-        for col in df.columns
-        if len(col) == 2
-        and col[1].startswith("Estimate!!Total!!POVERTY STATUS")
-        and ("Below 100 percent" in col[1] or "100 to 149 percent" in col[1])
-    ]
-
-    _add_total(cleaned_df, df, "Total Under 150% FPL", under_1_5_cols)
-
-    cleaned_df = pd.concat([cleaned_df, df.iloc[:, 10:].copy()], axis=1)
-
-    return cleaned_df
+    cleaned_df = add_totals(df, HOMELANDS_TOTALS, "Estimate!!Total!!Total population", keep_raw_columns=False)
+    first_kept = df.columns.get_loc(_column(df, HOMELANDS_AGE + "75 years and over"))
+    return pd.concat([cleaned_df, df.iloc[:, first_kept:]], axis=1)
 
 
 # aggregate_vehicles' own raw table has no household-count column (it only has the vehicle
@@ -357,26 +175,26 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
 def merge_tenure_households(vehicles_df: pd.DataFrame, tenure_raw_df: pd.DataFrame) -> pd.DataFrame:
     tenure_df = _rows_matching_geoids(vehicles_df, tenure_raw_df)
     merged = vehicles_df.copy()
-    _carry_with_moe(merged, tenure_df, _total_universe_col(tenure_df))
+    _carry_with_moe(merged, tenure_df, _column(tenure_df, "Estimate!!Total:"))
     return merged
 
 
-# One line per dataset alias: the recipe to run (None = write the raw cleaned table as is) and any other datasets' raw tables it needs.
-# A recipe returns one table, or a dict of {output file name: table} when one dataset makes several files.
-RECIPES = {
-    "age_of_structure": (recipe_age_of_structure, []),
+# Datasets cleaned by code, by alias: the recipe (returning one table, or {output file name: table}) and other datasets' raw tables it borrows
+CODED_RECIPES = {
     "aggregate_vehicles": (merge_tenure_households, ["tenure"]),
-    "health_insurance": (recipe_health_insurance, []),
-    "households_w_computer": (None, []),
-    "internet_subscription": (None, []),
-    "limited_english_speaking": (recipe_limited_english_speaking, []),
-    "living_arrangements": (recipe_living_arrangements, []),
-    "income_share_of_fpl": (recipe_income_share_of_fpl, []),
     "person_under_5_65": (recipe_person_under_5_65, []),
-    "population_group_quarters": (None, []),
-    "race_origin": (None, []),
-    "tenure": (None, []),
-    "tenure_by_occupants_per_room": (recipe_tenure_by_occupants_per_room, []),
-    "family_type_by_children": (recipe_family_type_by_children, []),
     "2022_census_hawaiian_homelands": (recipe_hawaiian_homelands, []),
 }
+
+
+# One dataset's cleaned tables as {output file name: table}: its coded recipe, else its config totals, else its raw table as is
+def cleaned_tables(config: dict, raw_tables: dict) -> dict:
+    alias = config["alias"]
+    df = raw_tables[alias]
+    if alias in CODED_RECIPES:
+        recipe, borrowed = CODED_RECIPES[alias]
+        result = recipe(df, *(raw_tables[name] for name in borrowed))
+        return result if isinstance(result, dict) else {alias: result}
+    if "totals" in config:
+        return {alias: add_totals(df, config["totals"], config["percent_denominator"], config.get("keep_raw_columns", False))}
+    return {alias: df}
