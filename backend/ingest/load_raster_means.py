@@ -19,8 +19,8 @@ import rasterio
 from rasterio.mask import mask
 
 import settings
-from ingest.writer import AREA_TYPES, Dataset, Metric, Value, layer_metric_key, save_dataset
-from pipeline.check_layers import rasters
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
+from registry import layer_metric_key, rasters
 
 # The two values saved for every raster, in display order
 METRICS = ("Mean", "Max")

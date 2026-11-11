@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 from titiler.core.factory import TilerFactory
 
 import settings
-from pipeline.check_layers import rasters
+from registry import rasters
 
 from ..colormaps import COLORMAPS, ColorMapParams
 

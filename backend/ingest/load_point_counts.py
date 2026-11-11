@@ -13,7 +13,8 @@ import asyncio
 import asyncpg
 
 import settings
-from ingest.writer import AREA_TYPES, Dataset, Metric, Value, layer_metric_key, save_dataset
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
+from registry import layer_metric_key
 
 
 def dataset_id_for(layer_id: str, homelands: bool) -> str:

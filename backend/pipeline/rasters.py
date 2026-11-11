@@ -13,7 +13,8 @@ import time
 
 import settings
 from pipeline.build_tools import file_size, run, write_report
-from pipeline.check_layers import rasters, source_problems, stop_on
+from pipeline.check_layers import source_problems
+from registry import rasters, stop_on
 
 STAGING_DIR = settings.DATA_DIR / "rasters_staging"
 REPORT = ("Rasters pipeline report", "rasters", [("Raster", "raster"), ("File size", "size"), ("Time", "time")])

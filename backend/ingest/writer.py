@@ -5,7 +5,6 @@ Each loader calls save_dataset inside its own conn.transaction(), so a dataset i
 """
 
 import json
-import re
 from dataclasses import dataclass
 
 import asyncpg
@@ -39,12 +38,6 @@ class Metric:
     has_moe_pp: bool = False
     # The short name the app looks the metric up by; None for a metric only the table shows
     key: str | None = None
-
-
-# A point or raster metric's key from its layer id and metric, e.g. "stormsurge_inundation_category1_mean" ("_homelands" ends the Homelands copy's)
-def layer_metric_key(layer_id: str, metric: str, homelands: bool) -> str:
-    key = f"{re.sub(r'[^a-z0-9]+', '_', layer_id.lower()).strip('_')}_{metric.lower()}"
-    return f"{key}_homelands" if homelands else key
 
 
 # One metric's value for one area; metric is the metric's name

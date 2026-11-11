@@ -15,7 +15,7 @@ import asyncpg
 import rasterio
 
 import settings
-from pipeline.check_layers import Raster, rasters
+from registry import Raster, rasters
 
 
 async def load_raster(conn: asyncpg.Connection, raster: Raster, points: list[asyncpg.Record]) -> None:

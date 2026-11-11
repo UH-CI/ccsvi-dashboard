@@ -22,7 +22,7 @@ from ingest.writer import Dataset, Metric, Value, save_dataset
 from pipeline.census import clean, proportions
 from pipeline.census.census_transform import metric_columns
 from pipeline.census.csv_format import CV, MISSING_VALUES, MOE_DERIVED, MOE_PP, PERCENT, moe_column_name
-from pipeline.check_layers import census_indicators
+from registry import census_indicators
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")

@@ -3,8 +3,7 @@ on or off, and one per point layer's count. Each column is named by its metric's
 """
 
 from ingest.load_postgis import POINT_LAYERS
-from ingest.writer import layer_metric_key
-from pipeline.check_layers import census_datasets, census_indicators, repeats
+from registry import census_datasets, census_indicators, layer_metric_key, repeats
 
 
 def view_columns(homelands):

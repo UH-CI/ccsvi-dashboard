@@ -18,7 +18,8 @@ from pathlib import Path
 
 import settings
 from pipeline.build_tools import file_size, run, write_report
-from pipeline.check_layers import shape_layers, source_problems, stop_on
+from pipeline.check_layers import source_problems
+from registry import shape_layers, stop_on
 
 RAW_DIR = settings.RAW_DIR
 GEOJSON_DIR = settings.HAZARD_GEOJSON_DIR

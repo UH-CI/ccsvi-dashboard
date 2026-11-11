@@ -11,7 +11,7 @@ from pathlib import Path
 import asyncpg
 
 import settings
-from pipeline.check_layers import shape_layers
+from registry import shape_layers
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
