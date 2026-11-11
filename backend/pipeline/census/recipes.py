@@ -161,10 +161,10 @@ HOMELANDS_TOTALS = [
 ]
 
 
-# Homelands: its total population and totals, then its raw columns from the 75-and-over age column on
+# Homelands: its total population and totals, then its raw columns from the first one after the age columns on
 def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     cleaned_df = add_totals(df, HOMELANDS_TOTALS, "Estimate!!Total!!Total population", keep_raw_columns=False)
-    first_kept = df.columns.get_loc(_column(df, HOMELANDS_AGE + "75 years and over"))
+    first_kept = df.columns.get_loc(_column(df, "Estimate!!Total!!Total population!!SEX!!Male"))
     return pd.concat([cleaned_df, df.iloc[:, first_kept:]], axis=1)
 
 
