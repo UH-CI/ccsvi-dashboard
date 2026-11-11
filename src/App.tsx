@@ -1,5 +1,4 @@
 import React, { useCallback, useRef, useState } from "react";
-import "./App.css";
 import styles from "./App.module.scss";
 import { ControlPanel } from "./components/ControlPanel";
 import { MultiMapContainer } from "./components/MultiMapContainer";
