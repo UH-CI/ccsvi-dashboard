@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect, memo } from "react";
+import React, { useCallback, useRef, useEffect, memo } from "react";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { FeatureCollection, Geometry } from "geojson";
@@ -29,7 +29,7 @@ import { useMapSnapshot } from "../../hooks/useMapSnapshot";
 import { AddressSearch } from "../AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
-import { useDatasets, useMetricKind } from "../../api/queries/datasets";
+import { useMetric } from "../../api/queries/metrics";
 import { useBoundary } from "../../api/queries/boundaries";
 import { useMetricValues } from "../../api/queries/metricValues";
 
@@ -101,7 +101,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
     const config = useMapConfig(mapId);
 
-    const blockGroupData = useDatasets();
     const countyBoundaries = useBoundary("counties");
 
     const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
@@ -109,25 +108,22 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
     );
 
-    const effectiveDataset = config?.dataset;
-    const effectiveDataset2 = config?.dataset2 ?? effectiveDataset;
-    const effectiveMetric = config?.metric;
-    const effectiveMetric2 = config?.metric2;
-    const metricLabel = effectiveMetric ? sviLabel(effectiveDataset, effectiveMetric) : undefined;
-    const kind1 = useMetricKind(effectiveDataset, effectiveMetric);
-    const kind2 = useMetricKind(effectiveDataset2, effectiveMetric2);
-    const metricIsCount = kind1 === "count";
-    const metricLabel2 = effectiveMetric2
-      ? sviLabel(effectiveDataset2, effectiveMetric2)
-      : undefined;
+    // The indicator's and the comparison indicator's keys
+    const metricKey = config?.metric || undefined;
+    const metricKey2 = config?.metric2;
+    const metricInfo = useMetric(metricKey);
+    const metricInfo2 = useMetric(metricKey2);
+    const metricLabel = metricKey ? sviLabel(metricKey) : undefined;
+    const metricLabel2 = metricKey2 ? sviLabel(metricKey2) : undefined;
+    const metricIsCount = metricInfo?.kind === "count";
 
     // Register this map's snapshot function
     useEffect(() => {
       const fn = async () => {
         await takeSnapshot(
           {
-            activeDataset: effectiveDataset,
-            activeDatasetMetric: effectiveMetric,
+            activeDataset: metricInfo?.datasetId,
+            activeDatasetMetric: metricInfo?.name,
             customPrefix: `hawaii-census-map-${mapId}`,
             quality: 0.9,
           },
@@ -137,14 +133,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
       registerSnapshot(mapId, fn);
       return () => unregisterSnapshot(mapId);
-    }, [
-      mapId,
-      registerSnapshot,
-      unregisterSnapshot,
-      takeSnapshot,
-      effectiveDataset,
-      effectiveMetric,
-    ]);
+    }, [mapId, registerSnapshot, unregisterSnapshot, takeSnapshot, metricInfo]);
 
     const visiblePointLayerIds = useMapLayersStore((state) => state.points[mapId]);
     const visibleHazardIds = useMapLayersStore((state) => state.hazards[mapId]);
@@ -162,28 +151,16 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       return () => clearTimeout(timeoutId);
     }, [mapConfigsLength, mapRef]);
 
-    const activeDatasetObject = useMemo(() => {
-      if (!blockGroupData || !effectiveDataset) return null;
-      return blockGroupData[effectiveDataset];
-    }, [blockGroupData, effectiveDataset]);
+    const shouldShowHawaiianHomelands = metricInfo?.dataset.hawaiian_homelands ?? false;
 
-    const shouldShowHawaiianHomelands = useMemo(() => {
-      return activeDatasetObject?.hawaiian_homelands || false;
-    }, [activeDatasetObject]);
-
-    const activeDatasetMetricObject = useMemo(() => {
-      if (!activeDatasetObject || !effectiveMetric) return null;
-      return activeDatasetObject.metrics[effectiveMetric];
-    }, [activeDatasetObject, effectiveMetric]);
-
-    const cachedMetric1 = useMetricValues(effectiveDataset, effectiveMetric);
-    const cachedMetric2 = useMetricValues(effectiveDataset2, effectiveMetric2);
+    const cachedMetric1 = useMetricValues(metricKey);
+    const cachedMetric2 = useMetricValues(metricKey2);
 
     const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
       cachedMetric1,
       cachedMetric2,
-      kind1,
-      kind2,
+      metricInfo?.kind,
+      metricInfo2?.kind,
     );
 
     const activeColorScheme = config?.colorScheme || DEFAULT_COLOR_SCHEME;
@@ -196,14 +173,14 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       allMetricValues2,
       colorScheme: activeColorScheme,
       bivariateColorScheme: activeBivariateColorScheme,
-      hasSecondMetric: Boolean(effectiveMetric2),
-      datasetMetricObject: activeDatasetMetricObject,
+      hasSecondMetric: Boolean(metricKey2),
+      hasMetric: Boolean(metricInfo),
       isCount: metricIsCount,
       noValueFill: noValueFill(mapId),
     });
 
     const shouldRenderCountyBoundariesBackground =
-      effectiveDataset && effectiveMetric && shouldShowHawaiianHomelands && countyBoundaries;
+      metricInfo && shouldShowHawaiianHomelands && countyBoundaries;
 
     if (!config?.visible) {
       return null;
@@ -222,14 +199,12 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
 
           <div className={styles["map-right-section"]}>
             <div className={styles["map-info"]}>
-              {effectiveDataset && effectiveMetric ? (
+              {metricInfo ? (
                 <>
                   <span className={styles["dataset-name"]}>
-                    {activeDatasetObject?.label || effectiveDataset.replace(/_/g, " ")}
+                    {metricInfo.dataset.label || metricInfo.datasetId.replace(/_/g, " ")}
                   </span>
-                  <span className={styles["metric-name"]}>
-                    {sviLabel(effectiveDataset, effectiveMetric)}
-                  </span>
+                  <span className={styles["metric-name"]}>{metricLabel}</span>
                 </>
               ) : (
                 <span className={styles["empty-state"]}>Select dataset and metric</span>
@@ -316,7 +291,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
               </React.Fragment>
             ))}
 
-            <MapRasterLayer mapId={mapId} clickable={!effectiveMetric && !effectiveMetric2} />
+            <MapRasterLayer mapId={mapId} clickable={!metricKey && !metricKey2} />
 
             {/* Render point layers - components fetch their own data from store */}
             {Array.from(visiblePointLayerIds ?? []).map((layerId) => (

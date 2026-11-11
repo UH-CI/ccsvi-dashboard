@@ -13,12 +13,10 @@ export const DataAnalyzerMenu = () => {
   const menuTrees = useVisibleMenuTrees(primaryMapId);
 
   const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
-  const dataset = primaryConfig?.dataset;
-  const metric = primaryConfig?.metric;
-  const dataset2 = primaryConfig?.dataset2 ?? dataset;
+  const metric = primaryConfig?.metric || undefined;
   const metric2 = primaryConfig?.metric2;
   const activeGeoid = primaryConfig?.activeFeature?.geoid ?? null;
-  const cachedValues = useMetricValues(dataset, metric);
+  const cachedValues = useMetricValues(metric);
 
   return (
     <Stack spacing={2}>
@@ -26,8 +24,6 @@ export const DataAnalyzerMenu = () => {
         metric={metric}
         cachedValues={cachedValues}
         activeGeoid={activeGeoid}
-        dataset={dataset}
-        dataset2={dataset2}
         metric2={metric2}
       />
 
@@ -46,9 +42,7 @@ export const DataAnalyzerMenu = () => {
       </Typography>
 
       <MapDerivedFilterSection
-        dataset={dataset}
         metric={metric}
-        dataset2={dataset2}
         metric2={metric2}
         onClearAll={() => useFilterStore.getState().clear()}
       />

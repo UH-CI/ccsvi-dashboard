@@ -3,11 +3,13 @@ import { ApiError } from "../client";
 import { boundaryQuery } from "./boundaries";
 import { datasetsQuery } from "./datasets";
 import { geographiesQuery } from "./geographies";
+import { metricsQuery } from "./metrics";
 
 // What the app needs before it can show anything, each with the message shown if it fails
 const STARTUP = [
   { query: geographiesQuery, failure: "Failed to fetch geography metadata" },
   { query: datasetsQuery, failure: "Failed to fetch dataset metadata" },
+  { query: metricsQuery, failure: "Failed to fetch metric list" },
   { query: boundaryQuery("blockGroups"), failure: "Failed to fetch census block group data" },
   { query: boundaryQuery("homelands"), failure: "Failed to fetch hawaiian homelands data" },
   { query: boundaryQuery("counties"), failure: "Failed to fetch county boundaries data" },

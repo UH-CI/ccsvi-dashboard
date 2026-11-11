@@ -53,7 +53,6 @@ export const DEFAULT_LAYER_OPACITIES = {
 export const newMapConfig = (id: string): MapConfig => ({
   id,
   title: `Map ${id.replace("map", "")}`,
-  dataset: "",
   metric: "",
   visible: true,
   colorScheme: DEFAULT_COLOR_SCHEME,
@@ -174,13 +173,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 // The main map's indicator and comparison indicator, as one key
 const indicatorKey = ({ mapConfigs, primaryMapId }: MapState) => {
   const primary = mapConfigs.find((c) => c.id === primaryMapId);
-  return [
-    primaryMapId,
-    primary?.dataset,
-    primary?.metric,
-    primary?.dataset2,
-    primary?.metric2,
-  ].join("|");
+  return [primaryMapId, primary?.metric, primary?.metric2].join("|");
 };
 
 // A Data Analyzer filter and its sliders belong to one indicator: a new one on the main map starts them over
@@ -202,7 +195,6 @@ export const usePrimaryMapState = () => {
     useShallow((state) => {
       const primary = state.mapConfigs.find((c) => c.id === state.primaryMapId);
       return {
-        dataset: primary?.dataset ?? "",
         metric: primary?.metric ?? "",
         activeFeature: primary?.activeFeature,
       };

@@ -6,19 +6,13 @@ import { getMetricValues } from "../client";
 export const metricNumber = (entry: MetricValue | undefined, kind: MetricKind): number | null =>
   (kind === "percentage" ? entry?.percentage : entry?.absolute) ?? null;
 
-// One metric's value for every area, from /api/v1/datasets/{id}/values
-export const metricValuesQuery = (dataset: string, metric: string) =>
+// One metric's value for every area, by its key, from /api/v1/metrics/{key}/values
+export const metricValuesQuery = (key: string) =>
   queryOptions({
-    queryKey: ["metric-values", dataset, metric],
-    queryFn: () => getMetricValues(dataset, metric),
+    queryKey: ["metric-values", key],
+    queryFn: () => getMetricValues(key),
   });
 
-// Waits until both are chosen
-export const useMetricValues = (
-  dataset: string | null | undefined,
-  metric: string | null | undefined,
-) =>
-  useQuery({
-    ...metricValuesQuery(dataset ?? "", metric ?? ""),
-    enabled: Boolean(dataset && metric),
-  }).data;
+// Waits until a key is chosen
+export const useMetricValues = (key: string | null | undefined) =>
+  useQuery({ ...metricValuesQuery(key ?? ""), enabled: Boolean(key) }).data;

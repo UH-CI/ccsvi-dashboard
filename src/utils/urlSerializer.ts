@@ -1,16 +1,22 @@
 import type { MapConfig } from "../types";
-import { MAX_MAPS } from "../config";
+import { MAX_MAPS, MENU_KEYS } from "../config";
 
-// Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written
+// Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written, and an indicator key the menu lacks is dropped
 export const MAP_URL_FIELDS: {
   prefix: string;
   read: (config: MapConfig) => string | undefined;
   write: (value: string) => Partial<MapConfig>;
 }[] = [
-  { prefix: "d", read: (c) => c.dataset, write: (dataset) => ({ dataset }) },
-  { prefix: "m", read: (c) => c.metric, write: (metric) => ({ metric }) },
-  { prefix: "d2", read: (c) => c.dataset2, write: (dataset2) => ({ dataset2 }) },
-  { prefix: "m2", read: (c) => c.metric2, write: (metric2) => ({ metric2 }) },
+  {
+    prefix: "m",
+    read: (c) => c.metric,
+    write: (metric) => (MENU_KEYS.has(metric) ? { metric } : {}),
+  },
+  {
+    prefix: "m2",
+    read: (c) => c.metric2,
+    write: (metric2) => (MENU_KEYS.has(metric2) ? { metric2 } : {}),
+  },
   {
     prefix: "bcs",
     read: (c) => c.bivariateColorScheme,
@@ -82,7 +88,7 @@ export function writeUrl(
   layersOn: LayersOn,
 ): URLSearchParams {
   const params = new URLSearchParams();
-  const isDefault = mapConfigs.length === 1 && !mapConfigs[0].dataset && !mapConfigs[0].metric;
+  const isDefault = mapConfigs.length === 1 && !mapConfigs[0].metric;
 
   if (!isDefault) {
     params.set("maps", mapConfigs.map((c) => `${c.id}:${c.visible ? "vis" : "hid"}`).join(","));

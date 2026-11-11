@@ -4,7 +4,7 @@ import { ControlPanel } from "./components/ControlPanel";
 import { MultiMapContainer } from "./components/MultiMapContainer";
 import { TableViewer } from "./components/TableViewer";
 import { usePrimaryMapState } from "./stores";
-import { useDatasets } from "./api/queries/datasets";
+import { useMetric } from "./api/queries/metrics";
 import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { takeMapSnapshot } from "./utils/snapshotUtils";
@@ -63,10 +63,11 @@ const App: React.FC = () => {
   }, []);
 
   // Get the active/primary map's dataset for the table viewer
-  const { dataset: primaryDataset } = usePrimaryMapState();
+  const { metric: primaryMetric } = usePrimaryMapState();
+  const primary = useMetric(primaryMetric || undefined);
+  const primaryDataset = primary?.datasetId ?? "";
 
   const { ready, errors } = useStartupData();
-  const datasets = useDatasets();
 
   // Reads the shared link into the stores, then keeps it in step with them
   useUrlSync();
@@ -94,7 +95,7 @@ const App: React.FC = () => {
   }
 
   // === Main UI ===
-  const activeDatasetObject = datasets && primaryDataset ? datasets[primaryDataset] : null;
+  const activeDatasetObject = primary?.dataset ?? null;
 
   return (
     <div className={styles["app-container"]}>

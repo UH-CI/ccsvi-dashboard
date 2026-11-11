@@ -33,9 +33,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
 
   const sviConfig = mapConfigs.find((c) => c.id === resolvedSviMapId);
   const activeSviCategoryId = SVI_CATEGORIES.find((cat) =>
-    cat.indicators.some(
-      (ind) => ind.dataset === sviConfig?.dataset && ind.metric === sviConfig?.metric,
-    ),
+    cat.indicators.some((ind) => ind.key === sviConfig?.metric),
   )?.id;
 
   return (
@@ -64,21 +62,17 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
                 onToggleExpand={() => toggleExpandSvi(category.id)}
               >
                 {category.indicators.map((indicator) => {
-                  const isSelected =
-                    sviConfig?.dataset === indicator.dataset &&
-                    sviConfig?.metric === indicator.metric;
+                  const isSelected = sviConfig?.metric === indicator.key;
                   return (
                     <LayerToggleItem
-                      key={`${indicator.dataset}:${indicator.metric}`}
+                      key={indicator.key}
                       label={indicator.label}
                       checked={isSelected}
                       indented
                       description={indicator.description}
                       onToggle={() =>
                         updateMapConfig(resolvedSviMapId, {
-                          dataset: isSelected ? "" : indicator.dataset,
-                          metric: isSelected ? "" : indicator.metric,
-                          dataset2: undefined,
+                          metric: isSelected ? "" : indicator.key,
                           metric2: undefined,
                         })
                       }
@@ -88,11 +82,9 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
               </LayerToggleGroup>
             );
           })}
-          {sviConfig?.dataset && sviConfig?.metric && (
+          {sviConfig?.metric && (
             <ComparisonMetricSelect
-              dataset={sviConfig.dataset}
               metric={sviConfig.metric}
-              dataset2={sviConfig.dataset2}
               metric2={sviConfig.metric2}
               onChange={(next) => updateMapConfig(resolvedSviMapId, next)}
             />

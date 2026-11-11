@@ -12,32 +12,29 @@ import { useFilteredGeoids } from "../../../api/queries/filter";
 import { formatValue } from "../metricValueHelpers";
 import { CHART_COLORS, sviLabel } from "../../../config";
 import { useGeographies } from "../../../api/queries/geographies";
-import { useMetricKind } from "../../../api/queries/datasets";
+import { useMetric } from "../../../api/queries/metrics";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 
 interface ComparisonSectionProps {
-  dataset: string | undefined;
+  // The main map's indicator key and its comparison indicator's key
   metric: string | undefined;
-  dataset2: string | undefined;
   metric2: string | undefined;
   activeGeoid: string | null;
 }
 
 export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
-  dataset,
   metric,
-  dataset2,
   metric2,
   activeGeoid,
 }) => {
   const geographiesData = useGeographies();
   const filteredGeoids = useFilteredGeoids();
 
-  const cachedValues1 = useMetricValues(dataset, metric);
-  const cachedValues2 = useMetricValues(dataset2, metric2);
+  const cachedValues1 = useMetricValues(metric);
+  const cachedValues2 = useMetricValues(metric2);
 
-  const kind1 = useMetricKind(dataset, metric);
-  const kind2 = useMetricKind(dataset2, metric2);
+  const kind1 = useMetric(metric)?.kind;
+  const kind2 = useMetric(metric2)?.kind;
 
   const { points, activePoint } = useMemo(() => {
     if (!cachedValues1 || !cachedValues2 || !kind1 || !kind2) {
@@ -56,8 +53,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
     return { points: pts, activePoint: active };
   }, [cachedValues1, cachedValues2, kind1, kind2, activeGeoid]);
 
-  const label1 = metric ? sviLabel(dataset, metric) : undefined;
-  const label2 = metric2 ? sviLabel(dataset2, metric2) : undefined;
+  const label1 = metric ? sviLabel(metric) : undefined;
+  const label2 = metric2 ? sviLabel(metric2) : undefined;
 
   if (!metric2) {
     return (

@@ -149,12 +149,12 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           </Typography>
         </MenuItem>
         {/* Color scheme selection requires loaded data */}
-        <Tooltip title={config.dataset ? "" : "Select a dataset first"}>
+        <Tooltip title={config.metric ? "" : "Select a dataset first"}>
           <span>
             <MenuItem
               onClick={(e) => setColorSchemeAnchor(e.currentTarget)}
               className={styles["single-map-item"]}
-              disabled={!config.dataset}
+              disabled={!config.metric}
             >
               <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                 <Palette fontSize="small" />

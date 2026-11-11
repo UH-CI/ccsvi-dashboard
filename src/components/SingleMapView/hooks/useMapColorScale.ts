@@ -5,7 +5,6 @@ import {
   ComputedColorScale,
   ComputedBivariateColorScale,
 } from "../../../utils/colorThresholds";
-import { CatalogMetric } from "../../../types";
 
 interface UseMapColorScaleArgs {
   allMetricValues: number[];
@@ -13,7 +12,8 @@ interface UseMapColorScaleArgs {
   colorScheme: string;
   bivariateColorScheme: string;
   hasSecondMetric: boolean;
-  datasetMetricObject: CatalogMetric | null;
+  // Whether the map has an indicator
+  hasMetric: boolean;
   isCount: boolean;
   // The fill for an area with no value: the map's hatch
   noValueFill: string;
@@ -32,14 +32,14 @@ export function useMapColorScale({
   colorScheme,
   bivariateColorScheme,
   hasSecondMetric,
-  datasetMetricObject,
+  hasMetric,
   isCount,
   noValueFill,
 }: UseMapColorScaleArgs): MapColorScale {
   const colorScale = useMemo(() => {
-    if (!datasetMetricObject) return null;
+    if (!hasMetric) return null;
     return computeColorScale(allMetricValues, colorScheme, isCount);
-  }, [allMetricValues, colorScheme, datasetMetricObject, isCount]);
+  }, [allMetricValues, colorScheme, hasMetric, isCount]);
 
   const bivariateColorScale = useMemo(() => {
     if (!hasSecondMetric || allMetricValues2.length === 0) return null;

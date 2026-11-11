@@ -1,9 +1,8 @@
 export interface MapConfig {
   id: string;
   title: string;
-  dataset: string;
+  // The indicator's key, "" for none; metric2 is the comparison indicator's key
   metric: string;
-  dataset2?: string;
   metric2?: string;
   bivariateColorScheme?: string;
   visible: boolean;
@@ -186,10 +185,15 @@ export interface AreaCriteria {
 // Whether a metric is shown as its percentage or as its count, as the server says
 export type MetricKind = "percentage" | "count";
 
+// A metric the app looks up: its dataset, its name in the data, and whether it's shown as a percentage or a count
 export interface CatalogMetric {
-  mv_column: string | null;
+  dataset: string;
+  name: string;
   kind: MetricKind;
 }
+
+// Every metric the app looks up, by its key (also its filter column's name)
+export type MetricCatalog = Record<string, CatalogMetric>;
 
 export interface CatalogDataset {
   label: string;
@@ -199,7 +203,6 @@ export interface CatalogDataset {
   // The map layer a point or raster dataset belongs to; null for census
   layer_id: string | null;
   metadata?: DatasetMetadata | null;
-  metrics: Record<string, CatalogMetric>;
 }
 
 export type DatasetCatalog = Record<string, CatalogDataset>;

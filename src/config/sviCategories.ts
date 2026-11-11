@@ -2,6 +2,8 @@ import menu from "../../config/census_menu.json";
 import { switchedOn } from "./layerFiles";
 
 export interface SviIndicator {
+  // The indicator's metric key: what a map holds, the link carries, and values are asked for by
+  key: string;
   dataset: string;
   metric: string;
   label: string;
@@ -21,16 +23,16 @@ export interface SviCategory {
 // The census indicator menu in config/census_menu.json, without the switched-off indicators
 export const SVI_CATEGORIES = switchedOn(menu.categories as SviCategory[], "indicators");
 
-// The SVI menu's name for a metric, or the raw metric name if the menu doesn't list it
-export const sviLabel = (dataset: string | undefined, metric: string): string =>
-  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
-    (i) => i.dataset === dataset && i.metric === metric,
-  )?.label ?? metric;
+const INDICATORS = SVI_CATEGORIES.flatMap((c) => c.indicators);
 
-export const sviCalculationDescription = (
-  dataset: string | undefined,
-  metric: string,
-): string | undefined =>
-  SVI_CATEGORIES.flatMap((c) => c.indicators).find(
-    (i) => i.dataset === dataset && i.metric === metric,
-  )?.calculationDescription;
+// Every switched-on indicator's key; a link naming any other is ignored
+export const MENU_KEYS = new Set(INDICATORS.map((i) => i.key));
+
+// The switched-on menu entry with this key
+export const indicatorOf = (key: string) => INDICATORS.find((i) => i.key === key);
+
+// The menu's name for an indicator
+export const sviLabel = (key: string): string => indicatorOf(key)!.label;
+
+export const sviCalculationDescription = (key: string): string | undefined =>
+  indicatorOf(key)?.calculationDescription;

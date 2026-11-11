@@ -5,6 +5,7 @@ import {
   DatasetCatalog,
   DatasetTable,
   GeographiesData,
+  MetricCatalog,
   MetricValue,
   RasterInfo,
   RasterSource,
@@ -56,10 +57,10 @@ export const getGeographies = () => get<GeographiesData>("/api/v1/geographies");
 export const getDatasetTable = (dataset: string) =>
   get<DatasetTable>(`/api/v1/datasets/${dataset}/table`);
 
-export const getMetricValues = (dataset: string, metric: string) =>
-  get<Record<string, MetricValue>>(
-    `/api/v1/datasets/${encodeURIComponent(dataset)}/values?metric=${encodeURIComponent(metric)}`,
-  );
+export const getMetrics = () => get<MetricCatalog>("/api/v1/metrics");
+
+export const getMetricValues = (key: string) =>
+  get<Record<string, MetricValue>>(`/api/v1/metrics/${encodeURIComponent(key)}/values`);
 
 // The server's name for the kind of area
 const areaType = (homelands: boolean) => (homelands ? "hawaiian_homeland" : "block_group");

@@ -3,8 +3,8 @@ import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { POINT_LAYERS } from "../../config/pointLayers";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import type { MetricValue, PointLayerConfig } from "../../types";
-import { layerDatasetId } from "../../utils/layerDatasets";
 import { useDatasets } from "./datasets";
+import { layerMetricKey, useMetrics } from "./metrics";
 import { metricValuesQuery } from "./metricValues";
 
 export interface VisiblePointCounts {
@@ -25,19 +25,22 @@ const countsOf = (results: UseQueryResult<Record<string, MetricValue>>[]) => ({
 
 // Point counts for every geoid, across whichever layers are currently toggled on map; blank where a layer has none saved
 export function useVisiblePointCounts(isHomelands: boolean, mapId: string): VisiblePointCounts {
-  const catalog = useDatasets();
+  const metrics = useMetrics();
+  const datasets = useDatasets();
   const visibleIds = useMapLayersStore((state) => state.points[mapId]);
 
   const layers = useMemo(
     () => POINT_LAYERS.filter((layer) => visibleIds?.has(layer.id)),
     [visibleIds],
   );
-  const datasets = layers.map((layer) => layerDatasetId(catalog, layer.id, isHomelands));
+  const keys = layers.map((layer) =>
+    layerMetricKey(metrics, datasets, layer.id, isHomelands, "Count"),
+  );
 
   const counts = useQueries({
-    queries: datasets.map((dataset) => ({
-      ...metricValuesQuery(dataset ?? "", "Count"),
-      enabled: dataset !== null,
+    queries: keys.map((key) => ({
+      ...metricValuesQuery(key ?? ""),
+      enabled: key !== null,
     })),
     combine: countsOf,
   });

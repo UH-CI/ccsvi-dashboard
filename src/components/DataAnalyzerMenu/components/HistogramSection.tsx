@@ -3,7 +3,7 @@ import { Box, Typography, Stack, Divider } from "@mui/material";
 import { useFilterStore } from "../../../stores/useFilterStore";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
-import { useMetricKind } from "../../../api/queries/datasets";
+import { useMetric } from "../../../api/queries/metrics";
 import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
 import { binIndex, binValues, matchingValues, metricNumbers, valueBounds } from "./analyzerStats";
@@ -13,11 +13,10 @@ import { MatchSummary } from "./MatchSummary";
 import { RangeSlider } from "./RangeSlider";
 
 interface HistogramSectionProps {
+  // The main map's indicator key and its comparison indicator's key
   metric: string | undefined;
   cachedValues: Record<string, MetricValue> | null | undefined;
   activeGeoid: string | null;
-  dataset: string | undefined;
-  dataset2: string | undefined;
   metric2: string | undefined;
 }
 
@@ -25,17 +24,15 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   metric,
   cachedValues,
   activeGeoid,
-  dataset,
-  dataset2,
   metric2,
 }) => {
   const setRange = useFilterStore((state) => state.setRange);
   const { primary: filterRange, comparison: filterRange2 } = useFilterStore(
     (state) => state.ranges,
   );
-  const cachedValues2 = useMetricValues(dataset2, metric2);
-  const kind = useMetricKind(dataset, metric);
-  const kind2 = useMetricKind(dataset2, metric2);
+  const cachedValues2 = useMetricValues(metric2);
+  const kind = useMetric(metric)?.kind;
+  const kind2 = useMetric(metric2)?.kind;
 
   const filteredGeoids = useFilteredGeoids();
 
@@ -85,10 +82,8 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     );
   }
 
-  const metricTitle = metric2
-    ? `${sviLabel(dataset, metric)} vs ${sviLabel(dataset2, metric2)}`
-    : sviLabel(dataset, metric);
-  const metricDescription = sviCalculationDescription(dataset, metric);
+  const metricTitle = metric2 ? `${sviLabel(metric)} vs ${sviLabel(metric2)}` : sviLabel(metric);
+  const metricDescription = sviCalculationDescription(metric);
 
   return (
     <Stack spacing={2}>
@@ -148,13 +143,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       </Box>
 
       <Divider />
-      <ComparisonSection
-        dataset={dataset}
-        metric={metric}
-        dataset2={dataset2}
-        metric2={metric2}
-        activeGeoid={activeGeoid}
-      />
+      <ComparisonSection metric={metric} metric2={metric2} activeGeoid={activeGeoid} />
     </Stack>
   );
 };

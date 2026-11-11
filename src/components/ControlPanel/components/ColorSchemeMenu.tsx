@@ -2,7 +2,7 @@ import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapConfig } from "../../../types";
 import { BIVARIATE_SCHEMES, COLOR_SCHEMES, DEFAULT_BIVARIATE_SCHEME } from "../../../config";
-import { useDatasets } from "../../../api/queries/datasets";
+import { useMetric } from "../../../api/queries/metrics";
 import styles from "../ControlPanel.module.scss";
 
 interface LayerOpacities {
@@ -35,7 +35,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
   updateMapConfig,
   setLayerOpacity,
 }) => {
-  const dataset = useDatasets();
+  const homelands = useMetric(config.metric)?.dataset.hawaiian_homelands;
 
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
@@ -45,27 +45,25 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
           Layer Opacity
         </Typography>
 
-        {config.dataset &&
-          dataset?.[config.dataset] &&
-          !dataset[config.dataset].hawaiian_homelands && (
-            <Box className={styles["opacity-field"]}>
-              <Typography variant="caption" gutterBottom display="block">
-                Census Blocks
-              </Typography>
-              <Slider
-                value={mapOpacities.census}
-                onChange={(_, value) => setLayerOpacity(config.id, "census", value as number)}
-                min={0}
-                max={1}
-                step={0.1}
-                marks
-                valueLabelDisplay="auto"
-                size="small"
-              />
-            </Box>
-          )}
+        {homelands === false && (
+          <Box className={styles["opacity-field"]}>
+            <Typography variant="caption" gutterBottom display="block">
+              Census Blocks
+            </Typography>
+            <Slider
+              value={mapOpacities.census}
+              onChange={(_, value) => setLayerOpacity(config.id, "census", value as number)}
+              min={0}
+              max={1}
+              step={0.1}
+              marks
+              valueLabelDisplay="auto"
+              size="small"
+            />
+          </Box>
+        )}
 
-        {config.dataset && dataset?.[config.dataset]?.hawaiian_homelands && (
+        {homelands && (
           <>
             <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">
