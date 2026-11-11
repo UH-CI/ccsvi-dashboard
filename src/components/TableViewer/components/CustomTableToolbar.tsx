@@ -106,16 +106,7 @@ export const CustomTableToolbar: React.FC<CustomToolbarProps> = ({
               onChange={props.onChange as React.ChangeEventHandler<HTMLInputElement>}
               onKeyDown={props.onKeyDown as React.KeyboardEventHandler<HTMLInputElement>}
               placeholder="Search..."
-              style={{
-                color: "white",
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                fontSize: "0.75rem",
-                width: "120px",
-                caretColor: "white",
-                padding: "3px 0",
-              }}
+              className={styles["toolbar-search-input"]}
             />
           </Box>
         )}

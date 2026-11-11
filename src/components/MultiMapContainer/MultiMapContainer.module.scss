@@ -48,7 +48,7 @@
 
   // When table is open with 3 or more maps, switch to horizontal layout
   &--table-open {
-    // Override grid to be a single row with as many columns as maps
+    // Override grid to be a single row with as many columns as maps; beats the grid size set on the element
     grid-template-rows: 1fr !important;
 
     // Shrink minimum height so maps don't crowd the table
@@ -82,7 +82,7 @@
       grid-template-rows: repeat(3, 1fr);
     }
 
-    // On medium screens with table open, allow wrapping to 2 cols max
+    // On medium screens with table open, allow wrapping to 2 cols max; beats the grid size set on the element
     &--table-open {
       grid-template-columns: repeat(2, 1fr) !important;
       grid-template-rows: 1fr !important;
@@ -105,7 +105,7 @@
     padding: 8px;
     gap: 8px;
 
-    // On small screens revert to single column regardless of table state
+    // On small screens revert to single column regardless of table state; beats the grid size set on the element
     &--table-open {
       grid-template-columns: 1fr !important;
       grid-template-rows: unset !important;

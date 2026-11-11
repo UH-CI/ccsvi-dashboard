@@ -38,8 +38,8 @@
 }
 
 .top-bar-title {
-  font-weight: 700 !important;
-  font-size: 1rem !important;
+  font-weight: 700;
+  font-size: 1rem;
   white-space: nowrap;
   color: #111;
 }
@@ -49,7 +49,7 @@
 }
 
 .bar-divider {
-  margin: 4px 8px !important;
+  margin: 4px 8px;
   height: 28px;
   align-self: center;
 }
@@ -118,10 +118,10 @@
 
 .scroll-arrow {
   flex-shrink: 0;
-  width: 26px !important;
-  height: 28px !important;
-  padding: 0 !important;
-  color: #333 !important;
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  color: #333;
 }
 
 .scroll-arrow--hidden {
@@ -131,28 +131,28 @@
 
 .nav-btn {
   flex-shrink: 0;
-  text-transform: none !important;
-  font-weight: 500 !important;
-  font-size: 0.8125rem !important;
-  border-radius: 8px !important;
-  color: #333 !important;
-  padding: 4px 10px !important;
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+  color: #333;
+  padding: 4px 10px;
   transition:
     background 0.15s ease,
-    color 0.15s ease !important;
+    color 0.15s ease;
   white-space: nowrap;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05) !important;
-    color: #111 !important;
+    background: rgba(0, 0, 0, 0.05);
+    color: #111;
   }
 
   &--active {
-    background: rgba(25, 118, 210, 0.08) !important;
-    color: #1976d2 !important;
+    background: rgba(25, 118, 210, 0.08);
+    color: #1976d2;
 
     &:hover {
-      background: rgba(25, 118, 210, 0.12) !important;
+      background: rgba(25, 118, 210, 0.12);
     }
   }
 }
@@ -179,29 +179,29 @@
 }
 
 .action-btn {
-  text-transform: none !important;
-  font-size: 0.8125rem !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
+  text-transform: none;
+  font-size: 0.8125rem;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 .reset-btn {
-  color: #666 !important;
+  color: #666;
 
   &:hover {
-    color: #333 !important;
-    background: rgba(0, 0, 0, 0.05) !important;
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
   }
 }
 
 // MUI Menu overrides ──────────────────────────────────────────────────────
 
 .menu-paper {
-  border-radius: 12px !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14) !important;
-  min-width: 260px !important;
-  max-width: 340px !important;
-  border: 1px solid #e0e0e0 !important;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+  min-width: 260px;
+  max-width: 340px;
+  border: 1px solid #e0e0e0;
   margin-top: 4px;
 
   &::-webkit-scrollbar {
@@ -217,8 +217,8 @@
 }
 
 .menu-paper-wide {
-  min-width: 400px !important;
-  max-width: 460px !important;
+  min-width: 400px;
+  max-width: 460px;
 }
 
 .menu-panel-paper {
@@ -227,7 +227,7 @@
 }
 
 .menu-list {
-  padding: 0 !important;
+  padding: 0;
 }
 
 .menu-content {
@@ -241,16 +241,16 @@
 // Shared dropdown content styles ─────────────────────────────────────────
 
 .popover-title {
-  font-weight: 700 !important;
-  font-size: 0.75rem !important;
-  color: #999 !important;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #999;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .popover-add-btn {
-  text-transform: none !important;
-  border-radius: 8px !important;
+  text-transform: none;
+  border-radius: 8px;
 }
 
 // Map List ────────────────────────────────────────────────────────────────
@@ -445,7 +445,7 @@
 // MenuShell ────────────────────────────────────────────────────────────────────
 
 .menu-info-btn {
-  margin-left: 8px !important;
+  margin-left: 8px;
 }
 
 // Color scheme menu opacity section ───────────────────────────────────────────

@@ -1,8 +1,9 @@
 import { NO_VALUE_HATCH, noValuePatternId } from "../../config";
+import styles from "./SingleMapView.module.scss";
 
 // One map's hatch for areas with no value, defined inside the map so its snapshot includes it
 export const NoValuePattern = ({ mapId }: { mapId: string }) => (
-  <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+  <svg width="0" height="0" className={styles["no-value-pattern"]} aria-hidden="true">
     <defs>
       <pattern
         id={noValuePatternId(mapId)}

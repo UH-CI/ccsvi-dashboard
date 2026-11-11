@@ -212,7 +212,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     return (
       <div className={`${styles["single-map-view"]} ${isPrimary ? styles["primary-map"] : ""}`}>
         <div
-          className={`${styles["map-header"]} ${isPrimary ? styles["primary-header"] : styles["inactive-header"]}`}
+          className={`${styles["map-header"]} ${isPrimary ? "" : styles["inactive-header"]}`}
           onClick={() => !isPrimary && setPrimaryMap(mapId)}
         >
           <div className={styles["map-title-row"]}>
@@ -253,11 +253,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
           </div>
         </div>
 
-        <div
-          ref={snapshotWrapperRef}
-          className={styles["map-container"]}
-          style={{ position: "relative", zIndex: 1 }}
-        >
+        <div ref={snapshotWrapperRef} className={styles["map-container"]}>
           <NoValuePattern mapId={mapId} />
           <MapContainer
             center={MAP_CONFIG.center}
@@ -266,7 +262,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
             maxBounds={MAP_CONFIG.maxBounds}
             maxBoundsViscosity={MAP_CONFIG.maxBoundsViscosity}
             className={styles["leaflet-map"]}
-            style={{ zIndex: 1 }}
           >
             <MapResizeHandler onMapRef={handleMapRef} />
 

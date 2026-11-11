@@ -1,9 +1,9 @@
 .legend-icon {
-  font-size: 18px !important;
+  font-size: 18px;
   color: #333;
 }
 
-.legendContainer {
+.legend-container {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -15,25 +15,25 @@
   pointer-events: none;
 }
 
-.legendIcons {
+.legend-buttons {
   display: flex;
   flex-direction: row;
   gap: 4px;
 }
 
-.legendPanels {
+.legend-panels {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 4px;
 }
 
-.legend__items {
+.legend-items {
   display: flex;
   flex-direction: column;
 }
 
-.legend__item {
+.legend-item {
   display: flex;
   align-items: center;
   margin-bottom: 3px;
@@ -46,7 +46,7 @@
   }
 }
 
-.legend__bivariate {
+.legend-bivariate {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -96,7 +96,7 @@
   }
 }
 
-.raster-legend__row {
+.raster-legend-row {
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -105,7 +105,7 @@
   min-width: 0;
 }
 
-.raster-legend__nums {
+.raster-legend-nums {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -123,7 +123,7 @@
   }
 }
 
-.raster-legend__units {
+.raster-legend-units {
   margin-top: -4px;
   font-size: 10px;
   color: #333;
@@ -131,7 +131,7 @@
   text-overflow: ellipsis;
 }
 
-.raster-legend__gradient {
+.raster-legend-gradient {
   flex-shrink: 0;
   width: 14px;
   border-radius: 2px;

@@ -37,14 +37,14 @@ export const GradientLegend: React.FC<GradientLegendProps> = ({
 
   return (
     <CollapsibleLegend title={title} icon={icon} order={0}>
-      {unitText ? <span className={styles["raster-legend__units"]}>{unitText}</span> : null}
-      <div className={styles["raster-legend__row"]} style={{ width: WIDTH_PX }}>
+      {unitText ? <span className={styles["raster-legend-units"]}>{unitText}</span> : null}
+      <div className={styles["raster-legend-row"]} style={{ width: WIDTH_PX }}>
         <div
-          className={styles["raster-legend__gradient"]}
+          className={styles["raster-legend-gradient"]}
           style={{ background: gradient, height: GRADIENT_HEIGHT_PX }}
           aria-hidden
         />
-        <div className={styles["raster-legend__nums"]} style={{ minHeight: GRADIENT_HEIGHT_PX }}>
+        <div className={styles["raster-legend-nums"]} style={{ minHeight: GRADIENT_HEIGHT_PX }}>
           <span title={withUnits(max)}>{formatValue(max)}</span>
           <span title={withUnits(min)}>{formatValue(min)}</span>
         </div>

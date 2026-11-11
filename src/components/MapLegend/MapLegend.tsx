@@ -19,8 +19,8 @@ interface MapLegendProps {
 
 // The "No value" entry: a swatch in the map's hatch
 const NoValueItem = ({ fill }: { fill: string }) => (
-  <div className={styles.legend__item}>
-    <svg className={styles["legend__item-color"]}>
+  <div className={styles["legend-item"]}>
+    <svg className={styles["legend-item-color"]}>
       <rect width="100%" height="100%" fill={fill} />
     </svg>
     <span>No value</span>
@@ -54,8 +54,8 @@ export const MapLegend: React.FC<MapLegendProps> = ({
               : `≤ ${fmt(limits[i + 1])}`
             : `${fmt(limits[i])} – ${fmt(limits[i + 1])}`;
       items.push(
-        <div key={i} className={styles.legend__item}>
-          <div className={styles["legend__item-color"]} style={{ backgroundColor: colors[i] }} />
+        <div key={i} className={styles["legend-item"]}>
+          <div className={styles["legend-item-color"]} style={{ backgroundColor: colors[i] }} />
           <span>{label}</span>
         </div>,
       );
@@ -68,24 +68,24 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   return (
     <CollapsibleLegend title={title} icon={<LayersIcon className={styles["legend-icon"]} />} order={1}>
       {bivariate ? (
-        <div className={styles["legend__bivariate"]}>
+        <div className={styles["legend-bivariate"]}>
           <Tooltip title={<span>{metric2Label ?? ""}</span>} placement="left" open={labelsHovered}>
             <span
-              className={styles["legend__bivariate-label-y"]}
+              className={styles["legend-bivariate-label-y"]}
               onMouseEnter={() => setLabelsHovered(true)}
               onMouseLeave={() => setLabelsHovered(false)}
             >
               {metric2Label ?? "Metric 2"}
             </span>
           </Tooltip>
-          <div className={styles["legend__bivariate-right"]}>
-            <div className={styles["legend__bivariate-grid"]}>
+          <div className={styles["legend-bivariate-right"]}>
+            <div className={styles["legend-bivariate-grid"]}>
               {[...bivariate.palette].reverse().map((rowColors, rowIdx) => (
-                <div key={rowIdx} className={styles["legend__bivariate-row"]}>
+                <div key={rowIdx} className={styles["legend-bivariate-row"]}>
                   {rowColors.map((color, col) => (
                     <div
                       key={`${rowIdx}-${col}`}
-                      className={styles["legend__bivariate-cell"]}
+                      className={styles["legend-bivariate-cell"]}
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -94,7 +94,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
             </div>
             <Tooltip title={metric1Label ?? ""} placement="bottom" open={labelsHovered}>
               <span
-                className={styles["legend__bivariate-label-x"]}
+                className={styles["legend-bivariate-label-x"]}
                 onMouseEnter={() => setLabelsHovered(true)}
                 onMouseLeave={() => setLabelsHovered(false)}
               >
@@ -105,7 +105,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
           </div>
         </div>
       ) : (
-        <div className={styles.legend__items}>
+        <div className={styles["legend-items"]}>
           {legendLevels}
           <NoValueItem fill={noValueFill} />
         </div>

@@ -7,11 +7,11 @@ export const LegendContainer: React.FC<{ children: React.ReactNode }> = ({ child
   const [panelsEl, setPanelsEl] = useState<HTMLDivElement | null>(null);
 
   return (
-    <div className={styles.legendContainer}>
+    <div className={styles["legend-container"]}>
       <LegendPanelSlot.Provider value={panelsEl}>
-        <div className={styles.legendIcons}>{children}</div>
+        <div className={styles["legend-buttons"]}>{children}</div>
       </LegendPanelSlot.Provider>
-      <div ref={setPanelsEl} className={styles.legendPanels} />
+      <div ref={setPanelsEl} className={styles["legend-panels"]} />
     </div>
   );
 };

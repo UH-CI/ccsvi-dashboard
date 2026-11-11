@@ -5,7 +5,6 @@ import { MapTabSelector } from "./MapTabSelector";
 import { useMapStore } from "../../../stores";
 import { useResolvedMapId } from "../hooks/useResolvedMapId";
 import { HCDPLoad } from "../../HCDP";
-import styles from "../ControlPanel.module.scss";
 
 interface HcdpMenuProps {
   open: boolean;
@@ -25,9 +24,7 @@ export const HcdpMenu: React.FC<HcdpMenuProps> = ({ open, anchorEl, onClose, onI
   return (
     <MenuShell open={open} anchorEl={anchorEl} onClose={onClose} title="HCDP" onInfoClick={onInfoClick}>
       <MapTabSelector mapConfigs={visibleMaps} selectedMapId={resolvedMapId} onChange={setHcdpMapId} />
-      <Stack spacing={1} className={styles["menu-stack"]}>
-        {resolvedMapId ? <HCDPLoad mapId={resolvedMapId} /> : null}
-      </Stack>
+      <Stack spacing={1}>{resolvedMapId ? <HCDPLoad mapId={resolvedMapId} /> : null}</Stack>
     </MenuShell>
   );
 };

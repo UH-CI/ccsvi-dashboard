@@ -33,7 +33,7 @@ export const CollapsibleLegend: React.FC<CollapsibleLegendProps> = ({
   const panel = isOpen ? (
     <div className={styles.panel} style={order !== undefined ? { order } : undefined}>
       <Tooltip title={title} placement="top">
-        <span className={styles.header__label}>{title}</span>
+        <span className={styles["header-label"]}>{title}</span>
       </Tooltip>
       {children}
     </div>
@@ -42,10 +42,10 @@ export const CollapsibleLegend: React.FC<CollapsibleLegendProps> = ({
   return (
     <>
       <button
-        className={`${styles.iconButton} ${isOpen ? styles["iconButton--active"] : ""}`}
+        className={`${styles["icon-button"]} ${isOpen ? styles["icon-button--active"] : ""}`}
         onClick={toggle}
       >
-        {icon ?? <LegendToggleIcon className={styles.iconButton__icon} />}
+        {icon ?? <LegendToggleIcon className={styles["icon-button-icon"]} />}
       </button>
       {panel && panelSlot ? createPortal(panel, panelSlot) : panel}
     </>

@@ -70,7 +70,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
       L.divIcon({
         html: renderToString(
           <div
-            className={styles.iconContainer}
+            className={styles["icon-container"]}
             style={{
               width: `${iconSize}px`,
               height: `${iconSize}px`,
@@ -80,7 +80,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
             <IconComponent size={iconElementSize} />
           </div>,
         ),
-        className: styles.genericPointMarker,
+        className: styles["generic-point-marker"],
         iconSize: [iconSize, iconSize],
         iconAnchor: [iconSize / 2, iconSize / 2],
       }),
@@ -139,49 +139,19 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ layerI
     L.divIcon({
       html: renderToString(
         <div
-          className={styles.iconContainer}
-          style={{
-            position: "relative",
-            width: "32px",
-            height: "32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: config.color,
-          }}
+          className={`${styles["icon-container"]} ${styles["cluster"]}`}
+          style={{ color: config.color }}
         >
           {/* POI icon */}
-          <div style={{ zIndex: 1 }}>
+          <div className={styles["cluster-icon"]}>
             <IconComponent size={22} />
           </div>
 
           {/* Count text ON TOP */}
-          <span
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: "#fff",
-              fontSize: "11px",
-              fontWeight: 700,
-              pointerEvents: "none",
-              zIndex: 2, // 👈 critical
-
-              textShadow: `
-                                -1px -1px 0 #000,
-                                 1px -1px 0 #000,
-                                -1px  1px 0 #000,
-                                 1px  1px 0 #000,
-                                 0  0  4px rgba(0,0,0,0.9)
-                            `,
-            }}
-          >
-            {cluster.getChildCount()}
-          </span>
+          <span className={styles["cluster-count"]}>{cluster.getChildCount()}</span>
         </div>,
       ),
-      className: styles.genericPointMarker,
+      className: styles["generic-point-marker"],
       iconSize: [32, 32],
       iconAnchor: [16, 16],
     });

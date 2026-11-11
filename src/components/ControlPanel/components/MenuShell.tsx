@@ -53,7 +53,7 @@ export const MenuShell: React.FC<MenuShellProps> = ({
 
   if (variant === "panel") {
     return (
-      <Popper open={open} anchorEl={anchorEl} placement="bottom-start" style={{ zIndex: 1300 }}>
+      <Popper open={open} anchorEl={anchorEl} placement="bottom-start" sx={{ zIndex: 1300 }}>
         <Paper className={paperClass}>{content}</Paper>
       </Popper>
     );
