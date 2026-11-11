@@ -1,8 +1,8 @@
-export { useAppStore } from "./useAppStore";
+export { useTableExportStore } from "./useTableExportStore";
 export {
   useMapStore,
   useVisibleMaps,
-  useMapConfig,
+  useMapState,
   usePrimaryMapState,
   DEFAULT_LAYER_OPACITIES,
 } from "./useMapStore";

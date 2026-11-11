@@ -50,10 +50,8 @@ export function useUrlSync() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const { mapConfigs, primaryMapId, layers } = readUrl(
-      new URLSearchParams(window.location.search),
-    );
-    useMapStore.getState().loadMaps(mapConfigs, primaryMapId);
+    const { maps, primaryMapId, layers } = readUrl(new URLSearchParams(window.location.search));
+    useMapStore.getState().loadMaps(maps, primaryMapId);
     for (const key of LAYER_LIST_KEYS) {
       const { knownIds, restore } = LINK_LISTS[key];
       for (const [mapId, ids] of Object.entries(layers[key])) {
@@ -66,7 +64,7 @@ export function useUrlSync() {
     setIsInitialized(true);
   }, []);
 
-  const mapConfigs = useMapStore((state) => state.mapConfigs);
+  const maps = useMapStore((state) => state.maps);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const points = useMapLayersStore((state) => state.points);
   const hazards = useMapLayersStore((state) => state.hazards);
@@ -78,12 +76,12 @@ export function useUrlSync() {
     const rasterIds = Object.fromEntries(
       Object.entries(rasters).map(([mapId, raster]) => [mapId, visibleRasterIds(raster)]),
     );
-    return writeUrl(mapConfigs, primaryMapId, {
+    return writeUrl(maps, primaryMapId, {
       layers: points,
       hazards,
       rasters: rasterIds,
     }).toString();
-  }, [mapConfigs, primaryMapId, points, hazards, rasters]);
+  }, [maps, primaryMapId, points, hazards, rasters]);
 
   useEffect(() => {
     if (!isInitialized) return;

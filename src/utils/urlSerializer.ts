@@ -1,11 +1,11 @@
-import type { MapConfig } from "../types";
+import type { MapState } from "../types";
 import { MAX_MAPS, MENU_KEYS } from "../config";
 
 // Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written, and an indicator key the menu lacks is dropped
 export const MAP_URL_FIELDS: {
   prefix: string;
-  read: (config: MapConfig) => string | undefined;
-  write: (value: string) => Partial<MapConfig>;
+  read: (config: MapState) => string | undefined;
+  write: (value: string) => Partial<MapState>;
 }[] = [
   {
     prefix: "m",
@@ -37,7 +37,7 @@ export type LayerListKey = (typeof LAYER_LIST_KEYS)[number];
 export type LayersOn = Record<LayerListKey, Record<string, Iterable<string>>>;
 
 export interface UrlState {
-  mapConfigs: (Partial<MapConfig> & { id: string })[];
+  maps: (Partial<MapState> & { id: string })[];
   primaryMapId?: string;
   layers: Record<LayerListKey, Record<string, string[]>>;
 }
@@ -55,11 +55,11 @@ export function parseLayerEntry(entry: string): { mapId: string; layerId: string
 // The maps, primary map and layers a link describes. A hand-edited link can hold a bad map id
 // or too many maps, so only ids like "map3" are kept, and only the first MAX_MAPS of them.
 export function readUrl(params: URLSearchParams): UrlState {
-  const mapConfigs = (params.get("maps") ?? "")
+  const maps = (params.get("maps") ?? "")
     .split(",")
     .map((entry) => {
       const [id, visibility] = entry.split(":");
-      const config: Partial<MapConfig> & { id: string } = { id, visible: visibility === "vis" };
+      const config: Partial<MapState> & { id: string } = { id, visible: visibility === "vis" };
       for (const field of MAP_URL_FIELDS) {
         const value = params.get(`${field.prefix}_${id}`);
         if (value) Object.assign(config, field.write(value));
@@ -78,22 +78,22 @@ export function readUrl(params: URLSearchParams): UrlState {
     }
   }
 
-  return { mapConfigs, primaryMapId: params.get("active") || undefined, layers };
+  return { maps, primaryMapId: params.get("active") || undefined, layers };
 }
 
 // The app's part of the address. One map with nothing chosen writes no map settings, so a fresh page has a clean link.
 export function writeUrl(
-  mapConfigs: MapConfig[],
+  maps: MapState[],
   primaryMapId: string,
   layersOn: LayersOn,
 ): URLSearchParams {
   const params = new URLSearchParams();
-  const isDefault = mapConfigs.length === 1 && !mapConfigs[0].metric;
+  const isDefault = maps.length === 1 && !maps[0].metric;
 
   if (!isDefault) {
-    params.set("maps", mapConfigs.map((c) => `${c.id}:${c.visible ? "vis" : "hid"}`).join(","));
+    params.set("maps", maps.map((c) => `${c.id}:${c.visible ? "vis" : "hid"}`).join(","));
     for (const field of MAP_URL_FIELDS) {
-      for (const config of mapConfigs) {
+      for (const config of maps) {
         const value = field.read(config);
         if (value) params.set(`${field.prefix}_${config.id}`, value);
       }

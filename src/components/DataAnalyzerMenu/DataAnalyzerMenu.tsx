@@ -8,11 +8,11 @@ import { MapDerivedFilterSection } from "./components/MapDerivedFilterSection";
 import { useVisibleMenuTrees } from "../../hooks/useVisibleMenuTrees";
 
 export const DataAnalyzerMenu = () => {
-  const mapConfigs = useMapStore((state) => state.mapConfigs);
+  const maps = useMapStore((state) => state.maps);
   const primaryMapId = useMapStore((state) => state.primaryMapId);
   const menuTrees = useVisibleMenuTrees(primaryMapId);
 
-  const primaryConfig = mapConfigs.find((c) => c.id === primaryMapId);
+  const primaryConfig = maps.find((c) => c.id === primaryMapId);
   const metric = primaryConfig?.metric || undefined;
   const metric2 = primaryConfig?.metric2;
   const activeGeoid = primaryConfig?.activeFeature?.geoid ?? null;

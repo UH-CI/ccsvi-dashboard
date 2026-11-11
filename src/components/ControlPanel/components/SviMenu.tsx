@@ -17,11 +17,11 @@ interface SviMenuProps {
 }
 
 export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
-  const mapConfigs = useMapStore((s) => s.mapConfigs);
+  const maps = useMapStore((s) => s.maps);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
-  const updateMapConfig = useMapStore((s) => s.updateMapConfig);
+  const updateMap = useMapStore((s) => s.updateMap);
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
+  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
   const [sviMapId, setSviMapId] = useState<string>("");
   const resolvedSviMapId = useResolvedMapId(sviMapId, visibleMaps, primaryMapId);
 
@@ -31,7 +31,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
     [],
   );
 
-  const sviConfig = mapConfigs.find((c) => c.id === resolvedSviMapId);
+  const sviConfig = maps.find((c) => c.id === resolvedSviMapId);
   const activeSviCategoryId = SVI_CATEGORIES.find((cat) =>
     cat.indicators.some((ind) => ind.key === sviConfig?.metric),
   )?.id;
@@ -44,11 +44,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
       title="Social Vulnerability Indicators"
       onInfoClick={onInfoClick}
     >
-      <MapTabSelector
-        mapConfigs={visibleMaps}
-        selectedMapId={resolvedSviMapId}
-        onChange={setSviMapId}
-      />
+      <MapTabSelector maps={visibleMaps} selectedMapId={resolvedSviMapId} onChange={setSviMapId} />
       {resolvedSviMapId && (
         <Stack spacing={1}>
           {SVI_CATEGORIES.map((category) => {
@@ -71,7 +67,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
                       indented
                       description={indicator.description}
                       onToggle={() =>
-                        updateMapConfig(resolvedSviMapId, {
+                        updateMap(resolvedSviMapId, {
                           metric: isSelected ? "" : indicator.key,
                           metric2: undefined,
                         })
@@ -86,7 +82,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
             <ComparisonMetricSelect
               metric={sviConfig.metric}
               metric2={sviConfig.metric2}
-              onChange={(next) => updateMapConfig(resolvedSviMapId, next)}
+              onChange={(next) => updateMap(resolvedSviMapId, next)}
             />
           )}
         </Stack>

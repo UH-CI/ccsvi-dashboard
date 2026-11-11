@@ -37,7 +37,7 @@ import { ErrorToast } from "../ErrorToast/ErrorToast";
 import { LAYER_MENUS } from "../../config/layerMenus";
 import type { LayerMenuId } from "../../config/layerMenus";
 
-interface IntegratedControlPanelProps {
+interface ControlPanelProps {
   isGridView?: boolean;
   onToggleGridView?: () => void;
   onSnapshot?: () => void | Promise<void>;
@@ -51,12 +51,12 @@ const LAYER_MENU_ICONS: Record<LayerMenuId, React.ReactNode> = {
   hazards: <Warning fontSize="small" />,
 };
 
-export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
+export const ControlPanel: React.FC<ControlPanelProps> = ({
   isGridView = true,
   onToggleGridView,
   onSnapshot,
 }) => {
-  const mapConfigs = useMapStore((state) => state.mapConfigs);
+  const maps = useMapStore((state) => state.maps);
   const resetMapStore = useMapStore((state) => state.reset);
 
   // One anchor per nav button
@@ -69,7 +69,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
     canScrollRight: false,
   });
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
+  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
 
   const openMenu = useCallback((key: NonNullable<PopoverKey>, el: HTMLElement) => {
     setAnchors((prev) => {
@@ -220,7 +220,7 @@ export const ControlPanel: React.FC<IntegratedControlPanelProps> = ({
           CCSVI
         </Typography>
         <Chip
-          label={`${visibleMaps.length}/${mapConfigs.length}`}
+          label={`${visibleMaps.length}/${maps.length}`}
           size="small"
           color="primary"
           className={styles["map-count-chip"]}

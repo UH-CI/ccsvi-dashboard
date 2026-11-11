@@ -57,10 +57,10 @@ export const LayerMenu: React.FC<LayerMenuProps> = ({
   onClose,
   onInfoClick,
 }) => {
-  const mapConfigs = useMapStore((s) => s.mapConfigs);
+  const maps = useMapStore((s) => s.maps);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
+  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
   const [preferredMapId, setPreferredMapId] = useState<string>("");
   const mapId = useResolvedMapId(preferredMapId, visibleMaps, primaryMapId);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -190,7 +190,7 @@ export const LayerMenu: React.FC<LayerMenuProps> = ({
       title={menu.popupTitle ?? menu.title}
       onInfoClick={onInfoClick}
     >
-      <MapTabSelector mapConfigs={visibleMaps} selectedMapId={mapId} onChange={setPreferredMapId} />
+      <MapTabSelector maps={visibleMaps} selectedMapId={mapId} onChange={setPreferredMapId} />
       {mapId && (
         <Stack spacing={1}>
           {entries.map((entry) =>

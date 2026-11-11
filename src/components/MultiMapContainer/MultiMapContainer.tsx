@@ -49,7 +49,7 @@ export const MultiMapContainer = forwardRef<HTMLDivElement, MultiMapContainerPro
               <SingleMapView
                 mapId={config.id}
                 isPrimary={config.id === primaryMapId}
-                mapConfigsLength={visibleMaps.length}
+                mapCount={visibleMaps.length}
               />
             </div>
           ))}

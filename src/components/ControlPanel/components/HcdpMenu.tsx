@@ -14,16 +14,16 @@ interface HcdpMenuProps {
 }
 
 export const HcdpMenu: React.FC<HcdpMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
-  const mapConfigs = useMapStore((s) => s.mapConfigs);
+  const maps = useMapStore((s) => s.maps);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
 
-  const visibleMaps = useMemo(() => mapConfigs.filter((c) => c.visible), [mapConfigs]);
+  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
   const [hcdpMapId, setHcdpMapId] = useState<string>("");
   const resolvedMapId = useResolvedMapId(hcdpMapId, visibleMaps, primaryMapId);
 
   return (
     <MenuShell open={open} anchorEl={anchorEl} onClose={onClose} title="HCDP" onInfoClick={onInfoClick}>
-      <MapTabSelector mapConfigs={visibleMaps} selectedMapId={resolvedMapId} onChange={setHcdpMapId} />
+      <MapTabSelector maps={visibleMaps} selectedMapId={resolvedMapId} onChange={setHcdpMapId} />
       <Stack spacing={1}>{resolvedMapId ? <HCDPLoad mapId={resolvedMapId} /> : null}</Stack>
     </MenuShell>
   );

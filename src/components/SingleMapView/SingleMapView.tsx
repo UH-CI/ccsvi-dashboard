@@ -18,7 +18,7 @@ import styles from "./SingleMapView.module.scss";
 import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
-import { useMapStore, useMapConfig, useSnapshotStore, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useMapStore, useMapState, useSnapshotStore, DEFAULT_LAYER_OPACITIES } from "../../stores";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
@@ -36,7 +36,7 @@ import { useMetricValues } from "../../api/queries/metricValues";
 interface SingleMapViewProps {
   mapId: string;
   isPrimary: boolean;
-  mapConfigsLength: number;
+  mapCount: number;
 }
 
 interface MapResizeHandlerProps {
@@ -80,7 +80,7 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef }) => {
 };
 
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(
-  ({ mapId, isPrimary, mapConfigsLength }) => {
+  ({ mapId, isPrimary, mapCount }) => {
     // Snapshot hook provides the mapRef we should populate + snapshot function
     const { mapRef, takeSnapshot } = useMapSnapshot();
 
@@ -99,7 +99,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
     const unregisterSnapshot = useSnapshotStore((s) => s.unregister);
     const snapshotOne = useSnapshotStore((s) => s.snapshotOne);
 
-    const config = useMapConfig(mapId);
+    const config = useMapState(mapId);
 
     const countyBoundaries = useBoundary("counties");
 
@@ -149,7 +149,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(
       }, 200);
 
       return () => clearTimeout(timeoutId);
-    }, [mapConfigsLength, mapRef]);
+    }, [mapCount, mapRef]);
 
     const shouldShowHawaiianHomelands = metricInfo?.dataset.hawaiian_homelands ?? false;
 

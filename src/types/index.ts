@@ -1,4 +1,4 @@
-export interface MapConfig {
+export interface MapState {
   id: string;
   title: string;
   // The indicator's key, "" for none; metric2 is the comparison indicator's key

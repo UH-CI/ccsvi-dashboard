@@ -11,7 +11,7 @@ import {
   Map,
 } from "@mui/icons-material";
 // Management actions for each map
-import { useMapStore, useMapConfig, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores";
 import { useMapLayersStore, useMapRaster } from "../../stores/useMapLayersStore";
 import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
@@ -29,9 +29,9 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   canRemoveMap,
   onRemove,
 }) => {
-  const config = useMapConfig(mapId);
+  const config = useMapState(mapId);
 
-  const updateMapConfig = useMapStore((state) => state.updateMapConfig);
+  const updateMap = useMapStore((state) => state.updateMap);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
 
   const mapOpacities = useMapStore(
@@ -78,12 +78,12 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             value={titleEditValue}
             onChange={(e) => setTitleEditValue(e.target.value)}
             onBlur={() => {
-              updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+              updateMap(config.id, { title: titleEditValue.trim() || config.title });
               setIsEditingTitle(false);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                updateMapConfig(config.id, { title: titleEditValue.trim() || config.title });
+                updateMap(config.id, { title: titleEditValue.trim() || config.title });
                 setIsEditingTitle(false);
               }
               if (e.key === "Escape") {
@@ -103,7 +103,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           onClose={() => setColorSchemeAnchor(null)}
           config={config}
           mapOpacities={mapOpacities}
-          updateMapConfig={updateMapConfig}
+          updateMap={updateMap}
           setLayerOpacity={setLayerOpacity}
         />
         {savedRasterId && (
@@ -123,7 +123,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           onClose={() => setBaseMapAnchor(null)}
           mapId={mapId}
           activeBaseMapId={config.baseMap}
-          updateMapConfig={updateMapConfig}
+          updateMap={updateMap}
         />
       </Box>
       <MenuList disablePadding>

@@ -17,15 +17,15 @@ interface MapsMenuProps {
 }
 
 export const MapsMenu: React.FC<MapsMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
-  const mapConfigs = useMapStore((s) => s.mapConfigs);
+  const maps = useMapStore((s) => s.maps);
   const primaryMapId = useMapStore((s) => s.primaryMapId);
   const addMap = useMapStore((s) => s.addMap);
   const removeMap = useMapStore((s) => s.removeMap);
 
-  const canAddMap = mapConfigs.length < MAX_MAPS;
-  const canRemoveMap = mapConfigs.length > 1;
+  const canAddMap = maps.length < MAX_MAPS;
+  const canRemoveMap = maps.length > 1;
   const [mapsMapId, setMapsMapId] = useState<string>("");
-  const resolvedMapsMapId = useResolvedMapId(mapsMapId, mapConfigs, primaryMapId);
+  const resolvedMapsMapId = useResolvedMapId(mapsMapId, maps, primaryMapId);
 
   return (
     <MenuShell
@@ -47,11 +47,7 @@ export const MapsMenu: React.FC<MapsMenuProps> = ({ open, anchorEl, onClose, onI
           Add Map
         </Button>
       )}
-      <MapTabSelector
-        mapConfigs={mapConfigs}
-        selectedMapId={resolvedMapsMapId}
-        onChange={setMapsMapId}
-      />
+      <MapTabSelector maps={maps} selectedMapId={resolvedMapsMapId} onChange={setMapsMapId} />
       {resolvedMapsMapId && (
         <SingleMapControls
           mapId={resolvedMapsMapId}

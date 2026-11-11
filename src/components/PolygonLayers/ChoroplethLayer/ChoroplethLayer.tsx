@@ -7,7 +7,7 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import { useBoundary } from "../../../api/queries/boundaries";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { useFilterStore } from "../../../stores/useFilterStore";
-import { DEFAULT_LAYER_OPACITIES, useMapConfig, useMapStore } from "../../../stores/useMapStore";
+import { DEFAULT_LAYER_OPACITIES, useMapState, useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore } from "../../../stores/useMapLayersStore";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
 
@@ -44,7 +44,7 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
   const { primary: filterRange, comparison: filterRange2 } = useFilterStore(
     (state) => state.ranges,
   );
-  const activeFeatureGeoid = useMapConfig(mapId)?.activeFeature?.geoid;
+  const activeFeatureGeoid = useMapState(mapId)?.activeFeature?.geoid;
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
   const opacity = useMapStore(
     (state) =>

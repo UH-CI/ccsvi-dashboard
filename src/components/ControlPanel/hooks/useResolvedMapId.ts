@@ -1,10 +1,10 @@
-import { MapConfig } from "../../../types";
+import { MapState } from "../../../types";
 
 // Resolves a panel's stored map preference against the live map list,
 // falling back to the primary map, then the first available map.
 export function useResolvedMapId(
   preferredId: string,
-  pool: MapConfig[],
+  pool: MapState[],
   primaryMapId: string,
 ): string {
   return (

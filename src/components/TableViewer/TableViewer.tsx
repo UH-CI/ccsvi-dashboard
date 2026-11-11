@@ -4,7 +4,7 @@ import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { CatalogDataset } from "../../types";
 import { useTableResize } from "../../hooks/useTableResize";
-import { usePrimaryMapState, useMapStore, useAppStore } from "../../stores";
+import { usePrimaryMapState, useMapStore, useTableExportStore } from "../../stores";
 import { useDatasetTable } from "../../api/queries/datasetTable";
 import { useFilteredGeoids } from "../../api/queries/filter";
 import { CustomTableToolbar } from "./components/CustomTableToolbar";
@@ -53,7 +53,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({
       }),
     [apiRef, activeDataset],
   );
-  const setExportTable = useAppStore((state) => state.setExportTable);
+  const setExportTable = useTableExportStore((state) => state.setExportTable);
   useEffect(() => {
     if (!activeDataset || error) return;
     setExportTable(exportTable);

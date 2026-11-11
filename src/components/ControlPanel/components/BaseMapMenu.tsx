@@ -1,6 +1,6 @@
 import React from "react";
 import { Switch, Checkbox, FormControlLabel, Menu, MenuItem, ListSubheader } from "@mui/material";
-import { MapConfig } from "../../../types";
+import { MapState } from "../../../types";
 import {
   BASE_MAP_LABEL_VARIANTS,
   BASE_MAP_OPTIONS,
@@ -16,7 +16,7 @@ interface BaseMapMenuProps {
   onClose: () => void;
   mapId: string;
   activeBaseMapId: string;
-  updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
+  updateMap: (mapId: string, updates: Partial<MapState>) => void;
 }
 // Base map (tile provider) picker for a single map
 export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
@@ -25,7 +25,7 @@ export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
   onClose,
   mapId,
   activeBaseMapId,
-  updateMapConfig,
+  updateMap,
 }) => {
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
@@ -38,7 +38,7 @@ export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
           <MenuItem
             key={noLabelsId}
             selected={isVariantSelected}
-            onClick={() => updateMapConfig(mapId, { baseMap: noLabelsId })}
+            onClick={() => updateMap(mapId, { baseMap: noLabelsId })}
             sx={{ justifyContent: "space-between" }}
           >
             {label}
@@ -54,7 +54,7 @@ export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
                     input: { "aria-label": `${label} labels` }
                   }}
                   onChange={(event) =>
-                    updateMapConfig(mapId, { baseMap: event.target.checked ? labelsId : noLabelsId })
+                    updateMap(mapId, { baseMap: event.target.checked ? labelsId : noLabelsId })
                   }
                 />
               }
@@ -66,7 +66,7 @@ export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
         <MenuItem
           key={opt.id}
           selected={opt.id === activeBaseMapId}
-          onClick={() => updateMapConfig(mapId, { baseMap: opt.id })}
+          onClick={() => updateMap(mapId, { baseMap: opt.id })}
         >
           {opt.label}
         </MenuItem>

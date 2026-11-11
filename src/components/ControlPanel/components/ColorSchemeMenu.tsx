@@ -1,6 +1,6 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
-import { MapConfig } from "../../../types";
+import { MapState } from "../../../types";
 import { BIVARIATE_SCHEMES, COLOR_SCHEMES, DEFAULT_BIVARIATE_SCHEME } from "../../../config";
 import { useMetric } from "../../../api/queries/metrics";
 import styles from "../ControlPanel.module.scss";
@@ -15,9 +15,9 @@ interface ColorSchemeMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
-  config: MapConfig;
+  config: MapState;
   mapOpacities: LayerOpacities;
-  updateMapConfig: (mapId: string, updates: Partial<MapConfig>) => void;
+  updateMap: (mapId: string, updates: Partial<MapState>) => void;
   setLayerOpacity: (
     mapId: string,
     layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
@@ -32,7 +32,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
   onClose,
   config,
   mapOpacities,
-  updateMapConfig,
+  updateMap,
   setLayerOpacity,
 }) => {
   const homelands = useMetric(config.metric)?.dataset.hawaiian_homelands;
@@ -116,7 +116,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
                 key={name}
                 selected={config.colorScheme === name}
                 onClick={() => {
-                  updateMapConfig(config.id, { colorScheme: name });
+                  updateMap(config.id, { colorScheme: name });
                   onClose();
                 }}
               >
@@ -136,7 +136,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
               key={name}
               selected={(config.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME) === name}
               onClick={() => {
-                updateMapConfig(config.id, { bivariateColorScheme: name });
+                updateMap(config.id, { bivariateColorScheme: name });
                 onClose();
               }}
             >
