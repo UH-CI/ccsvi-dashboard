@@ -1,39 +1,16 @@
 import { useMemo } from "react";
-import { Box, Slider, Typography, Stack, Divider, Tooltip, IconButton } from "@mui/material";
-import { InfoOutlined } from "@mui/icons-material";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts";
-import { useFilterStore, type SliderRange } from "../../../stores/useFilterStore";
+import { Box, Typography, Stack, Divider } from "@mui/material";
+import { useFilterStore } from "../../../stores/useFilterStore";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 import { useMetricKind } from "../../../api/queries/datasets";
-import { CHART_COLORS, sviCalculationDescription, sviLabel } from "../../../config";
+import { sviCalculationDescription, sviLabel } from "../../../config";
 import { MetricValue } from "../../../types";
-import { formatValue } from "../metricValueHelpers";
+import { binIndex, binValues, matchingValues, metricNumbers, valueBounds } from "./analyzerStats";
 import { ComparisonSection } from "./ComparisonSection";
-
-const NUM_BINS = 20;
-
-// Whether a value passes a slider: no range passes everything; an area with no value never passes a range
-function inRange(value: number | null, range: SliderRange): boolean {
-  return range === null || (value !== null && value >= range[0] && value <= range[1]);
-}
-
-function meanMedian(values: number[]): { mean: number; median: number } | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-  const mid = Math.floor(sorted.length / 2);
-  const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-  return { mean, median };
-}
+import { DistributionChart } from "./DistributionChart";
+import { MatchSummary } from "./MatchSummary";
+import { RangeSlider } from "./RangeSlider";
 
 interface HistogramSectionProps {
   metric: string | undefined;
@@ -60,71 +37,37 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   const kind = useMetricKind(dataset, metric);
   const kind2 = useMetricKind(dataset2, metric2);
 
-  const { dataMin2, dataMax2 } = useMemo(() => {
-    if (!cachedValues2 || !kind2) return { dataMin2: 0, dataMax2: 1 };
-    const vals = Object.values(cachedValues2)
-      .map((e) => metricNumber(e, kind2))
-      .filter((v): v is number => v !== null);
-    if (vals.length === 0) return { dataMin2: 0, dataMax2: 1 };
-    return { dataMin2: Math.min(...vals), dataMax2: Math.max(...vals) };
-  }, [cachedValues2, kind2]);
-
-  const allValues = useMemo(() => {
-    if (!cachedValues || !kind) return [];
-    return Object.values(cachedValues)
-      .map((e) => metricNumber(e, kind))
-      .filter((v): v is number => v !== null);
-  }, [cachedValues, kind]);
-
-  // Values of the areas the map currently shows as matching
   const filteredGeoids = useFilteredGeoids();
-  const matchedValues = useMemo(() => {
-    if (!cachedValues || !kind) return [];
-    return Object.entries(cachedValues)
-      .filter(
-        ([geoid]) =>
-          (!filteredGeoids || filteredGeoids.has(geoid)) &&
-          inRange(kind2 ? metricNumber(cachedValues2?.[geoid], kind2) : null, filterRange2),
-      )
-      .map(([, entry]) => metricNumber(entry, kind))
-      .filter((v): v is number => v !== null && inRange(v, filterRange));
-  }, [filteredGeoids, filterRange, filterRange2, cachedValues, cachedValues2, kind, kind2]);
 
-  const { bins, dataMin, dataMax } = useMemo(() => {
-    if (allValues.length === 0) return { bins: [], dataMin: 0, dataMax: 1 };
-    const dataMin = Math.min(...allValues);
-    const dataMax = Math.max(...allValues);
-    const step = (dataMax - dataMin) / NUM_BINS || 1;
-    const bins = Array.from({ length: NUM_BINS }, (_, i) => ({
-      label: formatValue(dataMin + i * step, kind!),
-      start: dataMin + i * step,
-      end: dataMin + (i + 1) * step,
-      count: 0,
-      matched: 0,
-      rest: 0,
-    }));
-    const binIndex = (v: number) => Math.min(Math.floor((v - dataMin) / step), NUM_BINS - 1);
-    for (const v of allValues) bins[binIndex(v)].count++;
-    for (const v of matchedValues ?? []) bins[binIndex(v)].matched++;
-    for (const bin of bins) bin.rest = bin.count - bin.matched;
-    return { bins, dataMin, dataMax };
-  }, [allValues, matchedValues, kind]);
-
-  const activeValue = useMemo(
+  const allValues = useMemo(() => metricNumbers(cachedValues, kind), [cachedValues, kind]);
+  const bounds = useMemo(() => valueBounds(allValues), [allValues]);
+  const bounds2 = useMemo(
+    () => valueBounds(metricNumbers(cachedValues2, kind2)),
+    [cachedValues2, kind2],
+  );
+  // The areas the Filter keeps that pass both sliders
+  const matchedValues = useMemo(
     () =>
-      activeGeoid && cachedValues && kind ? metricNumber(cachedValues[activeGeoid], kind) : null,
-    [activeGeoid, cachedValues, kind],
+      matchingValues(
+        cachedValues,
+        kind,
+        cachedValues2,
+        kind2,
+        filteredGeoids,
+        filterRange,
+        filterRange2,
+      ),
+    [cachedValues, kind, cachedValues2, kind2, filteredGeoids, filterRange, filterRange2],
+  );
+  const bins = useMemo(
+    () => (kind ? binValues(allValues, matchedValues, bounds, kind) : []),
+    [allValues, matchedValues, bounds, kind],
   );
 
-  const activeBinLabel = useMemo(() => {
-    if (activeValue == null || bins.length === 0) return null;
-    const step = (dataMax - dataMin) / NUM_BINS || 1;
-    const idx = Math.min(Math.floor((activeValue - dataMin) / step), NUM_BINS - 1);
-    return bins[idx]?.label ?? null;
-  }, [activeValue, bins, dataMin, dataMax]);
-
-  const stats = useMemo(() => meanMedian(allValues), [allValues]);
-  const matchedStats = useMemo(() => meanMedian(matchedValues), [matchedValues]);
+  const activeValue =
+    activeGeoid && cachedValues && kind ? metricNumber(cachedValues[activeGeoid], kind) : null;
+  const activeBinLabel =
+    activeValue === null || bins.length === 0 ? null : bins[binIndex(activeValue, bounds)].label;
 
   if (!metric) {
     return (
@@ -134,7 +77,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
     );
   }
 
-  if (allValues.length === 0) {
+  if (!kind || allValues.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
         Loading data…
@@ -169,194 +112,36 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
 
       <Divider />
 
-      <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-        >
-          Distribution
-        </Typography>
-        <ResponsiveContainer width="100%" height={100}>
-          <BarChart
-            data={bins}
-            margin={{ top: 8, right: 0, bottom: 0, left: 0 }}
-            barCategoryGap={2}
-          >
-            <XAxis dataKey="label" hide />
-            <YAxis hide />
-            <RechartsTooltip
-              cursor={{ fill: "rgba(0,0,0,0.05)" }}
-              formatter={(v, name) => [v != null ? `${v} block groups` : "–", name]}
-              labelFormatter={(label) => (label != null ? String(label) : "")}
-              contentStyle={{ fontSize: "0.75rem", borderRadius: 8 }}
-            />
-            <Bar dataKey="matched" name="Matching" stackId="bin" fill={CHART_COLORS.matching} />
-            <Bar
-              dataKey="rest"
-              name="Not matching"
-              stackId="bin"
-              fill={CHART_COLORS.notMatching}
-              radius={[2, 2, 0, 0]}
-            />
-            {activeBinLabel && (
-              <ReferenceLine
-                x={activeBinLabel}
-                stroke={CHART_COLORS.selected}
-                strokeWidth={2}
-                strokeDasharray="4 2"
-              />
-            )}
-          </BarChart>
-        </ResponsiveContainer>
-      </Box>
+      <DistributionChart bins={bins} activeBinLabel={activeBinLabel} />
 
-      {stats && (
-        <>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-            >
-              Summary for Matching Areas
-            </Typography>
-            <Tooltip
-              title="Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap."
-              placement="top"
-              disableInteractive
-            >
-              <IconButton
-                size="small"
-                aria-label="About summary statistics"
-                sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
-              >
-                <InfoOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Box display="flex" justifyContent="space-around">
-            {activeValue != null && (
-              <Box textAlign="center">
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Selected area
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: CHART_COLORS.selected }}>
-                  {formatValue(activeValue, kind!)}
-                </Typography>
-              </Box>
-            )}
-            <Box textAlign="center">
-              <Typography variant="caption" color="text.secondary" display="block">
-                Mean
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.mean, kind!) : "–"}
-              </Typography>
-              {matchedValues.length !== allValues.length && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.mean, kind!)}
-                </Typography>
-              )}
-            </Box>
-            <Box textAlign="center">
-              <Typography variant="caption" color="text.secondary" display="block">
-                Median
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {matchedStats ? formatValue(matchedStats.median, kind!) : "–"}
-              </Typography>
-              {matchedValues.length !== allValues.length && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  all {formatValue(stats.median, kind!)}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </>
-      )}
+      <MatchSummary
+        kind={kind}
+        activeValue={activeValue}
+        allValues={allValues}
+        matchedValues={matchedValues}
+      />
 
-      <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-        >
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
-            Filter range
-            <Tooltip
-              title="Limits the primary vulnerability indicator to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count."
-              placement="top"
-              disableInteractive
-            >
-              <IconButton
-                size="small"
-                aria-label="About indicator value range"
-                sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
-              >
-                <InfoOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Typography>
-        <Box sx={{ px: 1, mt: 1 }}>
-          <Slider
-            value={filterRange ?? [dataMin, dataMax]}
-            min={dataMin}
-            max={dataMax}
-            step={(dataMax - dataMin) / 100}
-            onChange={(_, v) => {
-              const r = v as [number, number];
-              setRange("primary", r);
-            }}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(v) => formatValue(v, kind!)}
-            size="small"
-          />
-        </Box>
-        <Box display="flex" justifyContent="space-between">
-          <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMin, kind!)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {formatValue(dataMax, kind!)}
-          </Typography>
-        </Box>
-      </Box>
+      <RangeSlider
+        title="Filter range"
+        info={{
+          tooltip:
+            "Limits the primary vulnerability indicator to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count.",
+          label: "About indicator value range",
+        }}
+        bounds={bounds}
+        value={filterRange}
+        kind={kind}
+        onChange={(range) => setRange("primary", range)}
+      />
 
-      {metric2 && cachedValues2 && (
-        <Box>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-          >
-            Comparison Metric Filter Range
-          </Typography>
-          <Box sx={{ px: 1, mt: 1 }}>
-            <Slider
-              value={filterRange2 ?? [dataMin2, dataMax2]}
-              min={dataMin2}
-              max={dataMax2}
-              step={(dataMax2 - dataMin2) / 100 || 1}
-              onChange={(_, v) => {
-                const r = v as [number, number];
-                setRange("comparison", r);
-              }}
-              valueLabelDisplay="auto"
-              valueLabelFormat={(v) => formatValue(v, kind2!)}
-              size="small"
-            />
-          </Box>
-          <Box display="flex" justifyContent="space-between">
-            <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMin2, kind2!)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {formatValue(dataMax2, kind2!)}
-            </Typography>
-          </Box>
-        </Box>
+      {metric2 && cachedValues2 && kind2 && (
+        <RangeSlider
+          title="Comparison Metric Filter Range"
+          bounds={bounds2}
+          value={filterRange2}
+          kind={kind2}
+          onChange={(range) => setRange("comparison", range)}
+        />
       )}
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
