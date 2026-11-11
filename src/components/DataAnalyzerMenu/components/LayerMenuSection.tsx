@@ -110,13 +110,7 @@ function NodeRows({ node }: { node: VisibleNode }) {
 // The visible layers of one control panel menu, grouped as the menu groups them
 export const LayerMenuSection: React.FC<LayerMenuSectionProps> = ({ title, nodes }) => (
   <Box>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-    >
-      {title}
-    </Typography>
+    <Typography variant="sectionHeading">{title}</Typography>
     <Box sx={{ mt: 0.5 }}>
       <TwoColumns>
         {nodes.map((node) => (

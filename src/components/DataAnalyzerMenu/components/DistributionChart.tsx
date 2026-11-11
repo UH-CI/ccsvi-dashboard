@@ -20,13 +20,7 @@ interface DistributionChartProps {
 // The indicator's distribution: one stacked bar per value band, matching areas below the rest
 export const DistributionChart: React.FC<DistributionChartProps> = ({ bins, activeBinLabel }) => (
   <Box>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-    >
-      Distribution
-    </Typography>
+    <Typography variant="sectionHeading">Distribution</Typography>
     <ResponsiveContainer width="100%" height={100}>
       <BarChart data={bins} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} barCategoryGap={2}>
         <XAxis dataKey="label" hide />

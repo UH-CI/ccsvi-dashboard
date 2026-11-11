@@ -39,13 +39,13 @@
 
 .top-bar-title {
   font-weight: 700 !important;
-  font-size: 0.95rem !important;
+  font-size: 1rem !important;
   white-space: nowrap;
-  color: #1a1a2e;
+  color: #111;
 }
 
 .map-count-chip {
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
 }
 
 .bar-divider {
@@ -75,7 +75,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: #bdbdbd;
     border-radius: 2px;
   }
 }
@@ -133,9 +133,9 @@
   flex-shrink: 0;
   text-transform: none !important;
   font-weight: 500 !important;
-  font-size: 0.82rem !important;
+  font-size: 0.8125rem !important;
   border-radius: 8px !important;
-  color: #444 !important;
+  color: #333 !important;
   padding: 4px 10px !important;
   transition:
     background 0.15s ease,
@@ -180,7 +180,7 @@
 
 .action-btn {
   text-transform: none !important;
-  font-size: 0.82rem !important;
+  font-size: 0.8125rem !important;
   border-radius: 8px !important;
   font-weight: 500 !important;
 }
@@ -208,10 +208,10 @@
     width: 6px;
   }
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #eee;
   }
   &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: #bdbdbd;
     border-radius: 3px;
   }
 }
@@ -243,7 +243,7 @@
 .popover-title {
   font-weight: 700 !important;
   font-size: 0.75rem !important;
-  color: #888 !important;
+  color: #999 !important;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -279,7 +279,7 @@
 .single-map-title {
   color: #666;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -290,7 +290,7 @@
 // Input used when renaming a map — bold and styled to match the title row
 .map-tab-input {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   border: none;
   background: transparent;
   outline: none;
@@ -403,9 +403,9 @@
 .map-tab-btn {
   text-transform: none;
   font-weight: 500;
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   border-radius: 8px;
-  color: #444;
+  color: #333;
   padding: 4px 10px;
   transition:
     background 0.15s ease,

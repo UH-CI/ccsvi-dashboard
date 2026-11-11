@@ -48,13 +48,7 @@ export const MatchSummary: React.FC<MatchSummaryProps> = ({
   return (
     <>
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-        >
-          Summary for Matching Areas
-        </Typography>
+        <Typography variant="sectionHeading">Summary for Matching Areas</Typography>
         <Tooltip
           title="Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap."
           placement="top"

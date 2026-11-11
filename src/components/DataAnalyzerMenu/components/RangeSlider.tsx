@@ -25,11 +25,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
   onChange,
 }) => (
   <Box>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}
-    >
+    <Typography variant="sectionHeading">
       {info ? (
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
           {title}

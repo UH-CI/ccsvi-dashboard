@@ -1,16 +1,8 @@
 import type { ReactNode } from "react";
 import styles from "./FeaturePopup.module.scss";
-import type { MetricKind, PointLayerConfig, Reliability, ReliabilityTier } from "../../types";
+import type { MetricKind, PointLayerConfig, Reliability } from "../../types";
+import { RELIABILITY_COLORS } from "../../config/colorSchemes";
 import { PointLayerIcon } from "../../utils/pointLayerIcon";
-
-const RELIABILITY_TIER_CLASS: Record<ReliabilityTier, string> = {
-  reliable: styles["popup-reliability-reliable"],
-  usable: styles["popup-reliability-usable"],
-  caution: styles["popup-reliability-caution"],
-  severe: styles["popup-reliability-severe"],
-  unreliable: styles["popup-reliability-unreliable"],
-  neutral: "",
-};
 
 interface PopupField {
   key: string;
@@ -96,7 +88,8 @@ const MetricRows = ({ metric }: { metric: MetricDisplay }) => (
       <div className={`${styles["popup-field"]} ${styles["popup-reliability"]}`}>
         <span className={styles["popup-field-label"]}>Data Reliability:</span>
         <span
-          className={`${styles["popup-field-value"]} ${RELIABILITY_TIER_CLASS[metric.reliability.tier]}`}
+          className={styles["popup-field-value"]}
+          style={{ color: RELIABILITY_COLORS[metric.reliability.tier] }}
         >
           {metric.reliability.label}
         </span>

@@ -1,3 +1,5 @@
+import type { ReliabilityTier } from "../types";
+
 export const DEFAULT_COLOR_SCHEME = "RdBu";
 
 export const COLOR_SCHEMES = [
@@ -84,3 +86,13 @@ export const OUTSIDE_RANGE_OUTLINE = "#cccccc";
 
 // Data Analyzer charts: areas in the range, areas outside it, and the selected area
 export const CHART_COLORS = { matching: "#1976d2", notMatching: "#d0d0d0", selected: "#e53935" };
+
+// The colour of a popup's "Data Reliability" word, from reliable (green) to unreliable (red)
+export const RELIABILITY_COLORS: Record<ReliabilityTier, string> = {
+  reliable: "#2e7d32",
+  usable: "#b58100",
+  caution: "#e65100",
+  severe: "#d84315",
+  unreliable: "#c62828",
+  neutral: "inherit",
+};

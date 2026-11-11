@@ -1,7 +1,7 @@
 .popup-metadata {
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .popup-metadata-line {
@@ -23,26 +23,6 @@
   .popup-field-value {
     font-style: italic;
   }
-}
-
-.popup-reliability-reliable {
-  color: #2e7d32;
-}
-
-.popup-reliability-usable {
-  color: #b58100;
-}
-
-.popup-reliability-caution {
-  color: #e65100;
-}
-
-.popup-reliability-severe {
-  color: #d84315;
-}
-
-.popup-reliability-unreliable {
-  color: #c62828;
 }
 
 .popup-field {
