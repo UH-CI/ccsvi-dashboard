@@ -5,6 +5,7 @@ Each loader calls save_dataset inside its own conn.transaction(), so a dataset i
 """
 
 import json
+import re
 from dataclasses import dataclass
 
 import asyncpg
@@ -36,6 +37,14 @@ class Metric:
     has_moe: bool = False
     has_percentage: bool = False
     has_moe_pp: bool = False
+    # The short name the app looks the metric up by; None for a metric only the table shows
+    key: str | None = None
+
+
+# A point or raster metric's key from its layer id and metric, e.g. "stormsurge_inundation_category1_mean" ("_homelands" ends the Homelands copy's)
+def layer_metric_key(layer_id: str, metric: str, homelands: bool) -> str:
+    key = f"{re.sub(r'[^a-z0-9]+', '_', layer_id.lower()).strip('_')}_{metric.lower()}"
+    return f"{key}_homelands" if homelands else key
 
 
 # One metric's value for one area; metric is the metric's name
@@ -80,18 +89,18 @@ async def save_dataset(conn: asyncpg.Connection, dataset: Dataset, metrics: list
         [m.name for m in metrics],
     )
 
-    # mv_column is set by add_mv_column, so it's left alone here
     await conn.executemany(
         """
-        INSERT INTO metrics (dataset_id, name, display_order, has_moe, has_percentage, has_moe_pp)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO metrics (dataset_id, name, display_order, has_moe, has_percentage, has_moe_pp, key)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (dataset_id, name) DO UPDATE SET
             display_order  = EXCLUDED.display_order,
             has_moe        = EXCLUDED.has_moe,
             has_percentage = EXCLUDED.has_percentage,
-            has_moe_pp     = EXCLUDED.has_moe_pp
+            has_moe_pp     = EXCLUDED.has_moe_pp,
+            key            = EXCLUDED.key
         """,
-        [(dataset.id, m.name, m.display_order, m.has_moe, m.has_percentage, m.has_moe_pp) for m in metrics],
+        [(dataset.id, m.name, m.display_order, m.has_moe, m.has_percentage, m.has_moe_pp, m.key) for m in metrics],
     )
 
     metric_ids = {

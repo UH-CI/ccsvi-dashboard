@@ -9,6 +9,7 @@ PYTHON="$BACKEND_DIR/.venv/bin/python"
 source "$BACKEND_DIR/settings.conf"
 DATA_DIR="$DATA_ROOT/$DATA_VERSION"
 RAW_DIR="$DATA_ROOT/archived/raw_files"
+CENSUS_CLEANED_DIR="$DATA_ROOT/archived/cleaned-data"
 
 PG_CONTAINER=ccsvi-pg
 DB_NAME=ccsvi

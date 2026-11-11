@@ -23,6 +23,12 @@ echo "-- checking generated SQL"
 echo "-- checking the layer files"
 (cd "$BACKEND_DIR" && "$PYTHON" -m pipeline.check_layers)
 
+echo "-- cleaning the raw census files"
+(cd "$BACKEND_DIR" && "$PYTHON" -m ingest.load_cleaned_census --clean-only --output-dir "$CENSUS_CLEANED_DIR")
+
+echo "-- checking the census menu against the cleaned files"
+(cd "$BACKEND_DIR" && "$PYTHON" -m pipeline.check_layers --census-files)
+
 echo "-- dropping census tables"
 psql_run <<'SQL'
 DROP MATERIALIZED VIEW IF EXISTS block_group_metrics;
@@ -43,10 +49,7 @@ echo "-- applying schema"
 
 echo "-- loading census data"
 cd "$BACKEND_DIR"
-"$PYTHON" -m ingest.load_cleaned_census
-
-echo "-- checking the census menu against the loaded metrics"
-"$PYTHON" -m pipeline.check_layers --census-metrics
+"$PYTHON" -m ingest.load_cleaned_census --dir "$CENSUS_CLEANED_DIR"
 
 if $FULL; then
     echo "-- loading geometry, points, hazards"
@@ -67,8 +70,6 @@ echo "-- reading each raster's value at every point"
 
 echo "-- averaging rasters per block group / Homeland area"
 "$PYTHON" -m ingest.load_raster_means
-
-"$PYTHON" -m ingest.add_mv_column
 
 # The schema step recreates the views while the tables are still empty, so refresh last.
 echo "-- refreshing views"

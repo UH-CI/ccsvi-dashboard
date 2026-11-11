@@ -18,97 +18,97 @@ SELECT
     ST_Centroid(g.geom) AS centroid,
 
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'age_of_structure' AND m.name = 'Total Housing Built Before 1990 (calc.)') AS age_of_structure__total_housing_built_before_1990_calc,
+        FILTER (WHERE m.key = 'housing_before_1990') AS housing_before_1990,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'age_of_structure' AND m.name = 'Total Housing Built Before 1970 (calc.)') AS age_of_structure__total_housing_built_before_1970_calc,
+        FILTER (WHERE m.key = 'housing_before_1970') AS housing_before_1970,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'population_group_quarters' AND m.name = 'Institutionalized population') AS population_group_quarters__institutionalized_population,
+        FILTER (WHERE m.key = 'group_quarters') AS group_quarters,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'population_group_quarters' AND m.name = 'Institutionalized population: Correctional facilities for adults') AS population_group_quarters__institutionalized_population__9fb436,
+        FILTER (WHERE m.key = 'group_quarters_correctional') AS group_quarters_correctional,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'population_group_quarters' AND m.name = 'Institutionalized population: Juvenile facilities') AS population_group_quarters__institutionalized_population__bffc6e,
+        FILTER (WHERE m.key = 'group_quarters_juvenile') AS group_quarters_juvenile,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'population_group_quarters' AND m.name = 'Institutionalized population: Nursing facilities/Skilled-nursing facilities') AS population_group_quarters__institutionalized_population__19f399,
+        FILTER (WHERE m.key = 'group_quarters_nursing') AS group_quarters_nursing,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'population_group_quarters' AND m.name = 'Institutionalized population: Other institutional facilities') AS population_group_quarters__institutionalized_population__adeffb,
+        FILTER (WHERE m.key = 'group_quarters_other') AS group_quarters_other,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'tenure' AND m.name = 'Renter occupied') AS tenure__renter_occupied,
+        FILTER (WHERE m.key = 'renter_occupied') AS renter_occupied,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'tenure_by_occupants_per_room' AND m.name = 'Total Overcrowded Housing Units (calc.)') AS tenure_by_occupants_per_room__total_overcrowded_housing__66b105,
+        FILTER (WHERE m.key = 'overcrowded_housing') AS overcrowded_housing,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'income_share_of_fpl' AND m.name = 'Total Under 100% FPL (calc.)') AS income_share_of_fpl__total_under_100_fpl_calc,
+        FILTER (WHERE m.key = 'below_100_fpl') AS below_100_fpl,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'income_share_of_fpl' AND m.name = 'Total Under 150% FPL (calc.)') AS income_share_of_fpl__total_under_150_fpl_calc,
+        FILTER (WHERE m.key = 'below_150_fpl') AS below_150_fpl,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'income_share_of_fpl' AND m.name = 'Total Under 200% FPL (calc.)') AS income_share_of_fpl__total_under_200_fpl_calc,
+        FILTER (WHERE m.key = 'below_200_fpl') AS below_200_fpl,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'health_insurance' AND m.name = 'No Health Insurance Coverage (calc.)') AS health_insurance__no_health_insurance_coverage_calc,
+        FILTER (WHERE m.key = 'no_health_insurance') AS no_health_insurance,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_males' AND m.name = 'Males Under 5 (calc.)') AS person_under_5_65_males__males_under_5_calc,
+        FILTER (WHERE m.key = 'under_5_male') AS under_5_male,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_females' AND m.name = 'Females Under 5 (calc.)') AS person_under_5_65_females__females_under_5_calc,
+        FILTER (WHERE m.key = 'under_5_female') AS under_5_female,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_males' AND m.name = 'Males Under 18 (calc.)') AS person_under_5_65_males__males_under_18_calc,
+        FILTER (WHERE m.key = 'under_18_male') AS under_18_male,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_females' AND m.name = 'Females Under 18 (calc.)') AS person_under_5_65_females__females_under_18_calc,
+        FILTER (WHERE m.key = 'under_18_female') AS under_18_female,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_males' AND m.name = 'Males Over 65 (calc.)') AS person_under_5_65_males__males_over_65_calc,
+        FILTER (WHERE m.key = 'over_65_male') AS over_65_male,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_females' AND m.name = 'Females Over 65 (calc.)') AS person_under_5_65_females__females_over_65_calc,
+        FILTER (WHERE m.key = 'over_65_female') AS over_65_female,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_total' AND m.name = 'Total Under 5 (calc.)') AS person_under_5_65_total__total_under_5_calc,
+        FILTER (WHERE m.key = 'under_5') AS under_5,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_total' AND m.name = 'Total Under 18 (calc.)') AS person_under_5_65_total__total_under_18_calc,
+        FILTER (WHERE m.key = 'under_18') AS under_18,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'person_under_5_65_total' AND m.name = 'Total Over 65 (calc.)') AS person_under_5_65_total__total_over_65_calc,
+        FILTER (WHERE m.key = 'over_65') AS over_65,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'living_arrangements' AND m.name = 'Total Living alone (calc.)') AS living_arrangements__total_living_alone_calc,
+        FILTER (WHERE m.key = 'living_alone') AS living_alone,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'family_type_by_children' AND m.name = 'Total Single-Parent Households With Children (calc.)') AS family_type_by_children__total_single_parent_households__5f36bd,
+        FILTER (WHERE m.key = 'single_parent_households') AS single_parent_households,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'race_origin' AND m.name = 'Native Hawaiian and Other Pacific Islander alone') AS race_origin__native_hawaiian_and_other_pacific_islander_alone,
+        FILTER (WHERE m.key = 'native_hawaiian_pacific_islander') AS native_hawaiian_pacific_islander,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'race_origin' AND m.name = 'Asian alone') AS race_origin__asian_alone,
+        FILTER (WHERE m.key = 'asian') AS asian,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'race_origin' AND m.name = 'Black or African American alone') AS race_origin__black_or_african_american_alone,
+        FILTER (WHERE m.key = 'black_african_american') AS black_african_american,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'race_origin' AND m.name = 'White alone') AS race_origin__white_alone,
+        FILTER (WHERE m.key = 'white') AS white,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'race_origin' AND m.name = 'Two or More Races') AS race_origin__two_or_more_races,
+        FILTER (WHERE m.key = 'two_or_more_races') AS two_or_more_races,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'limited_english_speaking' AND m.name = 'Total Limited English Speaking Households (calc.)') AS limited_english_speaking__total_limited_english_speaking_5ed13f,
+        FILTER (WHERE m.key = 'limited_english') AS limited_english,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'internet_subscription' AND m.name = 'No Internet access') AS internet_subscription__no_internet_access,
+        FILTER (WHERE m.key = 'no_internet') AS no_internet,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'households_w_computer' AND m.name = 'No Computer') AS households_w_computer__no_computer,
+        FILTER (WHERE m.key = 'no_computer') AS no_computer,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'aggregate_vehicles' AND m.name = 'Aggregate number of vehicles available') AS aggregate_vehicles__aggregate_number_of_vehicles_available,
+        FILTER (WHERE m.key = 'no_vehicle') AS no_vehicle,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'fire_stations_points' AND m.name = 'Count') AS fire_stations_points__count,
+        FILTER (WHERE m.key = 'fire_stations_count') AS fire_stations_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'hospitals_points' AND m.name = 'Count') AS hospitals_points__count,
+        FILTER (WHERE m.key = 'hospitals_count') AS hospitals_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'police_stations_points' AND m.name = 'Count') AS police_stations_points__count,
+        FILTER (WHERE m.key = 'police_stations_count') AS police_stations_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'shelters_points' AND m.name = 'Count') AS shelters_points__count,
+        FILTER (WHERE m.key = 'shelters_count') AS shelters_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'preschools_points' AND m.name = 'Count') AS preschools_points__count,
+        FILTER (WHERE m.key = 'preschools_count') AS preschools_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'public_schools_points' AND m.name = 'Count') AS public_schools_points__count,
+        FILTER (WHERE m.key = 'public_schools_count') AS public_schools_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'private_schools_points' AND m.name = 'Count') AS private_schools_points__count,
+        FILTER (WHERE m.key = 'private_schools_count') AS private_schools_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'bridges_points' AND m.name = 'Count') AS bridges_points__count,
+        FILTER (WHERE m.key = 'bridges_count') AS bridges_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'sewage_points' AND m.name = 'Count') AS sewage_points__count,
+        FILTER (WHERE m.key = 'sewage_count') AS sewage_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'wastewater_plant_points' AND m.name = 'Count') AS wastewater_plant_points__count,
+        FILTER (WHERE m.key = 'wastewater_plant_count') AS wastewater_plant_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'airports_points' AND m.name = 'Count') AS airports_points__count,
+        FILTER (WHERE m.key = 'airports_count') AS airports_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'commercial_harbors_points' AND m.name = 'Count') AS commercial_harbors_points__count,
+        FILTER (WHERE m.key = 'commercial_harbors_count') AS commercial_harbors_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'small_boat_harbors_points' AND m.name = 'Count') AS small_boat_harbors_points__count
+        FILTER (WHERE m.key = 'small_boat_harbors_count') AS small_boat_harbors_count
 
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
@@ -132,43 +132,43 @@ SELECT
     ST_Centroid(g.geom) AS centroid,
 
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level') AS d_2022_census_hawaiian_homelands__poverty_status_in_the__526cfd,
+        FILTER (WHERE m.key = 'below_100_fpl_homelands') AS below_100_fpl_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'Total Under 150% FPL (calc.)') AS d_2022_census_hawaiian_homelands__total_under_150_fpl_calc,
+        FILTER (WHERE m.key = 'below_150_fpl_homelands') AS below_150_fpl_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'Total Population Under 5 (calc.)') AS d_2022_census_hawaiian_homelands__total_population_under_5_calc,
+        FILTER (WHERE m.key = 'under_5_homelands') AS under_5_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'Total Population Under 18 (calc.)') AS d_2022_census_hawaiian_homelands__total_population_under_43d6ce,
+        FILTER (WHERE m.key = 'under_18_homelands') AS under_18_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'Total Population Over 65 (calc.)') AS d_2022_census_hawaiian_homelands__total_population_over_65_calc,
+        FILTER (WHERE m.key = 'over_65_homelands') AS over_65_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND m.name = 'LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well') AS d_2022_census_hawaiian_homelands__language_spoken_at_hom_ab95cf,
+        FILTER (WHERE m.key = 'limited_english_homelands') AS limited_english_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'fire_stations_points_homelands' AND m.name = 'Count') AS fire_stations_points_homelands__count,
+        FILTER (WHERE m.key = 'fire_stations_count_homelands') AS fire_stations_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'hospitals_points_homelands' AND m.name = 'Count') AS hospitals_points_homelands__count,
+        FILTER (WHERE m.key = 'hospitals_count_homelands') AS hospitals_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'police_stations_points_homelands' AND m.name = 'Count') AS police_stations_points_homelands__count,
+        FILTER (WHERE m.key = 'police_stations_count_homelands') AS police_stations_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'shelters_points_homelands' AND m.name = 'Count') AS shelters_points_homelands__count,
+        FILTER (WHERE m.key = 'shelters_count_homelands') AS shelters_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'preschools_points_homelands' AND m.name = 'Count') AS preschools_points_homelands__count,
+        FILTER (WHERE m.key = 'preschools_count_homelands') AS preschools_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'public_schools_points_homelands' AND m.name = 'Count') AS public_schools_points_homelands__count,
+        FILTER (WHERE m.key = 'public_schools_count_homelands') AS public_schools_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'private_schools_points_homelands' AND m.name = 'Count') AS private_schools_points_homelands__count,
+        FILTER (WHERE m.key = 'private_schools_count_homelands') AS private_schools_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'bridges_points_homelands' AND m.name = 'Count') AS bridges_points_homelands__count,
+        FILTER (WHERE m.key = 'bridges_count_homelands') AS bridges_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'sewage_points_homelands' AND m.name = 'Count') AS sewage_points_homelands__count,
+        FILTER (WHERE m.key = 'sewage_count_homelands') AS sewage_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'wastewater_plant_points_homelands' AND m.name = 'Count') AS wastewater_plant_points_homelands__count,
+        FILTER (WHERE m.key = 'wastewater_plant_count_homelands') AS wastewater_plant_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'airports_points_homelands' AND m.name = 'Count') AS airports_points_homelands__count,
+        FILTER (WHERE m.key = 'airports_count_homelands') AS airports_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'commercial_harbors_points_homelands' AND m.name = 'Count') AS commercial_harbors_points_homelands__count,
+        FILTER (WHERE m.key = 'commercial_harbors_count_homelands') AS commercial_harbors_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.dataset_id = 'small_boat_harbors_points_homelands' AND m.name = 'Count') AS small_boat_harbors_points_homelands__count
+        FILTER (WHERE m.key = 'small_boat_harbors_count_homelands') AS small_boat_harbors_count_homelands
 
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid

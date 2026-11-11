@@ -19,7 +19,7 @@ import rasterio
 from rasterio.mask import mask
 
 import settings
-from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, layer_metric_key, save_dataset
 from pipeline.check_layers import rasters
 
 # The two values saved for every raster, in display order
@@ -76,7 +76,10 @@ async def load_track(
             await save_dataset(
                 conn,
                 dataset,
-                [Metric(name, stat_index) for stat_index, name in enumerate(METRICS)],
+                [
+                    Metric(name, stat_index, key=layer_metric_key(raster.id, name, homelands))
+                    for stat_index, name in enumerate(METRICS)
+                ],
                 [
                     Value(geoid, name, values[stat_index])
                     for stat_index, name in enumerate(METRICS)

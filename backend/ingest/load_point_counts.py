@@ -5,7 +5,7 @@ Run after ingest.load_point_areas, before the view refresh, in both rebuild.sh
 modes:
     python -m ingest.load_point_counts
 
-Every point layer's count gets its filter column automatically (db/mv_columns.py).
+Every point layer's count gets a filter column named by its key (db/mv_columns.py).
 """
 
 import asyncio
@@ -13,7 +13,7 @@ import asyncio
 import asyncpg
 
 import settings
-from ingest.writer import AREA_TYPES, Dataset, Metric, Value, save_dataset
+from ingest.writer import AREA_TYPES, Dataset, Metric, Value, layer_metric_key, save_dataset
 
 
 def dataset_id_for(layer_id: str, homelands: bool) -> str:
@@ -52,7 +52,7 @@ async def load_layer(conn: asyncpg.Connection, layer_id: str) -> None:
             await save_dataset(
                 conn,
                 dataset,
-                [Metric("Count", 0)],
+                [Metric("Count", 0, key=layer_metric_key(layer_id, "Count", homelands))],
                 [Value(r["geoid"], "Count", r["cnt"]) for r in counts],
             )
 

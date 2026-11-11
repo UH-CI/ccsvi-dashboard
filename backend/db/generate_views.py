@@ -21,22 +21,19 @@ HEADER = """-- GENERATED FILE — do not edit.
 --   docker exec ccsvi-pg psql -U ccsvi -d ccsvi -c "REFRESH MATERIALIZED VIEW hawaiian_homeland_metrics;"
 """
 
-# One filtered aggregate per column, holding the number the map shows: the percentage when the
+# One filtered aggregate per metric key, holding the number the map shows: the percentage when the
 # metric has one, otherwise the count
-def columns_sql(rows: list[tuple[str, str, str]]) -> str:
-    lines = []
-    for column, dataset_id, name in rows:
-        escaped = name.replace("'", "''")
-        lines.append(
-            "    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)\n"
-            f"        FILTER (WHERE m.dataset_id = '{dataset_id}' AND m.name = '{escaped}') AS {column}"
-        )
-    return ",\n".join(lines)
+def columns_sql(keys: list[str]) -> str:
+    return ",\n".join(
+        "    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)\n"
+        f"        FILTER (WHERE m.key = '{key}') AS {key}"
+        for key in keys
+    )
 
 
 # One area type's view: a row per area of that type (geographies.type), with its filter columns.
 # extra_ids are id columns only that type has; each gets an index.
-def view_sql(view: str, index_prefix: str, area_type: str, extra_ids: list[str], rows: list[tuple[str, str, str]]) -> str:
+def view_sql(view: str, index_prefix: str, area_type: str, extra_ids: list[str], keys: list[str]) -> str:
     ids = ["geoid", "name", *extra_ids, "population", "geom"]
     id_select = "".join(f"    g.{col},\n" for col in ids)
     group_by = ", ".join(f"g.{col}" for col in ids)
@@ -55,7 +52,7 @@ CREATE MATERIALIZED VIEW {view} AS
 SELECT
 {id_select}    ST_Centroid(g.geom) AS centroid,
 
-{columns_sql(rows)}
+{columns_sql(keys)}
 
 FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid

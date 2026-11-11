@@ -3,21 +3,22 @@ checks them. Every backend part that needs a layer gets it from here, so they al
 
 python -m pipeline.check_layers                    every check, including the files on the VM
 python -m pipeline.check_layers --static           only the checks that need no data files
-python -m pipeline.check_layers --census-metrics   the census menu against the loaded metrics
+python -m pipeline.check_layers --census-files     the census menu against the cleaned census files
 """
 
 import argparse
-import asyncio
+import csv
 import functools
 import json
+import re
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
-import asyncpg
-
 import settings
 from pipeline.build_tools import run
+from pipeline.census.census_transform import metric_columns
+from pipeline.census.clean import dataset_outputs, load_dataset_config
 
 LAYERS_DIR = Path(__file__).resolve().parents[2] / "config" / "layers"
 CENSUS_MENU = LAYERS_DIR.parent / "census_menu.json"
@@ -26,7 +27,10 @@ SHAPES = {"polygons": "MultiPolygon", "lines": "MultiLineString"}
 
 # The census menu's fields, as (required, optional)
 CATEGORY_FIELDS = ({"id", "label", "indicators"}, {"description"})
-INDICATOR_FIELDS = ({"dataset", "metric", "label"}, {"description", "calculationDescription", "off"})
+INDICATOR_FIELDS = ({"key", "dataset", "metric", "label"}, {"description", "calculationDescription", "off"})
+
+# A metric key: a lowercase word with underscores, short enough to be a Postgres column name
+KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,62}")
 
 # Per layer file, the fields each kind of entry must have and may have, as (required, optional).
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
@@ -259,8 +263,8 @@ def census_categories():
 
 
 # Every indicator, switched off or not, so one switched back on still works
-def census_pairs():
-    return [(i["dataset"], i["metric"]) for category in census_categories() for i in category["indicators"]]
+def census_indicators():
+    return [indicator for category in census_categories() for indicator in category["indicators"]]
 
 
 def census_problems():
@@ -275,34 +279,45 @@ def census_problems():
             problems += [f"{name}: {p}" for p in field_problems("census", indicator, *INDICATOR_FIELDS)]
             if indicator.get("dataset") not in dataset_ids:
                 problems.append(f"{name}: no census dataset with that id")
+            if not KEY_PATTERN.fullmatch(str(indicator.get("key"))):
+                problems.append(f"{name}: key must be lowercase letters, digits and _, starting with a letter, at most 63 long")
             if not indicator.get("off"):
                 live.append((indicator.get("dataset"), indicator.get("metric")))
     problems += [f"{dataset} / {metric}: in the menu twice" for dataset, metric in repeats(live)]
+    keys = [indicator.get("key") for category in categories for indicator in category.get("indicators", [])]
+    problems += [f"key {key}: used twice" for key in repeats(keys)]
     return problems
 
 
-def census_metric_problems():
-    async def fetch_metrics():
-        conn = await asyncpg.connect(settings.database_url())
-        try:
-            return await conn.fetch("SELECT dataset_id, name FROM metrics")
-        finally:
-            await conn.close()
-
-    loaded = {(row["dataset_id"], row["name"]) for row in asyncio.run(fetch_metrics())}
-    return [f"{d} / {m}: no such metric after the census load" for d, m in census_pairs() if (d, m) not in loaded]
+# Menu indicators whose metric isn't among the metrics their cleaned census file makes; run before a rebuild drops anything
+def census_file_problems():
+    skip_column = {output["name"]: output["skip_metric_column"] for output in dataset_outputs(load_dataset_config(CENSUS_CONFIG))}
+    indicators = census_indicators()
+    problems, names = [], {}
+    for dataset in sorted({indicator["dataset"] for indicator in indicators}):
+        path = settings.CENSUS_CLEANED_DIR / f"{dataset}.csv"
+        if not path.exists():
+            problems.append(f"{dataset}: no cleaned file {path}")
+            continue
+        with path.open(newline="") as file:
+            names[dataset] = set(metric_columns(next(csv.reader(file)), skip_column[dataset], path.name).values())
+    return problems + [
+        f"{i['key']}: no metric \"{i['metric']}\" in {i['dataset']}.csv"
+        for i in indicators
+        if i["dataset"] in names and i["metric"] not in names[i["dataset"]]
+    ]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--static", action="store_true", help="skip the checks that need the data files")
-    parser.add_argument("--census-metrics", action="store_true", help="check the census menu against the loaded metrics")
+    parser.add_argument("--census-files", action="store_true", help="check the census menu against the cleaned census files")
     args = parser.parse_args()
 
     stop_on(census_problems())
-    if args.census_metrics:
-        stop_on(census_metric_problems())
-        print(f"Census menu ok: all {len(census_pairs())} indicators have a metric")
+    if args.census_files:
+        stop_on(census_file_problems())
+        print(f"Census menu ok: all {len(census_indicators())} indicators have a metric in the cleaned files")
         return
 
     found_rasters, found_shapes = rasters(), shape_layers()
@@ -310,7 +325,7 @@ def main():
         found = found_rasters + found_shapes
         stop_on(source_problems(found) + data_file_problems(found) + popup_problems(found_shapes))
     print(f"Layer files ok: {len(found_rasters)} rasters, {len(found_shapes)} lines and polygons, "
-          f"{len(census_pairs())} census indicators")
+          f"{len(census_indicators())} census indicators")
 
 
 if __name__ == "__main__":

@@ -29,11 +29,6 @@ class DatasetTable(BaseModel):
     columns: list[TableColumn]
     rows: list[TableRow]
 
-# A metric's filter column, and whether the map and filter show its percentage or its count
-class MetricConfig(BaseModel):
-    mv_column: str | None = None
-    kind: Literal["percentage", "count"]
-
 
 class DatasetMetadata(BaseModel):
     table_id: str
@@ -48,22 +43,6 @@ class DatasetRecord(BaseModel):
     source_type: str
     layer_id: str | None
     metadata: DatasetMetadata | None
-    metrics: dict[str, MetricConfig]
-
-
-class ReliabilityRecord(BaseModel):
-    label: str
-    tier: str
-
-
-class MetricValueRecord(BaseModel):
-    absolute: float | None
-    margin_of_error: float | None
-    percentage: float | None
-
-    moe_percentage_points: float | None
-    reliability: ReliabilityRecord
-    moe_derived: bool | None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -71,35 +50,22 @@ class MetricValueRecord(BaseModel):
 @router.get(
     "",
     response_model=dict[str, DatasetRecord],
-    summary="Dataset catalog with metric metadata",
+    summary="Dataset catalog",
 )
 async def get_datasets(conn: ConnDep) -> Any:
     rows = await conn.fetch(
-        """
-        SELECT d.id, d.label, d.hawaiian_homelands, d.source_type, d.layer_id, d.metadata,
-               m.name, m.mv_column, m.has_percentage
-        FROM datasets d
-        JOIN metrics m ON m.dataset_id = d.id
-        ORDER BY d.id, m.display_order NULLS LAST, m.name
-        """
+        "SELECT id, label, hawaiian_homelands, source_type, layer_id, metadata FROM datasets ORDER BY id"
     )
-    result: dict[str, Any] = {}
-    for row in rows:
-        dataset_id = row["id"]
-        if dataset_id not in result:
-            result[dataset_id] = {
-                "label": row["label"],
-                "hawaiian_homelands": row["hawaiian_homelands"],
-                "source_type": row["source_type"],
-                "layer_id": row["layer_id"],
-                "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
-                "metrics": {},
-            }
-        result[dataset_id]["metrics"][row["name"]] = {
-            "mv_column": row["mv_column"],
-            "kind": "percentage" if row["has_percentage"] else "count",
+    return {
+        row["id"]: {
+            "label": row["label"],
+            "hawaiian_homelands": row["hawaiian_homelands"],
+            "source_type": row["source_type"],
+            "layer_id": row["layer_id"],
+            "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
         }
-    return result
+        for row in rows
+    }
 
 
 @router.get(
@@ -184,45 +150,4 @@ async def get_dataset_table(dataset_id: str, conn: ConnDep) -> Any:
     return {
         "columns": [{"heading": heading, "type": kind} for heading, kind in columns],
         "rows": [{"geoid": geoid, "cells": cells} for geoid, cells in rows.items()],
-    }
-
-
-@router.get(
-    "/{dataset_id}/values",
-    response_model=dict[str, MetricValueRecord],
-    summary="Per-geoid values for one metric of a dataset",
-)
-async def get_metric_values(conn: ConnDep, dataset_id: str, metric: str) -> Any:
-    rows = await conn.fetch(
-        """
-        SELECT mv.geoid,
-               mv.absolute::float,
-               mv.margin_of_error::float,
-               mv.percentage::float,
-               mv.moe_percentage_points::float,
-               mv.cv::float,
-               mv.moe_derived,
-               m.has_moe
-        FROM metric_values mv
-        JOIN metrics m ON m.id = mv.metric_id
-        WHERE m.dataset_id = $1 AND m.name = $2
-        """,
-        dataset_id,
-        metric,
-    )
-    if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No data for dataset='{dataset_id}' metric='{metric}'",
-        )
-    return {
-        row["geoid"]: {
-            "absolute": row["absolute"],
-            "margin_of_error": row["margin_of_error"],
-            "percentage": row["percentage"],
-            "moe_percentage_points": row["moe_percentage_points"],
-            "reliability": reliability(row["absolute"], row["margin_of_error"], row["cv"], row["has_moe"]),
-            "moe_derived": row["moe_derived"],
-        }
-        for row in rows
     }

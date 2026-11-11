@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS metrics (
     id                  SERIAL  PRIMARY KEY,
     dataset_id          TEXT    NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
     name                TEXT    NOT NULL,
-    mv_column           TEXT,
+    -- The short name the app looks the metric up by, and its filter column's name; null for a metric only the table shows
+    key                 TEXT    UNIQUE,
     display_order       INTEGER,
     has_moe             BOOLEAN NOT NULL DEFAULT FALSE,
     has_percentage      BOOLEAN NOT NULL DEFAULT FALSE,

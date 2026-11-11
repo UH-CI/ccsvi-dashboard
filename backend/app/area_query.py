@@ -18,15 +18,15 @@ class QueryParams(list):
         return f"${len(self)}"
 
 
-# View metric columns from metrics.mv_column — also the allowlist for min_<col> and max_<col> params
+# The view's filter columns, each named by its metric key: its only decimal-number columns. Also the allowlist for min_<col> and max_<col>
 async def metric_columns(conn, area_type: AreaType) -> list[str]:
     rows = await conn.fetch(
-        "SELECT m.mv_column FROM metrics m JOIN datasets d ON d.id = m.dataset_id"
-        " WHERE m.mv_column IS NOT NULL AND d.hawaiian_homelands = $1"
-        " ORDER BY m.dataset_id, m.display_order",
-        area_type == "hawaiian_homeland",
+        "SELECT attname FROM pg_attribute"
+        " WHERE attrelid = $1::regclass AND attnum > 0 AND NOT attisdropped AND atttypid = 'numeric'::regtype"
+        " ORDER BY attnum",
+        AREA_VIEWS[area_type],
     )
-    return [r["mv_column"] for r in rows]
+    return [r["attname"] for r in rows]
 
 
 # A layer id "<parent>" or "<parent>.<sub>" as (parent, sub or ""); parent ids never contain a dot, so split at the first

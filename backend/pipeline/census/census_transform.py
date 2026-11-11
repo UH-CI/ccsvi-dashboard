@@ -5,7 +5,7 @@ import os
 
 import pandas as pd
 
-from .csv_format import CALC, ESTIMATE_PREFIX, MISSING_VALUES, moe_column_name
+from .csv_format import CALC, DERIVED_ENDINGS, ESTIMATE_PREFIX, MISSING_VALUES, MOE_PREFIX, moe_column_name
 
 
 """
@@ -123,3 +123,39 @@ def clean_column_name(col_name: str, prefixes_to_remove: list) -> str:
     cleaned_name = cleaned_name.rstrip(":")
 
     return cleaned_name
+
+
+# Header starts taken off a cleaned column to make its metric name
+METRIC_PREFIXES = [
+    ESTIMATE_PREFIX + "Total:!!",
+    ESTIMATE_PREFIX + "Total!!",
+    MOE_PREFIX,
+    ESTIMATE_PREFIX,
+    "!!Total:!!",  # Decennial files use "Total" not "Estimate"
+]
+
+NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
+
+
+# Turns a raw Census column header into a short metric name
+def metric_name_for(col: str) -> str:
+    name = clean_column_name(col, METRIC_PREFIXES)
+    return name if name else "Total"
+
+
+# Each column of a cleaned census file that becomes a metric, with its metric name; stops if two clean to the same name
+def metric_columns(columns, skip_column: str | None, source: str) -> dict[str, str]:
+    base_cols = [
+        col
+        for col in columns
+        if col not in NON_METRIC_COLS
+        and col != skip_column
+        and not col.startswith(MOE_PREFIX)
+        and not col.endswith(DERIVED_ENDINGS)
+    ]
+    col_to_metric = {col: metric_name_for(col) for col in base_cols}
+    names = list(col_to_metric.values())
+    if repeated := {name for name in names if names.count(name) > 1}:
+        clashing = [col for col in base_cols if col_to_metric[col] in repeated]
+        raise ValueError(f"{source}: columns {clashing} clean to the same metric name")
+    return col_to_metric

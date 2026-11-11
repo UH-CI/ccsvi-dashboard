@@ -5,7 +5,8 @@ rebuild.sh runs it. By hand, from the backend/ directory with .venv active and D
     python -m ingest.load_cleaned_census
 
 Cleans raw Census files and loads the result into database
-Pass --dir instead to skip cleaning and load CSVs you already have. 
+Pass --dir instead to skip cleaning and load CSVs you already have, or --clean-only to clean and stop.
+Each census menu indicator's metric gets the indicator's key; the run stops if one matches no metric.
 """
 
 import argparse
@@ -19,37 +20,14 @@ import pandas as pd
 import settings
 from ingest.writer import Dataset, Metric, Value, save_dataset
 from pipeline.census import clean, proportions
-from pipeline.census.census_transform import clean_column_name
-from pipeline.census.csv_format import (
-    CV,
-    DERIVED_ENDINGS,
-    ESTIMATE_PREFIX,
-    MISSING_VALUES,
-    MOE_DERIVED,
-    MOE_PP,
-    MOE_PREFIX,
-    PERCENT,
-    moe_column_name,
-)
+from pipeline.census.census_transform import metric_columns
+from pipeline.census.csv_format import CV, MISSING_VALUES, MOE_DERIVED, MOE_PP, PERCENT, moe_column_name
+from pipeline.check_layers import census_indicators
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
 DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
 
-PREFIXES_TO_REMOVE = [
-    ESTIMATE_PREFIX + "Total:!!",
-    ESTIMATE_PREFIX + "Total!!",
-    MOE_PREFIX,
-    ESTIMATE_PREFIX,
-    "!!Total:!!",  # Decennial files use "Total" not "Estimate"
-]
-
-NON_METRIC_COLS = {"Geography", "Geographic Area Name", "Census_Population"}
-
-# Turns a raw Census column header into a short metric name
-def metric_name_for(col: str) -> str:
-    name = clean_column_name(col, PREFIXES_TO_REMOVE)
-    return name if name else "Total"
 
 # True when the CSV has this column and at least one row has a value in it
 def _column_has_values(df: pd.DataFrame, col: str) -> bool:
@@ -69,22 +47,14 @@ def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
     return (geoid, "block_group", name, parts[0], parts[1], parts[2], parts[3], pop)
 
 
-def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[list[Metric], list[Value], list[tuple]]:
+# keys gives the metric names that are menu indicators their keys
+def read_dataset_rows(
+    csv_path: str, skip_column: str | None, keys: dict[str, str]
+) -> tuple[list[Metric], list[Value], list[tuple]]:
     df = pd.read_csv(csv_path, na_values=MISSING_VALUES)
 
-    base_cols = [
-        col
-        for col in df.columns
-        if col not in NON_METRIC_COLS
-        and col != skip_column
-        and not col.startswith(MOE_PREFIX)
-        and not col.endswith(DERIVED_ENDINGS)
-    ]
-    col_to_metric = {col: metric_name_for(col) for col in base_cols}
-    names = list(col_to_metric.values())
-    if repeated := {name for name in names if names.count(name) > 1}:
-        clashing = [col for col in base_cols if col_to_metric[col] in repeated]
-        raise ValueError(f"{os.path.basename(csv_path)}: columns {clashing} clean to the same metric name")
+    col_to_metric = metric_columns(df.columns, skip_column, os.path.basename(csv_path))
+    base_cols = list(col_to_metric)
 
     # One metric per column: its position, and which derived values it has
     metrics = [
@@ -94,6 +64,7 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
             has_moe=_column_has_values(df, moe_column_name(col)),
             has_percentage=_column_has_values(df, col + PERCENT),
             has_moe_pp=_column_has_values(df, col + MOE_PP),
+            key=keys.get(col_to_metric[col]),
         )
         for order, col in enumerate(base_cols)
     ]
@@ -142,8 +113,10 @@ def read_dataset_rows(csv_path: str, skip_column: str | None = None) -> tuple[li
     return metrics, values, geo_rows
 
 
-# output is one record from clean.dataset_outputs; its name is the dataset id and the CSV file name
-async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, seen_geoids: set[str]) -> None:
+# output is one record from clean.dataset_outputs; its name is the dataset id and the CSV file name. Returns the metric names
+async def load_dataset(
+    conn: asyncpg.Connection, output: dict, csv_path: str, seen_geoids: set[str], keys: dict[str, str]
+) -> list[str]:
     dataset = Dataset(
         id=output["name"],
         label=output["label"],
@@ -152,7 +125,7 @@ async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, se
         universe=output["universe"],
         metadata=output["metadata"],
     )
-    metrics, values, geo_rows = read_dataset_rows(csv_path, skip_column=output["skip_metric_column"])
+    metrics, values, geo_rows = read_dataset_rows(csv_path, output["skip_metric_column"], keys)
 
     geo_rows = [r for r in geo_rows if r[0] not in seen_geoids]
     seen_geoids.update(r[0] for r in geo_rows)
@@ -178,6 +151,7 @@ async def load_dataset(conn: asyncpg.Connection, output: dict, csv_path: str, se
         value_count = await save_dataset(conn, dataset, metrics, values)
 
     print(f"  {dataset.id}: {len(metrics)} metrics, {value_count} metric_values rows")
+    return [metric.name for metric in metrics]
 
 
 # If --dir given, skip cleaning and use that folder. Else, run the full
@@ -206,18 +180,25 @@ def resolve_cleaned_dir(args: argparse.Namespace) -> str:
     return cleaned_dir
 
 
-# Loads one CSV per config output from cleaned_dir, in name order
+# Loads one CSV per config output from cleaned_dir, in name order, then stops if a menu indicator matched no metric
 async def main(cleaned_dir: str, config_path: str) -> None:
     outputs = sorted(clean.dataset_outputs(clean.load_dataset_config(config_path)), key=lambda output: output["name"])
+    menu = {(indicator["dataset"], indicator["metric"]): indicator["key"] for indicator in census_indicators()}
     print(f"Loading {len(outputs)} CSV file(s) from {cleaned_dir}")
 
     conn = await asyncpg.connect(settings.database_url())
     try:
         seen_geoids: set[str] = set()
+        loaded: set[tuple[str, str]] = set()
         for output in outputs:
-            await load_dataset(conn, output, os.path.join(cleaned_dir, f"{output['name']}.csv"), seen_geoids)
+            keys = {metric: key for (dataset, metric), key in menu.items() if dataset == output["name"]}
+            csv_path = os.path.join(cleaned_dir, f"{output['name']}.csv")
+            names = await load_dataset(conn, output, csv_path, seen_geoids, keys)
+            loaded.update((output["name"], name) for name in names)
 
-        print("Done.")
+        if unmatched := [f"{key}: {dataset} / {metric}" for (dataset, metric), key in menu.items() if (dataset, metric) not in loaded]:
+            raise SystemExit("Census menu indicators with no metric:\n  " + "\n  ".join(unmatched))
+        print(f"Done; all {len(menu)} census menu indicators have their key.")
     finally:
         await conn.close()
 
@@ -232,6 +213,10 @@ if __name__ == "__main__":
     parser.add_argument("--notes-xlsx", default=str(settings.CENSUS_NOTES_XLSX))
     parser.add_argument("--boundaries-geojson", default=DEFAULT_BOUNDARIES_GEOJSON)
     parser.add_argument("--output-dir", default=str(settings.CENSUS_CLEANED_DIR))
+    parser.add_argument("--clean-only", action="store_true", help="Clean the raw files into --output-dir and stop")
     args = parser.parse_args()
 
-    asyncio.run(main(resolve_cleaned_dir(args), args.config))
+    if args.clean_only:
+        resolve_cleaned_dir(args)
+    else:
+        asyncio.run(main(resolve_cleaned_dir(args), args.config))

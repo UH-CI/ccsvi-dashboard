@@ -20,7 +20,7 @@ class GeographyRecord(BaseModel):
 
 
 class AreaResult(BaseModel):
-    # Metric columns come from metrics.mv_column and vary, and only block groups have a county, so they arrive as extras
+    # The view's filter columns (named by metric key) vary, and only block groups have a county, so they arrive as extras
     model_config = ConfigDict(extra="allow")
 
     geoid: str
