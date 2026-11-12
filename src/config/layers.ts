@@ -22,7 +22,6 @@ export interface LayerStyleConfig {
 
 export interface PolygonLayerConfig {
   name: string;
-  path: string;
   geoidProperty: string;
   popup: PopupConfig;
   styles: LayerStyleConfig;
@@ -31,7 +30,6 @@ export interface PolygonLayerConfig {
 export const POLYGON_LAYERS = {
   censusBlockGroups: {
     name: "Census Block Groups",
-    path: "./data/2020_Census_Block_Groups_Stripped.geojson",
     geoidProperty: "geoid20",
     popup: {
       title: "Census Block Group",
@@ -79,7 +77,6 @@ export const POLYGON_LAYERS = {
 
   hawaiianHomelands: {
     name: "Hawaiian Homelands",
-    path: "./data/Census_Hawaiian_Homelands_hhl10_Stripped.geojson",
     geoidProperty: "GEOID10",
     popup: {
       title: "Hawaiian Homeland",
@@ -127,7 +124,6 @@ export const POLYGON_LAYERS = {
 
   countyBoundaries: {
     name: "County Boundaries",
-    path: "./data/2020_Census_County_Boundaries_Stripped.geojson",
     geoidProperty: "NAME20",
     popup: {
       title: "County",

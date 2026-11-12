@@ -1,10 +1,8 @@
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
-import { POINT_LAYERS } from "../../config/pointLayers";
+import { pointLayer } from "../../config/pointLayers";
 import { getFilteredPoints, getPointFile } from "../client";
 import { layerFailureMessage } from "../queryClient";
 import type { PointCriteria } from "./filter";
-
-const pointLayer = (layerId: string) => POINT_LAYERS.find((layer) => layer.id === layerId)!;
 
 // One point layer's file, with every one of its points
 export const pointFileQuery = (layerId: string) =>

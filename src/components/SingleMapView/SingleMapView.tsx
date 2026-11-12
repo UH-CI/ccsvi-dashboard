@@ -8,11 +8,7 @@ import { GenericPointMarkers } from "../PointLayers/PointLayers";
 import { MapLegend } from "../MapLegend/MapLegend";
 import { RasterMapLegend } from "../MapLegend/RasterMapLegend";
 import { LegendContainer } from "../MapLegend/LegendContainer";
-import {
-  DEFAULT_BIVARIATE_SCHEME,
-  DEFAULT_COLOR_SCHEME,
-  noValueFill,
-} from "../../config/colorSchemes";
+import { DEFAULT_BIVARIATE_SCHEME, noValueFill } from "../../config/colorSchemes";
 import { MAP_CONFIG } from "../../config/map";
 import { sviLabel } from "../../config/sviCategories";
 import { NoValuePattern } from "./NoValuePattern";
@@ -25,6 +21,7 @@ import { useSnapshotStore } from "../../stores/useSnapshotStore";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
+import { pointLayer } from "../../config/pointLayers";
 import { subLayerId } from "../../config/layerFiles";
 import { HazardLayerRenderer } from "../HazardLayers/HazardLayerRenderer";
 import { MapRasterLayer } from "../RasterLayers/RasterLayerRenderer";
@@ -39,7 +36,6 @@ import { useMetricValues } from "../../api/queries/metricValues";
 interface SingleMapViewProps {
   mapId: string;
   isPrimary: boolean;
-  mapCount: number;
 }
 
 interface MapResizeHandlerProps {
@@ -82,243 +78,222 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef }) => {
   return null;
 };
 
-export const SingleMapView: React.FC<SingleMapViewProps> = memo(
-  ({ mapId, isPrimary, mapCount }) => {
-    // Snapshot hook provides the mapRef we should populate + snapshot function
-    const { mapRef, takeSnapshot } = useMapSnapshot();
+export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrimary }) => {
+  // Snapshot hook provides the mapRef we should populate + snapshot function
+  const { mapRef, takeSnapshot } = useMapSnapshot();
 
-    // Wrapper ref so snapshot includes legend and any overlays in this container
-    const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
+  // Wrapper ref so snapshot includes legend and any overlays in this container
+  const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
-    const handleMapRef = useCallback(
-      (map: L.Map | null) => {
-        mapRef.current = map;
-      },
-      [mapRef],
-    );
+  const handleMapRef = useCallback(
+    (map: L.Map | null) => {
+      mapRef.current = map;
+    },
+    [mapRef],
+  );
 
-    // Snapshot registry store
-    const registerSnapshot = useSnapshotStore((s) => s.register);
-    const unregisterSnapshot = useSnapshotStore((s) => s.unregister);
-    const snapshotOne = useSnapshotStore((s) => s.snapshotOne);
+  // Snapshot registry store
+  const registerSnapshot = useSnapshotStore((s) => s.register);
+  const unregisterSnapshot = useSnapshotStore((s) => s.unregister);
+  const snapshotOne = useSnapshotStore((s) => s.snapshotOne);
 
-    const config = useMapState(mapId);
+  // Drawn only for a map in the store that's shown
+  const config = useMapState(mapId)!;
 
-    const countyBoundaries = useBoundary("counties");
+  const countyBoundaries = useBoundary("counties");
 
-    const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
-    const mapOpacities = useMapStore(
-      (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
-    );
+  const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
+  const mapOpacities = useMapStore(
+    (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
+  );
 
-    // The indicator's and the comparison indicator's keys
-    const metricKey = config?.metric || undefined;
-    const metricKey2 = config?.metric2;
-    const metricInfo = useMetric(metricKey);
-    const metricInfo2 = useMetric(metricKey2);
-    const metricLabel = metricKey ? sviLabel(metricKey) : undefined;
-    const metricLabel2 = metricKey2 ? sviLabel(metricKey2) : undefined;
-    const metricIsCount = metricInfo?.kind === "count";
+  // The indicator's and the comparison indicator's keys
+  const metricKey = config.metric || undefined;
+  const metricKey2 = config.metric2;
+  const metricInfo = useMetric(metricKey);
+  const metricInfo2 = useMetric(metricKey2);
+  const metricLabel = metricKey ? sviLabel(metricKey) : undefined;
+  const metricLabel2 = metricKey2 ? sviLabel(metricKey2) : undefined;
+  const metricIsCount = metricInfo?.kind === "count";
 
-    // Register this map's snapshot function
-    useEffect(() => {
-      const fn = async () => {
-        await takeSnapshot(
-          {
-            activeDataset: metricInfo?.datasetId,
-            activeDatasetMetric: metricInfo?.name,
-            customPrefix: `hawaii-census-map-${mapId}`,
-            quality: 0.9,
-          },
-          snapshotWrapperRef,
-        );
-      };
+  // Register this map's snapshot function
+  useEffect(() => {
+    const fn = async () => {
+      await takeSnapshot(
+        {
+          activeDataset: metricInfo?.datasetId,
+          activeDatasetMetric: metricInfo?.name,
+          customPrefix: `hawaii-census-map-${mapId}`,
+          quality: 0.9,
+        },
+        snapshotWrapperRef,
+      );
+    };
 
-      registerSnapshot(mapId, fn);
-      return () => unregisterSnapshot(mapId);
-    }, [mapId, registerSnapshot, unregisterSnapshot, takeSnapshot, metricInfo]);
+    registerSnapshot(mapId, fn);
+    return () => unregisterSnapshot(mapId);
+  }, [mapId, registerSnapshot, unregisterSnapshot, takeSnapshot, metricInfo]);
 
-    const visiblePointLayerIds = useMapLayersStore((state) => state.points[mapId]);
-    const visibleHazardIds = useMapLayersStore((state) => state.hazards[mapId]);
+  const visiblePointLayerIds = useMapLayersStore((state) => state.points[mapId]);
+  const visibleHazardIds = useMapLayersStore((state) => state.hazards[mapId]);
 
-    useEffect(() => {
-      const map = mapRef.current;
-      if (!map) return;
+  const shouldShowHawaiianHomelands = metricInfo?.dataset.hawaiian_homelands ?? false;
 
-      const timeoutId = window.setTimeout(() => {
-        if (map.getContainer()) {
-          map.invalidateSize();
-        }
-      }, 200);
+  const cachedMetric1 = useMetricValues(metricKey);
+  const cachedMetric2 = useMetricValues(metricKey2);
 
-      return () => clearTimeout(timeoutId);
-    }, [mapCount, mapRef]);
+  const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
+    cachedMetric1,
+    cachedMetric2,
+    metricInfo?.kind,
+    metricInfo2?.kind,
+  );
 
-    const shouldShowHawaiianHomelands = metricInfo?.dataset.hawaiian_homelands ?? false;
+  const activeBivariateColorScheme = config.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME;
+  const activeBaseMap = BASE_MAP_OPTIONS.find((b) => b.id === config.baseMap)!;
 
-    const cachedMetric1 = useMetricValues(metricKey);
-    const cachedMetric2 = useMetricValues(metricKey2);
+  const { colorScale, bivariateColorScale, getColor } = useMapColorScale({
+    allMetricValues,
+    allMetricValues2,
+    colorScheme: config.colorScheme,
+    bivariateColorScheme: activeBivariateColorScheme,
+    hasSecondMetric: Boolean(metricKey2),
+    hasMetric: Boolean(metricInfo),
+    isCount: metricIsCount,
+    noValueFill: noValueFill(mapId),
+  });
 
-    const { allMetricValues, metric1, allMetricValues2, metric2 } = useMetricLookups(
-      cachedMetric1,
-      cachedMetric2,
-      metricInfo?.kind,
-      metricInfo2?.kind,
-    );
+  const shouldRenderCountyBoundariesBackground =
+    metricInfo && shouldShowHawaiianHomelands && countyBoundaries;
 
-    const activeColorScheme = config?.colorScheme || DEFAULT_COLOR_SCHEME;
-    const activeBivariateColorScheme = config?.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME;
-    const activeBaseMap =
-      BASE_MAP_OPTIONS.find((b) => b.id === config?.baseMap) ?? BASE_MAP_OPTIONS[0];
-
-    const { colorScale, bivariateColorScale, getColor } = useMapColorScale({
-      allMetricValues,
-      allMetricValues2,
-      colorScheme: activeColorScheme,
-      bivariateColorScheme: activeBivariateColorScheme,
-      hasSecondMetric: Boolean(metricKey2),
-      hasMetric: Boolean(metricInfo),
-      isCount: metricIsCount,
-      noValueFill: noValueFill(mapId),
-    });
-
-    const shouldRenderCountyBoundariesBackground =
-      metricInfo && shouldShowHawaiianHomelands && countyBoundaries;
-
-    if (!config?.visible) {
-      return null;
-    }
-
-    return (
-      <div className={`${styles["single-map-view"]} ${isPrimary ? styles["primary-map"] : ""}`}>
-        <div
-          className={`${styles["map-header"]} ${isPrimary ? "" : styles["inactive-header"]}`}
-          onClick={() => !isPrimary && setPrimaryMap(mapId)}
-        >
-          <div className={styles["map-title-row"]}>
-            <h3 className={styles["map-title"]}>{config.title}</h3>
-            {isPrimary && <Chip label="Active" size="small" color="primary" />}
-          </div>
-
-          <div className={styles["map-right-section"]}>
-            <div className={styles["map-info"]}>
-              {metricInfo ? (
-                <>
-                  <span className={styles["dataset-name"]}>
-                    {metricInfo.dataset.label || metricInfo.datasetId.replace(/_/g, " ")}
-                  </span>
-                  <span className={styles["metric-name"]}>{metricLabel}</span>
-                </>
-              ) : (
-                <span className={styles["empty-state"]}>Select dataset and metric</span>
-              )}
-            </div>
-
-            <AddressSearch mapRef={mapRef} />
-
-            <button
-              type="button"
-              className={styles["snapshot-btn"]}
-              onClick={(e) => {
-                e.stopPropagation();
-                void snapshotOne(mapId);
-              }}
-              title="Save snapshot"
-              aria-label="Save snapshot"
-            >
-              <CameraAltIcon fontSize="small" />
-            </button>
-          </div>
+  return (
+    <div className={`${styles["single-map-view"]} ${isPrimary ? styles["primary-map"] : ""}`}>
+      <div
+        className={`${styles["map-header"]} ${isPrimary ? "" : styles["inactive-header"]}`}
+        onClick={() => !isPrimary && setPrimaryMap(mapId)}
+      >
+        <div className={styles["map-title-row"]}>
+          <h3 className={styles["map-title"]}>{config.title}</h3>
+          {isPrimary && <Chip label="Active" size="small" color="primary" />}
         </div>
 
-        <div ref={snapshotWrapperRef} className={styles["map-container"]}>
-          <NoValuePattern mapId={mapId} />
-          <MapContainer
-            center={MAP_CONFIG.center}
-            zoom={MAP_CONFIG.zoom}
-            minZoom={MAP_CONFIG.minZoom}
-            maxBounds={MAP_CONFIG.maxBounds}
-            maxBoundsViscosity={MAP_CONFIG.maxBoundsViscosity}
-            className={styles["leaflet-map"]}
+        <div className={styles["map-right-section"]}>
+          <div className={styles["map-info"]}>
+            {metricInfo ? (
+              <>
+                <span className={styles["dataset-name"]}>
+                  {metricInfo.dataset.label || metricInfo.datasetId.replace(/_/g, " ")}
+                </span>
+                <span className={styles["metric-name"]}>{metricLabel}</span>
+              </>
+            ) : (
+              <span className={styles["empty-state"]}>Select dataset and metric</span>
+            )}
+          </div>
+
+          <AddressSearch mapRef={mapRef} />
+
+          <button
+            type="button"
+            className={styles["snapshot-btn"]}
+            onClick={(e) => {
+              e.stopPropagation();
+              void snapshotOne(mapId);
+            }}
+            title="Save snapshot"
+            aria-label="Save snapshot"
           >
-            <MapResizeHandler onMapRef={handleMapRef} />
-
-            <TileLayer
-              key={activeBaseMap.id}
-              url={activeBaseMap.url}
-              attribution={activeBaseMap.attribution}
-              maxNativeZoom={activeBaseMap.maxNativeZoom}
-              maxZoom={activeBaseMap.maxZoom ?? 18}
-            />
-
-            {shouldRenderCountyBoundariesBackground && (
-              <CountyBoundariesBackgroundLayer
-                data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
-                mapId={config.id}
-                layerOpacity={mapOpacities.countyBoundaries}
-              />
-            )}
-
-            {metricLabel && cachedMetric1 && (
-              <ChoroplethLayer
-                mapId={mapId}
-                homelands={shouldShowHawaiianHomelands}
-                metric1={metric1}
-                metric2={metric2}
-                label1={metricLabel}
-                label2={metricLabel2}
-                getColor={getColor}
-              />
-            )}
-
-            {/* Render hazard layers based on visibility state */}
-            {HAZARD_LAYERS.map((layer) => (
-              <React.Fragment key={layer.id}>
-                {/* Render parent layer if it has a file and is visible */}
-                {layer.file && visibleHazardIds?.has(layer.id) && (
-                  <HazardLayerRenderer mapId={mapId} parentId={layer.id} />
-                )}
-
-                {/* Render sublayers that are visible */}
-                {layer.subLayers?.map((sub) => {
-                  const compositeId = subLayerId(layer.id, sub.id);
-                  return visibleHazardIds?.has(compositeId) ? (
-                    <HazardLayerRenderer
-                      key={compositeId}
-                      mapId={mapId}
-                      parentId={layer.id}
-                      layerId={sub.id}
-                    />
-                  ) : null;
-                })}
-              </React.Fragment>
-            ))}
-
-            <MapRasterLayer mapId={mapId} clickable={!metricKey && !metricKey2} />
-
-            {/* Render point layers - components fetch their own data from store */}
-            {Array.from(visiblePointLayerIds ?? []).map((layerId) => (
-              <GenericPointMarkers key={layerId} layerId={layerId} mapId={mapId} />
-            ))}
-          </MapContainer>
-
-          <LegendContainer>
-            <RasterMapLegend mapId={mapId} />
-            {metricLabel && (
-              <MapLegend
-                title={metricLabel2 ? `${metricLabel} × ${metricLabel2}` : metricLabel}
-                limits={colorScale?.limits ?? null}
-                colors={colorScale?.getLegendColors() ?? null}
-                bivariate={bivariateColorScale ?? undefined}
-                metric1Label={metricLabel}
-                metric2Label={metricLabel2}
-                isCount={metricIsCount}
-                noValueFill={noValueFill(mapId)}
-              />
-            )}
-          </LegendContainer>
+            <CameraAltIcon fontSize="small" />
+          </button>
         </div>
       </div>
-    );
-  },
-);
+
+      <div ref={snapshotWrapperRef} className={styles["map-container"]}>
+        <NoValuePattern mapId={mapId} />
+        <MapContainer
+          center={MAP_CONFIG.center}
+          zoom={MAP_CONFIG.zoom}
+          minZoom={MAP_CONFIG.minZoom}
+          maxBounds={MAP_CONFIG.maxBounds}
+          maxBoundsViscosity={MAP_CONFIG.maxBoundsViscosity}
+          className={styles["leaflet-map"]}
+        >
+          <MapResizeHandler onMapRef={handleMapRef} />
+
+          <TileLayer
+            key={activeBaseMap.id}
+            url={activeBaseMap.url}
+            attribution={activeBaseMap.attribution}
+            maxNativeZoom={activeBaseMap.maxNativeZoom}
+            maxZoom={activeBaseMap.maxZoom ?? 18}
+          />
+
+          {shouldRenderCountyBoundariesBackground && (
+            <CountyBoundariesBackgroundLayer
+              data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
+              mapId={config.id}
+              layerOpacity={mapOpacities.countyBoundaries}
+            />
+          )}
+
+          {metricLabel && cachedMetric1 && (
+            <ChoroplethLayer
+              mapId={mapId}
+              homelands={shouldShowHawaiianHomelands}
+              metric1={metric1}
+              metric2={metric2}
+              label1={metricLabel}
+              label2={metricLabel2}
+              getColor={getColor}
+            />
+          )}
+
+          {/* Render hazard layers based on visibility state */}
+          {HAZARD_LAYERS.map((layer) => (
+            <React.Fragment key={layer.id}>
+              {/* Render parent layer if it has a file and is visible */}
+              {layer.file && visibleHazardIds?.has(layer.id) && (
+                <HazardLayerRenderer layer={layer} name={layer.name} />
+              )}
+
+              {/* Render sublayers that are visible */}
+              {layer.subLayers?.map((sub) => {
+                const compositeId = subLayerId(layer.id, sub.id);
+                return visibleHazardIds?.has(compositeId) ? (
+                  <HazardLayerRenderer
+                    key={compositeId}
+                    layer={sub}
+                    name={`${layer.name} – ${sub.name}`}
+                  />
+                ) : null;
+              })}
+            </React.Fragment>
+          ))}
+
+          <MapRasterLayer mapId={mapId} clickable={!metricKey && !metricKey2} />
+
+          {/* The point layers that are on */}
+          {Array.from(visiblePointLayerIds ?? []).map((layerId) => (
+            <GenericPointMarkers key={layerId} config={pointLayer(layerId)} />
+          ))}
+        </MapContainer>
+
+        <LegendContainer>
+          <RasterMapLegend mapId={mapId} />
+          {metricLabel && (
+            <MapLegend
+              title={metricLabel2 ? `${metricLabel} × ${metricLabel2}` : metricLabel}
+              limits={colorScale?.limits ?? null}
+              colors={colorScale?.getLegendColors() ?? null}
+              bivariate={bivariateColorScale ?? undefined}
+              metric1Label={metricLabel}
+              metric2Label={metricLabel2}
+              isCount={metricIsCount}
+              noValueFill={noValueFill(mapId)}
+            />
+          )}
+        </LegendContainer>
+      </div>
+    </div>
+  );
+});

@@ -75,13 +75,11 @@ export interface PointLayerConfig {
   id: string;
   name: string;
   description?: string;
-  visible: boolean;
   icon: string;
   color: string;
   filePath: string;
   // Properties that together identify one point in this layer's file
   idFields: string[];
-  data?: import("geojson").FeatureCollection<import("geojson").Point>;
   popupConfig: {
     titleField: string;
     fields: Array<{

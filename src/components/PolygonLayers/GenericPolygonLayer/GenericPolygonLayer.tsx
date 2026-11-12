@@ -2,7 +2,6 @@ import { GeoJSON, GeoJSONProps, Popup, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import { LatLng, Layer, LatLngBounds, LeafletMouseEvent, PathOptions } from "leaflet";
 import React, { useEffect, useCallback, memo, useRef, useState, type ReactNode } from "react";
-import { NO_VALUE_COLOR } from "../../../config/colorSchemes";
 
 export interface StyleConfig {
   fillColor: string;
@@ -13,6 +12,10 @@ export interface StyleConfig {
   dashArray?: string;
 }
 
+// The style with the layer's opacity on its outline and fill, when the layer has one
+const withOpacity = (style: StyleConfig, opacity: number | undefined): StyleConfig =>
+  opacity === undefined ? style : { ...style, opacity, fillOpacity: opacity };
+
 // A drawn shape, with the feature it was drawn from
 type ShapeLayer<T extends GeoJsonProperties> = Layer & {
   feature?: Feature<Geometry, T>;
@@ -22,7 +25,7 @@ type ShapeLayer<T extends GeoJsonProperties> = Layer & {
 export interface GenericPolygonLayerProps<
   T extends GeoJsonProperties = GeoJsonProperties,
 > extends Omit<GeoJSONProps, "data" | "style" | "onEachFeature"> {
-  data: Feature<Geometry, T>[] | FeatureCollection<Geometry, T> | null;
+  data: FeatureCollection<Geometry, T> | null;
   mapId: string;
   layerType: string;
   geoidProperty: string;
@@ -83,27 +86,7 @@ export const GenericPolygonLayer = memo(
     );
 
     const styleCallback = useCallback(
-      (feature?: Feature<Geometry, T>): PathOptions => {
-        const baseStyle = feature
-          ? getStyle(feature)
-          : {
-              fillColor: NO_VALUE_COLOR,
-              weight: 0.5,
-              opacity: 1,
-              color: "#333",
-              fillOpacity: 0.3,
-            };
-
-        if (layerOpacity !== undefined) {
-          return {
-            ...baseStyle,
-            opacity: layerOpacity,
-            fillOpacity: layerOpacity,
-          };
-        }
-
-        return baseStyle;
-      },
+      (feature?: Feature<Geometry, T>): PathOptions => withOpacity(getStyle(feature), layerOpacity),
       [getStyle, layerOpacity],
     );
 
@@ -131,12 +114,12 @@ export const GenericPolygonLayer = memo(
         if (!feature) return;
 
         const baseStyle = getStyle(feature);
-        let style =
-          isActive && getHighlightStyle ? getHighlightStyle(feature, baseStyle) : baseStyle;
-
-        if (layerOpacity !== undefined && !isActive) {
-          style = { ...style, opacity: layerOpacity, fillOpacity: layerOpacity };
-        }
+        // The selected shape takes its highlight, and never the layer's opacity
+        const style = !isActive
+          ? withOpacity(baseStyle, layerOpacity)
+          : getHighlightStyle
+            ? getHighlightStyle(feature, baseStyle)
+            : baseStyle;
         (layer as { setStyle: (style: PathOptions) => void }).setStyle(style);
       };
 
@@ -182,13 +165,6 @@ export const GenericPolygonLayer = memo(
       return null;
     }
 
-    const featureCollection: FeatureCollection<Geometry, T> = Array.isArray(data)
-      ? {
-          type: "FeatureCollection",
-          features: data,
-        }
-      : data;
-
     const popupFeature = popup
       ? (layersRef.get(popup.geoid) as ShapeLayer<T> | undefined)?.feature
       : undefined;
@@ -198,7 +174,7 @@ export const GenericPolygonLayer = memo(
       <>
         <GeoJSON
           key={storageKey}
-          data={featureCollection}
+          data={data}
           style={styleCallback}
           onEachFeature={onEachFeature}
           {...geoJsonProps}
@@ -219,20 +195,6 @@ export const GenericPolygonLayer = memo(
           </Popup>
         )}
       </>
-    );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.data === nextProps.data &&
-      prevProps.activeFeatureGeoid === nextProps.activeFeatureGeoid &&
-      prevProps.geoidProperty === nextProps.geoidProperty &&
-      prevProps.mapId === nextProps.mapId &&
-      prevProps.layerType === nextProps.layerType &&
-      prevProps.layerOpacity === nextProps.layerOpacity &&
-      prevProps.getStyle === nextProps.getStyle &&
-      prevProps.getHighlightStyle === nextProps.getHighlightStyle &&
-      prevProps.onFeatureClick === nextProps.onFeatureClick &&
-      prevProps.renderPopup === nextProps.renderPopup
     );
   },
 ) as <T extends GeoJsonProperties = GeoJsonProperties>(

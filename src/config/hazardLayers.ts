@@ -9,3 +9,7 @@ export const HAZARD_LAYERS = switchedOn(
   [...(polygons.layers as HazardLayerConfig[]), ...(lines.layers as HazardLayerConfig[])],
   "subLayers",
 );
+
+// A hazard layer's config from its id
+export const hazardLayer = (id: string): HazardLayerConfig =>
+  HAZARD_LAYERS.find((layer) => layer.id === id)!;

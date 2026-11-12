@@ -4,7 +4,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "fire_stations",
     name: "Fire Stations",
-    visible: false,
     icon: "FaFireExtinguisher",
     color: "#FF0000",
     filePath: "Fire_Stations_(Statewide).geojson",
@@ -14,7 +13,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "hospitals",
     name: "Hospitals",
-    visible: false,
     icon: "FaHospital",
     color: "#00BFFF",
     filePath: "Hospitals.geojson",
@@ -24,7 +22,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "police_stations",
     name: "Police Stations",
-    visible: false,
     icon: "FaShieldAlt",
     color: "#000080",
     filePath: "Police_Stations_(Statewide).geojson",
@@ -34,7 +31,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "shelters",
     name: "Emergency Shelters",
-    visible: false,
     icon: "FaHouseUser",
     color: "#00CC00",
     filePath: "emergency_shelters.geojson",
@@ -51,7 +47,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "preschools",
     name: "Preschools",
-    visible: false,
     icon: "FaSchool",
     color: "#FFA500",
     filePath: "Preschools.geojson",
@@ -67,7 +62,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "public_schools",
     name: "Public Schools",
-    visible: false,
     icon: "FaSchool",
     color: "#8A2BE2",
     filePath: "Public_Schools.geojson",
@@ -83,7 +77,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "private_schools",
     name: "Private Schools",
-    visible: false,
     icon: "FaSchool",
     color: "#DC143C",
     filePath: "Private_Schools.geojson",
@@ -99,7 +92,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "bridges",
     name: "Bridges",
-    visible: false,
     icon: "FaArchway",
     color: "#6c757d",
     filePath: "National_Bridge_Inventory.geojson",
@@ -137,7 +129,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     name: "Wastewater Treatment Plants",
     description:
       "Wastewater treatment facilities can be vulnerable to flooding and other hazards that affect essential services.",
-    visible: false,
     icon: "FaIndustry",
     color: "#2E8B57",
     filePath: "Wastewater_Treatment_Plants.geojson",
@@ -150,7 +141,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "airports",
     name: "Airports",
-    visible: false,
     icon: "FaPlane",
     color: "#e4870e",
     filePath: "Airports_points.geojson",
@@ -163,7 +153,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "commercial_harbors",
     name: "Commercial Harbors",
-    visible: false,
     icon: "FaShip",
     color: "#021f74",
     filePath: "Commercial_Harbors_points.geojson",
@@ -182,7 +171,6 @@ export const POINT_LAYERS: PointLayerConfig[] = [
   {
     id: "small_boat_harbors",
     name: "Small Boat Harbors",
-    visible: false,
     icon: "FaShip",
     color: "#021f74",
     filePath: "Small_Boat_Harbors_Ramps.geojson",
@@ -211,3 +199,7 @@ export const POINT_LAYERS: PointLayerConfig[] = [
     },
   },
 ];
+
+// A point layer's config from its id
+export const pointLayer = (id: string): PointLayerConfig =>
+  POINT_LAYERS.find((layer) => layer.id === id)!;

@@ -6,49 +6,27 @@ import { leafletLayer, PolygonSymbolizer, LineSymbolizer } from "protomaps-leafl
 import { hazardFileQuery } from "../../api/queries/hazardFile";
 import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
 import { ensurePane } from "../../utils/mapPanes";
-import { useMapLayersStore } from "../../stores/useMapLayersStore";
-import { HAZARD_LAYERS } from "../../config/hazardLayers";
-import { subLayerId } from "../../config/layerFiles";
 import { dataUrl } from "../../api/client";
 import { FeaturePopup } from "../FeaturePopup/FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
 
 interface HazardLayerRendererProps {
-  parentId: string;
-  layerId?: string;
-  mapId: string;
+  // The layer or sub-layer drawn; only ones with a file are
+  layer: SubHazardLayerConfig;
+  // As the popup and the "couldn't load" message show it: "<layer> – <sub-layer>" for a sub-layer
+  name: string;
 }
 
-export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
-  parentId,
-  layerId,
-  mapId,
-}) => {
+// One hazard layer or sub-layer, drawn while it's on
+export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer, name }) => {
   const map = useMap();
+  const file = layer.file!;
+  const { popup, color } = layer;
 
-  const parentLayer = HAZARD_LAYERS.find((h) => h.id === parentId);
-  const subLayer =
-    layerId && parentLayer?.subLayers
-      ? parentLayer.subLayers.find((sub) => sub.id === layerId)
-      : undefined;
+  useQuery(hazardFileQuery(file, name));
 
-  const activeLayer = subLayer ?? parentLayer;
-  const activeLayerId = layerId ? subLayerId(parentId, layerId) : parentId;
-
-  const isVisible = useMapLayersStore((state) => state.hazards[mapId]?.has(activeLayerId) ?? false);
-
-  const file = activeLayer?.file;
-  const popup = activeLayer?.popup;
-  const color = activeLayer?.color;
-  const layerName = subLayer ? `${parentLayer?.name} – ${subLayer.name}` : parentLayer?.name;
-
-  // Only layers with a file are drawn, so file and name are set
-  useQuery({ ...hazardFileQuery(file!, layerName!), enabled: isVisible });
-
-  // Draws the layer while it's on, and offers its popup for clicks on its shapes
+  // Draws the layer, and offers its popup for clicks on its shapes
   useEffect(() => {
-    if (!isVisible || !file) return;
-
     const url = dataUrl(`hazards/${file}.pmtiles`);
 
     const proLayer = leafletLayer({
@@ -79,14 +57,14 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 
     const removeClick = addClickTarget(map, CLICK_ORDER.hazard, (latlng) => {
       const features = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5).get(file) ?? [];
-      return features.length > 0 ? popupHtml(features[0].feature.props, popup, layerName) : null;
+      return features.length > 0 ? popupHtml(features[0].feature.props, popup, name) : null;
     });
 
     return () => {
       removeClick();
       proLayer.remove();
     };
-  }, [map, file, isVisible, popup, color, layerName]);
+  }, [map, file, popup, color, name]);
 
   return null;
 };
@@ -96,7 +74,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({
 const popupHtml = (
   props: Record<string, unknown>,
   popup: SubHazardLayerConfig["popup"],
-  layerName: string | undefined,
+  layerName: string,
 ) => {
   const title = popup?.title ? props[popup.title] : undefined;
   const listed = popup?.fields ?? [];

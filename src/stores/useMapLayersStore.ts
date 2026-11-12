@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { create } from "zustand";
-import { HAZARD_LAYERS } from "../config/hazardLayers";
+import { hazardLayer } from "../config/hazardLayers";
 import { splitLayerId, subLayerId } from "../config/layerFiles";
 import { HCDP_OPACITY, rasterColormap, rasterConfig } from "../config/rasterLayers";
 import type { VisibleIds } from "../utils/layerMenus";
@@ -57,7 +57,7 @@ export const useMapLayersStore = create<MapLayersState>((set, get) => ({
 
   toggleHazard: (mapId, id) => {
     const ids = new Set(get().hazards[mapId]);
-    const layer = HAZARD_LAYERS.find((l) => l.id === id)!;
+    const layer = hazardLayer(id);
     const subIds = (layer.subLayers ?? []).map((sub) => subLayerId(id, sub.id));
     if (ids.has(id)) [id, ...subIds].forEach((each) => ids.delete(each));
     else [id, ...subIds].forEach((each) => ids.add(each));
@@ -66,7 +66,7 @@ export const useMapLayersStore = create<MapLayersState>((set, get) => ({
 
   toggleHazardSub: (mapId, parentId, subId) => {
     const ids = new Set(get().hazards[mapId]);
-    const layer = HAZARD_LAYERS.find((l) => l.id === parentId)!;
+    const layer = hazardLayer(parentId);
     if (ids.delete(subLayerId(parentId, subId))) {
       if (!layer.subLayers!.some((sub) => ids.has(subLayerId(parentId, sub.id))))
         ids.delete(parentId);
