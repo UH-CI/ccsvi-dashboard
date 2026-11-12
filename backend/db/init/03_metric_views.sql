@@ -14,8 +14,6 @@ SELECT
     g.name,
     g.county,
     g.population,
-    g.geom,
-    ST_Centroid(g.geom) AS centroid,
 
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'housing_before_1990') AS housing_before_1990,
@@ -112,11 +110,9 @@ FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
 LEFT JOIN metrics m ON m.id = mv.metric_id
 WHERE g.type = 'block_group'
-GROUP BY g.geoid, g.name, g.county, g.population, g.geom;
+GROUP BY g.geoid, g.name, g.county, g.population;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bgm_geoid ON block_group_metrics (geoid);
-CREATE INDEX IF NOT EXISTS idx_bgm_geom ON block_group_metrics USING GIST (geom);
-CREATE INDEX IF NOT EXISTS idx_bgm_centroid ON block_group_metrics USING GIST (centroid);
 CREATE INDEX IF NOT EXISTS idx_bgm_county ON block_group_metrics (county);
 
 
@@ -126,8 +122,6 @@ SELECT
     g.geoid,
     g.name,
     g.population,
-    g.geom,
-    ST_Centroid(g.geom) AS centroid,
 
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'below_100_fpl_homelands') AS below_100_fpl_homelands,
@@ -172,8 +166,6 @@ FROM geographies g
 LEFT JOIN metric_values mv ON mv.geoid = g.geoid
 LEFT JOIN metrics m ON m.id = mv.metric_id
 WHERE g.type = 'hawaiian_homeland'
-GROUP BY g.geoid, g.name, g.population, g.geom;
+GROUP BY g.geoid, g.name, g.population;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_hhlm_geoid ON hawaiian_homeland_metrics (geoid);
-CREATE INDEX IF NOT EXISTS idx_hhlm_geom ON hawaiian_homeland_metrics USING GIST (geom);
-CREATE INDEX IF NOT EXISTS idx_hhlm_centroid ON hawaiian_homeland_metrics USING GIST (centroid);

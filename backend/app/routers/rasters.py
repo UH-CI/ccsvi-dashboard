@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
+from rio_tiler.errors import InvalidColorMapName
 from titiler.core.factory import TilerFactory
 
 import settings
@@ -40,6 +41,6 @@ async def get_colormap(name: str) -> list[list[int]]:
     """Return the 256 RGBA entries for a named TiTiler/rio-tiler colormap."""
     try:
         cm = COLORMAPS.get(name)
-    except Exception:
+    except InvalidColorMapName:
         raise HTTPException(status_code=404, detail=f"Unknown colormap: '{name}'")
     return [[int(value) for value in rgba] for rgba in cm.values()]

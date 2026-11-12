@@ -34,14 +34,12 @@ def columns_sql(keys: list[str]) -> str:
 # One area type's view: a row per area of that type (geographies.type), with its filter columns.
 # extra_ids are id columns only that type has; each gets an index.
 def view_sql(view: str, index_prefix: str, area_type: str, extra_ids: list[str], keys: list[str]) -> str:
-    ids = ["geoid", "name", *extra_ids, "population", "geom"]
+    ids = ["geoid", "name", *extra_ids, "population"]
     id_select = "".join(f"    g.{col},\n" for col in ids)
     group_by = ", ".join(f"g.{col}" for col in ids)
     indexes = "\n".join(
         [
             f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{index_prefix}_geoid ON {view} (geoid);",
-            f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_geom ON {view} USING GIST (geom);",
-            f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_centroid ON {view} USING GIST (centroid);",
             *(f"CREATE INDEX IF NOT EXISTS idx_{index_prefix}_{col} ON {view} ({col});" for col in extra_ids),
         ]
     )
@@ -50,8 +48,7 @@ def view_sql(view: str, index_prefix: str, area_type: str, extra_ids: list[str],
 DROP MATERIALIZED VIEW IF EXISTS {view};
 CREATE MATERIALIZED VIEW {view} AS
 SELECT
-{id_select}    ST_Centroid(g.geom) AS centroid,
-
+{id_select}
 {columns_sql(keys)}
 
 FROM geographies g

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
-from .caching import revalidate_data_answers
+from .caching import compress_and_tag_data_answers
 from .db import close_pool, create_pool
 from .hcdp_data import HcdpFailed, HcdpNotFound
 from .routers import datasets, geographies, hcdp, metrics, points, rasters
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title="CCSVI API", version="0.1.0", lifespan=lifespan)
 
 # Added before CORS, which then wraps it and covers its "unchanged" replies too
-app.middleware("http")(revalidate_data_answers)
+app.middleware("http")(compress_and_tag_data_answers)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://uh-ci.github.io", "http://128.171.215.85"],

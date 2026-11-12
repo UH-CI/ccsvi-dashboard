@@ -4,14 +4,11 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from ..area_query import AreaType, QueryParams, area_conditions, metric_columns, touches_every_hazard
+from ..area_query import AreaType, QueryParams, area_conditions, touches_every_hazard
 from ..db import ConnDep
-from ..request_params import read_ranges
 
 router = APIRouter(prefix="/api/v1/points")
 
-
-# ── Pydantic models ──────────────────────────────────────────────────────────
 
 class PointProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -31,8 +28,6 @@ class PointFeatureCollection(BaseModel):
     type: Literal["FeatureCollection"]
     features: list[PointFeature]
 
-
-# ── Endpoint ──────────────────────────────────────────────────────────────────
 
 @router.get(
     "",
@@ -75,8 +70,7 @@ async def get_points(
         conditions.append(f"points.layer_id = {params.bind(layer_id)}")
 
     if area_type:
-        metric_cols = await metric_columns(conn, area_type)
-        view, area_where = area_conditions(area_type, read_ranges(request, metric_cols), params)
+        view, area_where, _ = await area_conditions(conn, request, area_type, params)
         areas = f"SELECT v.geoid FROM {view} v" + (f" WHERE {' AND '.join(area_where)}" if area_where else "")
         conditions.append(
             "EXISTS (SELECT 1 FROM point_geographies pg WHERE pg.point_id = points.id"

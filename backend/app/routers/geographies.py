@@ -3,14 +3,11 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict
 
-from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, metric_columns, touches_every_hazard
+from ..area_query import AreaType, QueryParams, area_conditions, hazard_branches, touches_every_hazard
 from ..db import ConnDep
-from ..request_params import read_ranges
 
 router = APIRouter(prefix="/api/v1/geographies")
 
-
-# ── Pydantic models ──────────────────────────────────────────────────────────
 
 class GeographyRecord(BaseModel):
     name: str | None
@@ -28,15 +25,11 @@ class AreaResult(BaseModel):
     population: int | None
 
 
-# ── Column list for SELECT ────────────────────────────────────────────────────
-
+# The id columns each area type's filter answer starts with
 _ID_COLS: dict[AreaType, list[str]] = {
     "block_group": ["geoid", "name", "county", "population"],
     "hawaiian_homeland": ["geoid", "name", "population"],
 }
-
-
-# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -81,9 +74,8 @@ async def filter_areas(
         Query(description="Hazard/sub-layer IDs, e.g. 'flood_hazard.Zone_AE'. Repeatable; every hazard must match, any chosen sub-layer of it counts."),
     ] = None,
 ) -> Any:
-    metric_cols = await metric_columns(conn, area_type)
     params = QueryParams()
-    view, conditions = area_conditions(area_type, read_ranges(request, metric_cols), params)
+    view, conditions, metric_cols = await area_conditions(conn, request, area_type, params)
 
     if hazard:
         conditions += touches_every_hazard("geography_hazards", "h.geoid = v.geoid", hazard, params)

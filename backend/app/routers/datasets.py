@@ -11,8 +11,6 @@ from ..reliability import reliability
 router = APIRouter(prefix="/api/v1/datasets")
 
 
-# ── Pydantic models ──────────────────────────────────────────────────────────
-
 # One table column: its heading and whether its cells are numbers or text
 class TableColumn(BaseModel):
     heading: str
@@ -44,8 +42,6 @@ class DatasetRecord(BaseModel):
     layer_id: str | None
     metadata: DatasetMetadata | None
 
-
-# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get(
     "",

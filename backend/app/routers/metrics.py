@@ -9,8 +9,6 @@ from ..reliability import reliability
 router = APIRouter(prefix="/api/v1/metrics")
 
 
-# ── Pydantic models ──────────────────────────────────────────────────────────
-
 # A metric the app looks up: its dataset, its name in the data, and whether the map and filter show its percentage or its count
 class MetricRecord(BaseModel):
     dataset: str
@@ -32,8 +30,6 @@ class MetricValueRecord(BaseModel):
     reliability: ReliabilityRecord
     moe_derived: bool | None
 
-
-# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get(
     "",

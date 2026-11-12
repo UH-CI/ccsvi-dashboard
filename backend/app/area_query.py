@@ -2,6 +2,10 @@
 
 from typing import Any, Literal
 
+from fastapi import Request
+
+from .request_params import read_ranges
+
 # The kinds of area, as geographies.type holds them
 AreaType = Literal["block_group", "hawaiian_homeland"]
 
@@ -58,10 +62,14 @@ def touches_every_hazard(table: str, link: str, entries: list[str], params: Quer
     ]
 
 
-# The view of block groups or Homelands, and the WHERE conditions keeping the areas within each column's range
-def area_conditions(
+# The view of block groups or Homelands, the WHERE conditions keeping the areas within the request's
+# min_<col> and max_<col> ranges, and the view's filter columns
+async def area_conditions(
+    conn,
+    request: Request,
     area_type: AreaType,
-    bounds: list[tuple[str, str, float]],
     params: QueryParams,
-) -> tuple[str, list[str]]:
-    return AREA_VIEWS[area_type], [f"v.{col} {operator} {params.bind(value)}" for col, operator, value in bounds]
+) -> tuple[str, list[str], list[str]]:
+    columns = await metric_columns(conn, area_type)
+    conditions = [f"v.{col} {operator} {params.bind(value)}" for col, operator, value in read_ranges(request, columns)]
+    return AREA_VIEWS[area_type], conditions, columns
