@@ -11,7 +11,7 @@ import {
   Map,
 } from "@mui/icons-material";
 // Management actions for each map
-import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores/useMapStore";
 import { useMapLayersStore, useMapRaster } from "../../stores/useMapLayersStore";
 import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";

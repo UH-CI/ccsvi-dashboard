@@ -10,7 +10,8 @@ import {
 } from "recharts";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { formatValue } from "../metricValueHelpers";
-import { CHART_COLORS, sviLabel } from "../../../config";
+import { CHART_COLORS } from "../../../config/colorSchemes";
+import { sviLabel } from "../../../config/sviCategories";
 import { useGeographies } from "../../../api/queries/geographies";
 import { useMetric } from "../../../api/queries/metrics";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";

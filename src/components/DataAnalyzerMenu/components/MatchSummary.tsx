@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { InfoOutlined } from "@mui/icons-material";
-import { CHART_COLORS } from "../../../config";
+import { CHART_COLORS } from "../../../config/colorSchemes";
 import type { MetricKind } from "../../../types";
 import { formatValue } from "../metricValueHelpers";
 import { meanMedian } from "./analyzerStats";

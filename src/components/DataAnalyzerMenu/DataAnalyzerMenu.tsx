@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { Stack, Divider, Typography } from "@mui/material";
-import { useMapStore, useFilterStore } from "../../stores";
+import { useMapStore } from "../../stores/useMapStore";
+import { useFilterStore } from "../../stores/useFilterStore";
 import { useMetricValues } from "../../api/queries/metricValues";
 import { HistogramSection } from "./components/HistogramSection";
 import { LayerMenuSection } from "./components/LayerMenuSection";

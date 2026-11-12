@@ -2,9 +2,9 @@ import React, { useMemo, useState } from "react";
 import { Stack } from "@mui/material";
 import { MenuShell } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
-import { useMapStore } from "../../../stores";
+import { useMapStore } from "../../../stores/useMapStore";
 import { useResolvedMapId } from "../hooks/useResolvedMapId";
-import { HCDPLoad } from "../../HCDP";
+import { HCDPLoad } from "../../HCDP/HCDPLoad";
 
 interface HcdpMenuProps {
   open: boolean;

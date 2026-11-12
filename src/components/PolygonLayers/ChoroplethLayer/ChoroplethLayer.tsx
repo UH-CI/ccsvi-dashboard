@@ -9,7 +9,8 @@ import { useFilteredGeoids } from "../../../api/queries/filter";
 import { useFilterStore } from "../../../stores/useFilterStore";
 import { DEFAULT_LAYER_OPACITIES, useMapState, useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore } from "../../../stores/useMapLayersStore";
-import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE, POLYGON_LAYERS } from "../../../config";
+import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE } from "../../../config/colorSchemes";
+import { POLYGON_LAYERS } from "../../../config/layers";
 
 type AreaFeature = Feature<Geometry, GeoJsonProperties>;
 

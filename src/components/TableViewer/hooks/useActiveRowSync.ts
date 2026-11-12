@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { gridExpandedSortedRowIdsSelector, useGridApiRef } from "@mui/x-data-grid";
-import { useMapStore, usePrimaryMapState } from "../../../stores";
+import { useMapStore, usePrimaryMapState } from "../../../stores/useMapStore";
 import type { TableGridRow } from "./useDataGridColumns";
 
 interface PaginationModel {

@@ -10,7 +10,7 @@ import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
 import { subLayerId } from "../../config/layerFiles";
 import { dataUrl } from "../../api/client";
-import { FeaturePopup } from "../FeaturePopup";
+import { FeaturePopup } from "../FeaturePopup/FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
 
 interface HazardLayerRendererProps {

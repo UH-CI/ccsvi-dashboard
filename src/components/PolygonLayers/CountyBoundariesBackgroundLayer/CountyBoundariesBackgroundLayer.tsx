@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { Feature, FeatureCollection, Geometry } from "geojson";
 import { GenericPolygonLayer, StyleConfig } from "../GenericPolygonLayer/GenericPolygonLayer.tsx";
-import { POLYGON_LAYERS } from "../../../config";
+import { POLYGON_LAYERS } from "../../../config/layers";
 
 interface CountyBoundariesBackgroundLayerProps {
   data: FeatureCollection<Geometry, { NAME20: string; POP20: number }> | null;

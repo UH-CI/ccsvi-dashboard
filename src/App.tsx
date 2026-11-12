@@ -1,9 +1,9 @@
 import React, { useCallback, useRef, useState } from "react";
 import styles from "./App.module.scss";
-import { ControlPanel } from "./components/ControlPanel";
-import { MultiMapContainer } from "./components/MultiMapContainer";
-import { TableViewer } from "./components/TableViewer";
-import { usePrimaryMapState } from "./stores";
+import { ControlPanel } from "./components/ControlPanel/ControlPanel";
+import { MultiMapContainer } from "./components/MultiMapContainer/MultiMapContainer";
+import { TableViewer } from "./components/TableViewer/TableViewer";
+import { usePrimaryMapState } from "./stores/useMapStore";
 import { useMetric } from "./api/queries/metrics";
 import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";

@@ -4,7 +4,7 @@ import { useFilterStore } from "../../../stores/useFilterStore";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 import { useMetric } from "../../../api/queries/metrics";
-import { sviCalculationDescription, sviLabel } from "../../../config";
+import { sviCalculationDescription, sviLabel } from "../../../config/sviCategories";
 import { MetricValue } from "../../../types";
 import { binIndex, binValues, matchingValues, metricNumbers, valueBounds } from "./analyzerStats";
 import { ComparisonSection } from "./ComparisonSection";

@@ -4,7 +4,7 @@ import {
   COLOR_SCHEMES,
   DEFAULT_BIVARIATE_SCHEME,
   NO_VALUE_COLOR,
-} from "../config";
+} from "../config/colorSchemes";
 
 export interface ComputedColorScale {
   limits: number[];

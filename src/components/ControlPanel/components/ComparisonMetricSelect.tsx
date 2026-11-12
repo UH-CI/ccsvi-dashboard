@@ -1,6 +1,6 @@
 import React from "react";
 import { FormControl, InputLabel, Select, MenuItem, ListSubheader } from "@mui/material";
-import { SVI_CATEGORIES } from "../../../config";
+import { SVI_CATEGORIES } from "../../../config/sviCategories";
 import { useDatasets } from "../../../api/queries/datasets";
 import { useMetric } from "../../../api/queries/metrics";
 

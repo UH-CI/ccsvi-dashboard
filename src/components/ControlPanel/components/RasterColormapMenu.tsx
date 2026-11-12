@@ -1,6 +1,6 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader } from "@mui/material";
-import { RASTER_COLORMAPS } from "../../../config";
+import { RASTER_COLORMAPS } from "../../../config/colorSchemes";
 
 interface RasterColormapMenuProps {
   anchorEl: HTMLElement | null;

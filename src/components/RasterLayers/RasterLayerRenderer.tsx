@@ -8,7 +8,7 @@ import { useRasterInfo } from "../../api/queries/rasterInfo";
 import type { RasterSource } from "../../types";
 import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
 import { ensurePane } from "../../utils/mapPanes";
-import { FeaturePopup } from "../FeaturePopup";
+import { FeaturePopup } from "../FeaturePopup/FeaturePopup";
 
 interface RasterLayerRendererProps {
   // Kept the same object while the raster is unchanged, so the tiles aren't rebuilt on every render

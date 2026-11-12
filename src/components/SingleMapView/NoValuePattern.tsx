@@ -1,4 +1,4 @@
-import { NO_VALUE_HATCH, noValuePatternId } from "../../config";
+import { NO_VALUE_HATCH, noValuePatternId } from "../../config/colorSchemes";
 import styles from "./SingleMapView.module.scss";
 
 // One map's hatch for areas with no value, defined inside the map so its snapshot includes it

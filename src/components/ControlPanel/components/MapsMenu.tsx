@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
-import { useMapStore } from "../../../stores";
-import { MAX_MAPS } from "../../../config";
+import { useMapStore } from "../../../stores/useMapStore";
+import { MAX_MAPS } from "../../../config/map";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";

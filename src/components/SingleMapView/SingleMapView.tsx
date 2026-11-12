@@ -4,29 +4,32 @@ import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { FeatureCollection, Geometry } from "geojson";
 import L from "leaflet";
 import { CountyBoundariesProperties } from "../../types";
-import { GenericPointMarkers } from "../PointLayers";
-import { MapLegend, RasterMapLegend, LegendContainer } from "../MapLegend";
+import { GenericPointMarkers } from "../PointLayers/PointLayers";
+import { MapLegend } from "../MapLegend/MapLegend";
+import { RasterMapLegend } from "../MapLegend/RasterMapLegend";
+import { LegendContainer } from "../MapLegend/LegendContainer";
 import {
   DEFAULT_BIVARIATE_SCHEME,
   DEFAULT_COLOR_SCHEME,
-  MAP_CONFIG,
   noValueFill,
-  sviLabel,
-} from "../../config";
+} from "../../config/colorSchemes";
+import { MAP_CONFIG } from "../../config/map";
+import { sviLabel } from "../../config/sviCategories";
 import { NoValuePattern } from "./NoValuePattern";
 import styles from "./SingleMapView.module.scss";
 import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
-import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer";
+import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
-import { useMapStore, useMapState, useSnapshotStore, DEFAULT_LAYER_OPACITIES } from "../../stores";
+import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores/useMapStore";
+import { useSnapshotStore } from "../../stores/useSnapshotStore";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
 import { subLayerId } from "../../config/layerFiles";
-import { HazardLayerRenderer } from "../HazardLayers";
-import { MapRasterLayer } from "../RasterLayers";
+import { HazardLayerRenderer } from "../HazardLayers/HazardLayerRenderer";
+import { MapRasterLayer } from "../RasterLayers/RasterLayerRenderer";
 import { useMapSnapshot } from "../../hooks/useMapSnapshot";
-import { AddressSearch } from "../AddressSearch";
+import { AddressSearch } from "../AddressSearch/AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
 import { useMetric } from "../../api/queries/metrics";

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useMapStore } from "../stores";
+import { useMapStore } from "../stores/useMapStore";
 import { useMapLayersStore, visibleRasterIds } from "../stores/useMapLayersStore";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { HAZARD_LAYERS } from "../config/hazardLayers";

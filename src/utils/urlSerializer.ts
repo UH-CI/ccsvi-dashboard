@@ -1,5 +1,6 @@
 import type { MapState } from "../types";
-import { MAX_MAPS, MENU_KEYS } from "../config";
+import { MAX_MAPS } from "../config/map";
+import { MENU_KEYS } from "../config/sviCategories";
 
 // Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written, and an indicator key the menu lacks is dropped
 export const MAP_URL_FIELDS: {

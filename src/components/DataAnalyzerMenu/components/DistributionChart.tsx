@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { CHART_COLORS } from "../../../config";
+import { CHART_COLORS } from "../../../config/colorSchemes";
 import type { Bin } from "./analyzerStats";
 
 interface DistributionChartProps {

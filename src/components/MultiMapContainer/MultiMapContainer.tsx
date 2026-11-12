@@ -1,6 +1,6 @@
 import React, { useMemo, forwardRef } from "react";
-import { SingleMapView } from "../SingleMapView";
-import { useVisibleMaps, useMapStore } from "../../stores";
+import { SingleMapView } from "../SingleMapView/SingleMapView";
+import { useVisibleMaps, useMapStore } from "../../stores/useMapStore";
 import styles from "./MultiMapContainer.module.scss";
 
 interface MultiMapContainerProps {

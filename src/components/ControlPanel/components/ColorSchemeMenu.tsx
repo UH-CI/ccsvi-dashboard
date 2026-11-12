@@ -1,7 +1,11 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
 import { MapState } from "../../../types";
-import { BIVARIATE_SCHEMES, COLOR_SCHEMES, DEFAULT_BIVARIATE_SCHEME } from "../../../config";
+import {
+  BIVARIATE_SCHEMES,
+  COLOR_SCHEMES,
+  DEFAULT_BIVARIATE_SCHEME,
+} from "../../../config/colorSchemes";
 import { useMetric } from "../../../api/queries/metrics";
 import styles from "../ControlPanel.module.scss";
 

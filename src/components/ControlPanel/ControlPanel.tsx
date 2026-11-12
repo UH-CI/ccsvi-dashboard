@@ -26,7 +26,7 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
 } from "@mui/icons-material";
-import { useMapStore } from "../../stores";
+import { useMapStore } from "../../stores/useMapStore";
 import styles from "./ControlPanel.module.scss";
 import { MapsMenu } from "./components/MapsMenu";
 import { SviMenu } from "./components/SviMenu";

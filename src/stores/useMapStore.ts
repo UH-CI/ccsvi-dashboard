@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { MapState } from "../types";
 import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
-import { DEFAULT_COLOR_SCHEME } from "../config";
+import { DEFAULT_COLOR_SCHEME } from "../config/colorSchemes";
 import { useMapLayersStore } from "./useMapLayersStore";
 import { useFilterStore } from "./useFilterStore";
 

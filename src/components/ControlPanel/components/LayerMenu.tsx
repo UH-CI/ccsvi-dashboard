@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Stack } from "@mui/material";
 import type * as FaIcons from "react-icons/fa";
-import { useMapStore } from "../../../stores";
+import { useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore, useVisibleIds } from "../../../stores/useMapLayersStore";
 import styles from "../ControlPanel.module.scss";
 import { MenuShell } from "./MenuShell";

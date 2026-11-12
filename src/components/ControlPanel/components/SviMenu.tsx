@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Stack } from "@mui/material";
-import { useMapStore } from "../../../stores";
-import { SVI_CATEGORIES } from "../../../config";
+import { useMapStore } from "../../../stores/useMapStore";
+import { SVI_CATEGORIES } from "../../../config/sviCategories";
 import { MenuShell } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
 import { LayerToggleGroup } from "./LayerToggleGroup";

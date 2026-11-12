@@ -2,7 +2,7 @@ import { GeoJSON, GeoJSONProps, Popup, useMap } from "react-leaflet";
 import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from "geojson";
 import { LatLng, Layer, LatLngBounds, LeafletMouseEvent, PathOptions } from "leaflet";
 import React, { useEffect, useCallback, memo, useRef, useState, type ReactNode } from "react";
-import { NO_VALUE_COLOR } from "../../../config";
+import { NO_VALUE_COLOR } from "../../../config/colorSchemes";
 
 export interface StyleConfig {
   fillColor: string;
