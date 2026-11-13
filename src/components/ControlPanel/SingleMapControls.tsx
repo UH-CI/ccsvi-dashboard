@@ -10,9 +10,8 @@ import {
   ExpandMore,
   Map,
 } from "@mui/icons-material";
-// Management actions for each map
-import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores/useMapStore";
-import { useMapLayersStore, useMapRaster } from "../../stores/useMapLayersStore";
+import { useMapStore, useMapState } from "../../stores/useMapStore";
+import { useMapRaster } from "../../stores/useMapLayersStore";
 import styles from "./ControlPanel.module.scss";
 import { ColorSchemeMenu } from "./components/ColorSchemeMenu";
 import { RasterColormapMenu } from "./components/RasterColormapMenu";
@@ -24,6 +23,7 @@ interface SingleMapControlsProps {
   onRemove: (mapId: string) => void;
 }
 
+// Management actions for each map
 export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   mapId,
   canRemoveMap,
@@ -34,11 +34,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   const updateMap = useMapStore((state) => state.updateMap);
   const toggleMapVisibility = useMapStore((state) => state.toggleMapVisibility);
 
-  const mapOpacities = useMapStore(
-    (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
-  );
-  const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
-
   const [colorSchemeAnchor, setColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [rasterColorSchemeAnchor, setRasterColorSchemeAnchor] = useState<HTMLElement | null>(null);
   const [baseMapAnchor, setBaseMapAnchor] = useState<HTMLElement | null>(null);
@@ -47,7 +42,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
   // Only a saved raster's colour bar can be changed
   const shownRaster = useMapRaster(mapId);
   const savedRasterId = shownRaster?.raster.kind === "cog" ? shownRaster.raster.id : null;
-  const setRasterColormap = useMapLayersStore((s) => s.setRasterColormap);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -101,10 +95,7 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           anchorEl={colorSchemeAnchor}
           open={Boolean(colorSchemeAnchor)}
           onClose={() => setColorSchemeAnchor(null)}
-          config={config}
-          mapOpacities={mapOpacities}
-          updateMap={updateMap}
-          setLayerOpacity={setLayerOpacity}
+          mapId={mapId}
         />
         {savedRasterId && (
           <RasterColormapMenu
@@ -113,8 +104,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
             onClose={() => setRasterColorSchemeAnchor(null)}
             mapId={mapId}
             rasterId={savedRasterId}
-            colormap={shownRaster!.colormap}
-            setRasterColormap={setRasterColormap}
           />
         )}
         <BaseMapMenu
@@ -122,8 +111,6 @@ export const SingleMapControls: React.FC<SingleMapControlsProps> = ({
           open={Boolean(baseMapAnchor)}
           onClose={() => setBaseMapAnchor(null)}
           mapId={mapId}
-          activeBaseMapId={config.baseMap}
-          updateMap={updateMap}
         />
       </Box>
       <MenuList disablePadding>

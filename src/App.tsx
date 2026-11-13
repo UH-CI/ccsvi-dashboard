@@ -72,7 +72,7 @@ const App: React.FC = () => {
   // Reads the shared link into the stores, then keeps it in step with them
   useUrlSync();
 
-  // === Error handling ===
+  // The startup data couldn't be loaded
   if (errors.length > 0) {
     return (
       <div className={styles["error-container"]}>
@@ -85,7 +85,7 @@ const App: React.FC = () => {
     );
   }
 
-  // === Loading ===
+  // The startup data is still loading
   if (!ready) {
     return (
       <div className={styles["loading-container"]}>
@@ -94,7 +94,7 @@ const App: React.FC = () => {
     );
   }
 
-  // === Main UI ===
+  // The main map's dataset, for the table
   const activeDatasetObject = primary?.dataset ?? null;
 
   return (

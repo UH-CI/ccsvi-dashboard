@@ -16,7 +16,7 @@ import styles from "./SingleMapView.module.scss";
 import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLayer";
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
-import { useMapStore, useMapState, DEFAULT_LAYER_OPACITIES } from "../../stores/useMapStore";
+import { useMapStore, useMapState } from "../../stores/useMapStore";
 import { useSnapshotStore } from "../../stores/useSnapshotStore";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
@@ -103,9 +103,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrim
   const countyBoundaries = useBoundary("counties");
 
   const setPrimaryMap = useMapStore((state) => state.setPrimaryMap);
-  const mapOpacities = useMapStore(
-    (state) => state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES,
-  );
 
   // The indicator's and the comparison indicator's keys
   const metricKey = config.metric || undefined;
@@ -232,7 +229,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrim
             <CountyBoundariesBackgroundLayer
               data={countyBoundaries as FeatureCollection<Geometry, CountyBoundariesProperties>}
               mapId={config.id}
-              layerOpacity={mapOpacities.countyBoundaries}
+              layerOpacity={config.opacities.countyBoundaries}
             />
           )}
 

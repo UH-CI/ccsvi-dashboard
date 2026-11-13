@@ -7,7 +7,7 @@ import type { MetricLookup } from "../../SingleMapView/hooks/useMetricLookups";
 import { useBoundary } from "../../../api/queries/boundaries";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { useFilterStore } from "../../../stores/useFilterStore";
-import { DEFAULT_LAYER_OPACITIES, useMapState, useMapStore } from "../../../stores/useMapStore";
+import { useMapState, useMapStore } from "../../../stores/useMapStore";
 import { useMapLayersStore } from "../../../stores/useMapLayersStore";
 import { OUTSIDE_RANGE_FILL, OUTSIDE_RANGE_OUTLINE } from "../../../config/colorSchemes";
 import { POLYGON_LAYERS } from "../../../config/layers";
@@ -45,14 +45,10 @@ export const ChoroplethLayer: React.FC<ChoroplethLayerProps> = ({
   const { primary: filterRange, comparison: filterRange2 } = useFilterStore(
     (state) => state.ranges,
   );
-  const activeFeatureGeoid = useMapState(mapId)?.activeFeature?.geoid;
+  const map = useMapState(mapId)!;
+  const activeFeatureGeoid = map.activeFeature?.geoid;
+  const opacity = map.opacities[homelands ? "hawaiianHomelands" : "census"];
   const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
-  const opacity = useMapStore(
-    (state) =>
-      (state.layerOpacities[mapId] ?? DEFAULT_LAYER_OPACITIES)[
-        homelands ? "hawaiianHomelands" : "census"
-      ],
-  );
   const raster = useMapLayersStore((state) => state.rasters[mapId]);
 
   const geoidOf = useCallback(

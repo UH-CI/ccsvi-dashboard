@@ -1,26 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { Stack } from "@mui/material";
 import type * as FaIcons from "react-icons/fa";
-import { useMapStore } from "../../../stores/useMapStore";
+import { useVisibleMaps } from "../../../stores/useMapStore";
 import { useMapLayersStore, useVisibleIds } from "../../../stores/useMapLayersStore";
 import styles from "../ControlPanel.module.scss";
-import { MenuShell } from "./MenuShell";
+import { MenuShell, type MenuProps } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
+import { useMenuMap } from "../useMenuMap";
 import { LayerToggleItem } from "./LayerToggleItem";
 import { LayerToggleGroup } from "./LayerToggleGroup";
-import { useResolvedMapId } from "../hooks/useResolvedMapId";
 import type { LayerMenu as LayerMenuConfig } from "../../../config/layerMenus";
 import { subLayerId } from "../../../config/layerFiles";
 import { resolveLayerMenu } from "../../../utils/layerMenus";
 import type { LayerKind, MenuGroupEntry, MenuLayer } from "../../../utils/layerMenus";
 
-interface LayerMenuProps {
-  menu: LayerMenuConfig;
-  open: boolean;
-  anchorEl: HTMLElement | null;
-  onClose: () => void;
-  onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
-}
+type LayerMenuProps = MenuProps & { menu: LayerMenuConfig };
 
 // What a menu row does, per kind of layer; only kinds with sub-layers have toggleSub
 const MENU_ACTIONS: Record<
@@ -50,19 +44,9 @@ const MENU_ACTIONS: Record<
 const groupExpandKey = (label: string) => `__group__${label}`;
 
 // Draws one menu from src/config/layerMenus.ts
-export const LayerMenu: React.FC<LayerMenuProps> = ({
-  menu,
-  open,
-  anchorEl,
-  onClose,
-  onInfoClick,
-}) => {
-  const maps = useMapStore((s) => s.maps);
-  const primaryMapId = useMapStore((s) => s.primaryMapId);
-
-  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
-  const [preferredMapId, setPreferredMapId] = useState<string>("");
-  const mapId = useResolvedMapId(preferredMapId, visibleMaps, primaryMapId);
+export const LayerMenu: React.FC<LayerMenuProps> = ({ menu, ...props }) => {
+  const visibleMaps = useVisibleMaps();
+  const [mapId, setPreferredMapId] = useMenuMap(visibleMaps);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggleExpand = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -183,13 +167,7 @@ export const LayerMenu: React.FC<LayerMenuProps> = ({
   };
 
   return (
-    <MenuShell
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      title={menu.popupTitle ?? menu.title}
-      onInfoClick={onInfoClick}
-    >
+    <MenuShell {...props}>
       <MapTabSelector maps={visibleMaps} selectedMapId={mapId} onChange={setPreferredMapId} />
       {mapId && (
         <Stack spacing={1}>

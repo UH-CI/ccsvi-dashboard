@@ -1,32 +1,19 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader, Divider, Box, Typography, Slider } from "@mui/material";
-import { MapState } from "../../../types";
 import {
   BIVARIATE_SCHEMES,
   COLOR_SCHEMES,
   DEFAULT_BIVARIATE_SCHEME,
 } from "../../../config/colorSchemes";
 import { useMetric } from "../../../api/queries/metrics";
+import { useMapState, useMapStore } from "../../../stores/useMapStore";
 import styles from "../ControlPanel.module.scss";
-
-interface LayerOpacities {
-  census: number;
-  hawaiianHomelands: number;
-  countyBoundaries: number;
-}
 
 interface ColorSchemeMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
-  config: MapState;
-  mapOpacities: LayerOpacities;
-  updateMap: (mapId: string, updates: Partial<MapState>) => void;
-  setLayerOpacity: (
-    mapId: string,
-    layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
-    opacity: number,
-  ) => void;
+  mapId: string;
 }
 
 // Color-scheme picker (sequential/diverging/bivariate) plus per-layer opacity sliders.
@@ -34,11 +21,12 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
   anchorEl,
   open,
   onClose,
-  config,
-  mapOpacities,
-  updateMap,
-  setLayerOpacity,
+  mapId,
 }) => {
+  const config = useMapState(mapId)!;
+  const mapOpacities = config.opacities;
+  const updateMap = useMapStore((state) => state.updateMap);
+  const setLayerOpacity = useMapStore((state) => state.setLayerOpacity);
   const homelands = useMetric(config.metric)?.dataset.hawaiian_homelands;
 
   return (
@@ -107,48 +95,41 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
         )}
       </Box>
 
-      
       <Divider />
 
+      {/* A menu's items must be one flat list, so each section's heading and items are spread into it */}
+      {(["Sequential", "Diverging"] as const).flatMap((section) => [
+        <ListSubheader key={section}>{section}</ListSubheader>,
+        ...COLOR_SCHEMES.filter((scheme) => scheme.section === section).map(({ name, label }) => (
+          <MenuItem
+            key={name}
+            selected={config.colorScheme === name}
+            onClick={() => {
+              updateMap(config.id, { colorScheme: name });
+              onClose();
+            }}
+          >
+            {label}
+          </MenuItem>
+        )),
+      ])}
 
-      {(["Sequential", "Diverging"] as const).map((section) => (
-        <React.Fragment key={section}>
-          <ListSubheader>{section}</ListSubheader>
-          {COLOR_SCHEMES.filter((scheme) => scheme.section === section).map(
-            ({ name, label }) => (
-              <MenuItem
-                key={name}
-                selected={config.colorScheme === name}
-                onClick={() => {
-                  updateMap(config.id, { colorScheme: name });
-                  onClose();
-                }}
-              >
-                {label}
-              </MenuItem>
-            ),
-          )}
-        </React.Fragment>
-      ))}
-
-      {config.metric2 && (
-        <>
-          <Divider />
-          <ListSubheader>Bivariate Palette</ListSubheader>
-          {BIVARIATE_SCHEMES.map(({ name, label }) => (
-            <MenuItem
-              key={name}
-              selected={(config.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME) === name}
-              onClick={() => {
-                updateMap(config.id, { bivariateColorScheme: name });
-                onClose();
-              }}
-            >
-              {label}
-            </MenuItem>
-          ))}
-        </>
-      )}
+      {config.metric2 && [
+        <Divider key="bivariate-divider" />,
+        <ListSubheader key="bivariate-heading">Bivariate Palette</ListSubheader>,
+        ...BIVARIATE_SCHEMES.map(({ name, label }) => (
+          <MenuItem
+            key={name}
+            selected={(config.bivariateColorScheme ?? DEFAULT_BIVARIATE_SCHEME) === name}
+            onClick={() => {
+              updateMap(config.id, { bivariateColorScheme: name });
+              onClose();
+            }}
+          >
+            {label}
+          </MenuItem>
+        )),
+      ]}
     </Menu>
   );
 };

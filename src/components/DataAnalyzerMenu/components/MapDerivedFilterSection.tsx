@@ -2,14 +2,28 @@ import { useMemo } from "react";
 import { Stack, Button, IconButton, CircularProgress, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useTableExportStore } from "../../../stores/useTableExportStore";
-import { useFilterStore } from "../../../stores/useFilterStore";
+import { useFilterStore, type AppliedFilter } from "../../../stores/useFilterStore";
 import { useMapStore } from "../../../stores/useMapStore";
-import { applyFilter, useAreaFilter } from "../../../api/queries/filter";
+import { filterQuery, useAreaFilter } from "../../../api/queries/filter";
+import { queryClient } from "../../../api/queryClient";
 import { useVisibleMenuTrees } from "../../../hooks/useVisibleMenuTrees";
 import { flattenVisibleLayers } from "../../../utils/layerMenus";
 import { useDatasets } from "../../../api/queries/datasets";
 import { layerMetricKey, useMetric, useMetrics } from "../../../api/queries/metrics";
 import type { ValueRange } from "../../../types";
+
+// Pressing Filter again after a failed request asks the server again
+function applyFilter(filter: AppliedFilter) {
+  useFilterStore.getState().apply(filter);
+  if (filter.kind === "areas") {
+    const { queryKey } = filterQuery(filter.homelands, filter.hazards, filter.ranges);
+    queryClient.resetQueries({
+      queryKey,
+      exact: true,
+      predicate: (query) => query.state.status === "error",
+    });
+  }
+}
 
 interface MapDerivedFilterSectionProps {
   // The main map's indicator key and its comparison indicator's key; each is also its filter column

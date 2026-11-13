@@ -1,32 +1,19 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Stack } from "@mui/material";
-import { MenuShell } from "./MenuShell";
+import { MenuShell, type MenuProps } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
-import { useMapStore } from "../../../stores/useMapStore";
-import { useResolvedMapId } from "../hooks/useResolvedMapId";
+import { useMenuMap } from "../useMenuMap";
+import { useVisibleMaps } from "../../../stores/useMapStore";
 import { HCDPLoad } from "../../HCDP/HCDPLoad";
 
-interface HcdpMenuProps {
-  open: boolean;
-  anchorEl: HTMLElement | null;
-  onClose: () => void;
-  onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
-}
-
-export const HcdpMenu: React.FC<HcdpMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
-  const maps = useMapStore((s) => s.maps);
-  const primaryMapId = useMapStore((s) => s.primaryMapId);
-
-  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
-  const [hcdpMapId, setHcdpMapId] = useState<string>("");
-  const resolvedMapId = useResolvedMapId(hcdpMapId, visibleMaps, primaryMapId);
+export const HcdpMenu: React.FC<MenuProps> = (props) => {
+  const visibleMaps = useVisibleMaps();
+  const [resolvedMapId, setHcdpMapId] = useMenuMap(visibleMaps);
 
   return (
-    <MenuShell open={open} anchorEl={anchorEl} onClose={onClose} title="HCDP" onInfoClick={onInfoClick}>
+    <MenuShell {...props}>
       <MapTabSelector maps={visibleMaps} selectedMapId={resolvedMapId} onChange={setHcdpMapId} />
       <Stack spacing={1}>{resolvedMapId ? <HCDPLoad mapId={resolvedMapId} /> : null}</Stack>
     </MenuShell>
   );
 };
-
-export default HcdpMenu;

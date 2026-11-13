@@ -1,9 +1,9 @@
 import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 import { useQuery } from "@tanstack/react-query";
 import { useGeographies } from "../../api/queries/geographies";
-import { useVisiblePointCounts } from "../../api/queries/pointCounts";
+import { useVisiblePointCounts } from "../../hooks/useVisiblePointCounts";
 import { areaStatsQuery } from "../../api/queries/rasterInfo";
-import { useSavedRaster } from "../../api/queries/savedRaster";
+import { useSavedRaster } from "../../hooks/useSavedRaster";
 import { useMapRaster } from "../../stores/useMapLayersStore";
 import type { RasterSource } from "../../types";
 import type { MetricLookup } from "../SingleMapView/hooks/useMetricLookups";

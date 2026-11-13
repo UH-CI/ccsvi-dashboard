@@ -17,7 +17,7 @@ export const usePointFile = (layerId: string) => useQuery(pointFileQuery(layerId
 // One point layer's points inside the given areas, hazards and rasters, from /api/v1/points
 export const filteredPointsQuery = (layerId: string, { areas, hazards, rasters }: PointCriteria) =>
   queryOptions({
-    queryKey: ["filtered-points", layerId, areas, hazards, rasters],
+    queryKey: ["filtered-points", layerId, areas, [...hazards].sort(), [...rasters].sort()],
     queryFn: () => getFilteredPoints(layerId, areas, hazards, rasters),
     meta: { failureMessage: layerFailureMessage(pointLayer(layerId).name) },
   });

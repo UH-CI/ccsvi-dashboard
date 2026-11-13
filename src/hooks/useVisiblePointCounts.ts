@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useQueries, type UseQueryResult } from "@tanstack/react-query";
-import { POINT_LAYERS } from "../../config/pointLayers";
-import { useMapLayersStore } from "../../stores/useMapLayersStore";
-import type { MetricValue, PointLayerConfig } from "../../types";
-import { useDatasets } from "./datasets";
-import { layerMetricKey, useMetrics } from "./metrics";
-import { metricValuesQuery } from "./metricValues";
+import { POINT_LAYERS } from "../config/pointLayers";
+import { useMapLayersStore } from "../stores/useMapLayersStore";
+import type { MetricValue, PointLayerConfig } from "../types";
+import { useDatasets } from "../api/queries/datasets";
+import { layerMetricKey, useMetrics } from "../api/queries/metrics";
+import { metricValuesQuery } from "../api/queries/metricValues";
 
 export interface VisiblePointCounts {
   layers: PointLayerConfig[]; // currently visible on the map
@@ -38,10 +38,7 @@ export function useVisiblePointCounts(isHomelands: boolean, mapId: string): Visi
   );
 
   const counts = useQueries({
-    queries: keys.map((key) => ({
-      ...metricValuesQuery(key ?? ""),
-      enabled: key !== null,
-    })),
+    queries: keys.map(metricValuesQuery),
     combine: countsOf,
   });
 

@@ -1,40 +1,26 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@mui/material";
 import { Layers } from "@mui/icons-material";
 import { useMapStore } from "../../../stores/useMapStore";
 import { MAX_MAPS } from "../../../config/map";
 import styles from "../ControlPanel.module.scss";
-import { MenuShell } from "./MenuShell";
+import { MenuShell, type MenuProps } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
+import { useMenuMap } from "../useMenuMap";
 import { SingleMapControls } from "../SingleMapControls";
-import { useResolvedMapId } from "../hooks/useResolvedMapId";
 
-interface MapsMenuProps {
-  open: boolean;
-  anchorEl: HTMLElement | null;
-  onClose: () => void;
-  onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
-}
-
-export const MapsMenu: React.FC<MapsMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
+// Every map, shown or hidden, so a hidden map can be shown again
+export const MapsMenu: React.FC<MenuProps> = (props) => {
   const maps = useMapStore((s) => s.maps);
-  const primaryMapId = useMapStore((s) => s.primaryMapId);
   const addMap = useMapStore((s) => s.addMap);
   const removeMap = useMapStore((s) => s.removeMap);
 
   const canAddMap = maps.length < MAX_MAPS;
   const canRemoveMap = maps.length > 1;
-  const [mapsMapId, setMapsMapId] = useState<string>("");
-  const resolvedMapsMapId = useResolvedMapId(mapsMapId, maps, primaryMapId);
+  const [resolvedMapsMapId, setMapsMapId] = useMenuMap(maps);
 
   return (
-    <MenuShell
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      title="Map Management"
-      onInfoClick={onInfoClick}
-    >
+    <MenuShell {...props}>
       {canAddMap && (
         <Button
           variant="outlined"

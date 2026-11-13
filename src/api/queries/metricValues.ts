@@ -1,4 +1,4 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
 import type { MetricKind, MetricValue } from "../../types";
 import { getMetricValues } from "../client";
 
@@ -6,13 +6,12 @@ import { getMetricValues } from "../client";
 export const metricNumber = (entry: MetricValue | undefined, kind: MetricKind): number | null =>
   (kind === "percentage" ? entry?.percentage : entry?.absolute) ?? null;
 
-// One metric's value for every area, by its key, from /api/v1/metrics/{key}/values
-export const metricValuesQuery = (key: string) =>
+// One metric's value for every area, by its key, from /api/v1/metrics/{key}/values; nothing is asked until there's a key
+export const metricValuesQuery = (key: string | null | undefined) =>
   queryOptions({
     queryKey: ["metric-values", key],
-    queryFn: () => getMetricValues(key),
+    queryFn: key ? () => getMetricValues(key) : skipToken,
   });
 
-// Waits until a key is chosen
 export const useMetricValues = (key: string | null | undefined) =>
-  useQuery({ ...metricValuesQuery(key ?? ""), enabled: Boolean(key) }).data;
+  useQuery(metricValuesQuery(key)).data;

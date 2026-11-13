@@ -44,7 +44,7 @@ export function layerMetricKey(
   datasets: DatasetCatalog | undefined,
   layerId: string,
   homelands: boolean,
-  name: string,
+  name: "Mean" | "Max" | "Count",
 ): string | null {
   const match = Object.entries(metrics ?? {}).find(([, metric]) => {
     const dataset = datasets?.[metric.dataset];

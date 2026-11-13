@@ -16,6 +16,12 @@ interface MenuShellProps {
   variant?: "menu" | "panel";
 }
 
+// What the control bar gives each of its menus
+export type MenuProps = Pick<
+  MenuShellProps,
+  "open" | "anchorEl" | "onClose" | "title" | "onInfoClick"
+>;
+
 // Shared menu chrome: the popover, content box, and title row with info button.
 export const MenuShell: React.FC<MenuShellProps> = ({
   open,

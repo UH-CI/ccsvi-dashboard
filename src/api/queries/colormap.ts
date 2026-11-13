@@ -1,11 +1,11 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
 import { getColormap } from "../client";
 
-// A colour bar's colours, from /api/v1/rasters/colormap
-export const colormapQuery = (name: string) =>
+// A colour bar's colours, from /api/v1/rasters/colormap; nothing is asked until there's a name
+export const colormapQuery = (name: string | undefined) =>
   queryOptions({
     queryKey: ["colormap", name],
-    queryFn: () => getColormap(name),
+    queryFn: name ? () => getColormap(name) : skipToken,
   });
 
 // The colours as a bottom-to-top CSS gradient of about 16 stops
@@ -21,6 +21,5 @@ const toGradient = (entries: [number, number, number, number][]): string => {
   return `linear-gradient(to top, ${stops})`;
 };
 
-// Waits until a colour scheme is chosen
 export const useColormapGradient = (name: string | undefined) =>
-  useQuery({ ...colormapQuery(name ?? ""), enabled: Boolean(name), select: toGradient }).data;
+  useQuery({ ...colormapQuery(name), select: toGradient }).data;

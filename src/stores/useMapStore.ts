@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { MapState } from "../types";
+import type { LayerOpacities, MapState } from "../types";
 import { DEFAULT_BASE_MAP_ID } from "../config/basemaps";
 import { DEFAULT_COLOR_SCHEME } from "../config/colorSchemes";
 import { useMapLayersStore } from "./useMapLayersStore";
@@ -14,16 +14,6 @@ interface MapStoreState {
   // Which map drives the TableViewer
   primaryMapId: string;
 
-  // Layer opacity per map
-  layerOpacities: Record<
-    string,
-    {
-      census: number;
-      hawaiianHomelands: number;
-      countyBoundaries: number;
-    }
-  >;
-
   // Actions
   addMap: () => void;
   // Replaces the maps with ones read from a link; no maps keeps the current ones
@@ -33,21 +23,17 @@ interface MapStoreState {
   toggleMapVisibility: (mapId: string) => void;
   updateMapActiveFeature: (mapId: string, activeFeature: MapState["activeFeature"]) => void;
   setPrimaryMap: (mapId: string) => void;
-  setLayerOpacity: (
-    mapId: string,
-    layerType: "census" | "hawaiianHomelands" | "countyBoundaries",
-    opacity: number,
-  ) => void;
+  setLayerOpacity: (mapId: string, layer: keyof LayerOpacities, opacity: number) => void;
 
   // Reset
   reset: () => void;
 }
 
-export const DEFAULT_LAYER_OPACITIES = {
+const DEFAULT_LAYER_OPACITIES: LayerOpacities = {
   census: 0.3,
   hawaiianHomelands: 0.3,
   countyBoundaries: 0.7,
-} as const;
+};
 
 // A new map's settings; the one place they're written
 export const newMapState = (id: string): MapState => ({
@@ -57,6 +43,7 @@ export const newMapState = (id: string): MapState => ({
   visible: true,
   colorScheme: DEFAULT_COLOR_SCHEME,
   baseMap: DEFAULT_BASE_MAP_ID,
+  opacities: { ...DEFAULT_LAYER_OPACITIES },
 });
 
 // One fresh map, as on first load and after Reset View
@@ -64,7 +51,6 @@ const startingMaps = () => ({
   maps: [newMapState("map1")],
   nextMapId: 2,
   primaryMapId: "map1",
-  layerOpacities: { map1: { ...DEFAULT_LAYER_OPACITIES } },
 });
 
 export const useMapStore = create<MapStoreState>((set, get) => ({
@@ -74,14 +60,9 @@ export const useMapStore = create<MapStoreState>((set, get) => ({
   // Map actions
   addMap: () => {
     const { nextMapId } = get();
-    const newMap = newMapState(`map${nextMapId}`);
     set((state) => ({
-      maps: [...state.maps, newMap],
+      maps: [...state.maps, newMapState(`map${nextMapId}`)],
       nextMapId: state.nextMapId + 1,
-      layerOpacities: {
-        ...state.layerOpacities,
-        [newMap.id]: { ...DEFAULT_LAYER_OPACITIES },
-      },
     }));
   },
 
@@ -90,11 +71,7 @@ export const useMapStore = create<MapStoreState>((set, get) => ({
       const maps = configs.map((config) => ({ ...newMapState(config.id), ...config }));
       // Above the highest map number in the link, so a new map never takes an existing id
       const highest = Math.max(1, ...maps.map((c) => parseInt(c.id.replace("map", ""), 10)));
-      set({
-        maps,
-        nextMapId: highest + 1,
-        layerOpacities: Object.fromEntries(maps.map((c) => [c.id, { ...DEFAULT_LAYER_OPACITIES }])),
-      });
+      set({ maps, nextMapId: highest + 1 });
     }
     if (primaryMapId) set({ primaryMapId });
   },
@@ -108,15 +85,7 @@ export const useMapStore = create<MapStoreState>((set, get) => ({
         mapId === primaryMapId
           ? (remaining.find((c) => c.visible)?.id ?? remaining[0].id)
           : primaryMapId;
-      set((state) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { [mapId]: _removedOpacity, ...restOpacities } = state.layerOpacities;
-        return {
-          maps: remaining,
-          primaryMapId: newPrimaryId,
-          layerOpacities: restOpacities,
-        };
-      });
+      set({ maps: remaining, primaryMapId: newPrimaryId });
       useMapLayersStore.getState().clearMap(mapId);
     }
   },
@@ -149,16 +118,9 @@ export const useMapStore = create<MapStoreState>((set, get) => ({
     set({ primaryMapId: mapId });
   },
 
-  setLayerOpacity: (mapId, layerType, opacity) => {
-    set((state) => ({
-      layerOpacities: {
-        ...state.layerOpacities,
-        [mapId]: {
-          ...state.layerOpacities[mapId],
-          [layerType]: opacity,
-        },
-      },
-    }));
+  setLayerOpacity: (mapId, layer, opacity) => {
+    const { opacities } = get().maps.find((config) => config.id === mapId)!;
+    get().updateMap(mapId, { opacities: { ...opacities, [layer]: opacity } });
   },
 
   reset: () => {

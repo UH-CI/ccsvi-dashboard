@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { keepPreviousData, queryOptions, useQuery } from "@tanstack/react-query";
-import { useFilterStore, type AppliedFilter } from "../../stores/useFilterStore";
+import { useFilterStore } from "../../stores/useFilterStore";
 import type { AreaCriteria, AreaResult, ValueRange } from "../../types";
 import { getFilterResults } from "../client";
-import { queryClient } from "../queryClient";
 
 // The areas touching every hazard and within each column's range
 export const filterQuery = (
@@ -58,17 +57,4 @@ export function usePointFilter(layerId: string): PointCriteria | null | undefine
     const areas = { homelands: applied.homelands, ranges: applied.ranges };
     return { areas, noAreasMatched: geoids.size === 0, hazards, rasters };
   }, [applied, layerId, geoids, isPlaceholderData]);
-}
-
-// Pressing Filter again after a failed request asks the server again
-export function applyFilter(filter: AppliedFilter) {
-  useFilterStore.getState().apply(filter);
-  if (filter.kind === "areas") {
-    const { queryKey } = filterQuery(filter.homelands, filter.hazards, filter.ranges);
-    queryClient.resetQueries({
-      queryKey,
-      exact: true,
-      predicate: (query) => query.state.status === "error",
-    });
-  }
 }

@@ -1,29 +1,20 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Stack } from "@mui/material";
-import { useMapStore } from "../../../stores/useMapStore";
+import { useMapStore, useVisibleMaps } from "../../../stores/useMapStore";
 import { SVI_CATEGORIES } from "../../../config/sviCategories";
-import { MenuShell } from "./MenuShell";
+import { MenuShell, type MenuProps } from "./MenuShell";
 import { MapTabSelector } from "./MapTabSelector";
+import { useMenuMap } from "../useMenuMap";
 import { LayerToggleGroup } from "./LayerToggleGroup";
 import { LayerToggleItem } from "./LayerToggleItem";
 import { ComparisonMetricSelect } from "./ComparisonMetricSelect";
-import { useResolvedMapId } from "../hooks/useResolvedMapId";
 
-interface SviMenuProps {
-  open: boolean;
-  anchorEl: HTMLElement | null;
-  onClose: () => void;
-  onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
-}
-
-export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInfoClick }) => {
+export const SviMenu: React.FC<MenuProps> = (props) => {
   const maps = useMapStore((s) => s.maps);
-  const primaryMapId = useMapStore((s) => s.primaryMapId);
   const updateMap = useMapStore((s) => s.updateMap);
 
-  const visibleMaps = useMemo(() => maps.filter((c) => c.visible), [maps]);
-  const [sviMapId, setSviMapId] = useState<string>("");
-  const resolvedSviMapId = useResolvedMapId(sviMapId, visibleMaps, primaryMapId);
+  const visibleMaps = useVisibleMaps();
+  const [resolvedSviMapId, setSviMapId] = useMenuMap(visibleMaps);
 
   const [expandedSvi, setExpandedSvi] = useState<Record<string, boolean>>({});
   const toggleExpandSvi = useCallback(
@@ -37,13 +28,7 @@ export const SviMenu: React.FC<SviMenuProps> = ({ open, anchorEl, onClose, onInf
   )?.id;
 
   return (
-    <MenuShell
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      title="Social Vulnerability Indicators"
-      onInfoClick={onInfoClick}
-    >
+    <MenuShell {...props}>
       <MapTabSelector maps={visibleMaps} selectedMapId={resolvedSviMapId} onChange={setSviMapId} />
       {resolvedSviMapId && (
         <Stack spacing={1}>

@@ -1,10 +1,10 @@
 import React from "react";
 import { Switch, Checkbox, FormControlLabel, Menu, MenuItem, ListSubheader } from "@mui/material";
-import { MapState } from "../../../types";
 import {
   BASE_MAP_LABEL_VARIANTS,
   BASE_MAP_OPTIONS,
 } from "../../../config/basemaps";
+import { useMapState, useMapStore } from "../../../stores/useMapStore";
 
 const labelVariantIds = new Set(
   BASE_MAP_LABEL_VARIANTS.flatMap(({ noLabelsId, labelsId }) => [noLabelsId, labelsId]),
@@ -15,18 +15,12 @@ interface BaseMapMenuProps {
   open: boolean;
   onClose: () => void;
   mapId: string;
-  activeBaseMapId: string;
-  updateMap: (mapId: string, updates: Partial<MapState>) => void;
 }
+
 // Base map (tile provider) picker for a single map
-export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({
-  anchorEl,
-  open,
-  onClose,
-  mapId,
-  activeBaseMapId,
-  updateMap,
-}) => {
+export const BaseMapMenu: React.FC<BaseMapMenuProps> = ({ anchorEl, open, onClose, mapId }) => {
+  const activeBaseMapId = useMapState(mapId)!.baseMap;
+  const updateMap = useMapStore((state) => state.updateMap);
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       <ListSubheader>Base Map</ListSubheader>

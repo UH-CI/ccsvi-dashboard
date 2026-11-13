@@ -1,15 +1,15 @@
 import React from "react";
 import { Menu, MenuItem, ListSubheader } from "@mui/material";
 import { RASTER_COLORMAPS } from "../../../config/colorSchemes";
+import { useMapLayersStore, useMapRaster } from "../../../stores/useMapLayersStore";
 
 interface RasterColormapMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   mapId: string;
+  // The map's saved raster
   rasterId: string;
-  colormap: string;
-  setRasterColormap: (mapId: string, rasterId: string, colormapName: string) => void;
 }
 
 // Colormap picker for the map's saved raster
@@ -19,9 +19,9 @@ export const RasterColormapMenu: React.FC<RasterColormapMenuProps> = ({
   onClose,
   mapId,
   rasterId,
-  colormap,
-  setRasterColormap,
 }) => {
+  const colormap = useMapRaster(mapId)!.colormap;
+  const setRasterColormap = useMapLayersStore((state) => state.setRasterColormap);
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       <ListSubheader>Raster Colormap</ListSubheader>

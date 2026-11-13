@@ -1,3 +1,10 @@
+// How see-through each of a map's area layers is, from 0 to 1
+export interface LayerOpacities {
+  census: number;
+  hawaiianHomelands: number;
+  countyBoundaries: number;
+}
+
 export interface MapState {
   id: string;
   title: string;
@@ -8,6 +15,7 @@ export interface MapState {
   visible: boolean;
   colorScheme: string;
   baseMap: string;
+  opacities: LayerOpacities;
   activeFeature?: {
     geoid: string;
   };

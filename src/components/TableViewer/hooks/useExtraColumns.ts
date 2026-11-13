@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { useHazardOverlapsForTable } from "../../../api/queries/hazardAreas";
-import { useVisiblePointCounts } from "../../../api/queries/pointCounts";
-import { usePointNamesForTable } from "../../../api/queries/pointNames";
-import { useSavedRaster } from "../../../api/queries/savedRaster";
+import { useHazardOverlapsForTable } from "./useHazardOverlapsForTable";
+import { useVisiblePointCounts } from "../../../hooks/useVisiblePointCounts";
+import { usePointNamesForTable } from "./usePointNamesForTable";
+import { useSavedRaster } from "../../../hooks/useSavedRaster";
 import type { TableColumn } from "../../../types";
 
 // A column the table adds beside the dataset's own, from what's on the map: its heading, type, and value for an area
