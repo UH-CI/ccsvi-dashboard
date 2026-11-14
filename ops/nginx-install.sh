@@ -74,8 +74,14 @@ server {
         proxy_ssl_server_name on;
     }
 
+    # Nothing else in the data folder (backups, raw files) is reachable from outside
     location /data/ {
-        alias ${DATA_ROOT}/;
+        return 404;
+    }
+
+    # Only the two folders the website reads: the hazard tiles and the point files
+    location ~ ^/data/(${DATA_VERSION}/(?:hazards|point_data)/[^/]+)\$ {
+        alias ${DATA_ROOT}/\$1;
 
         types {
             application/geo+json geojson;
