@@ -1,48 +1,40 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
-interface UseTableResizeOptions {
-  onSizeChange?: (isCollapsed: boolean) => void;
-  initialCollapsed?: boolean;
-}
+const SHORT_VIEWPORT = 700;
+const COLLAPSE_THRESHOLD = 40;
+const MIN_TABLE_HEIGHT = 96;
 
-export const useTableResize = ({
-  onSizeChange,
-  initialCollapsed = false,
-}: UseTableResizeOptions = {}) => {
-  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
+// The table's size, decided only here: collapsed, full height, or a height dragged with the handle
+export const useTableResize = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isFullHeight, setIsFullHeight] = useState(false);
+  const [height, setHeight] = useState<number | null>(null);
   const autoCollapsedRef = useRef(false);
-  // Refs keep the effect closure current without making them deps (which would re-run check() on every state change)
+  // A ref keeps the effect closure current without making it a dep (which would re-run check() on every state change)
   const isCollapsedRef = useRef(isCollapsed);
-  const onSizeChangeRef = useRef(onSizeChange);
   isCollapsedRef.current = isCollapsed;
-  onSizeChangeRef.current = onSizeChange;
 
   useEffect(() => {
-    const SHORT_VIEWPORT = 700;
     const check = () => {
       if (window.innerHeight < SHORT_VIEWPORT && !isCollapsedRef.current) {
         autoCollapsedRef.current = true;
         setIsCollapsed(true);
         setIsFullHeight(false);
-        onSizeChangeRef.current?.(true);
       } else if (window.innerHeight >= SHORT_VIEWPORT && autoCollapsedRef.current) {
         autoCollapsedRef.current = false;
         setIsCollapsed(false);
-        onSizeChangeRef.current?.(false);
       }
     };
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleCollapse = useCallback(() => {
     autoCollapsedRef.current = false;
     const newCollapsed = !isCollapsedRef.current;
     setIsCollapsed(newCollapsed);
     if (newCollapsed) setIsFullHeight(false);
-    onSizeChangeRef.current?.(newCollapsed);
   }, []);
 
   const toggleFullHeight = useCallback(() => {
@@ -56,21 +48,47 @@ export const useTableResize = ({
       if (!collapsed) autoCollapsedRef.current = false;
       setIsCollapsed(collapsed);
       if (collapsed) setIsFullHeight(false);
-      onSizeChangeRef.current?.(collapsed);
     }
   }, []);
 
-  const setFullHeight = useCallback((full: boolean) => {
-    setIsFullHeight(full);
-    if (full) setIsCollapsed(false);
+  // Dragging the handle: near the bottom collapses, near the top goes full height, in between sets the height
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const newHeight = window.innerHeight - moveEvent.clientY;
+      const maxHeight = window.innerHeight * 0.85;
+      if (newHeight < COLLAPSE_THRESHOLD) {
+        setIsCollapsed(true);
+        setIsFullHeight(false);
+        setHeight(null);
+      } else if (newHeight > maxHeight + 40) {
+        setIsFullHeight(true);
+        setIsCollapsed(false);
+        setHeight(null);
+      } else {
+        setIsCollapsed(false);
+        setIsFullHeight(false);
+        setHeight(Math.max(MIN_TABLE_HEIGHT, Math.min(maxHeight, newHeight)));
+      }
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
   }, []);
 
   return {
     isCollapsed,
     isFullHeight,
+    height,
     toggleCollapse,
     toggleFullHeight,
     setCollapsed,
-    setFullHeight,
+    startResize,
   };
 };

@@ -1,23 +1,12 @@
-import domToImage from "dom-to-image-more";
-
 export interface SnapshotOptions {
   activeDataset?: string;
   activeDatasetMetric?: string;
   customPrefix?: string;
-  format?: "png" | "jpeg";
-  quality?: number;
 }
 
 // Generates a descriptive filename for the snapshot based on current map state
-const pad = (n: number) => n.toString().padStart(2, "0");
-
 export const generateSnapshotFilename = (options: SnapshotOptions = {}): string => {
-  const {
-    activeDataset,
-    activeDatasetMetric,
-    customPrefix = "census-map",
-    format = "png",
-  } = options;
+  const { activeDataset, activeDatasetMetric, customPrefix = "census-map" } = options;
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
   const datasetName = activeDataset ? activeDataset.replace(/_/g, "-") : "map";
@@ -29,7 +18,7 @@ export const generateSnapshotFilename = (options: SnapshotOptions = {}): string 
   }
   parts.push(timestamp);
 
-  return `${parts.join("-")}.${format}`;
+  return `${parts.join("-")}.png`;
 };
 
 /**
@@ -100,75 +89,33 @@ const waitForMapElements = (mapContainer: HTMLElement): Promise<void> => {
 export const takeMapSnapshot = async (
   targetElement: HTMLElement,
   options: SnapshotOptions = {},
-  allLayersIds: string[] = [],
 ): Promise<void> => {
-  // minor polyfills / safety (dom-to-image-more can choke in some browsers)
-  if (!window.URL) (window as any).URL = window.URL || {};
-
-  const format = options.format ?? "png";
-  const quality =
-    typeof options.quality === "number" ? options.quality : format === "jpeg" ? 0.95 : undefined;
-
   try {
+    // Wait a moment for any pending map updates to complete
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     // Wait for all elements to load
     await waitForMapElements(targetElement);
 
-    // Dynamic import
-    const domtoimage = (await import("dom-to-image-more")).default;
+    // Loaded on first use, so the library isn't part of the app's first download
+    const domToImage = (await import("dom-to-image-more")).default;
 
-    const format = options.format || "png";
-    const quality = options.quality || 0.9;
-
-    let dataUrl: string;
-
-    if (format === "jpeg") {
-      dataUrl = await domtoimage.toJpeg(targetElement, {
-        quality,
-        bgcolor: "#ffffff",
-        style: {
-          transform: "scale(1)",
-          transformOrigin: "top left",
-        },
-        filter: (node: HTMLElement) => {
-          // Include all nodes but exclude some problematic elements
-          if (node.classList) {
-            // Exclude attribution and zoom controls if they cause issues
-            return (
-              !node.classList.contains("leaflet-control-attribution") &&
-              !node.classList.contains("leaflet-bar")
-            );
-          }
-          return true;
-        },
-      });
-    } else {
-      dataUrl = await domtoimage.toPng(targetElement, {
-        bgcolor: "#ffffff",
-        style: {
-          transform: "scale(1)",
-          transformOrigin: "top left",
-        },
-        filter: (node: HTMLElement) => {
-          // Include all nodes but exclude some problematic elements
-          if (node.classList) {
-            // Keep all map layers, just exclude controls that might cause issues
-            return (
-              !node.classList.contains("leaflet-control-attribution") &&
-              !node.classList.contains("leaflet-bar")
-            );
-          }
-          return true;
-        },
-      });
-    }
+    const dataUrl = await domToImage.toPng(targetElement, {
+      bgcolor: "#ffffff",
+      style: {
+        transform: "scale(1)",
+        transformOrigin: "top left",
+      },
+      // Keep all map layers, just leave out the attribution and zoom controls
+      filter: (node: HTMLElement) =>
+        !node.classList ||
+        (!node.classList.contains("leaflet-control-attribution") &&
+          !node.classList.contains("leaflet-bar")),
+    });
 
     // Convert data URL to blob
     const response = await fetch(dataUrl);
     const blob = await response.blob();
-
-    if (!blob) {
-      throw new Error("Failed to create image blob");
-    }
 
     const filename = generateSnapshotFilename(options);
     downloadBlob(blob, filename);

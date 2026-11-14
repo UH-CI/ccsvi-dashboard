@@ -17,7 +17,6 @@ import { ChoroplethLayer } from "../PolygonLayers/ChoroplethLayer/ChoroplethLaye
 import { CountyBoundariesBackgroundLayer } from "../PolygonLayers/CountyBoundariesBackgroundLayer/CountyBoundariesBackgroundLayer";
 import { Chip } from "@mui/material";
 import { useMapStore, useMapState } from "../../stores/useMapStore";
-import { useSnapshotStore } from "../../stores/useSnapshotStore";
 import { useMapLayersStore } from "../../stores/useMapLayersStore";
 import { BASE_MAP_OPTIONS } from "../../config/basemaps";
 import { HAZARD_LAYERS } from "../../config/hazardLayers";
@@ -25,7 +24,7 @@ import { pointLayer } from "../../config/pointLayers";
 import { subLayerId } from "../../config/layerFiles";
 import { HazardLayerRenderer } from "../HazardLayers/HazardLayerRenderer";
 import { MapRasterLayer } from "../RasterLayers/RasterLayerRenderer";
-import { useMapSnapshot } from "../../hooks/useMapSnapshot";
+import { takeMapSnapshot } from "../../utils/snapshotUtils";
 import { AddressSearch } from "../AddressSearch/AddressSearch";
 import { useMetricLookups } from "./hooks/useMetricLookups";
 import { useMapColorScale } from "./hooks/useMapColorScale";
@@ -79,23 +78,15 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef }) => {
 };
 
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrimary }) => {
-  // Snapshot hook provides the mapRef we should populate + snapshot function
-  const { mapRef, takeSnapshot } = useMapSnapshot();
+  // The Leaflet map, for the address search
+  const mapRef = useRef<L.Map | null>(null);
 
   // Wrapper ref so snapshot includes legend and any overlays in this container
   const snapshotWrapperRef = useRef<HTMLDivElement | null>(null);
 
-  const handleMapRef = useCallback(
-    (map: L.Map | null) => {
-      mapRef.current = map;
-    },
-    [mapRef],
-  );
-
-  // Snapshot registry store
-  const registerSnapshot = useSnapshotStore((s) => s.register);
-  const unregisterSnapshot = useSnapshotStore((s) => s.unregister);
-  const snapshotOne = useSnapshotStore((s) => s.snapshotOne);
+  const handleMapRef = useCallback((map: L.Map | null) => {
+    mapRef.current = map;
+  }, []);
 
   // Drawn only for a map in the store that's shown
   const config = useMapState(mapId)!;
@@ -112,24 +103,6 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrim
   const metricLabel = metricKey ? sviLabel(metricKey) : undefined;
   const metricLabel2 = metricKey2 ? sviLabel(metricKey2) : undefined;
   const metricIsCount = metricInfo?.kind === "count";
-
-  // Register this map's snapshot function
-  useEffect(() => {
-    const fn = async () => {
-      await takeSnapshot(
-        {
-          activeDataset: metricInfo?.datasetId,
-          activeDatasetMetric: metricInfo?.name,
-          customPrefix: `hawaii-census-map-${mapId}`,
-          quality: 0.9,
-        },
-        snapshotWrapperRef,
-      );
-    };
-
-    registerSnapshot(mapId, fn);
-    return () => unregisterSnapshot(mapId);
-  }, [mapId, registerSnapshot, unregisterSnapshot, takeSnapshot, metricInfo]);
 
   const visiblePointLayerIds = useMapLayersStore((state) => state.points[mapId]);
   const visibleHazardIds = useMapLayersStore((state) => state.hazards[mapId]);
@@ -195,7 +168,11 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrim
             className={styles["snapshot-btn"]}
             onClick={(e) => {
               e.stopPropagation();
-              void snapshotOne(mapId);
+              void takeMapSnapshot(snapshotWrapperRef.current!, {
+                activeDataset: metricInfo?.datasetId,
+                activeDatasetMetric: metricInfo?.name,
+                customPrefix: `hawaii-census-map-${mapId}`,
+              });
             }}
             title="Save snapshot"
             aria-label="Save snapshot"

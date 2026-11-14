@@ -17,22 +17,9 @@ import styles from "./TableViewer.module.scss";
 interface TableViewerProps {
   activeDataset: string;
   datasetInfo: CatalogDataset | null;
-  onSizeChange?: (isCollapsed: boolean) => void;
-  initialCollapsed?: boolean;
-  tableHeight?: number | null;
-  collapsed?: boolean;
-  fullscreen?: boolean;
 }
 
-export const TableViewer: React.FC<TableViewerProps> = ({
-  activeDataset,
-  datasetInfo,
-  onSizeChange,
-  initialCollapsed = false,
-  tableHeight,
-  collapsed,
-  fullscreen,
-}) => {
+export const TableViewer: React.FC<TableViewerProps> = ({ activeDataset, datasetInfo }) => {
   const { metric: primaryMapMetric } = usePrimaryMapState();
   const filteredGeoidsSet = useFilteredGeoids();
 
@@ -64,22 +51,12 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   const {
     isCollapsed,
     isFullHeight,
+    height,
     toggleCollapse,
     toggleFullHeight,
     setCollapsed,
-    setFullHeight,
-  } = useTableResize({
-    onSizeChange,
-    initialCollapsed,
-  });
-
-  useEffect(() => {
-    if (collapsed !== undefined) setCollapsed(collapsed);
-  }, [collapsed, setCollapsed]);
-
-  useEffect(() => {
-    if (fullscreen !== undefined) setFullHeight(fullscreen);
-  }, [fullscreen, setFullHeight]);
+    startResize,
+  } = useTableResize();
 
   const { columns, rows } = useDataGridColumns(tableData);
 
@@ -136,84 +113,87 @@ export const TableViewer: React.FC<TableViewerProps> = ({
   }
 
   return (
-    <Paper
-      elevation={3}
-      className={`${styles["table-viewer"]} ${isFullHeight ? styles["table-viewer--full"] : isCollapsed ? styles["table-viewer--collapsed"] : styles["table-viewer--expanded"]}`}
-      style={
-        !isCollapsed && !isFullHeight && tableHeight
-          ? { height: tableHeight, maxHeight: "none", flex: "none" }
-          : undefined
-      }
-    >
-      {isCollapsed && (
-        <Box className={styles.header} onClick={toggleCollapse}>
-          <Typography variant="subtitle2" className={styles["header-title"]}>
-            {datasetLabel}
-          </Typography>
-          {metadataText && <span className={styles["metadata-line"]}>{metadataText}</span>}
-          <IconButton size="small" className={styles["header-icon-btn"]} title="Expand table">
-            <KeyboardArrowUp />
-          </IconButton>
-        </Box>
-      )}
-
-      <Collapse
-        in={!isCollapsed}
-        timeout={300}
-        unmountOnExit={false}
-        className={styles["table-collapse"]}
+    <>
+      {!isCollapsed && <div className={styles["table-resize-handle"]} onMouseDown={startResize} />}
+      <Paper
+        elevation={3}
+        className={`${styles["table-viewer"]} ${isFullHeight ? styles["table-viewer--full"] : isCollapsed ? styles["table-viewer--collapsed"] : styles["table-viewer--expanded"]}`}
+        style={
+          !isCollapsed && !isFullHeight && height
+            ? { height, maxHeight: "none", flex: "none" }
+            : undefined
+        }
       >
-        <Box className={styles.content}>
-          {error && (
-            <Alert severity="error" className={styles["error-alert"]}>
-              {error}
-            </Alert>
-          )}
+        {isCollapsed && (
+          <Box className={styles.header} onClick={toggleCollapse}>
+            <Typography variant="subtitle2" className={styles["header-title"]}>
+              {datasetLabel}
+            </Typography>
+            {metadataText && <span className={styles["metadata-line"]}>{metadataText}</span>}
+            <IconButton size="small" className={styles["header-icon-btn"]} title="Expand table">
+              <KeyboardArrowUp />
+            </IconButton>
+          </Box>
+        )}
 
-          {!error && (
-            <Box className={styles["data-grid-container"]}>
-              <DataGrid
-                apiRef={apiRef}
-                rows={displayRows}
-                columns={mergedColumns}
-                loading={loading}
-                showToolbar
-                density="compact"
-                // Header min-height the stylesheet forces and keeps scroll-to-row from stopping a row short
-                columnHeaderHeight={86}
-                slots={{ toolbar: CustomTableToolbar }}
-                slotProps={{
-                  toolbar: {
-                    datasetLabel,
-                    metadataText,
-                    isFullHeight,
-                    exportTable,
-                    toggleCollapse,
-                    toggleFullHeight,
-                  },
-                }}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[10, 25, 50, 100]}
-                getRowClassName={(params) =>
-                  params.row.id === activeRowId ? styles["active-row"] : ""
-                }
-                onRowClick={primaryMapMetric ? handleRowClick : undefined}
-                hideFooter={false}
-                disableColumnMenu={false}
-                disableColumnFilter={false}
-                disableColumnSelector={false}
-                className={[
-                  styles["data-grid"],
-                  primaryMapMetric ? styles["data-grid--clickable"] : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              />
-            </Box>
-          )}
-        </Box>
-      </Collapse>
-    </Paper>
+        <Collapse
+          in={!isCollapsed}
+          timeout={300}
+          unmountOnExit={false}
+          className={styles["table-collapse"]}
+        >
+          <Box className={styles.content}>
+            {error && (
+              <Alert severity="error" className={styles["error-alert"]}>
+                {error}
+              </Alert>
+            )}
+
+            {!error && (
+              <Box className={styles["data-grid-container"]}>
+                <DataGrid
+                  apiRef={apiRef}
+                  rows={displayRows}
+                  columns={mergedColumns}
+                  loading={loading}
+                  showToolbar
+                  density="compact"
+                  // Header min-height the stylesheet forces and keeps scroll-to-row from stopping a row short
+                  columnHeaderHeight={86}
+                  slots={{ toolbar: CustomTableToolbar }}
+                  slotProps={{
+                    toolbar: {
+                      datasetLabel,
+                      metadataText,
+                      isFullHeight,
+                      exportTable,
+                      toggleCollapse,
+                      toggleFullHeight,
+                    },
+                  }}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  getRowClassName={(params) =>
+                    params.row.id === activeRowId ? styles["active-row"] : ""
+                  }
+                  onRowClick={primaryMapMetric ? handleRowClick : undefined}
+                  hideFooter={false}
+                  disableColumnMenu={false}
+                  disableColumnFilter={false}
+                  disableColumnSelector={false}
+                  className={[
+                    styles["data-grid"],
+                    primaryMapMetric ? styles["data-grid--clickable"] : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              </Box>
+            )}
+          </Box>
+        </Collapse>
+      </Paper>
+    </>
   );
 };

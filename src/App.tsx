@@ -9,57 +9,14 @@ import { useStartupData } from "./api/queries/startup";
 import { useUrlSync } from "./hooks/useUrlSync";
 import { takeMapSnapshot } from "./utils/snapshotUtils";
 
-const MIN_TABLE_HEIGHT = 96;
-
 const App: React.FC = () => {
-  const [isTableOpen, setIsTableOpen] = useState(true);
   const [isGridView, setIsGridView] = useState(true);
-  const [tableHeight, setTableHeight] = useState<number | null>(null);
-  const [snapCollapsed, setSnapCollapsed] = useState(false);
-  const [snapFullscreen, setSnapFullscreen] = useState(false);
   const multiMapContainerRef = useRef<HTMLDivElement>(null);
-
-  const COLLAPSE_THRESHOLD = 40;
-
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      const newHeight = window.innerHeight - moveEvent.clientY;
-      const maxHeight = window.innerHeight * 0.85;
-      if (newHeight < COLLAPSE_THRESHOLD) {
-        setSnapCollapsed(true);
-        setSnapFullscreen(false);
-        setTableHeight(null);
-      } else if (newHeight > maxHeight + 40) {
-        setSnapFullscreen(true);
-        setSnapCollapsed(false);
-        setTableHeight(null);
-      } else {
-        setSnapCollapsed(false);
-        setSnapFullscreen(false);
-        setTableHeight(Math.max(MIN_TABLE_HEIGHT, Math.min(maxHeight, newHeight)));
-      }
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }, [COLLAPSE_THRESHOLD]);
 
   const handleSnapshot = useCallback(async () => {
     const el = multiMapContainerRef.current;
     if (!el) return;
     await takeMapSnapshot(el, { customPrefix: "ccsvi-multi-map" });
-  }, []);
-
-  const handleTableSizeChange = useCallback((isCollapsed: boolean) => {
-    setIsTableOpen(!isCollapsed);
-    if (!isCollapsed) { setSnapCollapsed(false); setSnapFullscreen(false); }
   }, []);
 
   // Get the active/primary map's dataset for the table viewer
@@ -106,17 +63,7 @@ const App: React.FC = () => {
       />
       <div className={styles["map-section"]}>
         <MultiMapContainer ref={multiMapContainerRef} isGridView={isGridView} />
-        {isTableOpen && primaryDataset && (
-          <div className={styles["table-resize-handle"]} onMouseDown={handleResizeStart} />
-        )}
-        <TableViewer
-          activeDataset={primaryDataset}
-          datasetInfo={activeDatasetObject}
-          onSizeChange={handleTableSizeChange}
-          tableHeight={tableHeight}
-          collapsed={snapCollapsed}
-          fullscreen={snapFullscreen}
-        />
+        <TableViewer activeDataset={primaryDataset} datasetInfo={activeDatasetObject} />
       </div>
     </div>
   );
