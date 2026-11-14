@@ -37,7 +37,8 @@ const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
-const get = <T>(path: string): Promise<T> => fetchJson<T>(apiUrl(path));
+// The browser asks the server before reusing a kept answer, so one kept from an older version is never used
+const get = <T>(path: string): Promise<T> => fetchJson<T>(apiUrl(path), { cache: "no-cache" });
 
 const post = <T>(path: string, body: unknown): Promise<T> =>
   fetchJson<T>(apiUrl(path), {

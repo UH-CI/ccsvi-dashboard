@@ -3,8 +3,8 @@
 # Run on VM after nginx is installed. safe to re-run.
 #
 # serve /data/ directly from disk instead of proxying through FastAPI's StaticFiles.
-# Also adds gzip for JSON/GeoJSON and a Cache-Control header
-# gzip is intentionally scoped to json/geo+json/csv only: nginx cannot gzip
+# Also adds gzip for JSON/GeoJSON and a Cache-Control header, and gzip for the website's own files
+# gzip is intentionally scoped to text types only: nginx cannot gzip
 # a response and honor Range requests on it. PMTiles and COG tiffs rely on
 # Range requests for partial reads, so they must never match gzip_types.
 #
@@ -97,6 +97,16 @@ server {
     location /ccsvi-dashboard/ {
         alias ${WEB_ROOT}/;
         try_files \$uri \$uri/ /ccsvi-dashboard/index.html;
+
+        gzip on;
+        gzip_vary on;
+        gzip_types application/javascript text/javascript text/css application/json image/svg+xml application/geo+json;
+
+        # nginx doesn't know the .geojson ending, so the area outlines would go out uncompressed
+        location ~ \.geojson\$ {
+            types { }
+            default_type application/geo+json;
+        }
     }
 
     # The page is checked on every load so a new deploy shows at once. The code files it loads

@@ -2,7 +2,7 @@
 Works out which block group / Hawaiian Homeland area each point is in, so requests
 and the point counts only look it up
 
-Run after ingest.load_postgis (rebuild.sh --full does this):
+Run after ingest.load_postgis (both rebuild.sh modes do this):
     python -m ingest.load_point_areas
 """
 

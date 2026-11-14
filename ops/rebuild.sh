@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rebuild database from raw files on VM
 # Usage: rebuild.sh [--full]
-#   (default) keeps geographies.geom, points, hazards and their overlaps; reloads census data, redoes point counts and raster values
+#   (default) keeps geographies.geom, points, hazards and their overlaps; reloads census data, redoes which area each point is in, point counts and raster values
 #   --full    also drops the spatial tables and re-runs load_postgis.py
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
@@ -57,10 +57,10 @@ if $FULL; then
 
     echo "-- working out which areas and points touch each hazard layer"
     "$PYTHON" -m ingest.load_hazard_overlaps
-
-    echo "-- working out which area each point is in"
-    "$PYTHON" -m ingest.load_point_areas
 fi
+
+echo "-- working out which area each point is in"
+"$PYTHON" -m ingest.load_point_areas
 
 echo "-- counting points per block group / Homeland area"
 "$PYTHON" -m ingest.load_point_counts

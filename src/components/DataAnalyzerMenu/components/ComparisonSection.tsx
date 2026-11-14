@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  type ScatterShapeProps,
 } from "recharts";
 import { useFilteredGeoids } from "../../../api/queries/filter";
 import { formatValue } from "../metricValueHelpers";
@@ -114,7 +115,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
           <Scatter
             data={points}
             isAnimationActive={false}
-            shape={(props: any) => {
+            shape={(props: ScatterShapeProps) => {
               const { cx, cy, payload } = props;
               const inFilter = filteredGeoids ? filteredGeoids.has(payload.geoid) : true;
               return (
@@ -132,7 +133,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             <Scatter
               data={[activePoint]}
               isAnimationActive={false}
-              shape={(props: any) => {
+              shape={(props: ScatterShapeProps) => {
                 const { cx, cy } = props;
                 return (
                   <g>
