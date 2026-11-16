@@ -79,22 +79,24 @@ export interface CountyBoundariesProperties {
   POP20: number;
 }
 
+// A point layer as written in config/layers/points.json (the fields the app reads)
 export interface PointLayerConfig {
   id: string;
   name: string;
   description?: string;
   icon: string;
   color: string;
-  filePath: string;
+  // The map file is point_data/<file>.geojson
+  file: string;
   // Properties that together identify one point in this layer's file
   idFields: string[];
-  popupConfig: {
-    titleField: string;
-    fields: Array<{
-      key: string;
-      label: string;
-    }>;
+  // title: the column whose value heads the popup and names the point; fields: columns shown under hand-written labels
+  popup: {
+    title: string;
+    fields?: { key: string; label: string }[];
   };
+  // Switched off: kept in the file, left out of the app
+  off?: boolean;
 }
 
 // A line or polygon layer or sub-layer as written in config/layers/lines.json and polygons.json

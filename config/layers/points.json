@@ -1,0 +1,186 @@
+{
+  "layers": [
+    {
+      "id": "fire_stations",
+      "name": "Fire Stations",
+      "icon": "FaFireExtinguisher",
+      "color": "#FF0000",
+      "file": "Fire_Stations_(Statewide)",
+      "source": {"zips": ["point_data/Fire_Stations_(Statewide).zip"], "inner": "Fire_Stations_(Statewide).shp"},
+      "idFields": ["objectid"],
+      "popup": {"title": "name"}
+    },
+    {
+      "id": "hospitals",
+      "name": "Hospitals",
+      "icon": "FaHospital",
+      "color": "#00BFFF",
+      "file": "Hospitals",
+      "source": {"zips": ["point_data/Hospitals.zip"], "inner": "Hospitals.shp"},
+      "idFields": ["objectid"],
+      "popup": {"title": "name"}
+    },
+    {
+      "id": "police_stations",
+      "name": "Police Stations",
+      "icon": "FaShieldAlt",
+      "color": "#000080",
+      "file": "Police_Stations_(Statewide)",
+      "source": {"zips": ["point_data/Police_Stations_(Statewide).zip"], "inner": "Police_Stations_(Statewide).shp"},
+      "idFields": ["objectid"],
+      "popup": {"title": "name"}
+    },
+    {
+      "id": "shelters",
+      "name": "Emergency Shelters",
+      "icon": "FaHouseUser",
+      "color": "#00CC00",
+      "file": "emergency_shelters",
+      "source": {"zips": ["point_data/PDC_emergency_shelters.zip"], "inner": "emergency_shelters.shp"},
+      "idFields": ["BUSNAME"],
+      "popup": {
+        "title": "BUSNAME",
+        "fields": [
+          {"key": "ADDRESS", "label": "Address"},
+          {"key": "PLACENAME", "label": "Location"}
+        ]
+      }
+    },
+    {
+      "id": "preschools",
+      "name": "Preschools",
+      "icon": "FaSchool",
+      "color": "#FFA500",
+      "file": "Preschools",
+      "source": {"zips": ["point_data/Preschools.zip"], "inner": "Preschools.shp"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "name",
+        "fields": [
+          {"key": "address", "label": "Address"},
+          {"key": "city", "label": "City"}
+        ]
+      }
+    },
+    {
+      "id": "public_schools",
+      "name": "Public Schools",
+      "icon": "FaSchool",
+      "color": "#8A2BE2",
+      "file": "Public_Schools",
+      "source": {"zips": ["point_data/Public_Schools.zip"], "inner": "Public_Schools.shp"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "sch_name",
+        "fields": [
+          {"key": "address", "label": "Address"},
+          {"key": "city", "label": "City"}
+        ]
+      }
+    },
+    {
+      "id": "private_schools",
+      "name": "Private Schools",
+      "icon": "FaSchool",
+      "color": "#DC143C",
+      "file": "Private_Schools",
+      "source": {"zips": ["point_data/Private_Schools.zip"], "inner": "Private_Schools.shp"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "school",
+        "fields": [
+          {"key": "address", "label": "Address"},
+          {"key": "city", "label": "City"}
+        ]
+      }
+    },
+    {
+      "id": "bridges",
+      "name": "Bridges",
+      "icon": "FaArchway",
+      "color": "#6c757d",
+      "file": "National_Bridge_Inventory",
+      "source": {"zips": ["point_data/National_Bridge_Inventory.zip"], "inner": "National_Bridge_Inventory.shp"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "structure_",
+        "fields": [
+          {"key": "structure_", "label": "Structure ID"},
+          {"key": "year_built", "label": "Year Built"},
+          {"key": "bridge_con", "label": "Bridge Condition"}
+        ]
+      }
+    },
+    {
+      "id": "wastewater_plant",
+      "name": "Wastewater Treatment Plants",
+      "description": "Wastewater treatment facilities can be vulnerable to flooding and other hazards that affect essential services.",
+      "icon": "FaIndustry",
+      "color": "#2E8B57",
+      "file": "Wastewater_Treatment_Plants",
+      "source": {"zips": ["point_data/Wastewater_Treatment_Plants.zip"], "inner": "Wastewater_Treatment_Plants.shp"},
+      "idFields": ["objectid"],
+      "popup": {"title": "wwtp_name", "fields": [{"key": "county", "label": "County"}]}
+    },
+    {
+      "id": "airports",
+      "name": "Airports",
+      "icon": "FaPlane",
+      "color": "#e4870e",
+      "file": "Airports_points",
+      "source": {"markersOf": "airport_areas"},
+      "idFields": ["objectid"],
+      "popup": {"title": "airport_na", "fields": [{"key": "airport_co", "label": "Airport Code"}]}
+    },
+    {
+      "id": "commercial_harbors",
+      "name": "Commercial Harbors",
+      "icon": "FaShip",
+      "color": "#021f74",
+      "file": "Commercial_Harbors_points",
+      "source": {"markersOf": "commercial_harbor_areas"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "harbor_nam",
+        "fields": [
+          {"key": "berth_leng", "label": "Dock Length"},
+          {"key": "yard_area", "label": "Outdoor Storage Area"},
+          {"key": "shed_area", "label": "Warehouse Area"},
+          {"key": "channel_de", "label": "Channel Depth"},
+          {"key": "turn_basin", "label": "Turning Area"}
+        ]
+      }
+    },
+    {
+      "id": "small_boat_harbors",
+      "name": "Small Boat Harbors",
+      "icon": "FaShip",
+      "color": "#021f74",
+      "file": "Small_Boat_Harbors_Ramps",
+      "source": {"zips": ["point_data/Small_Boat_Harbors_Ramps.zip"], "inner": "Small_Boat_Harbors_Ramps.shp"},
+      "idFields": ["objectid"],
+      "popup": {
+        "title": "name",
+        "fields": [
+          {"key": "acreage", "label": "Acreage"},
+          {"key": "desc1", "label": "Description 1"},
+          {"key": "desc2", "label": "Description 2"},
+          {"key": "desc3", "label": "Description 3"},
+          {"key": "f_berths", "label": "Number of Berths"},
+          {"key": "f_moorings", "label": "Number of Moorings"},
+          {"key": "f_ramps", "label": "Number of Ramps"},
+          {"key": "piers", "label": "Piers"},
+          {"key": "bldgs", "label": "On-site Buildings"},
+          {"key": "sewage_out", "label": "Pump-out station available"},
+          {"key": "utilities", "label": "Utilities"},
+          {"key": "restrooms", "label": "Restrooms"},
+          {"key": "constructe", "label": "Constructed"},
+          {"key": "modified", "label": "Modified"},
+          {"key": "plans1", "label": "Plans 1"},
+          {"key": "plans2", "label": "Plans 2"},
+          {"key": "plans3", "label": "Plans 3"}
+        ]
+      }
+    }
+  ]
+}

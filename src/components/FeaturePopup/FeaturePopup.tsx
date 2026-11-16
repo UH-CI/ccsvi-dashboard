@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./FeaturePopup.module.scss";
-import type { MetricKind, PointLayerConfig, Reliability } from "../../types";
+import type { MetricKind, PointLayerConfig, Reliability, SubHazardLayerConfig } from "../../types";
 import { RELIABILITY_COLORS } from "../../config/colorSchemes";
 import { PointLayerIcon } from "../../utils/pointLayerIcon";
 
@@ -141,5 +141,31 @@ export function FeaturePopup({
           ))}
       </div>
     </div>
+  );
+}
+
+// A map layer's shape or point. Heading: the title column's value, else the layer name. Then the
+// hand-labelled fields, then every other column with a value under its raw name
+export function LayerPopup({
+  properties,
+  popup,
+  layerName,
+}: {
+  properties: Record<string, unknown>;
+  popup: SubHazardLayerConfig["popup"];
+  layerName: string;
+}) {
+  const title = popup?.title ? properties[popup.title] : undefined;
+  const listed = popup?.fields ?? [];
+  const rest = Object.keys(properties)
+    .filter((key) => properties[key] != null && key !== popup?.title)
+    .filter((key) => !listed.some((field) => field.key === key))
+    .map((key) => ({ key, label: key }));
+  return (
+    <FeaturePopup
+      metadata={[String(title || layerName)]}
+      properties={properties}
+      fields={[...listed, ...rest]}
+    />
   );
 }

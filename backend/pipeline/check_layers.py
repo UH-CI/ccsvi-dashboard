@@ -16,7 +16,9 @@ import settings
 from pipeline.build_tools import run
 from pipeline.census.census_transform import metric_columns
 from pipeline.census.clean import dataset_outputs
-from registry import CENSUS_CONFIG, census_indicators, census_problems, load_dataset_config, rasters, shape_layers, stop_on
+from registry import (
+    CENSUS_CONFIG, census_indicators, census_problems, load_dataset_config, point_layers, rasters, shape_layers, stop_on,
+)
 
 
 # The names inside a zip, or inside a zip within it; each zip is read once per run
@@ -45,7 +47,7 @@ def data_file_problems(found):
     return [f"{layer.id}: no {layer.data_file}" for layer in found if not layer.data_file.exists()]
 
 
-# Popup columns of the shape layers that keep every column, checked against their GeoJSON
+# Popup columns of the line, polygon and point layers that keep every column, checked against their GeoJSON
 def popup_problems(found):
     problems = []
     for layer in found:
@@ -88,12 +90,13 @@ def main():
         print(f"Census menu ok: all {len(census_indicators())} indicators have a metric in the cleaned files")
         return
 
-    found_rasters, found_shapes = rasters(), shape_layers()
+    found_rasters, found_shapes, found_points = rasters(), shape_layers(), point_layers()
     if not args.static:
-        found = found_rasters + found_shapes
-        stop_on(source_problems(found) + data_file_problems(found) + popup_problems(found_shapes))
+        found = found_rasters + found_shapes + found_points
+        from_zips = [layer for layer in found if layer.zips]
+        stop_on(source_problems(from_zips) + data_file_problems(found) + popup_problems(found_shapes + found_points))
     print(f"Layer files ok: {len(found_rasters)} rasters, {len(found_shapes)} lines and polygons, "
-          f"{len(census_indicators())} census indicators")
+          f"{len(found_points)} point layers, {len(census_indicators())} census indicators")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,31 @@
-import { LAYER_MENUS } from "../config/layerMenus";
-import type { LayerMenu, LayerMenuGroup } from "../config/layerMenus";
+import menus from "../../config/layers/menus.json";
 import { POINT_LAYERS } from "../config/pointLayers";
 import { HAZARD_LAYERS } from "../config/hazardLayers";
 import { subLayerId } from "../config/layerFiles";
 import { RASTER_LAYERS } from "../config/rasterLayers";
 import type { HazardLayerConfig, PointLayerConfig, RasterLayerConfig } from "../types";
+
+export type LayerMenuId = "criticalInfrastructure" | "locations" | "hazards";
+
+export interface LayerMenuGroup {
+  group: string; // label shown in the menu; unique across all menus
+  description?: string; // hover text on the group header
+  icon?: string; // react-icons name; falls back to the first layer's icon
+  color?: string; // falls back to the first layer's color
+  items: string[]; // top-level layer ids, in display order
+}
+
+export interface LayerMenu {
+  id: LayerMenuId;
+  title: string; // button label, popup title and analyzer section title
+  popupTitle?: string; // popup title, when it differs from the button label
+  description: string; // info-popup text for the button
+  hideCheckboxes?: boolean; // rows have no checkbox
+  items: (string | LayerMenuGroup)[]; // top-level layer ids and groups, in display order
+}
+
+// What each layer menu shows, in config/layers/menus.json; array order is button order and analyzer section order
+export const LAYER_MENUS = menus.menus as LayerMenu[];
 
 export type MenuLayer =
   | { kind: "point"; layer: PointLayerConfig }
@@ -52,7 +73,7 @@ for (const layer of POINT_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "point", la
 for (const layer of HAZARD_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "shape", layer });
 for (const layer of RASTER_LAYERS) LAYERS_BY_ID.set(layer.id, { kind: "raster", layer });
 
-// Swaps one menu's ids for the layers' configs; checkLayerMenus makes sure every id exists
+// Swaps one menu's ids for the layers' configs; the layer file checks (backend/registry.py) make sure every id exists
 export function resolveLayerMenu(menu: LayerMenu): MenuEntry[] {
   return menu.items.map((item) =>
     typeof item === "string"
@@ -129,55 +150,3 @@ export function flattenVisibleLayers(nodes: VisibleNode[]): VisibleLeaf[] {
     return [node];
   });
 }
-
-// Stops the app with every problem in src/config/layerMenus.ts at once. Runs when this file loads.
-function checkLayerMenus(): void {
-  const problems: string[] = [];
-
-  const kindsById = new Map<string, string[]>();
-  const configLists = [
-    ["point", POINT_LAYERS],
-    ["shape", HAZARD_LAYERS],
-    ["raster", RASTER_LAYERS],
-  ] as const;
-  for (const [kind, layers] of configLists) {
-    for (const layer of layers) kindsById.set(layer.id, [...(kindsById.get(layer.id) ?? []), kind]);
-  }
-  for (const [id, kinds] of kindsById) {
-    if (kinds.length > 1)
-      problems.push(
-        `Layer id "${id}" is used by more than one kind of layer (${kinds.join(", ")})`,
-      );
-  }
-
-  const timesListed = new Map<string, number>();
-  const menuIds = new Set<string>();
-  const groupLabels = new Set<string>();
-  for (const menu of LAYER_MENUS) {
-    if (menuIds.has(menu.id)) problems.push(`Menu id "${menu.id}" is used twice`);
-    menuIds.add(menu.id);
-    for (const item of menu.items) {
-      if (typeof item !== "string") {
-        if (groupLabels.has(item.group)) problems.push(`Group "${item.group}" is used twice`);
-        groupLabels.add(item.group);
-        if (item.items.length === 0) problems.push(`Group "${item.group}" has no layers`);
-      }
-      for (const id of typeof item === "string" ? [item] : item.items) {
-        timesListed.set(id, (timesListed.get(id) ?? 0) + 1);
-      }
-    }
-  }
-  for (const [id, count] of timesListed) {
-    if (!kindsById.has(id)) problems.push(`"${id}" is listed, but no layer config has that id`);
-    if (count > 1) problems.push(`"${id}" is listed ${count} times`);
-  }
-  for (const id of kindsById.keys()) {
-    if (!timesListed.has(id)) problems.push(`Layer "${id}" is in no menu`);
-  }
-
-  if (problems.length > 0) {
-    throw new Error(`Problems in src/config/layerMenus.ts:\n- ${problems.join("\n- ")}`);
-  }
-}
-
-checkLayerMenus();

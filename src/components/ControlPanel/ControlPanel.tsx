@@ -35,8 +35,8 @@ import { LayerMenu } from "./components/LayerMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
 import { AnalyzerMenu } from "./components/AnalyzerMenu";
 import { ErrorToast } from "../ErrorToast/ErrorToast";
-import { LAYER_MENUS } from "../../config/layerMenus";
-import type { LayerMenuId } from "../../config/layerMenus";
+import { LAYER_MENUS } from "../../utils/layerMenus";
+import type { LayerMenuId } from "../../utils/layerMenus";
 
 interface ControlPanelProps {
   isGridView?: boolean;

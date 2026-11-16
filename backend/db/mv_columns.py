@@ -2,14 +2,13 @@
 on or off, and one per point layer's count. Each column is named by its metric's key.
 """
 
-from ingest.load_postgis import POINT_LAYERS
-from registry import census_datasets, census_indicators, layer_metric_key, repeats
+from registry import census_datasets, census_indicators, layer_metric_key, point_layers, repeats
 
 
 def view_columns(homelands):
     homelands_of = census_datasets()
     keys = [indicator["key"] for indicator in census_indicators() if homelands_of[indicator["dataset"]] == homelands]
-    keys += [layer_metric_key(layer_id, "Count", homelands) for _, layer_id, _ in POINT_LAYERS]
+    keys += [layer_metric_key(layer.id, "Count", homelands) for layer in point_layers()]
     if repeated := repeats(keys):
         raise SystemExit(f"Filter column name used twice: {', '.join(repeated)}")
     return keys

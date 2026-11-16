@@ -10,6 +10,7 @@ import styles from "./PointLayers.module.scss";
 import type { PointLayerConfig } from "../../types";
 import { usePointFilter } from "../../api/queries/filter";
 import { useFilteredPoints, usePointFile } from "../../api/queries/points";
+import { LayerPopup } from "../FeaturePopup/FeaturePopup";
 
 interface GenericPointMarkersProps {
   config: PointLayerConfig;
@@ -95,21 +96,6 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ config
   // Nothing to draw until the layer's file arrives
   if (!data) return null;
 
-  // The title column's value, then every column with a value
-  const renderPopupContent = (feature: Feature<Point>) => (
-    <div>
-      <h3>{String(feature.properties?.[config.popupConfig.titleField] || "")}</h3>
-      {Object.entries(feature.properties ?? {})
-        .filter(([, value]) => value !== null && value !== undefined && value !== "")
-        .map(([key, value]) => (
-          <React.Fragment key={key}>
-            <strong>{key}:</strong> {String(value)}
-            <br />
-          </React.Fragment>
-        ))}
-    </div>
-  );
-
   // const createClusterIcon = (cluster: L.MarkerCluster) =>
   //     L.divIcon({
   //         html: `
@@ -184,7 +170,13 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ config
                 position={[latitude, longitude]}
                 icon={customIcon}
               >
-                <Popup>{renderPopupContent(feature)}</Popup>
+                <Popup>
+                  <LayerPopup
+                    properties={feature.properties ?? {}}
+                    popup={config.popup}
+                    layerName={config.name}
+                  />
+                </Popup>
               </Marker>
             );
           })}

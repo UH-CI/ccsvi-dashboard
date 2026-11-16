@@ -1,9 +1,11 @@
 """Vector layer pipeline: turns original GIS downloads into the GeoJSON the database loads and the
-map tiles the website draws.
+map tiles and point files the website draws.
 
-Each layer is unzipped, cleaned (reprojected, repaired, rounded to about 1 m), tiled and checked.
-Files are built in a staging folder and only moved live once every layer passes. Each run writes
-a report to reports/. The layers are the ones in config/layers/lines.json and polygons.json.
+Each line and polygon layer is unzipped, cleaned (reprojected, repaired, rounded to about 1 m), tiled
+and checked. Each point layer is unzipped and reprojected at full precision, or made as one pin per
+shape of a line or polygon layer, and checked; points get no tiles. Files are built in a staging
+folder and only moved live once every layer passes. Each run writes a report to reports/. The layers
+are the ones in config/layers/lines.json, polygons.json and points.json.
 
 python -m pipeline.vector_layers [--only <layer id>]
 """
@@ -19,7 +21,7 @@ from pathlib import Path
 import settings
 from pipeline.build_tools import file_size, run, write_report
 from pipeline.check_layers import source_problems
-from registry import shape_layers, stop_on
+from registry import point_layers, shape_layers, stop_on
 
 RAW_DIR = settings.RAW_DIR
 GEOJSON_DIR = settings.HAZARD_GEOJSON_DIR
@@ -88,10 +90,27 @@ def process(layer, source, out, columns):
          "-lco", f"COORDINATE_PRECISION={DECIMALS}"])
 
 
-# One map pin inside each shape
-def make_markers(layer, geojson, markers, columns):
-    columns = ", ".join(f'"{c}"' for c in columns)
-    sql = f'SELECT {columns}, ST_PointOnSurface(geometry) AS geometry FROM "{layer.file}"'
+# A file's first layer as ogrinfo describes it: feature count, columns, ...
+def layer_info(path):
+    return json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", path]))["layers"][0]
+
+
+def column_names(path):
+    return [f["name"] for f in layer_info(path)["fields"]]
+
+
+def check_bounds(points):
+    lons = [p[0] for p in points]
+    lats = [p[1] for p in points]
+    box = (min(lons), min(lats), max(lons), max(lats))
+    inside = HAWAII[0] <= box[0] and HAWAII[1] <= box[1] and box[2] <= HAWAII[2] and box[3] <= HAWAII[3]
+    check(inside, "bounds: {:.2f}, {:.2f} to {:.2f}, {:.2f}".format(*box))
+
+
+# One map pin inside each shape of a built line or polygon file, with all its columns
+def make_markers(source_file, geojson, markers):
+    columns = ", ".join(f'"{c}"' for c in column_names(geojson))
+    sql = f'SELECT {columns}, ST_PointOnSurface(geometry) AS geometry FROM "{source_file}"'
     markers.unlink(missing_ok=True)
     run(["ogr2ogr", "-f", "GeoJSON", markers, geojson, "-dialect", "SQLite", "-sql", sql,
          "-a_srs", "EPSG:4326", "-nlt", "POINT", "-nln", markers.stem,
@@ -140,13 +159,7 @@ def check_outputs(layer, source, geojson, row):
     check(invalid == 0, f"invalid shapes: {invalid}")
 
     features = json.loads(geojson.read_text())["features"]
-    points = [p for f in features for p in corners(f["geometry"]["coordinates"])]
-
-    lons = [p[0] for p in points]
-    lats = [p[1] for p in points]
-    box = (min(lons), min(lats), max(lons), max(lats))
-    inside = HAWAII[0] <= box[0] and HAWAII[1] <= box[1] and box[2] <= HAWAII[2] and box[3] <= HAWAII[3]
-    check(inside, "bounds: {:.2f}, {:.2f} to {:.2f}, {:.2f}".format(*box))
+    check_bounds([p for f in features for p in corners(f["geometry"]["coordinates"])])
     return output["n"]
 
 
@@ -160,8 +173,7 @@ def build(layer, row):
     with tempfile.TemporaryDirectory() as tmp:
         source = unzip(layer, tmp)
         source_measure = measure(source, source.stem, layer.shape, layer.row_filter)
-        info = json.loads(run(["ogrinfo", "-json", "-so", "-ro", "-al", source]))["layers"][0]
-        source_columns = [f["name"] for f in info["fields"]]
+        source_columns = column_names(source)
         missing = sorted(set(layer.keep or []) - set(source_columns))
         check(not missing, f"kept columns missing from the source: {', '.join(missing) or 'none'}")
         columns = layer.keep or source_columns
@@ -176,16 +188,59 @@ def build(layer, row):
 
     count = check_outputs(layer, source_measure, geojson, row)
     check_tiles(layer, geojson, tiles, count, row)
-    moves = [(geojson, GEOJSON_DIR / geojson.name), (tiles, TILES_DIR / tiles.name)]
-
-    if layer.markers:
-        markers = STAGING_DIR / f"{layer.file}_points.geojson"
-        make_markers(layer, geojson, markers, columns)
-        row["map_files"] = file_size(tiles, markers)
-        moves.append((markers, POINT_DIR / markers.name))
-
     row["time"] = f"{time.time() - began:.0f} s"
-    return moves
+    return [(geojson, GEOJSON_DIR / geojson.name), (tiles, TILES_DIR / tiles.name)]
+
+
+# Reproject and keep rows/columns; drop rows with no point. Full precision: rounding would move some
+# points near an area's edge into the next area
+def process_points(layer, source, out, columns):
+    columns = ", ".join(f'"{c}"' for c in columns)
+    sql = f'SELECT {columns}, geometry FROM "{source.stem}" WHERE geometry IS NOT NULL'
+    if layer.row_filter:
+        sql += f" AND ({layer.row_filter})"
+    out.unlink(missing_ok=True)
+    run(["ogr2ogr", "-f", "GeoJSON", out, source, "-dialect", "SQLite", "-sql", sql,
+         "-t_srs", "EPSG:4326", "-nlt", "POINT", "-nln", layer.file])
+
+
+# Stops the run unless there are points, all in Hawaii, each with its own id values
+def check_points(layer, out, source_count, row):
+    features = json.loads(out.read_text())["features"]
+    check(len(features) > 0, f"points: {len(features)} (source {source_count})")
+    row["shapes"] = f"{source_count:,} -> {len(features):,}"
+    check_bounds([f["geometry"]["coordinates"] for f in features])
+    ids = [tuple(f["properties"].get(column) for column in layer.id_fields) for f in features]
+    without = sum(None in id_ for id_ in ids)
+    check(without == 0, f"points without {', '.join(layer.id_fields)}: {without}")
+    shared = len(ids) - len(set(ids))
+    check(shared == 0, f"points sharing {', '.join(layer.id_fields)} with another: {shared}")
+
+
+# Builds one point layer in the staging folder, from its zip or as pins on a line or polygon layer
+# (that layer's file from this run if it was built, else the live one); returns the file to move live
+def build_points(layer, row, shape_files):
+    print(layer.id)
+    out = STAGING_DIR / f"{layer.file}.geojson"
+    began = time.time()
+    if layer.markers_of:
+        source_file = shape_files[layer.markers_of]
+        staged = STAGING_DIR / f"{source_file}.geojson"
+        source = staged if staged.exists() else GEOJSON_DIR / staged.name
+        make_markers(source_file, source, out)
+        source_count = layer_info(source)["featureCount"]
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            source = unzip(layer, tmp)
+            source_columns = column_names(source)
+            missing = sorted(set(layer.keep or []) - set(source_columns))
+            check(not missing, f"kept columns missing from the source: {', '.join(missing) or 'none'}")
+            process_points(layer, source, out, layer.keep or source_columns)
+            source_count = layer_info(source)["featureCount"]
+    check_points(layer, out, source_count, row)
+    row["map_files"] = file_size(out)
+    row["time"] = f"{time.time() - began:.0f} s"
+    return [(out, POINT_DIR / out.name)]
 
 
 REPORT_COLUMNS = [("Layer", "layer"), ("Shapes in source -> kept", "shapes"), ("Length or area kept", "kept"),
@@ -194,21 +249,24 @@ REPORT = ("Vector layers pipeline report", "vector_layers", REPORT_COLUMNS)
 
 
 def main():
-    found = shape_layers()
+    shapes, points = shape_layers(), point_layers()
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--only", choices=[layer.id for layer in found], help="process just this layer")
+    parser.add_argument("--only", choices=[layer.id for layer in shapes + points], help="process just this layer")
     args = parser.parse_args()
-    chosen = [layer for layer in found if args.only in (None, layer.id)]
-    stop_on(source_problems(chosen))
+    chosen_shapes = [layer for layer in shapes if args.only in (None, layer.id)]
+    # Rebuilding a line or polygon layer also rebuilds the pins made from it
+    chosen_points = [layer for layer in points if args.only in (None, layer.id, layer.markers_of)]
+    stop_on(source_problems(chosen_shapes + [layer for layer in chosen_points if layer.zips]))
+    shape_files = {layer.id: layer.file for layer in shapes}
 
     GEOJSON_DIR.mkdir(exist_ok=True)
     STAGING_DIR.mkdir(exist_ok=True)
     rows, moves = [], []
     try:
-        for layer in chosen:
+        for layer in chosen_shapes + chosen_points:
             row = {"layer": layer.id, "notes": []}
             rows.append(row)
-            moves += build(layer, row)
+            moves += build_points(layer, row, shape_files) if layer in chosen_points else build(layer, row)
     except (SystemExit, subprocess.CalledProcessError) as failure:
         row["notes"].append(f"{failure}; run stopped, nothing installed")
         write_report(*REPORT, rows)

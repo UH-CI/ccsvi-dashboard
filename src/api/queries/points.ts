@@ -8,7 +8,7 @@ import type { PointCriteria } from "./filter";
 export const pointFileQuery = (layerId: string) =>
   queryOptions({
     queryKey: ["point-file", layerId],
-    queryFn: () => getPointFile(pointLayer(layerId).filePath),
+    queryFn: () => getPointFile(pointLayer(layerId).file),
     meta: { failureMessage: layerFailureMessage(pointLayer(layerId).name) },
   });
 

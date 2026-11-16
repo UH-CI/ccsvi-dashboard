@@ -11,27 +11,10 @@ from pathlib import Path
 import asyncpg
 
 import settings
-from registry import shape_layers
+from registry import point_layers, shape_layers
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 PUBLIC_DATA = REPO_ROOT / "public" / "data"
-
-# (filename, layer_id matching pointLayers.ts, name property key)
-POINT_LAYERS = [
-    ("Fire_Stations_(Statewide).geojson",           "fire_stations",     "name"),
-    ("Hospitals.geojson",                           "hospitals",         "name"),
-    ("Police_Stations_(Statewide).geojson",         "police_stations",   "name"),
-    ("emergency_shelters.geojson",                  "shelters",          "BUSNAME"),
-    ("Preschools.geojson",                          "preschools",        "name"),
-    ("Public_Schools.geojson",                      "public_schools",    "sch_name"),
-    ("Private_Schools.geojson",                     "private_schools",   "school"),
-    ("National_Bridge_Inventory.geojson",           "bridges",           "structure_"),
-    ("HI_Onsite_Sewage_Disposal_Systems.geojson",   "sewage",            "island"),
-    ("Wastewater_Treatment_Plants.geojson",         "wastewater_plant",  "wwtp_name"),
-    ("Airports_points.geojson",                     "airports",          "airport_na"),
-    ("Commercial_Harbors_points.geojson",           "commercial_harbors", "harbor_nam"),
-    ("Small_Boat_Harbors_Ramps.geojson",            "small_boat_harbors", "name"),
-]
 
 
 async def load_block_group_geoms(conn: asyncpg.Connection) -> int:
@@ -87,8 +70,9 @@ async def load_points(conn: asyncpg.Connection) -> int:
     await conn.execute("TRUNCATE points RESTART IDENTITY")
     total = 0
 
-    for filename, layer_id, name_field in POINT_LAYERS:
-        with open(settings.POINT_DATA_DIR / filename) as f:
+    for layer in point_layers():
+        layer_id = layer.id
+        with open(layer.data_file) as f:
             fc = json.load(f)
 
         rows = []
@@ -97,7 +81,7 @@ async def load_points(conn: asyncpg.Connection) -> int:
             if not geom:
                 continue
             props = feat.get("properties") or {}
-            rows.append((layer_id, props.get(name_field), json.dumps(props), json.dumps(geom)))
+            rows.append((layer_id, props.get(layer.name_column), json.dumps(props), json.dumps(geom)))
 
         await conn.executemany(
             "INSERT INTO points (layer_id, name, props, geom) "

@@ -541,7 +541,6 @@
       "file": "Airports",
       "source": {"zips": ["polygon/Airports.zip"], "inner": "Airports.shp"},
       "keep": ["objectid", "airport_co", "airport_na"],
-      "markers": true,
       "popup": {"title": "airport_na", "fields": [{"key": "airport_co", "label": "Airport Code"}]}
     },
     {
@@ -556,7 +555,6 @@
       "file": "Commercial_Harbors",
       "source": {"zips": ["polygon/Commercial_Harbors.zip"], "inner": "Commercial_Harbors.shp"},
       "keep": ["objectid", "harbor_nam", "berth_leng", "yard_area", "shed_area", "channel_de", "turn_basin"],
-      "markers": true,
       "popup": {
         "title": "harbor_nam",
         "fields": [

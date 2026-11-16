@@ -117,8 +117,8 @@ export const getFilterResults = (
 };
 
 // One point layer's file from the data folder
-export const getPointFile = (filePath: string) =>
-  fetchJson<FeatureCollection<Point>>(dataUrl(`point_data/${filePath}`));
+export const getPointFile = (file: string) =>
+  fetchJson<FeatureCollection<Point>>(dataUrl(`point_data/${file}.geojson`));
 
 // Fails when a hazard layer's map file can't be reached, without downloading it
 export const checkHazardFile = async (file: string): Promise<null> => {

@@ -7,7 +7,7 @@ import { hazardFileQuery } from "../../api/queries/hazardFile";
 import { addClickTarget, CLICK_ORDER } from "../../utils/mapClicks";
 import { ensurePane } from "../../utils/mapPanes";
 import { dataUrl } from "../../api/client";
-import { FeaturePopup } from "../FeaturePopup/FeaturePopup";
+import { LayerPopup } from "../FeaturePopup/FeaturePopup";
 import type { SubHazardLayerConfig } from "../../types";
 
 interface HazardLayerRendererProps {
@@ -57,7 +57,11 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer,
 
     const removeClick = addClickTarget(map, CLICK_ORDER.hazard, (latlng) => {
       const features = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5).get(file) ?? [];
-      return features.length > 0 ? popupHtml(features[0].feature.props, popup, name) : null;
+      return features.length > 0
+        ? renderToStaticMarkup(
+            <LayerPopup properties={features[0].feature.props} popup={popup} layerName={name} />,
+          )
+        : null;
     });
 
     return () => {
@@ -67,26 +71,4 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer,
   }, [map, file, popup, color, name]);
 
   return null;
-};
-
-// Heading: the title column's value, else the layer name. Then the hand-labelled fields, then every
-// other column with a value under its raw name
-const popupHtml = (
-  props: Record<string, unknown>,
-  popup: SubHazardLayerConfig["popup"],
-  layerName: string,
-) => {
-  const title = popup?.title ? props[popup.title] : undefined;
-  const listed = popup?.fields ?? [];
-  const rest = Object.keys(props)
-    .filter((key) => props[key] != null && key !== popup?.title)
-    .filter((key) => !listed.some((field) => field.key === key))
-    .map((key) => ({ key, label: key }));
-  return renderToStaticMarkup(
-    <FeaturePopup
-      metadata={[String(title || layerName)]}
-      properties={props}
-      fields={[...listed, ...rest]}
-    />,
-  );
 };

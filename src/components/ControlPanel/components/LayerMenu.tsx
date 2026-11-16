@@ -9,10 +9,14 @@ import { MapTabSelector } from "./MapTabSelector";
 import { useMenuMap } from "../useMenuMap";
 import { LayerToggleItem } from "./LayerToggleItem";
 import { LayerToggleGroup } from "./LayerToggleGroup";
-import type { LayerMenu as LayerMenuConfig } from "../../../config/layerMenus";
 import { subLayerId } from "../../../config/layerFiles";
 import { resolveLayerMenu } from "../../../utils/layerMenus";
-import type { LayerKind, MenuGroupEntry, MenuLayer } from "../../../utils/layerMenus";
+import type {
+  LayerKind,
+  LayerMenu as LayerMenuConfig,
+  MenuGroupEntry,
+  MenuLayer,
+} from "../../../utils/layerMenus";
 
 type LayerMenuProps = MenuProps & { menu: LayerMenuConfig };
 
@@ -43,7 +47,7 @@ const MENU_ACTIONS: Record<
 // Groups and layers share one open/closed record; this keeps a group's entry apart from layer ids
 const groupExpandKey = (label: string) => `__group__${label}`;
 
-// Draws one menu from src/config/layerMenus.ts
+// Draws one menu from config/layers/menus.json
 export const LayerMenu: React.FC<LayerMenuProps> = ({ menu, ...props }) => {
   const visibleMaps = useVisibleMaps();
   const [mapId, setPreferredMapId] = useMenuMap(visibleMaps);

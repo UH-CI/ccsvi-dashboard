@@ -34,14 +34,25 @@ FIELDS = {
     "polygons": {
         "layer": LAYER_FIELDS,
         "sub": SUB_LAYER_FIELDS,
-        "file": ({"file", "source"}, {"keep", "rowFilter", "tileFlags", "popup", "markers"}),
+        "file": ({"file", "source"}, {"keep", "rowFilter", "tileFlags", "popup"}),
     },
     "lines": {
         "layer": LAYER_FIELDS,
         "sub": SUB_LAYER_FIELDS,
         "file": ({"file", "source"}, {"keep", "rowFilter", "tileFlags", "popup"}),
     },
+    # Point layers have no sub-layers; the popup's title column also names each point
+    "points": {
+        "layer": (LAYER_FIELDS[0], LAYER_FIELDS[1] - {"subLayers"}),
+        "sub": SUB_LAYER_FIELDS,
+        "file": ({"file", "source", "idFields", "popup"}, {"keep", "rowFilter"}),
+    },
 }
+
+# The menus in menus.json and their groups, as (required, optional)
+MENU_IDS = {"criticalInfrastructure", "locations", "hazards"}
+MENU_FIELDS = ({"id", "title", "description", "items"}, {"popupTitle", "hideCheckboxes"})
+GROUP_FIELDS = ({"group", "items"}, {"description", "icon", "color"})
 
 
 @dataclass
@@ -68,7 +79,21 @@ class ShapeLayer:
     keep: list | None  # columns to keep; None keeps all
     row_filter: str | None  # SQL condition for rows to keep; None keeps all
     tile_flags: list  # extra tippecanoe settings
-    markers: bool  # also make one map pin per shape
+    popup_columns: list  # the columns the popup names
+
+
+@dataclass
+class PointLayer:
+    id: str  # points.layer_id
+    file: str  # output file stem
+    data_file: Path  # the GeoJSON the map and the loader read
+    zips: list | None  # zips, outermost first, starting inside RAW_DIR; None for pins made from another layer
+    inner: str | None  # shapefile inside the last zip
+    markers_of: str | None  # the line or polygon layer whose shapes each get one pin
+    keep: list | None  # columns to keep; None keeps all
+    row_filter: str | None  # SQL condition for rows to keep; None keeps all
+    id_fields: list  # the columns that together tell one point from another
+    name_column: str  # the column that names each point
     popup_columns: list  # the columns the popup names
 
 
@@ -101,12 +126,18 @@ def field_problems(kind, entry, required, optional):
     if unknown := entry.keys() - required - optional:
         problems.append(f"unknown field {', '.join(sorted(unknown))}")
     source = entry.get("source")
-    if source is not None and (
-        source.keys() != {"zips", "inner"} or not source["zips"] or kind == "rasters" and len(source["zips"]) != 1
-    ):
-        problems.append("source must be zips (exactly one for a raster) and the file inside the last")
-    if "keep" in entry and (outside := set(popup_columns(entry)) - set(entry["keep"])):
-        problems.append(f"popup column not in keep: {', '.join(sorted(outside))}")
+    from_zips = (
+        source is not None and source.keys() == {"zips", "inner"} and source["zips"]
+        and not (kind == "rasters" and len(source["zips"]) != 1)
+    )
+    pins = kind == "points" and source is not None and source.keys() == {"markersOf"}
+    if source is not None and not (from_zips or pins):
+        problems.append("source must be zips (exactly one for a raster) and the file inside the last, or markersOf for points")
+    named = set(popup_columns(entry)) | set(entry.get("idFields", []))
+    if "keep" in entry and (outside := named - set(entry["keep"])):
+        problems.append(f"popup or id column not in keep: {', '.join(sorted(outside))}")
+    if kind == "points" and "popup" in entry and "title" not in entry["popup"]:
+        problems.append("popup has no title; its column names each point")
     return problems
 
 
@@ -132,10 +163,44 @@ def static_problems(files):
             if parent or "subLayers" not in entry:
                 required, optional = required | fields["file"][0], optional | fields["file"][1]
             problems += [f"{id_}: {problem}" for problem in field_problems(kind, entry, required, optional)]
-    # Rasters and the shape layers are written to different folders
-    for kinds in (["rasters"], list(SHAPES)):
+    # Rasters, the shape layers and the points are written to different folders
+    for kinds in (["rasters"], list(SHAPES), ["points"]):
         names = [entry["file"] for kind in kinds for _, entry, _ in live_files(files[kind])]
         problems += [f"{name}: file used twice" for name in repeats(names)]
+    # Pins are made from a switched-on line or polygon layer with its own file, which must keep the columns the pins name
+    shapes = {entry["id"]: entry for kind in SHAPES for _, entry, parent in live_files(files[kind]) if parent is None}
+    for id_, entry, _ in live_files(files["points"]):
+        source_id = entry.get("source", {}).get("markersOf")
+        named = set(popup_columns(entry)) | set(entry.get("idFields", []))
+        if source_id is not None and source_id not in shapes:
+            problems.append(f"{id_}: markersOf {source_id} is not a switched-on line or polygon layer with its own file")
+        elif source_id is not None and "keep" in shapes[source_id] and (outside := named - set(shapes[source_id]["keep"])):
+            problems.append(f"{id_}: popup or id column not kept by {source_id}: {', '.join(sorted(outside))}")
+    return problems
+
+
+# Problems in menus.json: every switched-on top-level layer is listed exactly once, and only those
+def menu_problems(menus, files):
+    live = [entry["id"] for layers in files.values() for entry in layers if not entry.get("off")]
+    listed, groups = [], []
+    problems = [f"menu {id_}: id used twice" for id_ in repeats([menu.get("id") for menu in menus])]
+    for menu in menus:
+        problems += [f"menu {menu.get('id')}: {p}" for p in field_problems("menus", menu, *MENU_FIELDS)]
+        if menu.get("id") not in MENU_IDS:
+            problems.append(f"menu {menu.get('id')}: id must be one of {', '.join(sorted(MENU_IDS))}")
+        for item in menu.get("items", []):
+            if isinstance(item, str):
+                listed.append(item)
+                continue
+            groups.append(item.get("group"))
+            problems += [f"group {item.get('group')}: {p}" for p in field_problems("menus", item, *GROUP_FIELDS)]
+            if not item.get("items"):
+                problems.append(f"group {item.get('group')}: has no layers")
+            listed += item.get("items", [])
+    problems += [f"group {group}: label used twice" for group in repeats(groups)]
+    problems += [f"{id_}: listed in the menus twice" for id_ in repeats(listed)]
+    problems += [f"{id_}: listed in the menus, but no switched-on layer has that id" for id_ in sorted(set(listed) - set(live))]
+    problems += [f"{id_}: in no menu" for id_ in sorted(set(live) - set(listed))]
     return problems
 
 
@@ -146,10 +211,11 @@ def stop_on(problems):
         raise SystemExit(f"{len(problems)} problem(s), listed above")
 
 
-# Every layer file, once they all pass the static checks
+# Every layer file, once they and menus.json all pass the static checks
 def read_checked():
     files = {kind: json.loads((LAYERS_DIR / f"{kind}.json").read_text())["layers"] for kind in FIELDS}
-    stop_on(static_problems(files))
+    menus = json.loads((LAYERS_DIR / "menus.json").read_text())["menus"]
+    stop_on(static_problems(files) + menu_problems(menus, files))
     return files
 
 
@@ -193,11 +259,30 @@ def shape_layers():
             keep=entry.get("keep"),
             row_filter=entry.get("rowFilter"),
             tile_flags=entry.get("tileFlags", []),
-            markers=entry.get("markers", False),
             popup_columns=popup_columns(entry),
         )
         for kind, shape in SHAPES.items()
         for id_, entry, parent in live_files(files[kind])
+    ]
+
+
+# Every switched-on point layer
+def point_layers():
+    return [
+        PointLayer(
+            id=id_,
+            file=entry["file"],
+            data_file=settings.POINT_DATA_DIR / f"{entry['file']}.geojson",
+            zips=entry["source"].get("zips"),
+            inner=entry["source"].get("inner"),
+            markers_of=entry["source"].get("markersOf"),
+            keep=entry.get("keep"),
+            row_filter=entry.get("rowFilter"),
+            id_fields=entry["idFields"],
+            name_column=entry["popup"]["title"],
+            popup_columns=popup_columns(entry),
+        )
+        for id_, entry, _ in live_files(read_checked()["points"])
     ]
 
 

@@ -96,8 +96,6 @@ SELECT
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'bridges_count') AS bridges_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.key = 'sewage_count') AS sewage_count,
-    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'wastewater_plant_count') AS wastewater_plant_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'airports_count') AS airports_count,
@@ -151,8 +149,6 @@ SELECT
         FILTER (WHERE m.key = 'private_schools_count_homelands') AS private_schools_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'bridges_count_homelands') AS bridges_count_homelands,
-    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
-        FILTER (WHERE m.key = 'sewage_count_homelands') AS sewage_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'wastewater_plant_count_homelands') AS wastewater_plant_count_homelands,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)

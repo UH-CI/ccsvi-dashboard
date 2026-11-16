@@ -2,7 +2,8 @@ interface Switchable {
   off?: boolean;
 }
 
-const on = <V>(items: V[]): V[] => items.filter((item) => !(item as Switchable).off);
+// A list without its switched-off entries ("off": true), one level only
+export const on = <V>(items: V[]): V[] => items.filter((item) => !(item as Switchable).off);
 
 // A sub-layer's id: "<parent>.<sub>"
 export const subLayerId = (parentId: string, subId: string) => `${parentId}.${subId}`;
