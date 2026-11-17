@@ -104,9 +104,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({ activeDataset, dataset
   }, [activeDataset, datasetInfo]);
 
   const metadata = datasetInfo?.metadata;
-  const metadataText = metadata
-    ? `Source: ${metadata.citation}, Table ${metadata.table_id.split(".")[1]}`
-    : null;
+  const metadataText = metadata ? `Source: ${metadata.citation}` : null;
 
   if (!activeDataset) {
     return null;

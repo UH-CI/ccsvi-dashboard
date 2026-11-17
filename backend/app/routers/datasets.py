@@ -28,11 +28,11 @@ class DatasetTable(BaseModel):
     rows: list[TableRow]
 
 
+# A census table's source: its citation as the Census Bureau recommends it, its years and its page
 class DatasetMetadata(BaseModel):
-    table_id: str
-    program: str
-    period: str
     citation: str
+    period: str
+    link: str | None = None
 
 
 class DatasetRecord(BaseModel):

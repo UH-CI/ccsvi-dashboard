@@ -9,6 +9,13 @@ from registry import dataset_entries, load_dataset_config
 
 from . import census_transform, io_utils, proportions, recipes
 
+# Each Census product in a raw file name, as the Census Bureau names it in citations
+CENSUS_PRODUCTS = {
+    "ACSDT5Y": "American Community Survey 5-Year Estimates Detailed Tables",
+    "ACSST5Y": "American Community Survey 5-Year Estimates Subject Tables",
+    "DECENNIALPL": "Decennial Census Redistricting Data (Public Law 94-171)",
+}
+
 
 # Where a dataset's raw file sits: raw_dir/<alias>/<file name from original_file_path>
 def raw_file_path(raw_dir: str, config: dict) -> str:
@@ -81,24 +88,18 @@ def build_file_blocks(notes_wb_path: str) -> dict:
     return file_blocks
 
 
-def census_metadata(file_name: str) -> dict:
-    match = re.fullmatch(r"((ACSDT5Y|ACSST5Y|DECENNIALPL)(\d{4})\.\w+)-Data\.csv", file_name)
+# A census table's citation in the Census Bureau's recommended form, the years it covers and its page on
+# data.census.gov, from its title and raw file name
+def census_metadata(file_name: str, official_table_title: str) -> dict:
+    match = re.fullmatch(r"((ACSDT5Y|ACSST5Y|DECENNIALPL)(\d{4})\.(\w+))-Data\.csv", file_name)
     if not match:
         raise ValueError(f"Can't read the Census product and year from raw file name {file_name!r}")
-    table_id, product, year = match.group(1), match.group(2), int(match.group(3))
-
-    if product == "DECENNIALPL":
-        return {
-            "table_id": table_id,
-            "program": f"{year} Census",
-            "period": str(year),
-            "citation": f"U.S. Census Bureau, {year} Census Redistricting Data (Public Law 94-171)",
-        }
+    table_id, product, year, table = match.group(1), match.group(2), int(match.group(3)), match.group(4)
+    product_name = CENSUS_PRODUCTS[product]
     return {
-        "table_id": table_id,
-        "program": "ACS 5-Year",
-        "period": f"{year - 4}–{year}",
-        "citation": f"U.S. Census Bureau, {year - 4}-{year} American Community Survey 5-Year Estimates",
+        "citation": f'U.S. Census Bureau, "{official_table_title}," {product_name}, Table {table}, {year}',
+        "period": str(year) if product == "DECENNIALPL" else f"{year - 4}–{year}",
+        "link": f"https://data.census.gov/table/{table_id}",
     }
 
 
@@ -112,7 +113,7 @@ def dataset_outputs(dataset_configs: list) -> list:
             "hawaiian_homelands": output["hawaiian_homelands"],
             "percent_denominator": output["percent_denominator"],
             "skip_metric_column": output.get("skip_metric_column"),
-            "metadata": census_metadata(os.path.basename(config["original_file_path"])),
+            "metadata": census_metadata(os.path.basename(config["original_file_path"]), config["official_table_title"]),
             "counts_only": output.get("counts_only", False),
             "population_column": output.get("population_column"),
             "values_are_percentages": output.get("values_are_percentages", False),

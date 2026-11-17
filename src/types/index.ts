@@ -46,13 +46,6 @@ export interface GeographyMetadata {
 
 export type GeographiesData = Record<string, GeographyMetadata>;
 
-export interface DatasetMetadata {
-  table_id: string;
-  program: string;
-  period: string;
-  citation: string;
-}
-
 export interface BlockGroupProperties {
   objectid: number;
   geoid20: string;
@@ -217,7 +210,8 @@ export interface CatalogDataset {
   source_type: string;
   // The map layer a point or raster dataset belongs to; null for census
   layer_id: string | null;
-  metadata?: DatasetMetadata | null;
+  // A census table's citation, in the Census Bureau's recommended form
+  metadata?: Extract<LayerMetadata, { citation: string }> | null;
 }
 
 export type DatasetCatalog = Record<string, CatalogDataset>;
