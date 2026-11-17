@@ -33,7 +33,9 @@ export const POLYGON_LAYERS = {
   censusBlockGroups: {
     name: "Census Block Groups",
     metadata: {
-      citation: "U.S. Census Bureau; Hawaiʻi Statewide GIS Program",
+      author: "U.S. Census Bureau",
+      title: "2020 Census Block Groups",
+      publisher: "Hawaiʻi Statewide GIS Program",
       period: "September 2021",
       link: "https://geoportal.hawaii.gov/datasets/HiStateGIS::2020-census-block-groups/about",
     },
@@ -84,7 +86,13 @@ export const POLYGON_LAYERS = {
 
   hawaiianHomelands: {
     name: "Hawaiian Homelands",
-    metadata: { citation: "U.S. Census Bureau, Geography Division", period: "2010" },
+    metadata: {
+      author: "U.S. Census Bureau, Geography Division",
+      title:
+        "TIGER/Line Shapefile, 2010, 2010 State, Hawaiʻi, 2010 Census American Indian/Alaska Native/Native Hawaiian Area (AIANNH) State-based",
+      publisher: "U.S. Census Bureau",
+      period: "2010",
+    },
     geoidProperty: "GEOID10",
     popup: {
       title: "Hawaiian Homeland",
@@ -133,7 +141,9 @@ export const POLYGON_LAYERS = {
   countyBoundaries: {
     name: "County Boundaries",
     metadata: {
-      citation: "U.S. Census Bureau; Hawaiʻi Statewide GIS Program",
+      author: "U.S. Census Bureau",
+      title: "2020 Census County Boundaries",
+      publisher: "Hawaiʻi Statewide GIS Program",
       period: "September 2021",
       link: "https://geoportal.hawaii.gov/datasets/HiStateGIS::2020-census-county-boundaries/about",
     },

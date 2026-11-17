@@ -25,8 +25,10 @@ KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,62}")
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
 LAYER_FIELDS = ({"id", "name", "icon", "color"}, {"description", "metadata", "off", "subLayers"})
 SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "metadata", "off"})
-# Where a layer's data comes from; a sub-layer's metadata fields replace its parent's
-METADATA_FIELDS = ({"citation", "period"}, {"note", "link"})
+# Where a layer's data comes from: the publisher's own citation where it gives one, else the fields an
+# APA citation is built from. A sub-layer's metadata fields replace its parent's
+METADATA_FIELDS = {"period", "citation", "author", "title", "publisher", "note", "link"}
+APA_FIELDS = {"author", "title", "publisher"}
 FIELDS = {
     "rasters": {
         "layer": (LAYER_FIELDS[0] | {"units", "opacity"}, LAYER_FIELDS[1]),
@@ -143,6 +145,15 @@ def field_problems(kind, entry, required, optional):
     return problems
 
 
+# A layer's metadata, with its parent's, needs a period and either its own citation or every APA field
+def metadata_problems(metadata):
+    problems = [] if "period" in metadata else ["missing period"]
+    own, apa = "citation" in metadata, APA_FIELDS & metadata.keys()
+    if own and apa or not own and apa != APA_FIELDS:
+        problems.append("needs either citation, or author, title and publisher")
+    return problems
+
+
 # A comma or colon in an id would break the shared link; a dot in a parent id would break splitting "<parent>.<sub>"
 def id_problems(entry, parent):
     banned = ",:" if parent else ",:."
@@ -166,8 +177,10 @@ def static_problems(files):
                 required, optional = required | fields["file"][0], optional | fields["file"][1]
             problems += [f"{id_}: {problem}" for problem in field_problems(kind, entry, required, optional)]
             if "metadata" in entry:
-                metadata = {**(parent or {}).get("metadata", {}), **entry["metadata"]}
-                problems += [f"{id_}: metadata {problem}" for problem in field_problems("metadata", metadata, *METADATA_FIELDS)]
+                problems += [f"{id_}: metadata {p}" for p in field_problems("metadata", entry["metadata"], set(), METADATA_FIELDS)]
+            metadata = {**(parent or {}).get("metadata", {}), **entry.get("metadata", {})}
+            if "file" in entry and metadata:
+                problems += [f"{id_}: metadata {problem}" for problem in metadata_problems(metadata)]
     # Rasters, the shape layers and the points are written to different folders
     for kinds in (["rasters"], list(SHAPES), ["points"]):
         names = [entry["file"] for kind in kinds for _, entry, _ in live_files(files[kind])]

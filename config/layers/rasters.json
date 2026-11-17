@@ -8,7 +8,8 @@
       "units": "ft",
       "opacity": 0.7,
       "metadata": {
-        "citation": "NOAA National Hurricane Center (NHC) Storm Surge Unit; NOAA Office for Coastal Management",
+        "author": "NOAA National Hurricane Center Storm Surge Unit; NOAA Office for Coastal Management",
+        "publisher": "National Oceanic and Atmospheric Administration",
         "period": "November 2018"
       },
       "subLayers": [
@@ -18,7 +19,7 @@
           "color": "#0000FF",
           "units": "ft",
           "opacity": 0.7,
-          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-1-slosh-moms-storm-surge-inundation/about"},
+          "metadata": {"title": "Category 1 SLOSH MOM Inundation (HIGH Tide Scenario)", "link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-1-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -33,7 +34,7 @@
           "color": "#0066FF",
           "units": "ft",
           "opacity": 0.7,
-          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-2-slosh-moms-storm-surge-inundation/about"},
+          "metadata": {"title": "Category 2 SLOSH MOM Inundation (HIGH Tide Scenario)", "link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-2-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -48,7 +49,7 @@
           "color": "#0099FF",
           "units": "ft",
           "opacity": 0.7,
-          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-3-slosh-moms-storm-surge-inundation/about"},
+          "metadata": {"title": "Category 3 SLOSH MOM Inundation (HIGH Tide Scenario)", "link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-3-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -63,7 +64,7 @@
           "color": "#00CCFF",
           "units": "ft",
           "opacity": 0.7,
-          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-4-slosh-moms-storm-surge-inundation/about"},
+          "metadata": {"title": "Category 4 SLOSH MOM Inundation (HIGH Tide Scenario)", "link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-4-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -83,7 +84,7 @@
       "units": "Susceptibility Index",
       "opacity": 0.7,
       "metadata": {
-        "citation": "U.S. Geological Survey",
+        "citation": "Belair, G.M., Jones, J.M., Martinez, S.N., Mirus, B.B., and Wood, N.J., 2024, Slope-Relief Threshold Landslide Susceptibility Models for the United States and Puerto Rico: U.S. Geological Survey data release, https://doi.org/10.5066/P13KAGU3.",
         "period": "June 2024",
         "link": "https://doi.org/10.5066/P13KAGU3"
       },

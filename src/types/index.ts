@@ -79,13 +79,12 @@ export interface CountyBoundariesProperties {
   POP20: number;
 }
 
-// Where a layer's data comes from, as the "metadata" field of the layer files
-export interface LayerMetadata {
-  citation: string;
-  period: string;
-  note?: string;
-  link?: string;
-}
+// Where a layer's data comes from, as the "metadata" field of the layer files: the publisher's own
+// citation where it gives one, else the fields an APA citation is built from
+export type LayerMetadata = { period: string; note?: string; link?: string } & (
+  | { citation: string }
+  | { author: string; title: string; publisher: string }
+);
 
 // A point layer as written in config/layers/points.json (the fields the app reads)
 export interface PointLayerConfig {
