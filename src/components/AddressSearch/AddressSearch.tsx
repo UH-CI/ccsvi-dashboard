@@ -19,6 +19,9 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // The text of the newest search; answers to older text arrive late and are ignored
+  const latestRef = useRef("");
 
   const providerRef = useRef(
     new OpenStreetMapProvider({
@@ -32,19 +35,28 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
 
   useEffect(() => () => { markerRef.current?.remove(); }, []);
 
-  const close = useCallback(() => {
-    setOpen(false);
+  // Empties the box and forgets any search still on its way
+  const clear = useCallback(() => {
+    latestRef.current = "";
     setQuery("");
     setResults([]);
+    setLoading(false);
+    setFailed(false);
   }, []);
 
-  const handleToggle = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpen((prev) => {
-      if (prev) { setQuery(""); setResults([]); }
-      return !prev;
-    });
-  }, []);
+  const close = useCallback(() => {
+    setOpen(false);
+    clear();
+  }, [clear]);
+
+  const handleToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (open) clear();
+      setOpen(!open);
+    },
+    [open, clear],
+  );
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -59,24 +71,35 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open, close]);
 
-  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!val.trim()) { setResults([]); return; }
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await (providerRef.current.search({ query: val }) as Promise<any[]>);
-        setResults((res ?? []).slice(0, 6));
-      } catch {
-        // ignore transient network errors
-      } finally {
-        setLoading(false);
+  const handleQueryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (!val.trim()) {
+        clear();
+        setQuery(val);
+        return;
       }
-    }, 350);
-  }, []);
+      setQuery(val);
+      latestRef.current = val;
+      debounceRef.current = setTimeout(async () => {
+        setLoading(true);
+        setFailed(false);
+        try {
+          const res = await providerRef.current.search({ query: val });
+          if (val === latestRef.current) setResults(res.slice(0, 6));
+        } catch {
+          if (val === latestRef.current) {
+            setResults([]);
+            setFailed(true);
+          }
+        } finally {
+          if (val === latestRef.current) setLoading(false);
+        }
+      }, 350);
+    },
+    [clear],
+  );
 
   const handleSelect = useCallback(
     (result: SearchResult) => {
@@ -128,7 +151,10 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
               ))}
             </ul>
           )}
-          {!loading && query.trim() && results.length === 0 && (
+          {!loading && failed && (
+            <div className={styles.status}>Search failed. Check your connection and try again.</div>
+          )}
+          {!loading && !failed && query.trim() && results.length === 0 && (
             <div className={styles.status}>No results found</div>
           )}
         </div>

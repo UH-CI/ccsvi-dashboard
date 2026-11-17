@@ -134,6 +134,7 @@ async def get_points_by_geoid(
         LEFT JOIN point_geographies pg ON pg.geoid = g.geoid
         LEFT JOIN points p ON p.id = pg.point_id AND p.layer_id = $1
         WHERE g.type = $2
+        ORDER BY p.name
         """,
         layer_id,
         area_type,

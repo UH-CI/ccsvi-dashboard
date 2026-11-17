@@ -31,6 +31,10 @@ export const MENU_KEYS = new Set(INDICATORS.map((i) => i.key));
 // The switched-on menu entry with this key
 export const indicatorOf = (key: string) => INDICATORS.find((i) => i.key === key);
 
+// The key of the switched-on indicator with this dataset and metric name, as links made before the keys name it
+export const keyOfDatasetMetric = (dataset: string, metric: string) =>
+  INDICATORS.find((i) => i.dataset === dataset && i.metric === metric)?.key;
+
 // The menu's name for an indicator
 export const sviLabel = (key: string): string => indicatorOf(key)!.label;
 

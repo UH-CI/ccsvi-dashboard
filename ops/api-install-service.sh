@@ -34,7 +34,8 @@ Type=simple
 User=$(whoami)
 WorkingDirectory=$BACKEND_DIR
 EnvironmentFile=/etc/ccsvi-api.env
-ExecStart=$PYTHON -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 3
+# Only nginx, on this machine, talks to the API; it isn't reachable from outside
+ExecStart=$PYTHON -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 3
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

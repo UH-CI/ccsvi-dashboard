@@ -31,7 +31,8 @@ EOF
 sudo tee /etc/nginx/sites-available/ccsvi > /dev/null <<EOF
 server {
     listen 80;
-    server_name 128.171.215.85;
+    # Answers on whatever address this VM is reached by
+    server_name _;
 
     location /api/tiles/cog/ {
         proxy_pass http://127.0.0.1:8000/api/tiles/cog/;

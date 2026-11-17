@@ -2,6 +2,8 @@
 
 The census, point-count and raster loaders each work out their numbers and hand them here.
 Each loader calls save_dataset inside its own conn.transaction(), so a dataset is saved whole or not at all.
+The tables start empty (rebuild.sh drops and recreates them first), so a dataset saved twice stops
+with a duplicate-key error.
 """
 
 import json
@@ -53,19 +55,12 @@ class Value:
     moe_derived: bool | None = None
 
 
-# Writes the dataset, drops its metrics that aren't in metrics, writes metrics and values; returns the number of values
+# Writes the dataset, its metrics and their values; returns the number of values
 async def save_dataset(conn: asyncpg.Connection, dataset: Dataset, metrics: list[Metric], values: list[Value]) -> int:
     await conn.execute(
         """
         INSERT INTO datasets (id, label, universe, hawaiian_homelands, source_type, layer_id, metadata)
         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
-        ON CONFLICT (id) DO UPDATE SET
-            label              = EXCLUDED.label,
-            universe           = EXCLUDED.universe,
-            hawaiian_homelands = EXCLUDED.hawaiian_homelands,
-            source_type        = EXCLUDED.source_type,
-            layer_id           = EXCLUDED.layer_id,
-            metadata           = EXCLUDED.metadata
         """,
         dataset.id,
         dataset.label,
@@ -76,22 +71,10 @@ async def save_dataset(conn: asyncpg.Connection, dataset: Dataset, metrics: list
         None if dataset.metadata is None else json.dumps(dataset.metadata),
     )
 
-    await conn.execute(
-        "DELETE FROM metrics WHERE dataset_id = $1 AND name != ALL($2::text[])",
-        dataset.id,
-        [m.name for m in metrics],
-    )
-
     await conn.executemany(
         """
         INSERT INTO metrics (dataset_id, name, display_order, has_moe, has_percentage, has_moe_pp, key)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (dataset_id, name) DO UPDATE SET
-            display_order  = EXCLUDED.display_order,
-            has_moe        = EXCLUDED.has_moe,
-            has_percentage = EXCLUDED.has_percentage,
-            has_moe_pp     = EXCLUDED.has_moe_pp,
-            key            = EXCLUDED.key
         """,
         [(dataset.id, m.name, m.display_order, m.has_moe, m.has_percentage, m.has_moe_pp, m.key) for m in metrics],
     )
@@ -122,13 +105,6 @@ async def save_dataset(conn: asyncpg.Connection, dataset: Dataset, metrics: list
                 moe_percentage_points, cv, moe_derived
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT (geoid, metric_id) DO UPDATE SET
-                absolute              = EXCLUDED.absolute,
-                margin_of_error       = EXCLUDED.margin_of_error,
-                percentage            = EXCLUDED.percentage,
-                moe_percentage_points = EXCLUDED.moe_percentage_points,
-                cv                    = EXCLUDED.cv,
-                moe_derived           = EXCLUDED.moe_derived
             """,
             rows[i : i + VALUE_CHUNK_SIZE],
         )

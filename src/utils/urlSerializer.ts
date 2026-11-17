@@ -1,6 +1,13 @@
 import type { MapState } from "../types";
 import { MAX_MAPS } from "../config/map";
-import { MENU_KEYS } from "../config/sviCategories";
+import { keyOfDatasetMetric, MENU_KEYS } from "../config/sviCategories";
+
+// Links made before the indicator keys name an indicator by dataset (d_<mapId>) and metric name (m_<mapId>);
+// d2_ / m2_ for the comparison indicator
+const OLD_INDICATOR_PAIRS = [
+  ["d", "m"],
+  ["d2", "m2"],
+] as const;
 
 // Each map's settings saved in the link as <prefix>_<mapId>; an empty value isn't written, and an indicator key the menu lacks is dropped
 export const MAP_URL_FIELDS: {
@@ -55,7 +62,16 @@ export function parseLayerEntry(entry: string): { mapId: string; layerId: string
 
 // The maps, primary map and layers a link describes. A hand-edited link can hold a bad map id
 // or too many maps, so only ids like "map3" are kept, and only the first MAX_MAPS of them.
-export function readUrl(params: URLSearchParams): UrlState {
+export function readUrl(link: URLSearchParams): UrlState {
+  const params = new URLSearchParams(link);
+  for (const [datasetPrefix, metricPrefix] of OLD_INDICATOR_PAIRS) {
+    for (const [name, dataset] of link) {
+      if (!name.startsWith(`${datasetPrefix}_`)) continue;
+      const metricName = `${metricPrefix}_${name.slice(datasetPrefix.length + 1)}`;
+      const key = keyOfDatasetMetric(dataset, link.get(metricName) ?? "");
+      if (key) params.set(metricName, key);
+    }
+  }
   const maps = (params.get("maps") ?? "")
     .split(",")
     .map((entry) => {
@@ -117,4 +133,5 @@ export const isUrlKey = (key: string) =>
   key === "maps" ||
   key === "active" ||
   (LAYER_LIST_KEYS as readonly string[]).includes(key) ||
-  MAP_URL_FIELDS.some((field) => key.startsWith(`${field.prefix}_`));
+  MAP_URL_FIELDS.some((field) => key.startsWith(`${field.prefix}_`)) ||
+  OLD_INDICATOR_PAIRS.some(([datasetPrefix]) => key.startsWith(`${datasetPrefix}_`));
