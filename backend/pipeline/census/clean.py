@@ -88,8 +88,8 @@ def build_file_blocks(notes_wb_path: str) -> dict:
     return file_blocks
 
 
-# A census table's citation in the Census Bureau's recommended form, the years it covers and its page on
-# data.census.gov, from its title and raw file name
+# A census table's author, title, citation in the Census Bureau's recommended form, the years it covers
+# and its page on data.census.gov, from its title and raw file name
 def census_metadata(file_name: str, official_table_title: str) -> dict:
     match = re.fullmatch(r"((ACSDT5Y|ACSST5Y|DECENNIALPL)(\d{4})\.(\w+))-Data\.csv", file_name)
     if not match:
@@ -97,6 +97,8 @@ def census_metadata(file_name: str, official_table_title: str) -> dict:
     table_id, product, year, table = match.group(1), match.group(2), int(match.group(3)), match.group(4)
     product_name = CENSUS_PRODUCTS[product]
     return {
+        "author": "U.S. Census Bureau",
+        "title": official_table_title,
         "citation": f'U.S. Census Bureau, "{official_table_title}," {product_name}, Table {table}, {year}',
         "period": str(year) if product == "DECENNIALPL" else f"{year - 4}–{year}",
         "link": f"https://data.census.gov/table/{table_id}",

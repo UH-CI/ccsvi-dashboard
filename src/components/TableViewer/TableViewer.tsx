@@ -12,6 +12,7 @@ import { CustomTableToolbar } from "./components/CustomTableToolbar";
 import { tableCell, tableColumn, useDataGridColumns } from "./hooks/useDataGridColumns";
 import { useExtraColumns } from "./hooks/useExtraColumns";
 import { useActiveRowSync } from "./hooks/useActiveRowSync";
+import { shortCitation } from "../../utils/citation";
 import styles from "./TableViewer.module.scss";
 
 interface TableViewerProps {
@@ -104,7 +105,7 @@ export const TableViewer: React.FC<TableViewerProps> = ({ activeDataset, dataset
   }, [activeDataset, datasetInfo]);
 
   const metadata = datasetInfo?.metadata;
-  const metadataText = metadata ? `Source: ${metadata.citation}` : null;
+  const metadataText = metadata ? `Source: ${shortCitation(metadata)}` : null;
 
   if (!activeDataset) {
     return null;

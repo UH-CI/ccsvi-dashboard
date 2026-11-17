@@ -25,10 +25,10 @@ KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,62}")
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
 LAYER_FIELDS = ({"id", "name", "icon", "color"}, {"description", "metadata", "off", "subLayers"})
 SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "metadata", "off"})
-# Where a layer's data comes from: the publisher's own citation where it gives one, else the fields an
-# APA citation is built from. A sub-layer's metadata fields replace its parent's
-METADATA_FIELDS = {"period", "citation", "author", "title", "publisher", "note", "link"}
-APA_FIELDS = {"author", "title", "publisher"}
+# Where a layer's data comes from: author, title and period for the short source line, then the
+# source's own citation where it gives one, else the publisher for an APA citation. A sub-layer's
+# metadata fields replace its parent's
+METADATA_FIELDS = {"author", "title", "period", "citation", "publisher", "note", "link"}
 FIELDS = {
     "rasters": {
         "layer": (LAYER_FIELDS[0] | {"units", "opacity"}, LAYER_FIELDS[1]),
@@ -145,12 +145,14 @@ def field_problems(kind, entry, required, optional):
     return problems
 
 
-# A layer's metadata, with its parent's, needs a period and either its own citation or every APA field
+# A layer's metadata, with its parent's, needs an author, title and period, and either its own
+# citation or a publisher
 def metadata_problems(metadata):
-    problems = [] if "period" in metadata else ["missing period"]
-    own, apa = "citation" in metadata, APA_FIELDS & metadata.keys()
-    if own and apa or not own and apa != APA_FIELDS:
-        problems.append("needs either citation, or author, title and publisher")
+    problems = []
+    if missing := {"author", "title", "period"} - metadata.keys():
+        problems.append(f"missing {', '.join(sorted(missing))}")
+    if ("citation" in metadata) == ("publisher" in metadata):
+        problems.append("needs either citation or publisher")
     return problems
 
 

@@ -110,6 +110,7 @@
       "icon": "FaUmbrellaBeach",
       "color": "#A89C90",
       "metadata": {
+        "author": "University of Hawaiʻi Coastal Geology Group, SOEST",
         "citation": "Anderson, T.R., Fletcher, C.H., Barbee, M.M., Romine, B.R., Lemmo, S., and J.M.S. Delevaux (2018). Modeling multiple sea level rise stresses reveals up to twice the land at risk compared to strictly passive flooding methods, Scientific Reports, 8:14484, doi: 10.1038/s41598-018-32658-x. Anderson, T.R., Fletcher, C.H., Barbee, M.M., Frazer, L.N., and B.M. Romine (2015). Doubling of Coastal Erosion Under Rising Sea Level by Mid-Century in Hawaiʻi, Natural Hazards, doi:10.1007/s11069-015-1698-6.",
         "period": "November 2020"
       },
@@ -118,7 +119,7 @@
           "id": "0.5ft_erosion",
           "name": "0.5ft",
           "color": "#736a62",
-          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-0-5-ft-scenario/about"},
+          "metadata": {"title": "SLR Coastal Erosion - 0.5 Ft. Scenario", "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-0-5-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_0pt5ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -129,7 +130,7 @@
           "id": "1.1ft_erosion",
           "name": "1.1ft",
           "color": "#63584f",
-          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-1-1-ft-scenario-1/about"},
+          "metadata": {"title": "SLR Coastal Erosion - 1.1 Ft. Scenario", "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-1-1-ft-scenario-1/about"},
           "file": "filtered_slr_cstl_erosn_1pt1ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -140,7 +141,7 @@
           "id": "2.0ft_erosion",
           "name": "2.0ft",
           "color": "#5c4e42",
-          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-2-0-ft-scenario/about"},
+          "metadata": {"title": "SLR Coastal Erosion - 2.0 Ft. Scenario", "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-2-0-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_2pt0ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -151,7 +152,7 @@
           "id": "3.2ft_erosion",
           "name": "3.2ft",
           "color": "#524032",
-          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-3-2-ft-scenario/about"},
+          "metadata": {"title": "SLR Coastal Erosion - 3.2 Ft. Scenario", "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-3-2-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_3pt2ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],

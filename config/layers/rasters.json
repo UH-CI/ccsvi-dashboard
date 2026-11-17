@@ -84,6 +84,8 @@
       "units": "Susceptibility Index",
       "opacity": 0.7,
       "metadata": {
+        "author": "U.S. Geological Survey",
+        "title": "Slope-Relief Threshold Landslide Susceptibility Models for the United States and Puerto Rico",
         "citation": "Belair, G.M., Jones, J.M., Martinez, S.N., Mirus, B.B., and Wood, N.J., 2024, Slope-Relief Threshold Landslide Susceptibility Models for the United States and Puerto Rico: U.S. Geological Survey data release, https://doi.org/10.5066/P13KAGU3.",
         "period": "June 2024",
         "link": "https://doi.org/10.5066/P13KAGU3"

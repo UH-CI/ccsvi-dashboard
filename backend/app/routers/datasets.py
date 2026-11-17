@@ -28,10 +28,13 @@ class DatasetTable(BaseModel):
     rows: list[TableRow]
 
 
-# A census table's source: its citation as the Census Bureau recommends it, its years and its page
+# A census table's source: author, title and years for the short source line, its citation as the
+# Census Bureau recommends it, and its page
 class DatasetMetadata(BaseModel):
-    citation: str
+    author: str
+    title: str
     period: str
+    citation: str
     link: str | None = None
 
 
