@@ -1,197 +1,238 @@
-[
-    {
-        "data_type": "temperature",
-        "period": "day",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-04-21T10:00:00.000Z"
-        ],
-        "aggregation": "mean"
-    },
-    {
-        "data_type": "temperature",
-        "period": "month",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-03-01T10:00:00.000Z"
-        ],
-        "aggregation": "mean"
-    },
-    {
-        "data_type": "temperature",
-        "period": "day",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-05-12T10:00:00.000Z"
-        ],
-        "aggregation": "min"
-    },
-    {
-        "data_type": "temperature",
-        "period": "month",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "aggregation": "min"
-    },
-    {
-        "data_type": "temperature",
-        "period": "day",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-05-12T10:00:00.000Z"
-        ],
-        "aggregation": "max"
-    },
-    {
-        "data_type": "temperature",
-        "period": "month",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "aggregation": "max"
-    },
-    {
-        "data_type": "rainfall",
-        "period": "day",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-04-21T10:00:00.000Z"
-        ],
-        "production": "new"
-    },
-    {
-        "data_type": "rainfall",
-        "period": "month",
-        "date_range": [
-            "1920-01-01T10:30:00.000Z",
-            "2012-12-01T10:00:00.000Z"
-        ],
-        "production": "legacy"
-    },
-    {
-        "data_type": "rainfall",
-        "period": "month",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-03-01T10:00:00.000Z"
-        ],
-        "production": "new"
-    },
-    {
-        "data_type": "relative_humidity",
-        "period": "day",
-        "date_range": [
-            "2002-01-01T10:00:00.000Z",
-            "2026-04-21T10:00:00.000Z"
-        ]
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1990-01-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale001",
-        "scale": "1"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1990-03-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale003",
-        "scale": "3"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1990-06-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale006",
-        "scale": "6"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1990-09-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale009",
-        "scale": "9"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1991-01-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale012",
-        "scale": "12"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1991-12-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale024",
-        "scale": "24"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1992-12-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale036",
-        "scale": "36"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1993-12-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale048",
-        "scale": "48"
-    },
-    {
-        "data_type": "spi",
-        "period": "month",
-        "date_range": [
-            "1994-12-01T10:00:00.000Z",
-            "2026-04-01T10:00:00.000Z"
-        ],
-        "timescale": "timescale060",
-        "scale": "60"
-    },
-    {
-        "data_type": "ndvi_modis",
-        "period": "day",
-        "date_range": [
-            "2000-03-10T10:00:00.000Z",
-            "2026-05-26T10:00:00.000Z"
-        ]
-    },
-    {
-        "data_type": "ignition_probability",
-        "period": "day",
-        "date_range": [
-            "2002-01-01T10:00:00.000Z",
-            "2026-05-28T10:00:00.000Z"
-        ]
-    }
-]
+{
+    "dataTypes": [
+        {
+            "id": "rainfall",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Lucas, M. P., et al., Optimizing Automated Kriging to Improve Spatial Interpolation of Monthly Rainfall over Complex Terrain, Journal of Hydrometeorology; Frazier, A. G., et al. (2016), Comparison of Geostatistical Approaches to Spatially Interpolate Month-Year Rainfall for the Hawaiian Islands, International Journal of Climatology",
+                "period": "1920–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "day",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-04-21T10:00:00.000Z"
+                    ],
+                    "production": "new"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1920-01-01T10:30:00.000Z",
+                        "2012-12-01T10:00:00.000Z"
+                    ],
+                    "production": "legacy"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-03-01T10:00:00.000Z"
+                    ],
+                    "production": "new"
+                }
+            ]
+        },
+        {
+            "id": "temperature",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Kodama, K., et al., Mapping Daily Air Temperature Over the Hawaiian Islands From 1990 to 2021 via an Optimized Piecewise Linear Regression Technique, Earth and Space Science",
+                "period": "1990–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "day",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-04-21T10:00:00.000Z"
+                    ],
+                    "aggregation": "mean"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-03-01T10:00:00.000Z"
+                    ],
+                    "aggregation": "mean"
+                },
+                {
+                    "period": "day",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-05-12T10:00:00.000Z"
+                    ],
+                    "aggregation": "min"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "aggregation": "min"
+                },
+                {
+                    "period": "day",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-05-12T10:00:00.000Z"
+                    ],
+                    "aggregation": "max"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "aggregation": "max"
+                }
+            ]
+        },
+        {
+            "id": "relative_humidity",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Longman, R. J., et al. (2018), Compilation of Climate Data from Heterogeneous Networks across the Hawaiian Islands, Scientific Data 5",
+                "period": "2002–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "day",
+                    "date_range": [
+                        "2002-01-01T10:00:00.000Z",
+                        "2026-04-21T10:00:00.000Z"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "ndvi_modis",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society",
+                "period": "2000–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "day",
+                    "date_range": [
+                        "2000-03-10T10:00:00.000Z",
+                        "2026-05-26T10:00:00.000Z"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "spi",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Lucas, M. P., C. Trauernicht, A. G. Frazier and T. Miura (2020), Long-Term, Gridded Standardized Precipitation Index for Hawaiʻi, Data 5",
+                "period": "1990–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-01-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale001",
+                    "scale": "1"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-03-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale003",
+                    "scale": "3"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-06-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale006",
+                    "scale": "6"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1990-09-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale009",
+                    "scale": "9"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1991-01-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale012",
+                    "scale": "12"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1991-12-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale024",
+                    "scale": "24"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1992-12-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale036",
+                    "scale": "36"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1993-12-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale048",
+                    "scale": "48"
+                },
+                {
+                    "period": "month",
+                    "date_range": [
+                        "1994-12-01T10:00:00.000Z",
+                        "2026-04-01T10:00:00.000Z"
+                    ],
+                    "timescale": "timescale060",
+                    "scale": "60"
+                }
+            ]
+        },
+        {
+            "id": "ignition_probability",
+            "metadata": {
+                "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society",
+                "period": "2002–present",
+                "link": "https://www.hawaii.edu/climate-data-portal/"
+            },
+            "datasets": [
+                {
+                    "period": "day",
+                    "date_range": [
+                        "2002-01-01T10:00:00.000Z",
+                        "2026-05-28T10:00:00.000Z"
+                    ]
+                }
+            ]
+        }
+    ]
+}

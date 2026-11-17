@@ -15,10 +15,14 @@ from ..hcdp_data import available_dates, cleaned_file
 
 router = APIRouter(prefix="/api/v1/hcdp")
 
-# The datasets the map offers; each row is one data type and period, with its extra choices
-CATALOG: list[dict] = json.loads(
-    (Path(__file__).resolve().parents[3] / "config" / "hcdp_catalog.json").read_text()
-)
+# The datasets the map offers, from each data type's list; each row is one data type and period, with its extra choices
+CATALOG: list[dict] = [
+    {"data_type": data_type["id"], **dataset}
+    for data_type in json.loads(
+        (Path(__file__).resolve().parents[3] / "config" / "hcdp_catalog.json").read_text()
+    )["dataTypes"]
+    for dataset in data_type["datasets"]
+]
 OPTION_KEYS = ("aggregation", "production", "timescale")
 
 

@@ -1,4 +1,5 @@
 import { PathOptions } from "leaflet";
+import type { LayerMetadata } from "../types";
 import { NO_VALUE_COLOR } from "./colorSchemes";
 
 export interface PopupFieldConfig {
@@ -22,6 +23,7 @@ export interface LayerStyleConfig {
 
 export interface PolygonLayerConfig {
   name: string;
+  metadata: LayerMetadata;
   geoidProperty: string;
   popup: PopupConfig;
   styles: LayerStyleConfig;
@@ -30,6 +32,11 @@ export interface PolygonLayerConfig {
 export const POLYGON_LAYERS = {
   censusBlockGroups: {
     name: "Census Block Groups",
+    metadata: {
+      citation: "U.S. Census Bureau; Hawaiʻi Statewide GIS Program",
+      period: "September 2021",
+      link: "https://geoportal.hawaii.gov/datasets/HiStateGIS::2020-census-block-groups/about",
+    },
     geoidProperty: "geoid20",
     popup: {
       title: "Census Block Group",
@@ -77,6 +84,7 @@ export const POLYGON_LAYERS = {
 
   hawaiianHomelands: {
     name: "Hawaiian Homelands",
+    metadata: { citation: "U.S. Census Bureau, Geography Division", period: "2010" },
     geoidProperty: "GEOID10",
     popup: {
       title: "Hawaiian Homeland",
@@ -124,6 +132,11 @@ export const POLYGON_LAYERS = {
 
   countyBoundaries: {
     name: "County Boundaries",
+    metadata: {
+      citation: "U.S. Census Bureau; Hawaiʻi Statewide GIS Program",
+      period: "September 2021",
+      link: "https://geoportal.hawaii.gov/datasets/HiStateGIS::2020-census-county-boundaries/about",
+    },
     geoidProperty: "NAME20",
     popup: {
       title: "County",

@@ -1,8 +1,8 @@
 import dayjs, { type Dayjs } from "dayjs";
-import type { RasterSource } from "../types";
+import type { LayerMetadata, RasterSource } from "../types";
 import hcdpCatalog from "../../config/hcdp_catalog.json";
 
-/** One row from `config/hcdp_catalog.json`. */
+// One dataset in config/hcdp_catalog.json, with its data type
 export interface HcdpRangeRow {
   data_type: string;
   period: string;
@@ -14,18 +14,20 @@ export interface HcdpRangeRow {
   scale?: string;
 }
 
-// The HCDP datasets the map offers
-export const HCDP_CATALOG = hcdpCatalog as HcdpRangeRow[];
+// One data type in config/hcdp_catalog.json: where its data comes from, and its datasets
+interface HcdpDataType {
+  id: string;
+  metadata: LayerMetadata;
+  datasets: Omit<HcdpRangeRow, "data_type">[];
+}
 
-// Data types in this order first, then any others alphabetically
-const DATA_TYPE_ORDER = [
-  "rainfall",
-  "temperature",
-  "relative_humidity",
-  "ndvi_modis",
-  "spi",
-  "ignition_probability",
-];
+// The data types, in menu order
+const DATA_TYPES = (hcdpCatalog as { dataTypes: HcdpDataType[] }).dataTypes;
+
+// The HCDP datasets the map offers
+export const HCDP_CATALOG: HcdpRangeRow[] = DATA_TYPES.flatMap((type) =>
+  type.datasets.map((dataset) => ({ data_type: type.id, ...dataset })),
+);
 
 // The distinct non-empty values, sorted
 function uniqueSorted<T>(values: (T | undefined | null)[]): T[] {
@@ -76,15 +78,7 @@ export function hcdpChoices(wanted: HcdpPicks) {
 
 // The catalog's data types in menu order
 export function hcdpDataTypes(): string[] {
-  const unique = [...new Set(HCDP_CATALOG.map((r) => r.data_type))];
-  return unique.sort((a, b) => {
-    const idxA = DATA_TYPE_ORDER.indexOf(a);
-    const idxB = DATA_TYPE_ORDER.indexOf(b);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
-    return a.localeCompare(b);
-  });
+  return DATA_TYPES.map((type) => type.id);
 }
 
 // One catalog row as the server's HCDP choice: datatype, period and the row's extra choices
