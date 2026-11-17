@@ -6,7 +6,7 @@
       "icon": "FaFireExtinguisher",
       "color": "#FF0000",
       "metadata": {
-        "citation": "Counties of Hawaii, Honolulu, Kauai and Maui; Hawaii Statewide GIS Program",
+        "citation": "Counties of Hawaiʻi, Honolulu, Kauaʻi and Maui; Hawaiʻi Statewide GIS Program",
         "period": "August 2017"
       },
       "file": "Fire_Stations_(Statewide)",
@@ -20,7 +20,7 @@
       "icon": "FaHospital",
       "color": "#00BFFF",
       "metadata": {
-        "citation": "Hawaii State Department of Health, Office of Health Care Assurance (OHCA); Hawaii Statewide GIS Program",
+        "citation": "Hawaiʻi State Department of Health, Office of Health Care Assurance (OHCA); Hawaiʻi Statewide GIS Program",
         "period": "November 2021"
       },
       "file": "Hospitals",
@@ -34,7 +34,7 @@
       "icon": "FaShieldAlt",
       "color": "#000080",
       "metadata": {
-        "citation": "Counties of Hawaii, Honolulu, Kauai and Maui; Hawaii Statewide GIS Program",
+        "citation": "Counties of Hawaiʻi, Honolulu, Kauaʻi and Maui; Hawaiʻi Statewide GIS Program",
         "period": "August 2017"
       },
       "file": "Police_Stations_(Statewide)",
@@ -48,7 +48,7 @@
       "icon": "FaHouseUser",
       "color": "#00CC00",
       "metadata": {
-        "citation": "American Red Cross/Hawaii State Chapter: http://www.hawaiiredcross.org/ County of Kauai/Civil Defense Agency: http://www.kauai.gov/Default.aspx?tabid=45",
+        "citation": "Pacific Disaster Center; State of Hawaiʻi Office of Planning; American Red Cross, Hawaiʻi State Chapter; County of Kauaʻi Civil Defense Agency",
         "period": "October 2009"
       },
       "file": "emergency_shelters",
@@ -68,8 +68,9 @@
       "icon": "FaSchool",
       "color": "#FFA500",
       "metadata": {
-        "citation": "Hawaii Executive Office on Early Learning (EOEL), People Attentive to Children (PATCH); Hawaii Statewide GIS Program",
-        "period": "December 2021"
+        "citation": "Hawaiʻi Executive Office on Early Learning (EOEL), People Attentive to Children (PATCH); Hawaiʻi Statewide GIS Program",
+        "period": "December 2021",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::preschools/about"
       },
       "file": "Preschools",
       "source": {"zips": ["point_data/Preschools.zip"], "inner": "Preschools.shp"},
@@ -88,7 +89,7 @@
       "icon": "FaSchool",
       "color": "#8A2BE2",
       "metadata": {
-        "citation": "Hawaii State Department of Education; Hawaii Statewide GIS Program",
+        "citation": "Hawaiʻi State Department of Education; Hawaiʻi Statewide GIS Program",
         "period": "July 2023"
       },
       "file": "Public_Schools",
@@ -108,8 +109,9 @@
       "icon": "FaSchool",
       "color": "#DC143C",
       "metadata": {
-        "citation": "Hawaii Statewide GIS Program, Hawaii Association of Independent Schools (HAIS)",
-        "period": "November 2021"
+        "citation": "Hawaiʻi Statewide GIS Program, Hawaiʻi Association of Independent Schools (HAIS)",
+        "period": "November 2021",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::private-schools/about"
       },
       "file": "Private_Schools",
       "source": {"zips": ["point_data/Private_Schools.zip"], "inner": "Private_Schools.shp"},
@@ -150,8 +152,9 @@
       "icon": "FaIndustry",
       "color": "#2E8B57",
       "metadata": {
-        "citation": "Hawaii State Department of Health, Environmental Management Division, Wastewater Branch",
-        "period": "January 2023"
+        "citation": "Hawaiʻi State Department of Health, Environmental Management Division, Wastewater Branch",
+        "period": "January 2023",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::wastewater-treatment-plants/about"
       },
       "file": "Wastewater_Treatment_Plants",
       "source": {"zips": ["point_data/Wastewater_Treatment_Plants.zip"], "inner": "Wastewater_Treatment_Plants.shp"},
@@ -164,8 +167,9 @@
       "icon": "FaPlane",
       "color": "#e4870e",
       "metadata": {
-        "citation": "State of Hawaii Department of Transportation, Airports Division; Hawaii Statewide GIS Program",
-        "period": "March 2019"
+        "citation": "State of Hawaiʻi Department of Transportation, Airports Division; Hawaiʻi Statewide GIS Program",
+        "period": "March 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::airports/about"
       },
       "file": "Airports_points",
       "source": {"markersOf": "airport_areas"},
@@ -178,8 +182,9 @@
       "icon": "FaShip",
       "color": "#021f74",
       "metadata": {
-        "citation": "Hawaii State Department of Transportation, Harbors Division; Hawaii Statewide GIS Program",
-        "period": "March 2019"
+        "citation": "Hawaiʻi State Department of Transportation, Harbors Division; Hawaiʻi Statewide GIS Program",
+        "period": "March 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::commercial-harbors/about"
       },
       "file": "Commercial_Harbors_points",
       "source": {"markersOf": "commercial_harbor_areas"},
@@ -201,8 +206,9 @@
       "icon": "FaShip",
       "color": "#021f74",
       "metadata": {
-        "citation": "Hawaii Statewide GIS Program, DLNR, Division of Boating and Ocean Recreation (DOBOR)",
-        "period": "1994"
+        "citation": "Hawaiʻi Statewide GIS Program, DLNR, Division of Boating and Ocean Recreation (DOBOR); Office of Planning, Coastal Zone Management (CZM) Program",
+        "period": "1994",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::small-boat-harbors-ramps/about"
       },
       "file": "Small_Boat_Harbors_Ramps",
       "source": {"zips": ["point_data/Small_Boat_Harbors_Ramps.zip"], "inner": "Small_Boat_Harbors_Ramps.shp"},

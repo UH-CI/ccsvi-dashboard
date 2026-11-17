@@ -6,11 +6,16 @@
       "description": "Highway sections at risk of flooding under sea level rise scenarios can reduce transportation access during hazard events.",
       "icon": "FaRoad",
       "color": "#000000",
+      "metadata": {
+        "citation": "Tetra Tech, Inc.; University of Hawaiʻi Coastal Geology Group (CGG), SOEST; PacIOOS",
+        "period": "December 2017"
+      },
       "subLayers": [
         {
           "id": "0.5ft_pfh",
           "name": "0.5ft",
           "color": "#000000",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-potential-flooded-highways-0-5-ft-scenario/about"},
           "file": "filtered_slr_potent_fld_hwys_0pt5ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
@@ -22,6 +27,7 @@
           "id": "1.1ft_pfh",
           "name": "1.1ft",
           "color": "#2e2e2e",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-potential-flooded-highways-1-1-ft-scenario/about"},
           "file": "filtered_slr_potent_fld_hwys_1pt1ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
@@ -33,6 +39,7 @@
           "id": "2.0ft_pfh",
           "name": "2.0ft",
           "color": "#575757",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-potential-flooded-highways-2-0-ft-scenario/about"},
           "file": "filtered_slr_potent_fld_hwys_2pt0ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
@@ -44,6 +51,7 @@
           "id": "3.2ft_pfh",
           "name": "3.2ft",
           "color": "#808080",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-potential-flooded-highways-3-2-ft-scenario/about"},
           "file": "filtered_slr_potent_fld_hwys_3pt2ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_potent_fld_hwys_all.shp.zip"],
@@ -58,6 +66,11 @@
       "name": "Sidewalks and Paths",
       "icon": "FaWalking",
       "color": "#000000",
+      "metadata": {
+        "citation": "Mandli Communications; Hawaiʻi Department of Transportation, Highways Division; Hawaiʻi Statewide GIS Program",
+        "period": "September 2022",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::existing-state-sidewalks-and-paths/about"
+      },
       "file": "filtered_sidewalks_and_paths",
       "source": {
         "zips": ["line/HI_All_Counties_Roads.zip", "sidewalks_and_paths_state.shp.zip"],
@@ -79,8 +92,13 @@
       "subLayers": [
         {
           "id": "hawaii_island",
-          "name": "Hawaii Island",
+          "name": "Hawaiʻi Island",
           "color": "#000000",
+          "metadata": {
+            "citation": "County of Hawaiʻi, Planning Department; Hawaiʻi Statewide GIS Program",
+            "period": "February 2024",
+            "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::roads-hawaii-county/about"
+          },
           "file": "filtered_road_Hawaii_island",
           "source": {
             "zips": ["line/HI_All_Counties_Roads.zip", "centerlines_haw.shp.zip"],
@@ -89,8 +107,13 @@
         },
         {
           "id": "kauai",
-          "name": "Kauai",
+          "name": "Kauaʻi",
           "color": "#000000",
+          "metadata": {
+            "citation": "County of Kauaʻi; Hawaiʻi Statewide GIS Program",
+            "period": "November 2023",
+            "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::street-centerlines-island-of-kauai/about"
+          },
           "file": "filtered_road_Kauai",
           "source": {
             "zips": ["line/HI_All_Counties_Roads.zip", "centerlines_kau.shp.zip"],
@@ -101,6 +124,7 @@
           "id": "maui",
           "name": "Maui",
           "color": "#000000",
+          "metadata": {"citation": "County of Maui; Hawaiʻi Statewide GIS Program", "period": "April 2022"},
           "file": "filtered_road_Maui",
           "source": {
             "zips": ["line/HI_All_Counties_Roads.zip", "roads_mau.shp.zip"],
@@ -109,8 +133,13 @@
         },
         {
           "id": "oahu",
-          "name": "Oahu",
+          "name": "Oʻahu",
           "color": "#000000",
+          "metadata": {
+            "citation": "Honolulu Land Information System (HOLIS), Department of Planning and Permitting, City and County of Honolulu",
+            "period": "August 2024",
+            "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::roads-honolulu-county/about"
+          },
           "file": "filtered_road_Oahu",
           "source": {
             "zips": ["line/HI_All_Counties_Roads.zip", "streets_oah.shp.zip"],

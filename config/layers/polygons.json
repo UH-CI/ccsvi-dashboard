@@ -7,7 +7,7 @@
       "icon": "FaWater",
       "color": "#0000FF",
       "metadata": {
-        "citation": "Federal Emergency Management Agency (FEMA), Flood Map Service Center; Hawaii Statewide GIS Program",
+        "citation": "Federal Emergency Management Agency (FEMA), Flood Map Service Center; Hawaiʻi Statewide GIS Program",
         "period": "May 2021"
       },
       "subLayers": [
@@ -107,11 +107,16 @@
       "description": "Projected shoreline erosion under sea level rise scenarios can increase long term exposure along the coast.",
       "icon": "FaUmbrellaBeach",
       "color": "#A89C90",
+      "metadata": {
+        "citation": "University of Hawaiʻi Coastal Geology Group (CGG), SOEST; PacIOOS",
+        "period": "November 2020"
+      },
       "subLayers": [
         {
           "id": "0.5ft_erosion",
           "name": "0.5ft",
           "color": "#736a62",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-0-5-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_0pt5ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -122,6 +127,7 @@
           "id": "1.1ft_erosion",
           "name": "1.1ft",
           "color": "#63584f",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-1-1-ft-scenario-1/about"},
           "file": "filtered_slr_cstl_erosn_1pt1ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -132,6 +138,7 @@
           "id": "2.0ft_erosion",
           "name": "2.0ft",
           "color": "#5c4e42",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-2-0-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_2pt0ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -142,6 +149,7 @@
           "id": "3.2ft_erosion",
           "name": "3.2ft",
           "color": "#524032",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-coastal-erosion-3-2-ft-scenario/about"},
           "file": "filtered_slr_cstl_erosn_3pt2ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_cstl_erosn_all.shp.zip"],
@@ -156,11 +164,16 @@
       "description": "Frequent inundation under sea level rise scenarios indicates locations with greater exposure to repeated flooding.",
       "icon": "FaRadiationAlt",
       "color": "#7ea834",
+      "metadata": {
+        "citation": "University of Hawaiʻi Coastal Geology Group (CGG), SOEST; Tetra Tech, Inc.; PacIOOS",
+        "period": "December 2017"
+      },
       "subLayers": [
         {
           "id": "0.5ft_ea",
           "name": "0.5ft",
           "color": "#7ea834",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-exposure-area-0-5-ft-scenario/about"},
           "file": "filtered_slr_exposure_area_0pt5ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
@@ -171,6 +184,7 @@
           "id": "1.1ft_ea",
           "name": "1.1ft",
           "color": "#7ea834",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-exposure-area-1-1-ft-scenario/about"},
           "file": "filtered_slr_exposure_area_1pt1ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
@@ -181,6 +195,7 @@
           "id": "2.0ft_ea",
           "name": "2.0ft",
           "color": "#7ea834",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-exposure-area-2-0-ft-scenario/about"},
           "file": "filtered_slr_exposure_area_2pt0ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
@@ -191,6 +206,7 @@
           "id": "3.2ft_ea",
           "name": "3.2ft",
           "color": "#7ea834",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-exposure-area-3-2-ft-scenario/about"},
           "file": "filtered_slr_exposure_area_3pt2ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_exposure_area_all.shp.zip"],
@@ -212,11 +228,16 @@
       "description": "Low lying areas projected to experience inundation as sea levels rise may face increasing long-term exposure.",
       "icon": "FaTint",
       "color": "#37bbf0",
+      "metadata": {
+        "citation": "University of Hawaiʻi Coastal Geology Group (CGG), SOEST; PacIOOS",
+        "period": "December 2017"
+      },
       "subLayers": [
         {
           "id": "0.5ft_pf",
           "name": "0.5ft",
           "color": "#37bbf0",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-passive-flooding-0-5-ft-scenario/about"},
           "file": "filtered_slr_passive_fld_0pt5ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
@@ -228,6 +249,7 @@
           "id": "1.1ft_pf",
           "name": "1.1ft",
           "color": "#2c9cc9",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-passive-flooding-1-1-ft-scenario/about"},
           "file": "filtered_slr_passive_fld_1pt1ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
@@ -239,6 +261,7 @@
           "id": "2.0ft_pf",
           "name": "2.0ft",
           "color": "#22799c",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-passive-flooding-2-0-ft-scenario/about"},
           "file": "filtered_slr_passive_fld_2pt0ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
@@ -250,6 +273,7 @@
           "id": "3.2ft_pf",
           "name": "3.2ft",
           "color": "#1a5d78",
+          "metadata": {"link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::slr-passive-flooding-3-2-ft-scenario/about"},
           "file": "filtered_slr_passive_fld_3pt2ft",
           "source": {
             "zips": ["polygon/hazards/Sea Level Rise Data.zip", "Sea Level Rise Data/slr_passive_fld_all.shp.zip"],
@@ -265,7 +289,11 @@
       "description": "Surface solar radiation intensity indicates potential exposure to higher levels of heat.",
       "icon": "FaSun",
       "color": "#FFD700",
-      "metadata": {"citation": "Hawaii Statewide GIS Program, Hawaii State Energy Office", "period": "1985"},
+      "metadata": {
+        "citation": "Hawaiʻi Statewide GIS Program, Hawaiʻi State Energy Office; State Department of Planning and Economic Development, Energy Division",
+        "period": "1985",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::solar-insolation-ranges/about"
+      },
       "subLayers": [
         {
           "id": "200_250",
@@ -375,8 +403,9 @@
       "icon": "FaFire",
       "color": "#D73502",
       "metadata": {
-        "citation": "Department of Land and Natural Resources (DLNR), Division of Forestry and Wildlife (DOFAW), Fire Management Program; Hawaii Statewide GIS Program",
-        "period": "2007"
+        "citation": "Department of Land and Natural Resources (DLNR), Division of Forestry and Wildlife (DOFAW), Fire Management Program; Hawaiʻi Statewide GIS Program",
+        "period": "2007",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::fire-risk-areas/about"
       },
       "subLayers": [
         {
@@ -477,8 +506,9 @@
       "icon": "FaOilCan",
       "color": "#000000",
       "metadata": {
-        "citation": "Hawaii State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaii Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaii Statewide GIS Program",
-        "period": "September 2019"
+        "citation": "Hawaiʻi State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaiʻi Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaiʻi Statewide GIS Program",
+        "period": "September 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::hawaii-brightfields-initiative-data/about"
       },
       "file": "Prev_contaminated_land_filtered",
       "source": {
@@ -506,8 +536,9 @@
       "icon": "FaTrash",
       "color": "#000000",
       "metadata": {
-        "citation": "Hawaii State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaii Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaii Statewide GIS Program",
-        "period": "September 2019"
+        "citation": "Hawaiʻi State Energy Office; US Environmental Protection Agency (EPA); National Renewable Energy Lab (NREL); Hawaiʻi Department of Health Hazard Evaluation and Emergency Response Office (HEER); Hawaiʻi Statewide GIS Program",
+        "period": "September 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::hawaii-brightfields-initiative-data/about"
       },
       "file": "Prev_contaminated_land_landfills",
       "source": {
@@ -535,8 +566,9 @@
       "icon": "FaPlane",
       "color": "#f3c863",
       "metadata": {
-        "citation": "State of Hawaii Department of Transportation, Airports Division; Hawaii Statewide GIS Program",
-        "period": "March 2019"
+        "citation": "State of Hawaiʻi Department of Transportation, Airports Division; Hawaiʻi Statewide GIS Program",
+        "period": "March 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::airports/about"
       },
       "file": "Airports",
       "source": {"zips": ["polygon/Airports.zip"], "inner": "Airports.shp"},
@@ -549,8 +581,9 @@
       "icon": "FaShip",
       "color": "#254bbc",
       "metadata": {
-        "citation": "Hawaii State Department of Transportation, Harbors Division; Hawaii Statewide GIS Program",
-        "period": "March 2019"
+        "citation": "Hawaiʻi State Department of Transportation, Harbors Division; Hawaiʻi Statewide GIS Program",
+        "period": "March 2019",
+        "link": "https://geoportal.hawaii.gov/datasets/HiStateGIS::commercial-harbors/about"
       },
       "file": "Commercial_Harbors",
       "source": {"zips": ["polygon/Commercial_Harbors.zip"], "inner": "Commercial_Harbors.shp"},

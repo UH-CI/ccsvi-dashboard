@@ -24,7 +24,9 @@ KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,62}")
 # Per layer file, the fields each kind of entry must have and may have, as (required, optional).
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
 LAYER_FIELDS = ({"id", "name", "icon", "color"}, {"description", "metadata", "off", "subLayers"})
-SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "off"})
+SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "metadata", "off"})
+# Where a layer's data comes from; a sub-layer's metadata fields replace its parent's
+METADATA_FIELDS = ({"citation", "period"}, {"note", "link"})
 FIELDS = {
     "rasters": {
         "layer": (LAYER_FIELDS[0] | {"units", "opacity"}, LAYER_FIELDS[1]),
@@ -163,6 +165,9 @@ def static_problems(files):
             if parent or "subLayers" not in entry:
                 required, optional = required | fields["file"][0], optional | fields["file"][1]
             problems += [f"{id_}: {problem}" for problem in field_problems(kind, entry, required, optional)]
+            if "metadata" in entry:
+                metadata = {**(parent or {}).get("metadata", {}), **entry["metadata"]}
+                problems += [f"{id_}: metadata {problem}" for problem in field_problems("metadata", metadata, *METADATA_FIELDS)]
     # Rasters, the shape layers and the points are written to different folders
     for kinds in (["rasters"], list(SHAPES), ["points"]):
         names = [entry["file"] for kind in kinds for _, entry, _ in live_files(files[kind])]

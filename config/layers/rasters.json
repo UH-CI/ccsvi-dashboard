@@ -8,7 +8,7 @@
       "units": "ft",
       "opacity": 0.7,
       "metadata": {
-        "citation": "Data processed by the National Hurricane Center (NHC) Storm Surge Unit. SLOSH grid data (SLOSH MOMs) are provided by NWS Meteorological Development Lab (MDL). The primary elevation data used to compute inundation is provided by NOAA Office for Coastal Management (OCM), USGS 3D Elevation Program (3DEP) used outside the extent of OCM data.",
+        "citation": "NOAA National Hurricane Center (NHC) Storm Surge Unit; NOAA Office for Coastal Management",
         "period": "November 2018"
       },
       "subLayers": [
@@ -18,6 +18,7 @@
           "color": "#0000FF",
           "units": "ft",
           "opacity": 0.7,
+          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-1-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category1_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -32,6 +33,7 @@
           "color": "#0066FF",
           "units": "ft",
           "opacity": 0.7,
+          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-2-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category2_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -46,6 +48,7 @@
           "color": "#0099FF",
           "units": "ft",
           "opacity": 0.7,
+          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-3-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category3_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -60,6 +63,7 @@
           "color": "#00CCFF",
           "units": "ft",
           "opacity": 0.7,
+          "metadata": {"link": "https://noaa.hub.arcgis.com/maps/noaa::hawaii-category-4-slosh-moms-storm-surge-inundation/about"},
           "colormap": "plasma",
           "file": "Hawaii_Category4_MOM_Inundation_HighTide.cog.tif",
           "source": {
@@ -80,7 +84,8 @@
       "opacity": 0.7,
       "metadata": {
         "citation": "U.S. Geological Survey",
-        "period": "June 2024"
+        "period": "June 2024",
+        "link": "https://doi.org/10.5066/P13KAGU3"
       },
       "colormap": "ylorrd",
       "file": "lw_hi.cog.tif",

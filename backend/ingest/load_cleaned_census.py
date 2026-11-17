@@ -12,6 +12,7 @@ Each census menu indicator's metric gets the indicator's key; the run stops if o
 import argparse
 import asyncio
 import os
+import re
 import tempfile
 
 import asyncpg
@@ -27,6 +28,8 @@ from registry import census_indicators, load_dataset_config
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "pipeline", "census", "config", "census_datasets_config.json")
 DEFAULT_BOUNDARIES_GEOJSON = os.path.join(REPO_ROOT, "public", "data", "2020_Census_Block_Groups_Stripped.geojson")
+# Place names the Census writes without the ʻokina and kahakō, as the app spells them
+OKINA_SPELLINGS = {"Hawaii": "Hawaiʻi", "Kauai": "Kauaʻi", "Lanai": "Lānaʻi"}
 
 
 # True when the CSV has this column and at least one row has a value in it
@@ -39,6 +42,8 @@ def _column_has_values(df: pd.DataFrame, col: str) -> bool:
 def geography_row(geoid: str, name, population, is_homeland: bool) -> tuple:
     pop = None if pd.isna(population) else int(float(population))
     name = None if pd.isna(name) else str(name)
+    for plain, spelled in OKINA_SPELLINGS.items():
+        name = re.sub(rf"\b{plain}\b", spelled, name)
 
     if is_homeland:
         return (geoid, "hawaiian_homeland", name, None, None, None, None, pop)

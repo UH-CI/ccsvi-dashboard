@@ -139,7 +139,7 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({ mapRef }) => {
             value={query}
             onChange={handleQueryChange}
             onKeyDown={handleKeyDown}
-            placeholder="Search address in Hawaii…"
+            placeholder="Search address in Hawaiʻi…"
           />
           {loading && <div className={styles.status}>Searching…</div>}
           {!loading && results.length > 0 && (

@@ -90,11 +90,11 @@ const NAV_MENUS: NavMenu[] = [
   })),
   {
     key: "HCDP",
-    label: "Hawaii Climate Data Portal",
+    label: "Hawaiʻi Climate Data Portal",
     title: "HCDP",
     icon: <CloudQueue fontSize="small" />,
     description:
-      "Load Hawaii Climate Data Portal (HCDP) raster datasets. After selecting a dataset, use the HCDP tab on the map legend to choose a specific raster layer to display.",
+      "Load Hawaiʻi Climate Data Portal (HCDP) raster datasets. After selecting a dataset, use the HCDP tab on the map legend to choose a specific raster layer to display.",
     Menu: HcdpMenu,
   },
   {
