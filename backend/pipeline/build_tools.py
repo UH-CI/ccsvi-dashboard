@@ -1,13 +1,39 @@
 """Shared by the vector and raster builds: running GIS commands, file sizes and the run report."""
 
+import re
+import shutil
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
 import settings
+
+# min lon, min lat, max lon, max lat
+HAWAII = (-161, 18, -154, 23)
+# Correction files for coordinate conversions, kept in the repo; https://cdn.proj.org has every one
+PROJ_GRIDS_DIR = Path(__file__).resolve().parents[2] / "config" / "proj"
 
 
 def run(cmd):
     return subprocess.run([str(c) for c in cmd], stdout=subprocess.PIPE, text=True, check=True).stdout
+
+
+# Copies the repo's correction files into the first folder the conversion software looks in
+def install_proj_grids():
+    folder = Path(run(["projinfo", "--searchpaths"]).splitlines()[0])
+    folder.mkdir(parents=True, exist_ok=True)
+    for grid in PROJ_GRIDS_DIR.glob("*.tif"):
+        shutil.copy2(grid, folder / grid.name)
+
+
+# The correction files a source's coordinates need, to become longitude/latitude in Hawaii, that can't be
+# found, each with where to get it
+def missing_proj_grids(source):
+    wkt = run(["gdalsrsinfo", "-o", "wkt2", source]).strip()
+    box = ",".join(map(str, HAWAII))
+    found = run(["projinfo", "-s", wkt, "-t", "EPSG:4326", "--bbox", box, "--spatial-test", "intersects", "-o", "PROJ"])
+    grids = sorted(set(re.findall(r"Grid (\S+) needed but not found", found)))
+    return [f"{grid} (add https://cdn.proj.org/{grid} to config/proj)" for grid in grids]
 
 
 # Total size, in KB under 1 MB

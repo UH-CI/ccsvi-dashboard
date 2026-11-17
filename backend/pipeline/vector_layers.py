@@ -7,6 +7,9 @@ shape of a line or polygon layer, and checked; points get no tiles. Files are bu
 folder and only moved live once every layer passes. Each run writes a report to reports/. The layers
 are the ones in config/layers/lines.json, polygons.json and points.json.
 
+Every run first installs the coordinate correction files kept in config/proj; a source whose
+coordinates need one that isn't there stops the run, naming it.
+
 python -m pipeline.vector_layers [--only <layer id>]
 """
 
@@ -19,7 +22,7 @@ import zipfile
 from pathlib import Path
 
 import settings
-from pipeline.build_tools import file_size, run, write_report
+from pipeline.build_tools import HAWAII, file_size, install_proj_grids, missing_proj_grids, run, write_report
 from pipeline.check_layers import source_problems
 from registry import point_layers, shape_layers, stop_on
 
@@ -38,8 +41,6 @@ TILE_FLAGS = ["--minimum-zoom=6", f"--maximum-zoom={MAX_ZOOM}", "--generate-ids"
 METRIC_SRID = 32604
 # SpatiaLite's number for each shape type
 EXTRACT = {"MultiPolygon": 3, "MultiLineString": 2}
-# min lon, min lat, max lon, max lat
-HAWAII = (-161, 18, -154, 23)
 
 
 # Every corner in nested GeoJSON coordinates
@@ -163,6 +164,12 @@ def check_outputs(layer, source, geojson, row):
     return output["n"]
 
 
+# Stops the run if this source's coordinates need a correction file that isn't in config/proj
+def check_projection(source):
+    missing = missing_proj_grids(source)
+    check(not missing, f"coordinate correction files missing: {', '.join(missing) or 'none'}")
+
+
 # Builds one layer in the staging folder; returns the files to move live
 def build(layer, row):
     print(layer.id)
@@ -172,6 +179,7 @@ def build(layer, row):
     began = start = time.time()
     with tempfile.TemporaryDirectory() as tmp:
         source = unzip(layer, tmp)
+        check_projection(source)
         source_measure = measure(source, source.stem, layer.shape, layer.row_filter)
         source_columns = column_names(source)
         missing = sorted(set(layer.keep or []) - set(source_columns))
@@ -232,6 +240,7 @@ def build_points(layer, row, shape_files):
     else:
         with tempfile.TemporaryDirectory() as tmp:
             source = unzip(layer, tmp)
+            check_projection(source)
             source_columns = column_names(source)
             missing = sorted(set(layer.keep or []) - set(source_columns))
             check(not missing, f"kept columns missing from the source: {', '.join(missing) or 'none'}")
@@ -258,6 +267,7 @@ def main():
     chosen_points = [layer for layer in points if args.only in (None, layer.id, layer.markers_of)]
     stop_on(source_problems(chosen_shapes + [layer for layer in chosen_points if layer.zips]))
     shape_files = {layer.id: layer.file for layer in shapes}
+    install_proj_grids()
 
     GEOJSON_DIR.mkdir(exist_ok=True)
     STAGING_DIR.mkdir(exist_ok=True)

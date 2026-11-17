@@ -7,8 +7,8 @@ modes:
 
 The mean skips the file's no-data pixels, and an area with no data pixels gets
 no row, so it shows empty rather than 0. A pixel counts when its centre is
-inside the area. The rasters are NAD83 and the shapes WGS84; this doesn't
-reproject (under a metre in Hawaii).
+inside the area. The raster build stores the rasters in WGS84, like the
+shapes, so nothing is converted here.
 """
 
 import asyncio
