@@ -4,7 +4,7 @@ A web map of Hawaiʻi's climate change social vulnerability: census-based vulner
 
 ## Layout
 
-- `src/`: the web app (React, Vite, Zustand, react-leaflet).
+- `src/`: the web app (React, Vite, react-leaflet, Zustand for the app's own state, and TanStack Query for loading data from the server).
 - `backend/app/`: the API (FastAPI, with TiTiler for raster tiles).
 - `backend/db/`: database setup (PostGIS) and the generated metric views.
 - `backend/pipeline/`: turns raw census tables and hazard, point and raster files into cleaned data and map files.
