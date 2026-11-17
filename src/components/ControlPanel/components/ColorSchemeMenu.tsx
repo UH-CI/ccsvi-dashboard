@@ -5,6 +5,7 @@ import {
   COLOR_SCHEMES,
   DEFAULT_BIVARIATE_SCHEME,
 } from "../../../config/colorSchemes";
+import { POLYGON_LAYERS } from "../../../config/layers";
 import { useMetric } from "../../../api/queries/metrics";
 import { useMapState, useMapStore } from "../../../stores/useMapStore";
 import styles from "../ControlPanel.module.scss";
@@ -40,7 +41,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
         {homelands === false && (
           <Box className={styles["opacity-field"]}>
             <Typography variant="caption" gutterBottom display="block">
-              Census Blocks
+              {POLYGON_LAYERS.censusBlockGroups.name}
             </Typography>
             <Slider
               value={mapOpacities.census}
@@ -59,7 +60,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
           <>
             <Box className={styles["opacity-field"]}>
               <Typography variant="caption" gutterBottom display="block">
-                Hawaiian Homelands
+                {POLYGON_LAYERS.hawaiianHomelands.name}
               </Typography>
               <Slider
                 value={mapOpacities.hawaiianHomelands}
@@ -76,7 +77,7 @@ export const ColorSchemeMenu: React.FC<ColorSchemeMenuProps> = ({
             </Box>
             <Box>
               <Typography variant="caption" gutterBottom display="block">
-                County Boundaries
+                {POLYGON_LAYERS.countyBoundaries.name}
               </Typography>
               <Slider
                 value={mapOpacities.countyBoundaries}

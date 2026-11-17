@@ -2,6 +2,7 @@
     "dataTypes": [
         {
             "id": "rainfall",
+            "name": "Rainfall",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Rainfall",
@@ -38,6 +39,7 @@
         },
         {
             "id": "temperature",
+            "name": "Air Temperature",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Air Temperature",
@@ -98,6 +100,7 @@
         },
         {
             "id": "relative_humidity",
+            "name": "Relative Humidity",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Relative Humidity",
@@ -117,6 +120,7 @@
         },
         {
             "id": "ndvi_modis",
+            "name": "Normalized Difference Vegetation Index (NDVI)",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Normalized Difference Vegetation Index (MODIS)",
@@ -136,6 +140,7 @@
         },
         {
             "id": "spi",
+            "name": "Standardized Precipitation Index (SPI)",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Standardized Precipitation Index",
@@ -229,6 +234,7 @@
         },
         {
             "id": "ignition_probability",
+            "name": "Fire Ignition Probability",
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Fire Ignition Probability",

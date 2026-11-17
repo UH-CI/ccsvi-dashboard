@@ -25,6 +25,7 @@ import {
   BarChart,
   KeyboardArrowLeft,
   KeyboardArrowRight,
+  MenuBook,
 } from "@mui/icons-material";
 import { useMapStore, useVisibleMaps } from "../../stores/useMapStore";
 import styles from "./ControlPanel.module.scss";
@@ -35,6 +36,7 @@ import { LayerMenu } from "./components/LayerMenu";
 import { HcdpMenu } from "./components/HcdpMenu";
 import { AnalyzerMenu } from "./components/AnalyzerMenu";
 import { ErrorToast } from "../ErrorToast/ErrorToast";
+import { CitationsDialog } from "../Citations/CitationsDialog";
 import { LAYER_MENUS } from "../../utils/layerMenus";
 import type { LayerMenuId } from "../../utils/layerMenus";
 
@@ -120,6 +122,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const [anchors, setAnchors] = useState<Partial<Record<string, HTMLElement>>>({});
   const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
   const [infoKey, setInfoKey] = useState<string | null>(null);
+  const [citationsOpen, setCitationsOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState({
     canScrollLeft: false,
@@ -277,6 +280,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 {label}
               </Button>
             ))}
+            <Button
+              className={`${styles["nav-btn"]} ${citationsOpen ? styles["nav-btn--active"] : ""}`}
+              onClick={() => setCitationsOpen(true)}
+              startIcon={<MenuBook fontSize="small" />}
+              size="small"
+            >
+              Citations
+            </Button>
           </Box>
         </Box>
         <IconButton
@@ -330,6 +341,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         />
       ))}
       <ErrorToast />
+      <CitationsDialog open={citationsOpen} onClose={() => setCitationsOpen(false)} />
       <Popover
         open={Boolean(infoAnchor)}
         anchorEl={infoAnchor}

@@ -96,12 +96,13 @@ def census_metadata(file_name: str, official_table_title: str) -> dict:
         raise ValueError(f"Can't read the Census product and year from raw file name {file_name!r}")
     table_id, product, year, table = match.group(1), match.group(2), int(match.group(3)), match.group(4)
     product_name = CENSUS_PRODUCTS[product]
+    link = f"https://data.census.gov/table/{table_id}"
     return {
         "author": "U.S. Census Bureau",
         "title": official_table_title,
-        "citation": f'U.S. Census Bureau, "{official_table_title}," {product_name}, Table {table}, {year}',
+        "citation": f'U.S. Census Bureau, "{official_table_title}," {product_name}, Table {table}, {year}, {link}',
         "period": str(year) if product == "DECENNIALPL" else f"{year - 4}–{year}",
-        "link": f"https://data.census.gov/table/{table_id}",
+        "link": link,
     }
 
 

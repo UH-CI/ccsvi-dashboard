@@ -17,15 +17,17 @@ export interface HcdpRangeRow {
 // One data type in config/hcdp_catalog.json: where its data comes from, and its datasets
 interface HcdpDataType {
   id: string;
+  // Its name wherever the app shows it
+  name: string;
   metadata: LayerMetadata;
   datasets: Omit<HcdpRangeRow, "data_type">[];
 }
 
 // The data types, in menu order
-const DATA_TYPES = (hcdpCatalog as { dataTypes: HcdpDataType[] }).dataTypes;
+export const HCDP_DATA_TYPES = (hcdpCatalog as { dataTypes: HcdpDataType[] }).dataTypes;
 
 // The HCDP datasets the map offers
-export const HCDP_CATALOG: HcdpRangeRow[] = DATA_TYPES.flatMap((type) =>
+export const HCDP_CATALOG: HcdpRangeRow[] = HCDP_DATA_TYPES.flatMap((type) =>
   type.datasets.map((dataset) => ({ data_type: type.id, ...dataset })),
 );
 
@@ -78,7 +80,7 @@ export function hcdpChoices(wanted: HcdpPicks) {
 
 // The catalog's data types in menu order
 export function hcdpDataTypes(): string[] {
-  return DATA_TYPES.map((type) => type.id);
+  return HCDP_DATA_TYPES.map((type) => type.id);
 }
 
 // One catalog row as the server's HCDP choice: datatype, period and the row's extra choices
@@ -108,7 +110,7 @@ export function buildHcdpOverlayTitle(row: HcdpRangeRow, date: string): string {
     row.production,
     row.timescale?.replace(/^timescale/i, "TS "),
   ].filter(Boolean);
-  return [formatHcdpDataTypeLabel(row.data_type), ...extras, row.period, date].join(" · ");
+  return [hcdpName(row.data_type), ...extras, row.period, date].join(" · ");
 }
 
 // The catalog's dates, used when HCDP's live range can't be fetched. An SPI timescale of n months
@@ -121,12 +123,9 @@ export function hcdpFallbackRange(row: HcdpRangeRow): { min: Dayjs; max: Dayjs }
   return { min: scale === 12 ? start.add(12, "month") : start.add(scale - 1, "month"), max };
 }
 
-export function formatHcdpDataTypeLabel(dataType: string): string {
-  return dataType
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
+// A data type's name, as written in config/hcdp_catalog.json
+export const hcdpName = (dataType: string): string =>
+  HCDP_DATA_TYPES.find((type) => type.id === dataType)!.name;
 
 export function formatTimescaleLabel(timescale: string): string {
   const m = /^timescale(\d+)$/i.exec(timescale);

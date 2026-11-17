@@ -15,10 +15,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
   buildHcdpOverlayTitle,
-  formatHcdpDataTypeLabel,
   formatTimescaleLabel,
   hcdpChoices,
   hcdpDataTypes,
+  hcdpName,
   hcdpFallbackRange,
   hcdpSource,
   type HcdpExtraChoice,
@@ -159,7 +159,7 @@ export const HCDPLoad: React.FC<HCDPLoadProps> = ({ mapId }) => {
         >
           {DATA_TYPES.map((dt) => (
             <MenuItem key={dt} value={dt}>
-              {formatHcdpDataTypeLabel(dt)}
+              {hcdpName(dt)}
             </MenuItem>
           ))}
         </Select>

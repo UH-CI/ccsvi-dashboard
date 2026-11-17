@@ -1,0 +1,49 @@
+.dialog-paper {
+  width: 90vw;
+  height: 90vh;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.section-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #d0d7de;
+  margin-bottom: 4px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.entry {
+  padding: 10px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.entry-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.detail {
+  color: #616161;
+  margin-top: 2px;
+}
+
+.link {
+  word-break: break-all;
+}

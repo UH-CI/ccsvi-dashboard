@@ -83,11 +83,17 @@ export type LayerMetadata = {
   link?: string;
 } & ({ citation: string } | { publisher: string });
 
+// A layer file's "metadata" field: a layer's is complete (the layer check makes sure), a sub-layer's
+// holds only what differs from its layer's
+export type LayerFileMetadata = Partial<LayerMetadata>;
+
 // A point layer as written in config/layers/points.json (the fields the app reads)
 export interface PointLayerConfig {
   id: string;
   name: string;
   description?: string;
+  // Where its data comes from
+  metadata?: LayerFileMetadata;
   icon: string;
   color: string;
   // The map file is point_data/<file>.geojson
@@ -109,6 +115,8 @@ export interface SubHazardLayerConfig {
   id: string;
   name: string;
   description?: string;
+  // Where its data comes from; a sub-layer's holds only what differs from its layer's
+  metadata?: LayerFileMetadata;
   color: string;
   // Map tiles are hazards/<file>.pmtiles, whose layer is also named <file>
   file?: string;
@@ -131,6 +139,8 @@ export interface SubRasterLayerConfig {
   id: string;
   name: string;
   description?: string;
+  // Where its data comes from; a sub-layer's holds only what differs from its layer's
+  metadata?: LayerFileMetadata;
   color?: string;
   // TiTiler built-in colormap name; set on every layer that has a file
   colormap?: string;
