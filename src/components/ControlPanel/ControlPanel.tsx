@@ -95,7 +95,7 @@ const NAV_MENUS: NavMenu[] = [
     title: "Data Analyzer",
     icon: <BarChart fontSize="small" />,
     description:
-      "Displays the mean/ median value of the selected community characteristic for areas where all chosen layers overlap.",
+      "Explore the distribution of the selected community characteristic across block groups, compare it with a second characteristic, and filter the map by value range and by the layers currently shown.",
     Menu: AnalyzerMenu,
   },
 ];

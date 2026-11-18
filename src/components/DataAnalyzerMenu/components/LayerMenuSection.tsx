@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import * as FaIcons from "react-icons/fa";
 import type { VisibleLeaf, VisibleNode, VisibleParent } from "../../../utils/layerMenus";
+import { SectionHeading } from "./SectionHeading";
 
 interface LayerMenuSectionProps {
   title: string;
@@ -110,7 +111,14 @@ function NodeRows({ node }: { node: VisibleNode }) {
 // The visible layers of one control panel menu, grouped as the menu groups them
 export const LayerMenuSection: React.FC<LayerMenuSectionProps> = ({ title, nodes }) => (
   <Box>
-    <Typography variant="sectionHeading">{title}</Typography>
+    <SectionHeading
+      title={title}
+      info={{
+        tooltip:
+          "Layers from this menu that are currently shown on the map. Filtering keeps only areas that overlap the shapes and rasters listed and that contain at least one of the points listed.",
+        label: `About ${title} layers`,
+      }}
+    />
     <Box sx={{ mt: 0.5 }}>
       <TwoColumns>
         {nodes.map((node) => (

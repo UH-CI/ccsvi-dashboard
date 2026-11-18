@@ -64,7 +64,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
   // Filter just keeps the checked layers' points that sit inside a visible hazard or raster area.
   const sviShown = Boolean(metric);
 
-  // The "Filter range" and "Comparison Metric Filter Range" sliders, when moved
+  // The "Filter Range" and "Comparison Metric Filter Range" sliders, when moved
   const hasMetricThreshold = sviShown && filterRange !== null;
   const hasMetricThreshold2 = Boolean(metric2) && filterRange2 !== null;
   const hasCriteria = sviShown

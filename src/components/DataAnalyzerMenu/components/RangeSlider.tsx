@@ -1,13 +1,12 @@
-import { Box, IconButton, Slider, Tooltip, Typography } from "@mui/material";
-import { InfoOutlined } from "@mui/icons-material";
+import { Box, Slider, Typography } from "@mui/material";
 import type { SliderRange } from "../../../stores/useFilterStore";
 import type { MetricKind } from "../../../types";
 import { formatValue } from "../metricValueHelpers";
+import { SectionHeading, type Info } from "./SectionHeading";
 
 interface RangeSliderProps {
   title: string;
-  // An info icon after the title, with its tooltip and its screen-reader label
-  info?: { tooltip: string; label: string };
+  info?: Info;
   bounds: [number, number];
   // The chosen range; null shows the whole range
   value: SliderRange;
@@ -25,24 +24,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
   onChange,
 }) => (
   <Box>
-    <Typography variant="sectionHeading">
-      {info ? (
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
-          {title}
-          <Tooltip title={info.tooltip} placement="top" disableInteractive>
-            <IconButton
-              size="small"
-              aria-label={info.label}
-              sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
-            >
-              <InfoOutlined sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ) : (
-        title
-      )}
-    </Typography>
+    <SectionHeading title={title} info={info} />
     <Box sx={{ px: 1, mt: 1 }}>
       <Slider
         value={value ?? [min, max]}

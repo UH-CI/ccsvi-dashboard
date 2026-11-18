@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { InfoOutlined } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
 import { CHART_COLORS } from "../../../config/colorSchemes";
 import type { MetricKind } from "../../../types";
 import { formatValue } from "../metricValueHelpers";
 import { meanMedian } from "./analyzerStats";
+import { SectionHeading } from "./SectionHeading";
 
 interface MatchSummaryProps {
   kind: MetricKind;
@@ -47,22 +47,14 @@ export const MatchSummary: React.FC<MatchSummaryProps> = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-        <Typography variant="sectionHeading">Summary for Matching Areas</Typography>
-        <Tooltip
-          title="Displays the mean/ median value of the selected community characteristic for areas where all chosen layers overlap."
-          placement="top"
-          disableInteractive
-        >
-          <IconButton
-            size="small"
-            aria-label="About summary statistics"
-            sx={{ p: 0.25, ml: 0.5, color: "text.secondary" }}
-          >
-            <InfoOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      <SectionHeading
+        title="Summary for Matching Areas"
+        info={{
+          tooltip:
+            "Displays the mean/ median value of the selected community characteristic for areas where all chosen layers overlap.",
+          label: "About summary statistics",
+        }}
+      />
       <Box display="flex" justifyContent="space-around">
         {activeValue != null && (
           <Box textAlign="center">

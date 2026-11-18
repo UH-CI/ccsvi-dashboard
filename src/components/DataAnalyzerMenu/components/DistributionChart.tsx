@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { CHART_COLORS } from "../../../config/colorSchemes";
 import type { Bin } from "./analyzerStats";
+import { SectionHeading } from "./SectionHeading";
 
 interface DistributionChartProps {
   bins: Bin[];
@@ -20,7 +21,14 @@ interface DistributionChartProps {
 // The indicator's distribution: one stacked bar per value band, matching areas below the rest
 export const DistributionChart: React.FC<DistributionChartProps> = ({ bins, activeBinLabel }) => (
   <Box>
-    <Typography variant="sectionHeading">Distribution</Typography>
+    <SectionHeading
+      title="Block Group Distribution"
+      info={{
+        tooltip:
+          "Shows how many block groups fall into each value range of the selected community characteristic. Colored bars are block groups that match the current filter, gray bars are those that don't, and a dashed line marks the selected area.",
+        label: "About block group distribution",
+      }}
+    />
     <ResponsiveContainer width="100%" height={100}>
       <BarChart data={bins} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} barCategoryGap={2}>
         <XAxis dataKey="label" hide />

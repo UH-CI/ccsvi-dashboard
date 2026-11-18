@@ -11,6 +11,7 @@ import { ComparisonSection } from "./ComparisonSection";
 import { DistributionChart } from "./DistributionChart";
 import { MatchSummary } from "./MatchSummary";
 import { RangeSlider } from "./RangeSlider";
+import { InfoTip, SectionHeading } from "./SectionHeading";
 
 interface HistogramSectionProps {
   // The main map's indicator key and its comparison indicator's key
@@ -88,7 +89,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   return (
     <Stack spacing={2}>
       <Box>
-        <Typography variant="sectionHeading">Selected Community Characteristic</Typography>
+        <SectionHeading title="Selected Community Characteristic" />
         <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metricTitle}>
           {metricTitle}
         </Typography>
@@ -111,7 +112,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       />
 
       <RangeSlider
-        title="Filter range"
+        title="Filter Range"
         info={{
           tooltip:
             "Limits the primary community characteristic to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count.",
@@ -126,6 +127,11 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       {metric2 && cachedValues2 && kind2 && (
         <RangeSlider
           title="Comparison Metric Filter Range"
+          info={{
+            tooltip:
+              "Limits the comparison characteristic to the selected minimum and maximum values. Used together with the Filter Range when filters are applied.",
+            label: "About comparison value range",
+          }}
           bounds={bounds2}
           value={filterRange2}
           kind={kind2}
@@ -134,9 +140,15 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
       )}
 
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="body2" color="text.secondary">
-          {filteredGeoids ? "Block groups matching filter" : "Block groups in range"}
-        </Typography>
+        <Box display="flex" alignItems="center">
+          <Typography variant="body2" color="text.secondary">
+            {filteredGeoids ? "Block groups matching filter" : "Block groups in range"}
+          </Typography>
+          <InfoTip
+            tooltip="How many block groups pass the current filter, out of all block groups with data for this characteristic."
+            label="About block group count"
+          />
+        </Box>
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {matchedValues.length} / {allValues.length}
         </Typography>

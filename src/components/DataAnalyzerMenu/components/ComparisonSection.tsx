@@ -26,6 +26,7 @@ import { useGeographies } from "../../../api/queries/geographies";
 import { useMetric } from "../../../api/queries/metrics";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
 import { useMapStore } from "../../../stores/useMapStore";
+import { SectionHeading } from "./SectionHeading";
 
 interface ComparisonSectionProps {
   // The main map's indicator key and its comparison indicator's key
@@ -79,8 +80,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   if (!metric2) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-        Set a "Compare with" metric on the map (Community Characteristics menu) to plot it
-        against {label1 ?? "the selected metric"}.
+        Set a "Compare with" metric on the map (Community Characteristics menu) to plot it against{" "}
+        {label1 ?? "the selected metric"}.
       </Typography>
     );
   }
@@ -181,7 +182,14 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   return (
     <Box>
       <Box display="flex" alignItems="center" justifyContent="space-between">
-        <Typography variant="sectionHeading">Compare</Typography>
+        <SectionHeading
+          title="Comparison Scatter Plot"
+          info={{
+            tooltip:
+              "Each dot is a block group, placed by its value for the selected characteristic (across) and the comparison characteristic (up). Gray dots don't match the current filter. Click a dot to select that area on the map.",
+            label: "About comparison scatter plot",
+          }}
+        />
         <Tooltip title="Pop out scatter plot">
           <IconButton size="small" onClick={() => setPoppedOut(true)}>
             <AspectRatio sx={{ fontSize: 16 }} />
