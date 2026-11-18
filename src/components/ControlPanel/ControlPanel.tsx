@@ -75,11 +75,11 @@ const NAV_MENUS: NavMenu[] = [
   },
   {
     key: "svi",
-    label: "Social Vulnerability Indicators",
-    title: "Social Vulnerability Indicators",
+    label: "Community Characteristics",
+    title: "Community Characteristics",
     icon: <Assessment fontSize="small" />,
     description:
-      "Select social vulnerability indicators to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariately using the Compare with selector.",
+      "Select community characteristics to visualize as a choropleth layer. Indicators are grouped by category and can be compared bivariately using the Compare with selector.",
     Menu: SviMenu,
   },
   ...LAYER_MENUS.map((menu) => ({

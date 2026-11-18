@@ -69,7 +69,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   if (!metric) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-        Select a Social Vulnerability Indicator on the map to analyze its distribution.
+        Select a Community Characteristic on the map to analyze its distribution.
       </Typography>
     );
   }
@@ -88,7 +88,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
   return (
     <Stack spacing={2}>
       <Box>
-        <Typography variant="sectionHeading">Selected Social Vulnerability Indicator</Typography>
+        <Typography variant="sectionHeading">Selected Community Characteristic</Typography>
         <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.25 }} noWrap title={metricTitle}>
           {metricTitle}
         </Typography>

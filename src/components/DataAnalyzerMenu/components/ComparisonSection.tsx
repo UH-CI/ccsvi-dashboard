@@ -79,7 +79,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
   if (!metric2) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-        Set a "Compare with" metric on the map (Social Vulnerability Indicators menu) to plot it
+        Set a "Compare with" metric on the map (Community Characteristics menu) to plot it
         against {label1 ?? "the selected metric"}.
       </Typography>
     );

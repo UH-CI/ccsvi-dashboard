@@ -84,7 +84,7 @@ export const CitationsDialog: React.FC<CitationsDialogProps> = ({ open, onClose 
     ),
   );
   const sections: [string, Source[]][] = [
-    ["Social Vulnerability Indicators", censusSources],
+    ["Community Characteristics", censusSources],
     ["Map Layers", MAP_LAYER_SOURCES],
     ["Hawaiʻi Climate Data Portal", HCDP_SOURCES],
     ["Boundaries", BOUNDARY_SOURCES],
