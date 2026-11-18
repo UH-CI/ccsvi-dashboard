@@ -294,6 +294,7 @@
       "description": "Surface solar radiation intensity indicates potential exposure to higher levels of heat.",
       "icon": "FaSun",
       "color": "#FFD700",
+      "off": true,
       "metadata": {
         "author": "State Department of Planning and Economic Development, Energy Division; Hawaiʻi State Energy Office",
         "title": "Solar Insolation Ranges",

@@ -27,7 +27,7 @@
       "id": "hazards",
       "title": "Environmental Hazards",
       "popupTitle": "Hazard Layers",
-      "description": "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), solar insolation, storm surge, and landslide data.",
+      "description": "Display hazard layers including FEMA flood zones, sea level rise projections (passive flooding, highway exposure, erosion, exposure areas), storm surge, and landslide data.",
       "hideCheckboxes": true,
       "items": [
         "flood_hazard",
@@ -38,7 +38,6 @@
           "color": "#1976d2",
           "items": ["erosion", "potential_flood_highways", "exposure_area", "passive_flood"]
         },
-        "solar_insolation",
         "fire_zone",
         "stormSurge",
         "Landslide"

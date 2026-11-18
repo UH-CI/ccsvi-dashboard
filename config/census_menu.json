@@ -71,7 +71,8 @@
           "metric": "Total Overcrowded Housing Units (calc.)",
           "label": "Overcrowded Units",
           "calculationDescription": "Percentage of occupied housing units with more than one person per room.",
-          "description": "Crowded housing can make it harder to shelter safely during hazards and to find suitable alternative housing."
+          "description": "Crowded housing can make it harder to shelter safely during hazards and to find suitable alternative housing.",
+          "off": true
         }
       ]
     },
