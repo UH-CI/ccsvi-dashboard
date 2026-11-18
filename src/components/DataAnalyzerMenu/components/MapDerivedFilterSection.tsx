@@ -99,7 +99,7 @@ export const MapDerivedFilterSection: React.FC<MapDerivedFilterSectionProps> = (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} alignItems="center">
         <Tooltip
-          title="Limits the map to areas within the selected range of the chosen vulnerability indicator."
+          title="Limits the map to areas within the selected range of the chosen community characteristic."
           enterTouchDelay={0}
           leaveTouchDelay={5000}
         >

@@ -114,7 +114,7 @@ export const HistogramSection: React.FC<HistogramSectionProps> = ({
         title="Filter range"
         info={{
           tooltip:
-            "Limits the primary vulnerability indicator to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count.",
+            "Limits the primary community characteristic to the selected minimum and maximum values. The range is used when filters are applied and is reflected in the histogram and count.",
           label: "About indicator value range",
         }}
         bounds={bounds}

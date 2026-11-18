@@ -50,7 +50,7 @@ export const MatchSummary: React.FC<MatchSummaryProps> = ({
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
         <Typography variant="sectionHeading">Summary for Matching Areas</Typography>
         <Tooltip
-          title="Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap."
+          title="Displays the mean/ median value of the selected community characteristic for areas where all chosen layers overlap."
           placement="top"
           disableInteractive
         >

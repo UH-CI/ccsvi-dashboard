@@ -8,7 +8,7 @@ interface MenuShellProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
   title: string;
-  onInfoClick: (e: React.MouseEvent<HTMLElement>) => void;
+  description: string;
   children: React.ReactNode;
   paperClassName?: string;
   // "menu" (default) closes on outside click
@@ -19,7 +19,7 @@ interface MenuShellProps {
 // What the control bar gives each of its menus
 export type MenuProps = Pick<
   MenuShellProps,
-  "open" | "anchorEl" | "onClose" | "title" | "onInfoClick"
+  "open" | "anchorEl" | "onClose" | "title" | "description"
 >;
 
 // Shared menu chrome: the popover, content box, and title row with info button.
@@ -28,7 +28,7 @@ export const MenuShell: React.FC<MenuShellProps> = ({
   anchorEl,
   onClose,
   title,
-  onInfoClick,
+  description,
   children,
   paperClassName,
   variant = "menu",
@@ -47,8 +47,8 @@ export const MenuShell: React.FC<MenuShellProps> = ({
         <Typography variant="subtitle2" className={styles["popover-title"]}>
           {title}
         </Typography>
-        <Tooltip title="About this section">
-          <IconButton size="small" onClick={onInfoClick} className={styles["menu-info-btn"]}>
+        <Tooltip title={description}>
+          <IconButton size="small" className={styles["menu-info-btn"]}>
             <InfoOutlined fontSize="small" />
           </IconButton>
         </Tooltip>

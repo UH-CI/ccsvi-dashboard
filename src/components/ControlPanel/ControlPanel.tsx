@@ -1,15 +1,5 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
-import {
-  Typography,
-  Button,
-  Paper,
-  Divider,
-  Box,
-  Chip,
-  Tooltip,
-  IconButton,
-  Popover,
-} from "@mui/material";
+import { Typography, Button, Paper, Divider, Box, Chip, Tooltip, IconButton } from "@mui/material";
 import {
   Camera,
   CloudQueue,
@@ -105,7 +95,7 @@ const NAV_MENUS: NavMenu[] = [
     title: "Data Analyzer",
     icon: <BarChart fontSize="small" />,
     description:
-      "Displays the mean/ median value of the selected vulnerability indicator for areas where all chosen layers overlap.",
+      "Displays the mean/ median value of the selected community characteristic for areas where all chosen layers overlap.",
     Menu: AnalyzerMenu,
   },
 ];
@@ -120,8 +110,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   // One anchor per nav button
   const [anchors, setAnchors] = useState<Partial<Record<string, HTMLElement>>>({});
-  const [infoAnchor, setInfoAnchor] = useState<HTMLElement | null>(null);
-  const [infoKey, setInfoKey] = useState<string | null>(null);
   const [citationsOpen, setCitationsOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState({
@@ -170,17 +158,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     setAnchors({});
     void onSnapshot?.();
   }, [onSnapshot]);
-
-  const handleInfoClick = useCallback((key: string, e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation();
-    setInfoAnchor(e.currentTarget);
-    setInfoKey(key);
-  }, []);
-
-  const handleInfoClose = useCallback(() => {
-    setInfoAnchor(null);
-    setInfoKey(null);
-  }, []);
 
   const updateScrollState = useCallback(() => {
     const nav = navRef.current;
@@ -330,32 +307,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </Tooltip>
       </Box>
 
-      {NAV_MENUS.map(({ key, title, Menu }) => (
+      {NAV_MENUS.map(({ key, title, description, Menu }) => (
         <Menu
           key={key}
           title={title}
+          description={description}
           open={Boolean(anchors[key])}
           anchorEl={anchors[key] ?? null}
           onClose={() => closeMenu(key)}
-          onInfoClick={(e) => handleInfoClick(key, e)}
         />
       ))}
       <ErrorToast />
       <CitationsDialog open={citationsOpen} onClose={() => setCitationsOpen(false)} />
-      <Popover
-        open={Boolean(infoAnchor)}
-        anchorEl={infoAnchor}
-        onClose={handleInfoClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        disableRestoreFocus
-      >
-        <Box className={styles["info-popover-content"]}>
-          <Typography variant="body2">
-            {infoKey ? NAV_MENUS.find((n) => n.key === infoKey)?.description : ""}
-          </Typography>
-        </Box>
-      </Popover>
     </Paper>
   );
 };
