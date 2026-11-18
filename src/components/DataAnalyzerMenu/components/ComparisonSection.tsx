@@ -16,6 +16,7 @@ import { sviLabel } from "../../../config/sviCategories";
 import { useGeographies } from "../../../api/queries/geographies";
 import { useMetric } from "../../../api/queries/metrics";
 import { metricNumber, useMetricValues } from "../../../api/queries/metricValues";
+import { useMapStore } from "../../../stores/useMapStore";
 
 interface ComparisonSectionProps {
   // The main map's indicator key and its comparison indicator's key
@@ -31,6 +32,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
 }) => {
   const geographiesData = useGeographies();
   const filteredGeoids = useFilteredGeoids();
+  const primaryMapId = useMapStore((state) => state.primaryMapId);
+  const updateMapActiveFeature = useMapStore((state) => state.updateMapActiveFeature);
 
   const cachedValues1 = useMetricValues(metric);
   const cachedValues2 = useMetricValues(metric2);
@@ -118,6 +121,7 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
             shape={(props: ScatterShapeProps) => {
               const { cx, cy, payload } = props;
               const inFilter = filteredGeoids ? filteredGeoids.has(payload.geoid) : true;
+              // Clicking a dot the Filter kept selects its area on the main map
               return (
                 <circle
                   cx={cx}
@@ -125,6 +129,8 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
                   r={2.5}
                   fill={inFilter ? CHART_COLORS.matching : CHART_COLORS.notMatching}
                   fillOpacity={0.6}
+                  style={inFilter ? { cursor: "pointer" } : undefined}
+                  onClick={inFilter ? () => updateMapActiveFeature(primaryMapId, { geoid: payload.geoid }) : undefined}
                 />
               );
             }}
@@ -135,8 +141,12 @@ export const ComparisonSection: React.FC<ComparisonSectionProps> = ({
               isAnimationActive={false}
               shape={(props: ScatterShapeProps) => {
                 const { cx, cy } = props;
+                // Clicking the selected area's dot clears the selection
                 return (
-                  <g>
+                  <g
+                    style={{ cursor: "pointer" }}
+                    onClick={() => updateMapActiveFeature(primaryMapId, undefined)}
+                  >
                     <circle cx={cx} cy={cy} r={6} fill="#fff" fillOpacity={0.9} />
                     <circle cx={cx} cy={cy} r={4} fill={CHART_COLORS.selected} />
                   </g>
