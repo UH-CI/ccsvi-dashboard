@@ -73,8 +73,8 @@ export const RASTER_COLORMAPS: { name: string; label: string }[] = [
 // An area with no value for the metric
 export const NO_VALUE_COLOR = "#cccccc";
 
-// The hatch drawn over an area with no value for the indicator shown: pale ground, grey diagonal stripes
-export const NO_VALUE_HATCH = { ground: "#f5f5f5", stripe: "#9e9e9e" };
+// The hatch drawn over an area with no value for the indicator shown: white ground, dark grey diagonal stripes
+export const NO_VALUE_HATCH = { ground: "#ffffff", stripe: "#5f5f5f" };
 
 // The id of one map's hatch pattern, and the fill that draws it
 export const noValuePatternId = (mapId: string) => `no-value-${mapId}`;
@@ -95,4 +95,5 @@ export const RELIABILITY_COLORS: Record<ReliabilityTier, string> = {
   severe: "#d84315",
   unreliable: "#c62828",
   neutral: "inherit",
+  no_data: "inherit",
 };

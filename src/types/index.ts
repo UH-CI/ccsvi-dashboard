@@ -21,7 +21,7 @@ export interface MapState {
   };
 }
 
-export type ReliabilityTier = "reliable" | "usable" | "caution" | "severe" | "unreliable" | "neutral";
+export type ReliabilityTier = "reliable" | "usable" | "caution" | "severe" | "unreliable" | "neutral" | "no_data";
 
 export interface Reliability {
   label: string;

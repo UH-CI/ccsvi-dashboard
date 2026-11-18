@@ -7,7 +7,7 @@ def reliability(absolute: float | None, moe: float | None, cv: float | None, has
     if not has_moe:
         return {"label": "Complete count — no sampling error", "tier": "neutral"}
     if absolute == 0:
-        return {"label": "Too small to assess", "tier": "neutral"}
+        return {"label": "No data", "tier": "no_data"}
     if moe is None or cv is None:
         return {"label": "Reliability unknown", "tier": "neutral"}
     if cv <= 15:

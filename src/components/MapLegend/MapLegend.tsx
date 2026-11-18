@@ -17,13 +17,13 @@ interface MapLegendProps {
   noValueFill: string;
 }
 
-// The "No value" entry: a swatch in the map's hatch
+// The "No data" entry: a swatch in the map's hatch
 const NoValueItem = ({ fill }: { fill: string }) => (
   <div className={styles["legend-item"]}>
     <svg className={styles["legend-item-color"]}>
       <rect width="100%" height="100%" fill={fill} />
     </svg>
-    <span>No value</span>
+    <span>No data</span>
   </div>
 );
 

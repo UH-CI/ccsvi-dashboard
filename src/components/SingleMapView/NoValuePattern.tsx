@@ -7,13 +7,13 @@ export const NoValuePattern = ({ mapId }: { mapId: string }) => (
     <defs>
       <pattern
         id={noValuePatternId(mapId)}
-        width="6"
-        height="6"
+        width="8"
+        height="8"
         patternUnits="userSpaceOnUse"
         patternTransform="rotate(45)"
       >
-        <rect width="6" height="6" fill={NO_VALUE_HATCH.ground} />
-        <line x1="0" y1="0" x2="0" y2="6" stroke={NO_VALUE_HATCH.stripe} strokeWidth="2" />
+        <rect width="8" height="8" fill={NO_VALUE_HATCH.ground} />
+        <line x1="1.5" y1="0" x2="1.5" y2="8" stroke={NO_VALUE_HATCH.stripe} strokeWidth="3" />
       </pattern>
     </defs>
   </svg>
