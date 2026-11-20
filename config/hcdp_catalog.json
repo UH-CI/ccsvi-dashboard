@@ -6,6 +6,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Rainfall",
+                "units": "mm",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Lucas, M. P., et al., Optimizing Automated Kriging to Improve Spatial Interpolation of Monthly Rainfall over Complex Terrain, Journal of Hydrometeorology; Frazier, A. G., et al. (2016), Comparison of Geostatistical Approaches to Spatially Interpolate Month-Year Rainfall for the Hawaiian Islands, International Journal of Climatology",
                 "period": "1920–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
@@ -43,6 +44,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Air Temperature",
+                "units": "°C",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Kodama, K., et al., Mapping Daily Air Temperature Over the Hawaiian Islands From 1990 to 2021 via an Optimized Piecewise Linear Regression Technique, Earth and Space Science",
                 "period": "1990–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
@@ -104,6 +106,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Relative Humidity",
+                "units": "%",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Longman, R. J., et al. (2018), Compilation of Climate Data from Heterogeneous Networks across the Hawaiian Islands, Scientific Data 5",
                 "period": "2002–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
@@ -124,6 +127,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Normalized Difference Vegetation Index (MODIS)",
+                "units": "NDVI",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society",
                 "period": "2000–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
@@ -144,6 +148,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Standardized Precipitation Index",
+                "units": "SPI",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society; Lucas, M. P., C. Trauernicht, A. G. Frazier and T. Miura (2020), Long-Term, Gridded Standardized Precipitation Index for Hawaiʻi, Data 5",
                 "period": "1990–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
@@ -238,6 +243,7 @@
             "metadata": {
                 "author": "Hawaiʻi Climate Data Portal",
                 "title": "Fire Ignition Probability",
+                "units": "%",
                 "citation": "Longman, R. J., et al. (2024), Hawaiʻi Climate Data Portal (HCDP), Bulletin of the American Meteorological Society",
                 "period": "2002–present",
                 "link": "https://www.hawaii.edu/climate-data-portal/"
