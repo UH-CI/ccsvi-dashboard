@@ -204,6 +204,20 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     });
   }, []);
 
+  const handleNavWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const maxScroll = nav.scrollWidth - nav.clientWidth;
+    const nextScroll = Math.max(0, Math.min(maxScroll, nav.scrollLeft + event.deltaY));
+    if (nextScroll === nav.scrollLeft) return;
+
+    event.preventDefault();
+    nav.scrollLeft = nextScroll;
+  }, []);
+
   return (
     <Paper className={styles["top-bar"]} elevation={3}>
       {/* Brand */}
@@ -239,7 +253,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <KeyboardArrowLeft fontSize="small" />
         </IconButton>
         <Box className={styles["top-bar-nav-viewport"]}>
-          <Box className={styles["top-bar-nav"]} ref={navRef}>
+          <Box className={styles["top-bar-nav"]} ref={navRef} onWheel={handleNavWheel}>
             {NAV_MENUS.map(({ key, label, icon }) => (
               <Button
                 key={key}

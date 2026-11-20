@@ -2,7 +2,7 @@ import React from "react";
 import { CollapsibleLegend } from "./CollapsibleLegend";
 import styles from "./MapLegend.module.scss";
 
-const WIDTH_PX = 80;
+const WIDTH_PX = 130;
 const GRADIENT_HEIGHT_PX = 100;
 
 // More decimals for smaller numbers; very large or very small ones in exponent form
@@ -23,7 +23,7 @@ interface GradientLegendProps {
   units?: string;
 }
 
-// A colour-bar legend: the units under the title, then the bar with its max on top and min below
+// A colour-bar legend: the bar with its max on top and min below, then units beside each number
 export const GradientLegend: React.FC<GradientLegendProps> = ({
   title,
   icon,
@@ -37,7 +37,6 @@ export const GradientLegend: React.FC<GradientLegendProps> = ({
 
   return (
     <CollapsibleLegend title={title} icon={icon} order={0}>
-      {unitText ? <span className={styles["raster-legend-units"]}>{unitText}</span> : null}
       <div className={styles["raster-legend-row"]} style={{ width: WIDTH_PX }}>
         <div
           className={styles["raster-legend-gradient"]}
@@ -45,8 +44,14 @@ export const GradientLegend: React.FC<GradientLegendProps> = ({
           aria-hidden
         />
         <div className={styles["raster-legend-nums"]} style={{ minHeight: GRADIENT_HEIGHT_PX }}>
-          <span title={withUnits(max)}>{formatValue(max)}</span>
-          <span title={withUnits(min)}>{formatValue(min)}</span>
+          <span title={withUnits(max)}>
+            {formatValue(max)}
+            {unitText ? `\u00a0${unitText}` : null}
+          </span>
+          <span title={withUnits(min)}>
+            {formatValue(min)}
+            {unitText ? `\u00a0${unitText}` : null}
+          </span>
         </div>
       </div>
     </CollapsibleLegend>

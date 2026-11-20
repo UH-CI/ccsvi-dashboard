@@ -19,7 +19,7 @@ interface HcdpDataType {
   id: string;
   // Its name wherever the app shows it
   name: string;
-  metadata: LayerMetadata;
+  metadata: LayerMetadata & { units?: string };
   datasets: Omit<HcdpRangeRow, "data_type">[];
 }
 
@@ -126,6 +126,9 @@ export function hcdpFallbackRange(row: HcdpRangeRow): { min: Dayjs; max: Dayjs }
 // A data type's name, as written in config/hcdp_catalog.json
 export const hcdpName = (dataType: string): string =>
   HCDP_DATA_TYPES.find((type) => type.id === dataType)!.name;
+
+export const hcdpUnits = (dataType: string): string | undefined =>
+  HCDP_DATA_TYPES.find((type) => type.id === dataType)?.metadata.units;
 
 export function formatTimescaleLabel(timescale: string): string {
   const m = /^timescale(\d+)$/i.exec(timescale);

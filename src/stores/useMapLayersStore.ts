@@ -5,6 +5,7 @@ import { splitLayerId, subLayerId } from "../config/layerFiles";
 import { HCDP_OPACITY, rasterColormap, rasterConfig } from "../config/rasterLayers";
 import type { VisibleIds } from "../utils/layerMenus";
 import type { RasterSource } from "../types";
+import { hcdpUnits } from "../utils/hcdpRaster";
 
 // One map's raster: a saved one by id, or HCDP with the title shown in its legend and popup
 export type MapRaster =
@@ -144,6 +145,7 @@ export function useMapRaster(mapId: string): ShownRaster | null {
         raster,
         source: { kind: "hcdp", params: raster.params },
         name: raster.title,
+        units: hcdpUnits(raster.params.datatype),
         colormap: "hcdp",
         opacity: HCDP_OPACITY,
       };
