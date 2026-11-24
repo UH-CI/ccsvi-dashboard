@@ -182,7 +182,7 @@
           "key": "under_5",
           "dataset": "person_under_5_65_total",
           "metric": "Total Under 5 (calc.)",
-          "label": "Aged 5 Years and Under",
+          "label": "Aged Under 5",
           "calculationDescription": "Percentage of population under the age of 5.",
           "description": "Young children have specific caregiving and evacuation needs that increase household vulnerability."
         },
