@@ -144,8 +144,8 @@ export function FeaturePopup({
   );
 }
 
-// A map layer's shape or point. Heading: the title column's value, else the layer name. Then the
-// hand-labelled fields, then every other column with a value under its raw name
+// A map layer's shape or point. Heading: the title column's value, else the layer name. Then only the
+// hand-labelled fields
 export function LayerPopup({
   properties,
   popup,
@@ -156,16 +156,11 @@ export function LayerPopup({
   layerName: string;
 }) {
   const title = popup?.title ? properties[popup.title] : undefined;
-  const listed = popup?.fields ?? [];
-  const rest = Object.keys(properties)
-    .filter((key) => properties[key] != null && key !== popup?.title)
-    .filter((key) => !listed.some((field) => field.key === key))
-    .map((key) => ({ key, label: key }));
   return (
     <FeaturePopup
       metadata={[String(title || layerName)]}
       properties={properties}
-      fields={[...listed, ...rest]}
+      fields={popup?.fields ?? []}
     />
   );
 }
