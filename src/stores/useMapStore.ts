@@ -25,7 +25,8 @@ interface MapStoreState {
   setPrimaryMap: (mapId: string) => void;
   setLayerOpacity: (mapId: string, layer: keyof LayerOpacities, opacity: number) => void;
 
-  // Reset
+  // Hack to pass reset value to maps
+  resets: number;
   reset: () => void;
 }
 
@@ -56,6 +57,7 @@ const startingMaps = () => ({
 export const useMapStore = create<MapStoreState>((set, get) => ({
   // Initial state
   ...startingMaps(),
+  resets: 0,
 
   // Map actions
   addMap: () => {
@@ -126,7 +128,7 @@ export const useMapStore = create<MapStoreState>((set, get) => ({
   reset: () => {
     get().maps.forEach((config) => useMapLayersStore.getState().clearMap(config.id));
     useFilterStore.getState().clear();
-    set(startingMaps());
+    set((state) => ({ ...startingMaps(), resets: state.resets + 1 }));
   },
 }));
 

@@ -77,6 +77,18 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ onMapRef }) => {
   return null;
 };
 
+// Returns the map to the opening view each time Reset View is pressed
+const ResetViewHandler: React.FC = () => {
+  const map = useMap();
+  const resets = useMapStore((state) => state.resets);
+
+  useEffect(() => {
+    map.setView(MAP_CONFIG.center, MAP_CONFIG.zoom);
+  }, [map, resets]);
+
+  return null;
+};
+
 export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrimary }) => {
   // The Leaflet map, for the address search
   const mapRef = useRef<L.Map | null>(null);
@@ -193,6 +205,7 @@ export const SingleMapView: React.FC<SingleMapViewProps> = memo(({ mapId, isPrim
           className={styles["leaflet-map"]}
         >
           <MapResizeHandler onMapRef={handleMapRef} />
+          <ResetViewHandler />
 
           <TileLayer
             key={activeBaseMap.id}
