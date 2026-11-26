@@ -87,11 +87,15 @@ export type LayerMetadata = {
 // holds only what differs from its layer's
 export type LayerFileMetadata = Partial<LayerMetadata>;
 
+// Exact source values to replace when displaying a layer property
+export type LayerDisplayValues = Record<string, Record<string, string>>;
+
 // A point layer as written in config/layers/points.json (the fields the app reads)
 export interface PointLayerConfig {
   id: string;
   name: string;
   description?: string;
+  displayValues?: LayerDisplayValues;
   // Where its data comes from
   metadata?: LayerFileMetadata;
   icon: string;
@@ -115,6 +119,7 @@ export interface SubHazardLayerConfig {
   id: string;
   name: string;
   description?: string;
+  displayValues?: LayerDisplayValues;
   // Where its data comes from; a sub-layer's holds only what differs from its layer's
   metadata?: LayerFileMetadata;
   color: string;

@@ -23,8 +23,8 @@ KEY_PATTERN = re.compile(r"[a-z][a-z0-9_]{0,62}")
 
 # Per layer file, the fields each kind of entry must have and may have, as (required, optional).
 # A top-level layer has either subLayers or the file fields; a sub-layer always has the file fields
-LAYER_FIELDS = ({"id", "name", "icon", "color"}, {"description", "metadata", "off", "subLayers"})
-SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "metadata", "off"})
+LAYER_FIELDS = ({"id", "name", "icon", "color"}, {"description", "displayValues", "metadata", "off", "subLayers"})
+SUB_LAYER_FIELDS = ({"id", "name", "color"}, {"description", "displayValues", "metadata", "off"})
 # Where a layer's data comes from: author, title and period for the short source line, then the
 # source's own citation where it gives one, else the publisher for an APA citation. A sub-layer's
 # metadata fields replace its parent's
@@ -83,7 +83,7 @@ class ShapeLayer:
     keep: list | None  # columns to keep; None keeps all
     row_filter: str | None  # SQL condition for rows to keep; None keeps all
     tile_flags: list  # extra tippecanoe settings
-    popup_columns: list  # the columns the popup names
+    popup_columns: list  # the columns the popup uses or formats
 
 
 @dataclass
@@ -98,7 +98,7 @@ class PointLayer:
     row_filter: str | None  # SQL condition for rows to keep; None keeps all
     id_fields: list  # the columns that together tell one point from another
     name_column: str  # the column that names each point
-    popup_columns: list  # the columns the popup names
+    popup_columns: list  # the columns the popup uses or formats
 
 
 # Every layer and sub-layer as (id, entry, parent); a sub-layer's id is "<parent id>.<sub id>"
@@ -117,10 +117,15 @@ def repeats(values):
     return sorted({value for value in values if values.count(value) > 1})
 
 
-# The columns a popup names: its title column, then its listed fields
+# Columns used by the popup or its display-value mappings
 def popup_columns(entry):
     popup = entry.get("popup", {})
-    return ([popup["title"]] if "title" in popup else []) + [field["key"] for field in popup.get("fields", [])]
+    display_values = entry.get("displayValues")
+    return (
+        ([popup["title"]] if "title" in popup else [])
+        + [field["key"] for field in popup.get("fields", [])]
+        + (list(display_values) if isinstance(display_values, dict) else [])
+    )
 
 
 def field_problems(kind, entry, required, optional):
@@ -129,6 +134,19 @@ def field_problems(kind, entry, required, optional):
         problems.append(f"missing {', '.join(sorted(missing))}")
     if unknown := entry.keys() - required - optional:
         problems.append(f"unknown field {', '.join(sorted(unknown))}")
+    display_values = entry.get("displayValues")
+    if display_values is not None:
+        if not isinstance(display_values, dict):
+            problems.append("displayValues must map column names to value labels")
+        else:
+            for column, replacements in display_values.items():
+                if not isinstance(column, str) or not column:
+                    problems.append("displayValues column names must be non-empty strings")
+                if not isinstance(replacements, dict) or any(
+                    not isinstance(value, str) or not isinstance(label, str)
+                    for value, label in replacements.items()
+                ):
+                    problems.append(f"displayValues for {column} must map string values to string labels")
     source = entry.get("source")
     from_zips = (
         source is not None and source.keys() == {"zips", "inner"} and source["zips"]

@@ -21,7 +21,7 @@ interface HazardLayerRendererProps {
 export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer, name }) => {
   const map = useMap();
   const file = layer.file!;
-  const { popup, color } = layer;
+  const { popup, color, displayValues } = layer;
 
   useQuery(hazardFileQuery(file, name));
 
@@ -59,7 +59,12 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer,
       const features = proLayer.queryTileFeaturesDebug(latlng.lng, latlng.lat, 5).get(file) ?? [];
       return features.length > 0
         ? renderToStaticMarkup(
-            <LayerPopup properties={features[0].feature.props} popup={popup} layerName={name} />,
+            <LayerPopup
+              properties={features[0].feature.props}
+              popup={popup}
+              layerName={name}
+              displayValues={displayValues}
+            />,
           )
         : null;
     });
@@ -68,7 +73,7 @@ export const HazardLayerRenderer: React.FC<HazardLayerRendererProps> = ({ layer,
       removeClick();
       proLayer.remove();
     };
-  }, [map, file, popup, color, name]);
+  }, [map, file, popup, color, name, displayValues]);
 
   return null;
 };

@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import styles from "./FeaturePopup.module.scss";
-import type { MetricKind, PointLayerConfig, Reliability, SubHazardLayerConfig } from "../../types";
+import type {
+  LayerDisplayValues,
+  MetricKind,
+  PointLayerConfig,
+  Reliability,
+  SubHazardLayerConfig,
+} from "../../types";
 import { RELIABILITY_COLORS } from "../../config/colorSchemes";
 import { PointLayerIcon } from "../../utils/pointLayerIcon";
 
@@ -44,6 +50,7 @@ interface FeaturePopupProps {
   // The clicked shape's column values
   properties: Record<string, unknown>;
   fields: PopupField[];
+  displayValues?: LayerDisplayValues;
   metric1?: MetricDisplay;
   metric2?: MetricDisplay;
   hcdp?: HcdpPopupField;
@@ -103,12 +110,19 @@ export function FeaturePopup({
   metadata,
   properties,
   fields,
+  displayValues,
   metric1,
   metric2,
   hcdp,
   overlay,
   pointCounts,
 }: FeaturePopupProps) {
+  const displayProperty = (key: string) => {
+    const value = properties[key];
+    if (value == null) return "N/A";
+    return displayValues?.[key]?.[String(value)] ?? String(value);
+  };
+
   return (
     <div>
       {metadata && metadata.length > 0 && (
@@ -123,7 +137,7 @@ export function FeaturePopup({
       <div className={styles["popup-fields"]}>
         {fields.map((field) => (
           <Row key={field.key} label={field.label}>
-            {String(properties[field.key] ?? "N/A")}
+            {displayProperty(field.key)}
           </Row>
         ))}
         {metric1 && <MetricRows metric={metric1} />}
@@ -150,10 +164,12 @@ export function LayerPopup({
   properties,
   popup,
   layerName,
+  displayValues,
 }: {
   properties: Record<string, unknown>;
   popup: SubHazardLayerConfig["popup"];
   layerName: string;
+  displayValues?: LayerDisplayValues;
 }) {
   const title = popup?.title ? properties[popup.title] : undefined;
   const listed = popup?.fields ?? [];
@@ -166,6 +182,7 @@ export function LayerPopup({
       metadata={[String(title || layerName)]}
       properties={properties}
       fields={[...listed, ...rest]}
+      displayValues={displayValues}
     />
   );
 }

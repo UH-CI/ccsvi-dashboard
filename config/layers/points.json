@@ -53,6 +53,11 @@
       "name": "Emergency Shelters",
       "icon": "FaHouseUser",
       "color": "#00CC00",
+      "displayValues": {
+        "CAPACITY": {
+          "0": "Unknown"
+        }
+      },
       "metadata": {
         "author": "American Red Cross, Hawaiʻi State Chapter; County of Kauaʻi Civil Defense Agency; State of Hawaiʻi Office of Planning",
         "title": "Hawaiʻi Emergency Shelters",
@@ -143,6 +148,13 @@
       "name": "Bridges",
       "icon": "FaArchway",
       "color": "#6c757d",
+      "displayValues": {
+        "bridge_con": {
+          "G": "Good",
+          "F": "Fair",
+          "P": "Poor"
+        }
+      },
       "metadata": {
         "author": "Federal Highway Administration; Bureau of Transportation Statistics",
         "title": "National Bridge Inventory",

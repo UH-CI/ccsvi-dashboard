@@ -175,6 +175,7 @@ export const GenericPointMarkers: React.FC<GenericPointMarkersProps> = ({ config
                     properties={feature.properties ?? {}}
                     popup={config.popup}
                     layerName={config.name}
+                    displayValues={config.displayValues}
                   />
                 </Popup>
               </Marker>
