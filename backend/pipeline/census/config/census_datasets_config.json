@@ -3,7 +3,7 @@
     {
       "key": "age_of_structure",
       "alias": "age_of_structure",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Age of Structure/Age of Structure/ACSDT5Y2022.B25034-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/age_of_structure/ACSDT5Y2024.B25034-Data.csv",
       "official_table_title": "Year Structure Built",
       "label": "Housing units by year structure was built",
       "universe": "Housing units",
@@ -35,7 +35,7 @@
     {
       "key": "health_insurance_coverage_by_age",
       "alias": "health_insurance",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Lack of social security and insurance/Health insurance coverage by age/Health insurance coverage by age/ACSDT5Y2022.B27010-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/health_insurance/ACSDT5Y2024.B27010-Data.csv",
       "official_table_title": "Types of Health Insurance Coverage by Age",
       "label": "Health insurance coverage status by age",
       "universe": "Civilian noninstitutionalized population",
@@ -56,7 +56,7 @@
     {
       "key": "households_with_a_computer",
       "alias": "households_w_computer",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/households_w_computer/ACSDT5Y2022.B28010-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/households_w_computer/ACSDT5Y2024.B28010-Data.csv",
       "official_table_title": "Computers in Household",
       "label": "Households with computer and internet access",
       "universe": "Occupied housing units",
@@ -66,7 +66,7 @@
     {
       "key": "internet_subscription_in_household",
       "alias": "internet_subscription",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/internet_subscription/ACSDT5Y2022.B28011-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/internet_subscription/ACSDT5Y2024.B28011-Data.csv",
       "official_table_title": "Internet Subscriptions in Household",
       "label": "Types of internet subscriptions in household",
       "universe": "Occupied housing units",
@@ -76,7 +76,7 @@
     {
       "key": "limited_english_speaking_households",
       "alias": "limited_english_speaking",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Language and communication barriers/limited_english_speaking/ACSDT5Y2022.C16002-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/limited_english_speaking/ACSDT5Y2024.C16002-Data.csv",
       "official_table_title": "Household Language by Household Limited English Speaking Status",
       "label": "Households with limited English speaking ability",
       "universe": "Households",
@@ -98,7 +98,7 @@
     {
       "key": "living_arragements_including_living_alone_by_sex_and_relationship",
       "alias": "living_arrangements",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/Living arragements, including living alone, by sex and relationship/ACSDT5Y2022.B09019-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/living_arrangements/ACSDT5Y2024.B09019-Data.csv",
       "official_table_title": "Household Type (Including Living Alone) by Relationship",
       "label": "Living arrangements including living alone by sex and relationship",
       "universe": "Households",
@@ -118,7 +118,7 @@
     {
       "key": "income_share_of_fpl",
       "alias": "income_share_of_fpl",
-      "original_file_path": "All Exposures/Other/Ratio of Income to Poverty Level in the Past 12 Months (2022)/ACSDT5Y2022.C17002_2025-03-17T172135/ACSDT5Y2022.C17002-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/income_share_of_fpl/ACSDT5Y2024.C17002-Data.csv",
       "official_table_title": "Ratio of Income to Poverty Level in the Past 12 Months",
       "label": "Ratio of income to poverty level",
       "universe": "Population for whom poverty status has been determined",
@@ -157,7 +157,7 @@
     {
       "key": "persons_under_5_65_years_table",
       "alias": "person_under_5_65",
-      "original_file_path": "All Exposures/Table2/Data Describing Unsafe Conditions/Special Group at Risk/person_under_5_65/ACSDT5Y2022.B01001-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/person_under_5_65/ACSDT5Y2024.B01001-Data.csv",
       "official_table_title": "Sex by Age",
       "outputs": [
         {
@@ -206,7 +206,7 @@
     {
       "key": "race_origin",
       "alias": "race_origin",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Historical an other disparities_race or origin_and_gender/race_origin/ACSDT5Y2022.B02001-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/race_origin/ACSDT5Y2024.B02001-Data.csv",
       "official_table_title": "Race",
       "label": "Race and Hispanic or Latino origin",
       "universe": "Total population",
@@ -216,7 +216,7 @@
     {
       "key": "tenure",
       "alias": "tenure",
-      "original_file_path": "All Exposures/Table1/Data Describing Unsafe Conditions/Higher risk housing and infrastructure/Tenure/ACSDT5Y2022.B25003-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/tenure/ACSDT5Y2024.B25003-Data.csv",
       "official_table_title": "Tenure",
       "label": "Tenure (owner vs. renter occupied housing)",
       "universe": "Occupied housing units",

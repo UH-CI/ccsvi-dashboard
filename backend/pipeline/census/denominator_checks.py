@@ -55,7 +55,7 @@ def check_population_source_mismatch(raw_dataset_dir: str, block_group_populatio
     raw_dataset_dir = os.path.expanduser(raw_dataset_dir)
     csv_files = glob.glob(os.path.join(raw_dataset_dir, "*.csv"))
     if not csv_files:
-        print(f"  ⚠ No raw CSV found in {raw_dataset_dir}")
+        print(f"  ⚠ No raw CSV found in {os.path.basename(raw_dataset_dir)}")
         return {}
 
     mismatches = {}
@@ -114,7 +114,7 @@ def compare_population_denominators(cleaned_csv_path: str, raw_dataset_dir: str,
 
     raw_csv_files = glob.glob(os.path.join(raw_dataset_dir, "*.csv"))
     if not raw_csv_files:
-        print(f"  ⚠ No raw CSV found in {raw_dataset_dir}")
+        print(f"  ⚠ No raw CSV found in {os.path.basename(raw_dataset_dir)}")
         return pd.DataFrame()
 
     acs_totals = {}

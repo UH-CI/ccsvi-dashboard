@@ -108,7 +108,7 @@ def export_census_csv(df: pd.DataFrame, output_dir: str, filename: str, overwrit
         temp_df.columns = cleaned_aliases
         temp_df.to_csv(f, index=False, header=False)
 
-    print(f"Exported to {output_path}")
+    print(f"Exported {filename}")
 
 
 # Strips a Census prefix (e.g. "Estimate!!Total:!!") and tidies up the rest of the name
