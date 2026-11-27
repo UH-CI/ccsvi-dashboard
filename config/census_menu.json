@@ -128,6 +128,22 @@
           "label": "Without Health Insurance",
           "calculationDescription": "Percentage of civilian noninstitutionalized population without health insurance.",
           "description": "Uninsured individuals may have reduced access to medical care during and after hazards."
+        },
+        {
+          "key": "unemployed",
+          "dataset": "unemployed",
+          "metric": "In labor force: Civilian labor force: Unemployed",
+          "label": "Unemployed",
+          "calculationDescription": "Percentage of the civilian labor force that is unemployed.",
+          "description": "People who want work but can't find it may lack steady income to prepare for or recover from hazards."
+        },
+        {
+          "key": "not_in_labor_force",
+          "dataset": "not_in_labor_force",
+          "metric": "Not in labor force",
+          "label": "Not in Labor Force",
+          "calculationDescription": "Percentage of civilians aged 16 and over who are neither working nor looking for work.",
+          "description": "Includes retirees, students, caregivers and people unable to work, who may rely on fixed or limited income."
         }
       ]
     },
@@ -327,6 +343,14 @@
           "label": "Households Without a Computer or Smartphone",
           "calculationDescription": "Percentage of households without a computer or smartphone.",
           "description": "Limited access to digital devices can reduce access to information and resources for hazard preparedness, response, and recovery."
+        },
+        {
+          "key": "no_vehicle",
+          "dataset": "tenure_by_vehicles",
+          "metric": "Households Without a Vehicle (calc.)",
+          "label": "Households Without a Vehicle",
+          "calculationDescription": "Percentage of households without a vehicle.",
+          "description": "Lack of vehicle access can create barriers to preparedness, evacuation, access to essential services, and recovery during hazards."
         }
       ]
     }

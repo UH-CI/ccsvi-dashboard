@@ -162,10 +162,27 @@ def recipe_hawaiian_homelands(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([cleaned_df, df.iloc[:, first_kept:]], axis=1)
 
 
+# Employment status as two files: the unemployed out of the civilian labor force, and people not in the labor force out of all civilians 16 and over
+def recipe_employment_status(df: pd.DataFrame) -> dict:
+    labor_force = _column(df, "Estimate!!Total:!!In labor force:!!Civilian labor force:")
+    not_in_labor_force = _column(df, "Estimate!!Total:!!Not in labor force")
+
+    unemployed_df = df.iloc[:, :2].copy()
+    _carry_with_moe(unemployed_df, df, labor_force)
+    _carry_with_moe(unemployed_df, df, _column(df, "Estimate!!Total:!!In labor force:!!Civilian labor force:!!Unemployed"))
+
+    not_in_labor_force_df = df.iloc[:, :2].copy()
+    _add_total(not_in_labor_force_df, df, "Civilians 16 and Over", [labor_force, not_in_labor_force])
+    _carry_with_moe(not_in_labor_force_df, df, not_in_labor_force)
+
+    return {"unemployed": unemployed_df, "not_in_labor_force": not_in_labor_force_df}
+
+
 # Datasets cleaned by code, by alias; a recipe returns one table, or {output file name: table}
 CODED_RECIPES = {
     "person_under_5_65": recipe_person_under_5_65,
     "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
+    "employment_status": recipe_employment_status,
 }
 
 

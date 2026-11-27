@@ -42,6 +42,10 @@ SELECT
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'no_health_insurance') AS no_health_insurance,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
+        FILTER (WHERE m.key = 'unemployed') AS unemployed,
+    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
+        FILTER (WHERE m.key = 'not_in_labor_force') AS not_in_labor_force,
+    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'under_5_male') AS under_5_male,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'under_5_female') AS under_5_female,
@@ -79,6 +83,8 @@ SELECT
         FILTER (WHERE m.key = 'no_internet') AS no_internet,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'no_computer') AS no_computer,
+    MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
+        FILTER (WHERE m.key = 'no_vehicle') AS no_vehicle,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)
         FILTER (WHERE m.key = 'fire_stations_count') AS fire_stations_count,
     MAX(CASE WHEN m.has_percentage THEN mv.percentage ELSE mv.absolute END)

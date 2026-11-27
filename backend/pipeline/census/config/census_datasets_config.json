@@ -98,7 +98,7 @@
     {
       "key": "living_arragements_including_living_alone_by_sex_and_relationship",
       "alias": "living_arrangements",
-      "original_file_path": "All Exposures/census/JPL/living_arrangements/ACSDT5Y2024.B09019-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/living_arrangements/ACSDT5Y2022.B09019-Data.csv",
       "official_table_title": "Household Type (Including Living Alone) by Relationship",
       "label": "Living arrangements including living alone by sex and relationship",
       "universe": "Households",
@@ -226,7 +226,7 @@
     {
       "key": "tenure_by_occupants_per_room",
       "alias": "tenure_by_occupants_per_room",
-      "original_file_path": "All Exposures/Other/Tenure by Occupants per Room (2024)/ACSDT5Y2024.B25014_2026-09-15T214051/ACSDT5Y2024.B25014-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/tenure_by_occupants_per_room/ACSDT5Y2024.B25014-Data.csv",
       "official_table_title": "Tenure by Occupants per Room",
       "label": "Tenure by occupants per room (overcrowding)",
       "universe": "Occupied housing units",
@@ -249,7 +249,7 @@
     {
       "key": "family_type_by_presence_and_age_of_own_children",
       "alias": "family_type_by_children",
-      "original_file_path": "All Exposures/Other/Family Type by Presence and Age of Own Children Under 18 Years (2024)/ACSDT5Y2024.B11003_2026-09-16T173856/ACSDT5Y2024.B11003-Data.csv",
+      "original_file_path": "All Exposures/census/JPL/family_type_by_children/ACSDT5Y2024.B11003-Data.csv",
       "official_table_title": "Family Type by Presence and Age of Own Children Under 18 Years",
       "label": "Family type by presence and age of own children (single-parent households)",
       "universe": "Families",
@@ -262,6 +262,47 @@
             "Estimate!!Total:!!Other family:!!Male householder, no spouse present:!!With own children of the householder under 18 years:",
             "Estimate!!Total:!!Other family:!!Female householder, no spouse present:!!With own children of the householder under 18 years:"
           ]
+        }
+      ]
+    },
+    {
+      "key": "tenure_by_vehicles_available",
+      "alias": "tenure_by_vehicles",
+      "original_file_path": "All Exposures/census/JPL/tenure_by_vehicles/ACSDT5Y2024.B25044-Data.csv",
+      "official_table_title": "Tenure by Vehicles Available",
+      "label": "Tenure by vehicles available (households without a vehicle)",
+      "universe": "Occupied housing units",
+      "hawaiian_homelands": false,
+      "percent_denominator": "Estimate!!Total:",
+      "totals": [
+        {
+          "name": "Households Without a Vehicle",
+          "columns": [
+            "Estimate!!Total:!!Owner occupied:!!No vehicle available",
+            "Estimate!!Total:!!Renter occupied:!!No vehicle available"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "employment_status",
+      "alias": "employment_status",
+      "original_file_path": "All Exposures/census/JPL/employment_status/ACSDT5Y2024.B23025-Data.csv",
+      "official_table_title": "Employment Status for the Population 16 Years and Over",
+      "outputs": [
+        {
+          "name": "unemployed",
+          "label": "Unemployment (civilian labor force)",
+          "universe": "Civilian labor force",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Estimate!!Total:!!In labor force:!!Civilian labor force:"
+        },
+        {
+          "name": "not_in_labor_force",
+          "label": "Not in labor force (civilians 16 and over)",
+          "universe": "Civilian population 16 years and over",
+          "hawaiian_homelands": false,
+          "percent_denominator": "Civilians 16 and Over (calc.)"
         }
       ]
     },
