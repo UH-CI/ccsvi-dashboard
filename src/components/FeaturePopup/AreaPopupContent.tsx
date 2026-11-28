@@ -70,7 +70,7 @@ export function AreaPopupContent({
         Boolean(line),
       )
     : [];
-  if (metadata.length === 0 && feature.properties?.NAME10) metadata.push(feature.properties.NAME10);
+  if (metadata.length === 0 && feature.properties?.NAME) metadata.push(feature.properties.NAME);
 
   // A layer whose counts couldn't be fetched shows N/A; a layer with none here isn't listed
   const pointCounts: PointCountsPopupField = counts.loading
@@ -105,7 +105,7 @@ export function AreaPopupContent({
   return (
     <FeaturePopup
       metadata={metadata.length > 0 ? metadata : undefined}
-      properties={feature.properties ?? {}}
+      properties={{ ...feature.properties, population: place?.population ?? null }}
       fields={fields}
       metric1={metricDisplay(label1, metric1, geoid)}
       metric2={metricDisplay(label2, metric2, geoid)}

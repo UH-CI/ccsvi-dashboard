@@ -42,6 +42,7 @@ export interface GeographyMetadata {
   block_group: string | null;
   census_tract: string | null;
   county: string | null;
+  population: number | null;
 }
 
 export type GeographiesData = Record<string, GeographyMetadata>;
@@ -57,14 +58,8 @@ export interface BlockGroupProperties {
 }
 
 export interface HawaiianHomelandProperties {
-  AIANNHCE10: string;
-  AIANNHNS10: string;
-  GEOID10: string;
-  NAME10: string;
-  AIANNHFP10: string;
-  POP10: number;
-  Shape_Leng: number;
-  Shape_Area: number;
+  GEOID: string;
+  NAME: string;
 }
 
 export interface CountyBoundariesProperties {

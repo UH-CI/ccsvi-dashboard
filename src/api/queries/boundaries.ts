@@ -10,7 +10,7 @@ import { getAppFile } from "../client";
 // The area outlines shipped with the app
 const BOUNDARY_FILES = {
   blockGroups: "data/2020_Census_Block_Groups_Stripped.geojson",
-  homelands: "data/Census_Hawaiian_Homelands_hhl10_Stripped.geojson",
+  homelands: "data/2024_Census_Hawaiian_Homelands_Stripped.geojson",
   counties: "data/2020_Census_County_Boundaries_Stripped.geojson",
 } as const;
 

@@ -89,16 +89,17 @@ export const POLYGON_LAYERS = {
     metadata: {
       author: "U.S. Census Bureau, Geography Division",
       title:
-        "TIGER/Line Shapefile, 2010, 2010 State, Hawaiʻi, 2010 Census American Indian/Alaska Native/Native Hawaiian Area (AIANNH) State-based",
+        "TIGER/Line Shapefile, 2024, Nation, U.S., American Indian/Alaska Native/Native Hawaiian Areas (AIANNH)",
       publisher: "U.S. Census Bureau",
-      period: "2010",
+      period: "2024",
+      link: "https://www2.census.gov/geo/tiger/TIGER2024/AIANNH/",
     },
-    geoidProperty: "GEOID10",
+    geoidProperty: "GEOID",
     popup: {
       title: "Hawaiian Homeland",
       fields: [
-        { key: "GEOID10", label: "Geo ID" },
-        { key: "POP10", label: "Population" },
+        { key: "GEOID", label: "Geo ID" },
+        { key: "population", label: "Population" },
       ],
     },
     styles: {

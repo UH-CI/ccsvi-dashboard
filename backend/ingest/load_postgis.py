@@ -37,29 +37,29 @@ async def load_block_group_geoms(conn: asyncpg.Connection) -> int:
 async def load_hawaiian_homeland_geoms(conn: asyncpg.Connection) -> int:
     """Update geographies.geom for Hawaiian Homeland geoids.
 
-    Matches on GEOID10 from the GeoJSON — must match geographies.geoid values
-    loaded from the Hawaiian Homeland census metrics JSON.
+    Matches on GEOID (the 4-digit Home Land code) from the GeoJSON — must match the
+    geographies.geoid values the census loader takes from the Homelands data file.
     """
-    path = PUBLIC_DATA / "Census_Hawaiian_Homelands_hhl10_Stripped.geojson"
+    path = PUBLIC_DATA / "2024_Census_Hawaiian_Homelands_Stripped.geojson"
     with open(path) as f:
         fc = json.load(f)
 
     rows = [
-        (json.dumps(feat["geometry"]), feat["properties"]["GEOID10"])
+        (json.dumps(feat["geometry"]), feat["properties"]["GEOID"])
         for feat in fc["features"]
-        if feat.get("geometry") and feat["properties"].get("GEOID10")
+        if feat.get("geometry") and feat["properties"].get("GEOID")
     ]
     await conn.executemany(
         "UPDATE geographies SET geom = ST_Multi(ST_GeomFromGeoJSON($1)) WHERE geoid = $2",
         rows,
     )
-    # Report mismatches so we know if GEOID10 doesn't align with geographies.geoid
+    # Report mismatches so we know if GEOID doesn't align with geographies.geoid
     null_count = await conn.fetchval(
         "SELECT count(*) FROM geographies WHERE type = 'hawaiian_homeland' AND geom IS NULL"
     )
     if null_count:
         print(f"  WARNING: {null_count} Hawaiian Homeland geographies still have NULL geom "
-              "(GEOID10 may not match geographies.geoid)")
+              "(GEOID may not match geographies.geoid)")
     return len(rows)
 
 

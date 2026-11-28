@@ -14,6 +14,7 @@ class GeographyRecord(BaseModel):
     block_group: str | None
     census_tract: str | None
     county: str | None
+    population: int | None
 
 
 class AreaResult(BaseModel):
@@ -39,7 +40,7 @@ _ID_COLS: dict[AreaType, list[str]] = {
 )
 async def get_geographies(conn: ConnDep) -> Any:
     rows = await conn.fetch(
-        "SELECT geoid, name, block_group, census_tract, county FROM geographies"
+        "SELECT geoid, name, block_group, census_tract, county, population FROM geographies"
     )
     return {
         row["geoid"]: {
@@ -47,6 +48,7 @@ async def get_geographies(conn: ConnDep) -> Any:
             "block_group": row["block_group"],
             "census_tract": row["census_tract"],
             "county": row["county"],
+            "population": row["population"],
         }
         for row in rows
     }
