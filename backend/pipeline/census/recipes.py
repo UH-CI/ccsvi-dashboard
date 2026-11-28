@@ -181,7 +181,7 @@ def recipe_employment_status(df: pd.DataFrame) -> dict:
 # Datasets cleaned by code, by alias; a recipe returns one table, or {output file name: table}
 CODED_RECIPES = {
     "person_under_5_65": recipe_person_under_5_65,
-    "2022_census_hawaiian_homelands": recipe_hawaiian_homelands,
+    "census_hawaiian_homelands": recipe_hawaiian_homelands,
     "employment_status": recipe_employment_status,
 }
 

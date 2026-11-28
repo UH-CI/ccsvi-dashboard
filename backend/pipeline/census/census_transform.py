@@ -44,13 +44,13 @@ def census_drop_cols(df: pd.DataFrame, cols_to_drop: list) -> pd.DataFrame:
 
     alias_to_col = {}
     for col, alias in zip(df.columns, aliases):
-        clean_alias = "" if pd.isna(alias) else str(alias).strip('"').strip().rstrip(":")
+        clean_alias = "" if pd.isna(alias) else str(alias).replace('"', "").strip().rstrip(":")
         alias_to_col[clean_alias] = col
 
     columns_to_drop = set()
 
     for remove_col in cols_to_drop:
-        clean_remove_col = "" if pd.isna(remove_col) else str(remove_col).strip('"').strip().rstrip(":")
+        clean_remove_col = "" if pd.isna(remove_col) else str(remove_col).replace('"', "").strip().rstrip(":")
 
         if clean_remove_col in alias_to_col:
             columns_to_drop.add(alias_to_col[clean_remove_col])

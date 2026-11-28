@@ -55,10 +55,7 @@ async def load_hawaiian_homeland_geoms(conn: asyncpg.Connection) -> int:
     )
     # Report mismatches so we know if GEOID10 doesn't align with geographies.geoid
     null_count = await conn.fetchval(
-        "SELECT count(*) FROM geographies g "
-        "JOIN metrics m ON true "
-        "JOIN metric_values mv ON mv.geoid = g.geoid AND mv.metric_id = m.id "
-        "WHERE m.dataset_id = '2022_census_hawaiian_homelands' AND g.geom IS NULL"
+        "SELECT count(*) FROM geographies WHERE type = 'hawaiian_homeland' AND geom IS NULL"
     )
     if null_count:
         print(f"  WARNING: {null_count} Hawaiian Homeland geographies still have NULL geom "

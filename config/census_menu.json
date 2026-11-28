@@ -107,7 +107,7 @@
         },
         {
           "key": "below_100_fpl_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "POVERTY STATUS IN THE PAST 12 MONTHS Population for whom poverty status is determined Below 100 percent of the poverty level",
           "label": "Hawaiian Homelands - Below 100% Federal Poverty Line",
           "calculationDescription": "Percentage of population on Hawaiian homelands with income below 100% of the federal poverty level.",
@@ -115,7 +115,7 @@
         },
         {
           "key": "below_150_fpl_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "Total Under 150% FPL (calc.)",
           "label": "Hawaiian Homelands - Below 150% Federal Poverty Line",
           "calculationDescription": "Percentage of population on Hawaiian homelands with income below 150% of the federal poverty level.",
@@ -236,7 +236,7 @@
         },
         {
           "key": "under_5_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "Total Population Under 5 (calc.)",
           "label": "Hawaiian Homelands - Aged 5 Years and Under",
           "calculationDescription": "Percentage of population under the age of 5 living on Hawaiian homelands.",
@@ -244,7 +244,7 @@
         },
         {
           "key": "under_18_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "Total Population Under 18 (calc.)",
           "label": "Hawaiian Homelands - Aged 17 Years and Under",
           "calculationDescription": "Percentage of population under the age of 18 living on Hawaiian homelands.",
@@ -252,7 +252,7 @@
         },
         {
           "key": "over_65_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "Total Population Over 65 (calc.)",
           "label": "Hawaiian Homelands - Aged 65 Years and Older",
           "calculationDescription": "Percentage of population aged 65 and over living on Hawaiian homelands.",
@@ -315,7 +315,7 @@
         },
         {
           "key": "limited_english_homelands",
-          "dataset": "2022_census_hawaiian_homelands",
+          "dataset": "census_hawaiian_homelands",
           "metric": "LANGUAGE SPOKEN AT HOME AND ABILITY TO SPEAK ENGLISH Population 5 years and over Speak language other than English Speak English less than very well",
           "label": "Hawaiian Homelands - Limited English Proficiency",
           "calculationDescription": "Percentage of households on Hawaiian homelands with limited English proficiency.",
